@@ -21,10 +21,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Client, ClientStatus, NextAction } from "@/utils/types";
+import { Client, ClientStatus, NextAction, Payment } from "@/utils/types";
 import {
   Select,
   SelectContent,
@@ -33,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
+import { v4 as uuidv4 } from 'uuid';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "O nome é obrigatório" }),
@@ -40,9 +40,14 @@ const formSchema = z.object({
   phone: z.string().min(1, { message: "O telefone é obrigatório" }),
   weddingDate: z.date().nullable(),
   contractValue: z.coerce.number().min(0, { message: "O valor deve ser positivo" }),
+  downPayment: z.coerce.number().min(0, { message: "O valor deve ser positivo" }),
   status: z.enum(["orçamento enviado", "follow-up", "fechado", "em andamento", "pago"]),
   nextAction: z.enum(["responder", "enviar proposta", "editar", "entregar", "nenhuma"]),
   notes: z.string().optional(),
+})
+.refine(data => data.downPayment <= data.contractValue, {
+  message: "O valor da entrada não pode ser maior que o valor do contrato",
+  path: ["downPayment"],
 });
 
 export type ClientFormValues = z.infer<typeof formSchema>;
@@ -63,6 +68,7 @@ export function ClientForm({ client, onSubmit }: ClientFormProps) {
           phone: client.phone,
           weddingDate: client.weddingDate,
           contractValue: client.contractValue,
+          downPayment: client.downPayment,
           status: client.status,
           nextAction: client.nextAction,
           notes: client.notes,
@@ -73,6 +79,7 @@ export function ClientForm({ client, onSubmit }: ClientFormProps) {
           phone: "",
           weddingDate: null,
           contractValue: 0,
+          downPayment: 0,
           status: "orçamento enviado",
           nextAction: "enviar proposta",
           notes: "",
@@ -82,6 +89,10 @@ export function ClientForm({ client, onSubmit }: ClientFormProps) {
   const handleSubmit = (data: ClientFormValues) => {
     onSubmit(data);
   };
+
+  const watchStatus = form.watch("status");
+  const watchContractValue = form.watch("contractValue");
+  const watchDownPayment = form.watch("downPayment");
 
   return (
     <Form {...form}>
@@ -211,11 +222,51 @@ export function ClientForm({ client, onSubmit }: ClientFormProps) {
 
           <FormField
             control={form.control}
+            name="downPayment"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Valor de Entrada</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                      R$
+                    </span>
+                    <Input 
+                      type="number" 
+                      placeholder="0,00" 
+                      {...field} 
+                      className="pl-8 focus:ring-1 focus:ring-black dark:focus:ring-white transition-shadow"
+                      disabled={watchStatus === "orçamento enviado" || watchStatus === "follow-up"}
+                    />
+                  </div>
+                </FormControl>
+                {watchStatus === "orçamento enviado" || watchStatus === "follow-up" ? (
+                  <FormDescription>
+                    Disponível apenas para contratos fechados
+                  </FormDescription>
+                ) : (
+                  <FormDescription>
+                    Valor da entrada inicial (será registrado como primeiro pagamento)
+                  </FormDescription>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="status"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Status do Contrato</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={(value) => {
+                  field.onChange(value);
+                  // Reset downpayment when changing to initial statuses
+                  if (value === "orçamento enviado" || value === "follow-up") {
+                    form.setValue("downPayment", 0);
+                  }
+                }} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um status" />

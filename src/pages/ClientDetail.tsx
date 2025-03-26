@@ -30,11 +30,27 @@ import {
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
+import { ClientPayments } from "@/components/ClientPayments";
+import { Client } from "@/utils/types";
 
 export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [client, setClient] = useState(clients.find(c => c.id === id));
+  const [client, setClient] = useState(() => clients.find(c => c.id === id));
+  
+  // Function to update stored clients
+  const updateClientInStore = (updatedClient: Client) => {
+    // This is a mock implementation that would be replaced by an API call in a real app
+    const updatedClients = clients.map(c => c.id === updatedClient.id ? updatedClient : c);
+    
+    // In a real app, this would update a global state or make an API call
+    // Here we just update the local state
+    setClient(updatedClient);
+    
+    // For demo purposes, we're mutating the clients array directly
+    // In a real app, you would use a proper state management solution
+    clients.splice(0, clients.length, ...updatedClients);
+  };
 
   useEffect(() => {
     if (!client) {
@@ -50,6 +66,11 @@ export default function ClientDetail() {
 
   const handleDelete = () => {
     // In a real app, this would make an API call
+    const clientIndex = clients.findIndex(c => c.id === id);
+    if (clientIndex !== -1) {
+      clients.splice(clientIndex, 1);
+    }
+    
     toast.success("Cliente removido com sucesso");
     navigate("/clients");
   };
@@ -138,6 +159,11 @@ export default function ClientDetail() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Financial Information Section (only for closed contracts) */}
+        {client.status !== "orçamento enviado" && client.status !== "follow-up" && (
+          <ClientPayments client={client} onUpdate={updateClientInStore} />
+        )}
 
         {/* Client Information */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">

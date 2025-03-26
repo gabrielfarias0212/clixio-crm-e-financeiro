@@ -13,6 +13,13 @@ export type NextAction =
   | "entregar" 
   | "nenhuma";
 
+export interface Payment {
+  id: string;
+  amount: number;
+  date: Date;
+  notes?: string;
+}
+
 export interface Client {
   id: string;
   name: string;
@@ -23,6 +30,8 @@ export interface Client {
   email: string;
   phone: string;
   notes: string;
+  downPayment: number;
+  payments: Payment[];
   createdAt: Date;
   updatedAt: Date;
 }

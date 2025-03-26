@@ -40,7 +40,7 @@ export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
   // Set next action based on status (more realistic)
   let nextAction: NextAction;
   if (status === "orçamento enviado") {
-    nextAction = Math.random() > 0.5 ? "responder" : "follow-up";
+    nextAction = Math.random() > 0.5 ? "responder" : "enviar proposta";
   } else if (status === "follow-up") {
     nextAction = "responder";
   } else if (status === "fechado") {

@@ -48,7 +48,14 @@ export function ActionChip({ action, className }: ActionChipProps) {
     }
   };
 
-  const { icon, bg, text, border } = actionConfig[action];
+  // Safely access the configuration for the given action
+  const config = actionConfig[action];
+  
+  // If for some reason the config is undefined, use a fallback
+  const icon = config?.icon || <Clock className="h-3 w-3 mr-1" />;
+  const bg = config?.bg || "bg-gray-50";
+  const text = config?.text || "text-gray-500";
+  const border = config?.border || "border-gray-100";
 
   return (
     <span 

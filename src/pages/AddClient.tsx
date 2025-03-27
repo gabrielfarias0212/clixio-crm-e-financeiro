@@ -8,7 +8,7 @@ import { ChevronLeft } from "lucide-react";
 import { clients } from "@/utils/mockData";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from 'uuid';
-import { Payment } from "@/utils/types";
+import { Payment, Client } from "@/utils/types";
 
 export default function AddClient() {
   const navigate = useNavigate();
@@ -31,10 +31,18 @@ export default function AddClient() {
       });
     }
     
-    // Create a new client object
-    const newClient = {
+    // Create a new client object with all required properties explicitly set
+    const newClient: Client = {
       id: uuidv4(),
-      ...data,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      weddingDate: data.weddingDate,
+      contractValue: data.contractValue,
+      downPayment: data.downPayment,
+      status: data.status,
+      nextAction: data.nextAction,
+      notes: data.notes || "",
       payments,
       createdAt: new Date(),
       updatedAt: new Date(),

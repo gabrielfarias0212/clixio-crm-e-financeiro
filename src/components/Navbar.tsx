@@ -1,130 +1,136 @@
 
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { 
-  CalendarDays, 
-  Home, 
-  Menu, 
-  PlusCircle,
-  UserPlus, 
-  Users, 
-  X 
-} from "lucide-react";
+import { BarChart, CalendarDays, Menu, Users, X, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
-const NavItem = ({ 
-  to, 
-  icon, 
-  label,
-  isActive,
-  onClick
-}: { 
-  to: string; 
-  icon: React.ReactNode; 
-  label: string;
-  isActive: boolean;
-  onClick?: () => void;
-}) => {
-  return (
-    <Link 
-      to={to} 
-      className={cn(
-        "flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200",
-        "hover:bg-gray-100 dark:hover:bg-gray-800",
-        isActive ? "bg-gray-100 dark:bg-gray-800 font-medium" : "text-gray-600 dark:text-gray-400"
-      )}
-      onClick={onClick}
-    >
-      <span className={cn(
-        "transition-colors duration-200",
-        isActive ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-500"
-      )}>
-        {icon}
-      </span>
-      <span>{label}</span>
-    </Link>
-  );
-};
-
-export default function Navbar() {
+export function Navbar() {
+  const { isMobile } = useMobile();
+  const [open, setOpen] = useState(false);
   const location = useLocation();
-  const isMobile = useIsMobile();
-  const [isOpen, setIsOpen] = useState(false);
-  
-  const routes = [
-    { path: "/", icon: <Home size={18} />, label: "Dashboard" },
-    { path: "/clients", icon: <Users size={18} />, label: "Clientes" },
-    { path: "/calendar", icon: <CalendarDays size={18} />, label: "Calendário" }
-  ];
 
-  // Close mobile menu when route changes
+  // Close mobile menu when location changes
   useEffect(() => {
-    setIsOpen(false);
+    if (open) setOpen(false);
   }, [location.pathname]);
 
-  const renderNav = () => (
-    <nav className="flex flex-col space-y-1">
-      {routes.map((route) => (
-        <NavItem
-          key={route.path}
-          to={route.path}
-          icon={route.icon}
-          label={route.label}
-          isActive={location.pathname === route.path}
-          onClick={() => setIsOpen(false)}
-        />
-      ))}
-    </nav>
-  );
+  // Close mobile menu when escape key is pressed
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, []);
 
-  if (isMobile) {
-    return (
-      <div className="flex justify-between items-center py-3 px-4 border-b">
-        <Link to="/" className="font-semibold text-xl">
-          Wedding CRM
-        </Link>
-        <div className="flex gap-2">
-          <Link to="/clients/add">
-            <Button size="sm" variant="ghost" className="gap-1">
-              <UserPlus size={18} />
-            </Button>
-          </Link>
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm">
-                {isOpen ? <X size={18} /> : <Menu size={18} />}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[240px] sm:w-[280px]">
-              <div className="py-6">{renderNav()}</div>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
-    );
-  }
+  const isActive = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
+  const handleToggle = () => {
+    setOpen(!open);
+  };
+
+  const closeMenu = () => {
+    setOpen(false);
+  };
+
+  // List of nav items
+  const navItems = [
+    {
+      name: "Dashboard",
+      path: "/",
+      icon: <BarChart className="h-5 w-5" />,
+    },
+    {
+      name: "Clientes",
+      path: "/clients",
+      icon: <Users className="h-5 w-5" />,
+    },
+    {
+      name: "Calendário",
+      path: "/calendar",
+      icon: <CalendarDays className="h-5 w-5" />,
+    },
+    {
+      name: "Fluxo de Caixa",
+      path: "/cashflow",
+      icon: <DollarSign className="h-5 w-5" />,
+    },
+  ];
 
   return (
-    <div className="border-b">
-      <div className="flex justify-between items-center py-3 px-6 max-w-screen-2xl mx-auto">
-        <div className="flex items-center space-x-8">
-          <Link to="/" className="font-semibold text-xl">
-            Wedding CRM
+    <header className="sticky top-0 z-30 bg-white shadow-sm">
+      <div className="container mx-auto px-4 flex h-16 items-center justify-between">
+        <div className="flex items-center">
+          <Link to="/" className="flex items-center">
+            <h1 className="text-xl font-bold">Wedding CRM</h1>
           </Link>
-          <div className="hidden md:flex items-center space-x-1">
-            {renderNav()}
-          </div>
         </div>
-        <Link to="/clients/add">
-          <Button size="sm" className="gap-1">
-            <PlusCircle size={16} />
-            <span>Novo Cliente</span>
+
+        {/* Desktop nav */}
+        {!isMobile && (
+          <nav className="ml-10 flex gap-6">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary",
+                  isActive(item.path)
+                    ? "text-primary"
+                    : "text-gray-600"
+                )}
+              >
+                {item.icon}
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+        )}
+
+        {/* Mobile menu button */}
+        {isMobile && (
+          <Button
+            variant="ghost"
+            className="flex items-center gap-1.5 text-sm font-medium"
+            onClick={handleToggle}
+          >
+            {open ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </Button>
-        </Link>
+        )}
       </div>
-    </div>
+
+      {/* Mobile navigation */}
+      {isMobile && open && (
+        <div className="fixed inset-0 top-16 z-20 bg-white">
+          <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-4 text-base rounded-md font-medium transition-colors hover:bg-gray-100",
+                  isActive(item.path)
+                    ? "bg-gray-100 text-primary"
+                    : "text-gray-600"
+                )}
+                onClick={closeMenu}
+              >
+                {item.icon}
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      )}
+    </header>
   );
 }

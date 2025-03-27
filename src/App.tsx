@@ -11,6 +11,7 @@ import ClientDetail from "./pages/ClientDetail";
 import AddClient from "./pages/AddClient";
 import EditClient from "./pages/EditClient";
 import Calendar from "./pages/Calendar";
+import CashFlow from "./pages/CashFlow";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/clients/add" element={<AddClient />} />
           <Route path="/clients/edit/:id" element={<EditClient />} />
           <Route path="/calendar" element={<Calendar />} />
+          <Route path="/cashflow" element={<CashFlow />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

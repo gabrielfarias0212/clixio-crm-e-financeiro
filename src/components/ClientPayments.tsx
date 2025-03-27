@@ -7,6 +7,8 @@ import { PaymentHistory } from "./PaymentHistory";
 import { AddPaymentForm } from "./AddPaymentForm";
 import { DollarSign, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from 'uuid';
+import { transactions } from "@/utils/mockTransactions";
 
 interface ClientPaymentsProps {
   client: Client;
@@ -39,6 +41,19 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
       // If this payment makes the total equal to the contract value, set status to "pago"
       status: totalPaid + newPayment.amount >= client.contractValue ? "pago" : client.status
     };
+    
+    // Add the payment to the transactions list as well
+    transactions.unshift({
+      id: uuidv4(),
+      amount: newPayment.amount,
+      date: newPayment.date,
+      type: "entrada",
+      category: "pagamento de cliente",
+      description: `Pagamento de ${client.name}`,
+      clientId: client.id,
+      paymentId: newPayment.id,
+      createdAt: new Date()
+    });
     
     // Update the client
     onUpdate(updatedClient);

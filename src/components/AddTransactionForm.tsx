@@ -92,9 +92,12 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
 
   const handleSubmit = (data: TransactionFormValues) => {
     onAddTransaction({
-      ...data,
+      type: data.type, // Ensure this is included and not marked as optional
       category: data.category as TransactionCategory,
+      amount: data.amount,
       date: data.date,
+      description: data.description,
+      clientId: data.clientId,
     });
   };
 

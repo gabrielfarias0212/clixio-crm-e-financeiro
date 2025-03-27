@@ -1,5 +1,5 @@
 
-import { Transaction } from "./types";
+import { Transaction, TransactionCategory } from "./types";
 import { clients } from "./mockData";
 import { v4 as uuidv4 } from 'uuid';
 

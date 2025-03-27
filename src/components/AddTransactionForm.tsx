@@ -242,7 +242,7 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
                   </FormControl>
                   <SelectContent>
                     {transactionType === "saída" && (
-                      <SelectItem value="">Nenhum cliente</SelectItem>
+                      <SelectItem value="none">Nenhum cliente</SelectItem>
                     )}
                     {clients.map((client) => (
                       <SelectItem key={client.id} value={client.id}>

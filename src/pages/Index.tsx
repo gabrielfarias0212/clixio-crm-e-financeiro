@@ -194,7 +194,7 @@ export default function Index() {
                 </div>
               )}
               <div className="mt-4 pt-3 border-t">
-                <Link to="/calendar">
+                <Link to="/calendar" className="inline-block">
                   <Button variant="link" className="p-0 h-auto">Ver calendário completo</Button>
                 </Link>
               </div>
@@ -234,7 +234,7 @@ export default function Index() {
                 </div>
               )}
               <div className="mt-4 pt-3 border-t">
-                <Link to="/clients">
+                <Link to="/clients" className="inline-block">
                   <Button variant="link" className="p-0 h-auto">Ver todos os clientes</Button>
                 </Link>
               </div>

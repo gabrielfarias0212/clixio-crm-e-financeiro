@@ -1,20 +1,19 @@
 
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
-import { transactions } from "@/utils/mockTransactions";
-import { clients } from "@/utils/mockData";
+import { useClients } from "@/contexts/ClientsContext";
+import { useTransactions } from "@/contexts/TransactionsContext";
 import { TransactionList } from "@/components/TransactionList";
 import { AddTransactionForm } from "@/components/AddTransactionForm";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { TransactionSummary } from "@/components/TransactionSummary";
 import { Transaction, TransactionType } from "@/utils/types";
-import { toast } from "sonner";
-import { v4 as uuidv4 } from 'uuid';
 
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
-  const [allTransactions, setAllTransactions] = useState<Transaction[]>(transactions);
+  const { clients } = useClients();
+  const { transactions, addTransaction } = useTransactions();
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>(transactions);
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
 
@@ -24,58 +23,18 @@ export default function CashFlow() {
 
   useEffect(() => {
     if (typeFilter === "all") {
-      setFilteredTransactions(allTransactions);
+      setFilteredTransactions(transactions);
     } else {
-      setFilteredTransactions(allTransactions.filter(t => t.type === typeFilter));
+      setFilteredTransactions(transactions.filter(t => t.type === typeFilter));
     }
-  }, [allTransactions, typeFilter]);
+  }, [transactions, typeFilter]);
 
-  const handleAddTransaction = (newTransaction: Omit<Transaction, "id" | "createdAt">) => {
-    const transaction: Transaction = {
-      ...newTransaction,
-      id: uuidv4(),
-      createdAt: new Date(),
-    };
-
-    // If transaction is linked to a client and is an income, create a payment record
-    if (transaction.clientId && transaction.type === "entrada") {
-      const clientIndex = clients.findIndex(c => c.id === transaction.clientId);
-      
-      if (clientIndex !== -1) {
-        const paymentId = uuidv4();
-        
-        // Add payment to client
-        const payment = {
-          id: paymentId,
-          amount: transaction.amount,
-          date: transaction.date,
-          notes: transaction.description
-        };
-        
-        clients[clientIndex].payments.push(payment);
-        clients[clientIndex].updatedAt = new Date();
-        
-        // Update client status if fully paid
-        const totalPaid = clients[clientIndex].payments.reduce(
-          (sum, payment) => sum + payment.amount, 0
-        );
-        
-        if (totalPaid >= clients[clientIndex].contractValue) {
-          clients[clientIndex].status = "pago";
-        }
-        
-        // Link payment to transaction
-        transaction.paymentId = paymentId;
-      }
-    }
-
-    // Add transaction to the list
-    const updatedTransactions = [transaction, ...allTransactions];
-    setAllTransactions(updatedTransactions);
+  const handleAddTransaction = async (newTransaction: Omit<Transaction, "id" | "createdAt">) => {
+    const result = await addTransaction(newTransaction);
     
-    // Close the form
-    setShowAddTransaction(false);
-    toast.success("Transação registrada com sucesso!");
+    if (result) {
+      setShowAddTransaction(false);
+    }
   };
 
   return (
@@ -93,7 +52,7 @@ export default function CashFlow() {
           </Button>
         </div>
 
-        <TransactionSummary transactions={allTransactions} className="mb-6" />
+        <TransactionSummary transactions={transactions} className="mb-6" />
 
         {showAddTransaction && (
           <div className="mb-6 p-4 border rounded-lg bg-gray-50">

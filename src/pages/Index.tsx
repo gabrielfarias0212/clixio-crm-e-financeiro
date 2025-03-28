@@ -1,16 +1,19 @@
 
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClientStatus, NextAction } from "@/utils/types";
-import { clients } from "@/utils/mockData";
 import { Link } from "react-router-dom";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ActionChip } from "@/components/ActionChip";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock, DollarSign, Users } from "lucide-react";
 import { useEffect } from "react";
+import { useClients } from "@/contexts/ClientsContext";
+import { useTransactions } from "@/contexts/TransactionsContext";
 
 export default function Index() {
+  const { clients, loading: clientsLoading } = useClients();
+  const { transactions, loading: transactionsLoading } = useTransactions();
+
   // Stats calculation
   const totalClients = clients.length;
   const totalValue = clients
@@ -46,7 +49,7 @@ export default function Index() {
     .filter(client => client.nextAction !== "nenhuma")
     .sort((a, b) => {
       // Sort by status priority
-      const statusPriority: Record<ClientStatus, number> = {
+      const statusPriority: Record<string, number> = {
         "em andamento": 1,
         "follow-up": 2,
         "orçamento enviado": 3,
@@ -55,7 +58,7 @@ export default function Index() {
       };
 
       // Sort by action priority
-      const actionPriority: Record<NextAction, number> = {
+      const actionPriority: Record<string, number> = {
         "responder": 1,
         "enviar proposta": 2,
         "editar": 3,
@@ -168,7 +171,11 @@ export default function Index() {
               <CardTitle className="text-lg">Próximos Casamentos</CardTitle>
             </CardHeader>
             <CardContent>
-              {upcomingWeddings.length > 0 ? (
+              {clientsLoading ? (
+                <div className="text-center py-8">
+                  <p>Carregando...</p>
+                </div>
+              ) : upcomingWeddings.length > 0 ? (
                 <div className="space-y-4">
                   {upcomingWeddings.map((client) => (
                     <Link 
@@ -207,7 +214,11 @@ export default function Index() {
               <CardTitle className="text-lg">Ações Necessárias</CardTitle>
             </CardHeader>
             <CardContent>
-              {clientsNeedingAction.length > 0 ? (
+              {clientsLoading ? (
+                <div className="text-center py-8">
+                  <p>Carregando...</p>
+                </div>
+              ) : clientsNeedingAction.length > 0 ? (
                 <div className="space-y-4">
                   {clientsNeedingAction.map((client) => (
                     <Link 

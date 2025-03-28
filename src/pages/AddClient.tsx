@@ -5,35 +5,21 @@ import Layout from "@/components/Layout";
 import { ClientForm, ClientFormValues } from "@/components/ClientForm";
 import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-import { clients } from "@/utils/mockData";
 import { toast } from "sonner";
-import { v4 as uuidv4 } from 'uuid';
-import { Payment, Client } from "@/utils/types";
+import { useClients } from "@/contexts/ClientsContext";
 
 export default function AddClient() {
   const navigate = useNavigate();
+  const { addClient } = useClients();
 
   useEffect(() => {
     document.title = "Adicionar Cliente | Wedding CRM";
   }, []);
 
-  const handleCreateClient = (data: ClientFormValues) => {
+  const handleCreateClient = async (data: ClientFormValues) => {
     console.info("Creating client:", data);
     
-    // Create an initial payment if a downpayment is specified and status is not initial
-    const payments: Payment[] = [];
-    if (data.downPayment > 0 && data.status !== "orçamento enviado" && data.status !== "follow-up") {
-      payments.push({
-        id: uuidv4(),
-        amount: data.downPayment,
-        date: new Date(),
-        notes: "Entrada inicial"
-      });
-    }
-    
-    // Create a new client object with all required properties explicitly set
-    const newClient: Client = {
-      id: uuidv4(),
+    const newClient = await addClient({
       name: data.name,
       email: data.email,
       phone: data.phone,
@@ -43,16 +29,11 @@ export default function AddClient() {
       status: data.status,
       nextAction: data.nextAction,
       notes: data.notes || "",
-      payments,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    });
     
-    // Add to the clients array (in a real app, this would be an API call)
-    clients.unshift(newClient);
-    
-    toast.success("Cliente adicionado com sucesso!");
-    navigate(`/clients/${newClient.id}`);
+    if (newClient) {
+      navigate(`/clients/${newClient.id}`);
+    }
   };
 
   return (

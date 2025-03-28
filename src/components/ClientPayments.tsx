@@ -7,16 +7,17 @@ import { PaymentHistory } from "./PaymentHistory";
 import { AddPaymentForm } from "./AddPaymentForm";
 import { DollarSign, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { v4 as uuidv4 } from 'uuid';
-import { transactions } from "@/utils/mockTransactions";
+import { createPayment } from "@/utils/supabaseUtils";
+import { useClients } from "@/contexts/ClientsContext";
+import { getUpdatedStatus } from "@/utils/clientUtils";
 
 interface ClientPaymentsProps {
   client: Client;
-  onUpdate: (updatedClient: Client) => void;
 }
 
-export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
+export function ClientPayments({ client }: ClientPaymentsProps) {
   const [showAddPayment, setShowAddPayment] = useState(false);
+  const { updateClient } = useClients();
 
   // Calculate the total amount paid
   const totalPaid = client.payments.reduce((sum, payment) => sum + payment.amount, 0);
@@ -32,37 +33,35 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
     }).format(amount);
   };
 
-  const handleAddPayment = (newPayment: Payment) => {
-    // Create updated client with new payment
-    const updatedClient = {
-      ...client,
-      payments: [...client.payments, newPayment],
-      updatedAt: new Date(),
-      // If this payment makes the total equal to the contract value, set status to "pago"
-      status: totalPaid + newPayment.amount >= client.contractValue ? "pago" : client.status
-    };
-    
-    // Add the payment to the transactions list as well
-    transactions.unshift({
-      id: uuidv4(),
-      amount: newPayment.amount,
-      date: newPayment.date,
-      type: "entrada",
-      category: "pagamento de cliente",
-      description: `Pagamento de ${client.name}`,
-      clientId: client.id,
-      paymentId: newPayment.id,
-      createdAt: new Date()
-    });
-    
-    // Update the client
-    onUpdate(updatedClient);
-    
-    // Hide the form
-    setShowAddPayment(false);
-    
-    // Notify the user
-    toast.success("Pagamento registrado com sucesso!");
+  const handleAddPayment = async (newPayment: Payment) => {
+    try {
+      // Add the payment through the API
+      const result = await createPayment({
+        clientId: client.id,
+        amount: newPayment.amount,
+        date: newPayment.date,
+        notes: newPayment.notes
+      });
+
+      if (result) {
+        // Check if the client status should be updated
+        const updatedStatus = getUpdatedStatus(client, newPayment.amount);
+        
+        // Update client status if needed
+        if (updatedStatus !== client.status) {
+          await updateClient(client.id, { status: updatedStatus });
+        }
+        
+        // Hide the form
+        setShowAddPayment(false);
+        
+        // Notify the user
+        toast.success("Pagamento registrado com sucesso!");
+      }
+    } catch (error) {
+      console.error("Error adding payment:", error);
+      toast.error("Erro ao registrar pagamento");
+    }
   };
 
   return (

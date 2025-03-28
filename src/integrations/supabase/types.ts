@@ -703,6 +703,137 @@ export type Database = {
         }
         Relationships: []
       }
+      wedding_clients: {
+        Row: {
+          contract_value: number | null
+          created_at: string | null
+          down_payment: number | null
+          email: string | null
+          id: string
+          name: string
+          next_action: string | null
+          notes: string | null
+          phone: string | null
+          status: string | null
+          updated_at: string | null
+          wedding_date: string | null
+        }
+        Insert: {
+          contract_value?: number | null
+          created_at?: string | null
+          down_payment?: number | null
+          email?: string | null
+          id?: string
+          name: string
+          next_action?: string | null
+          notes?: string | null
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+          wedding_date?: string | null
+        }
+        Update: {
+          contract_value?: number | null
+          created_at?: string | null
+          down_payment?: number | null
+          email?: string | null
+          id?: string
+          name?: string
+          next_action?: string | null
+          notes?: string | null
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+          wedding_date?: string | null
+        }
+        Relationships: []
+      }
+      wedding_payments: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string | null
+          date: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          created_at?: string | null
+          date: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string | null
+          date?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wedding_payments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wedding_transactions: {
+        Row: {
+          amount: number
+          category: string
+          client_id: string | null
+          created_at: string | null
+          date: string
+          description: string
+          id: string
+          payment_id: string | null
+          type: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          client_id?: string | null
+          created_at?: string | null
+          date: string
+          description: string
+          id?: string
+          payment_id?: string | null
+          type: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          client_id?: string | null
+          created_at?: string | null
+          date?: string
+          description?: string
+          id?: string
+          payment_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wedding_transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wedding_transactions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

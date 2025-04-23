@@ -20,7 +20,7 @@ export default function AddClient() {
   const handleCreateClient = async (data: ClientFormValues) => {
     setSubmitting(true);
     try {
-      console.info("Creating client:", data);
+      console.info("Creating client with data:", data);
       
       const newClient = await addClient({
         name: data.name,
@@ -38,11 +38,12 @@ export default function AddClient() {
         toast.success("Cliente adicionado com sucesso!");
         navigate(`/clients/${newClient.id}`);
       } else {
-        toast.error("Erro ao adicionar cliente. Por favor, tente novamente.");
+        console.error("Failed to add client, no client returned");
+        toast.error("Erro ao adicionar cliente. Por favor, verifique os dados e tente novamente.");
       }
     } catch (error) {
       console.error("Error creating client:", error);
-      toast.error("Erro ao adicionar cliente. Por favor, tente novamente.");
+      toast.error("Erro ao adicionar cliente. Por favor, tente novamente mais tarde.");
     } finally {
       setSubmitting(false);
     }

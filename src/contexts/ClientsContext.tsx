@@ -37,13 +37,18 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
 
   const addClient = async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>) => {
     try {
+      console.log('Adding client via context:', clientData);
       const newClient = await createClient(clientData);
+      
       if (newClient) {
+        console.log('Client created successfully:', newClient);
         setClients(prev => [newClient, ...prev]);
-        toast.success('Cliente adicionado com sucesso!');
         return newClient;
+      } else {
+        console.error('Failed to add client, no client returned from API');
+        toast.error('Falha ao adicionar cliente. Verifique os dados e tente novamente.');
+        return null;
       }
-      return null;
     } catch (err) {
       console.error('Error adding client:', err);
       toast.error('Falha ao adicionar cliente');

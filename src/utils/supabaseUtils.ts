@@ -61,64 +61,76 @@ export const parseTransaction = (transaction: any): Transaction => {
 
 // Client API functions
 export const fetchClients = async (): Promise<Client[]> => {
-  const { data: clientsData, error: clientsError } = await supabase
-    .from('wedding_clients')
-    .select('*')
-    .order('created_at', { ascending: false });
+  try {
+    const { data: clientsData, error: clientsError } = await supabase
+      .from('wedding_clients')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  if (clientsError) {
-    console.error('Error fetching clients:', clientsError);
+    if (clientsError) {
+      console.error('Error fetching clients:', clientsError);
+      return [];
+    }
+
+    const clients = clientsData?.map(parseClient) || [];
+
+    // Fetch payments for all clients
+    for (const client of clients) {
+      const { data: paymentsData, error: paymentsError } = await supabase
+        .from('wedding_payments')
+        .select('*')
+        .eq('client_id', client.id)
+        .order('date', { ascending: false });
+      
+      if (!paymentsError && paymentsData) {
+        client.payments = paymentsData.map(parsePayment);
+      }
+    }
+
+    return clients;
+  } catch (error) {
+    console.error('Exception fetching clients:', error);
     return [];
   }
+};
 
-  const clients = clientsData?.map(parseClient) || [];
+export const fetchClient = async (id: string): Promise<Client | null> => {
+  try {
+    const { data: clientData, error: clientError } = await supabase
+      .from('wedding_clients')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-  // Fetch payments for all clients
-  for (const client of clients) {
+    if (clientError) {
+      console.error('Error fetching client:', clientError);
+      return null;
+    }
+
+    const client = parseClient(clientData);
+
+    // Fetch payments for this client
     const { data: paymentsData, error: paymentsError } = await supabase
       .from('wedding_payments')
       .select('*')
-      .eq('client_id', client.id)
+      .eq('client_id', id)
       .order('date', { ascending: false });
     
     if (!paymentsError && paymentsData) {
       client.payments = paymentsData.map(parsePayment);
     }
-  }
 
-  return clients;
-};
-
-export const fetchClient = async (id: string): Promise<Client | null> => {
-  const { data: clientData, error: clientError } = await supabase
-    .from('wedding_clients')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (clientError) {
-    console.error('Error fetching client:', clientError);
+    return client;
+  } catch (error) {
+    console.error('Exception fetching client:', error);
     return null;
   }
-
-  const client = parseClient(clientData);
-
-  // Fetch payments for this client
-  const { data: paymentsData, error: paymentsError } = await supabase
-    .from('wedding_payments')
-    .select('*')
-    .eq('client_id', id)
-    .order('date', { ascending: false });
-  
-  if (!paymentsError && paymentsData) {
-    client.payments = paymentsData.map(parsePayment);
-  }
-
-  return client;
 };
 
 export const createClient = async (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>): Promise<Client | null> => {
   try {
+    console.log('Creating client with data:', JSON.stringify(client, null, 2));
+    
     const { data, error } = await supabase
       .from('wedding_clients')
       .insert({
@@ -137,6 +149,7 @@ export const createClient = async (client: Omit<Client, 'id' | 'createdAt' | 'up
 
     if (error) {
       console.error('Error creating client:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       return null;
     }
 

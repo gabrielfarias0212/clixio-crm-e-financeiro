@@ -33,6 +33,14 @@ import {
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from 'uuid';
 
+const EVENT_CATEGORIES = [
+  "casamento",
+  "aniversário",
+  "ensaio",
+  "evento corporativo",
+  "outro",
+];
+
 const formSchema = z.object({
   name: z.string().min(1, { message: "O nome é obrigatório" }),
   email: z.string().email({ message: "Email inválido" }),
@@ -43,6 +51,7 @@ const formSchema = z.object({
   status: z.enum(["orçamento enviado", "follow-up", "fechado", "em andamento", "pago"]),
   nextAction: z.enum(["responder", "enviar proposta", "editar", "entregar", "nenhuma"]),
   notes: z.string().optional(),
+  eventCategory: z.string().min(1, { message: "Selecione uma categoria" }),
 })
 .refine(data => data.downPayment <= data.contractValue, {
   message: "O valor da entrada não pode ser maior que o valor do contrato",
@@ -72,6 +81,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           status: client.status,
           nextAction: client.nextAction,
           notes: client.notes,
+          eventCategory: client.eventCategory || "",
         }
       : {
           name: "",
@@ -83,6 +93,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           status: "orçamento enviado",
           nextAction: "enviar proposta",
           notes: "",
+          eventCategory: "",
         },
   });
 
@@ -303,6 +314,29 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
                     <SelectItem value="editar">Editar</SelectItem>
                     <SelectItem value="entregar">Entregar</SelectItem>
                     <SelectItem value="nenhuma">Nenhuma</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="eventCategory"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Categoria do Evento</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a categoria do evento" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {EVENT_CATEGORIES.map((ec) => (
+                      <SelectItem key={ec} value={ec}>{ec.charAt(0).toUpperCase() + ec.slice(1)}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />

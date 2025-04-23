@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Client, Transaction, TransactionCategory, TransactionType } from "@/utils/types";
 import { format } from "date-fns";
@@ -31,6 +30,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fetchFinancialCategories, createFinancialCategory } from "@/utils/supabaseUtils";
+import { toast } from "sonner";
 
 // Income categories
 const incomeCategories: TransactionCategory[] = [
@@ -67,6 +68,9 @@ interface AddTransactionFormProps {
 export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddTransactionFormProps) {
   const [transactionType, setTransactionType] = useState<TransactionType>("entrada");
   const [availableCategories, setAvailableCategories] = useState<TransactionCategory[]>(incomeCategories);
+  const [financialCategories, setFinancialCategories] = useState<TransactionCategory[]>([]);
+  const [addingCategory, setAddingCategory] = useState<boolean>(false);
+  const [newCategoryName, setNewCategoryName] = useState<string>("");
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
@@ -82,13 +86,37 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
 
   // Update available categories when transaction type changes
   useEffect(() => {
-    setAvailableCategories(transactionType === "entrada" ? incomeCategories : expenseCategories);
-    
-    // Reset category when type changes
-    form.setValue("category", 
-      transactionType === "entrada" ? "pagamento de cliente" : "despesa operacional"
-    );
-  }, [transactionType, form]);
+    const loadCats = async () => {
+      const cats = await fetchFinancialCategories();
+      setFinancialCategories([
+        ...(transactionType === "entrada"
+          ? ["pagamento de cliente", "outras receitas"]
+          : ["despesa operacional", "material", "serviço terceirizado", "imposto", "outras despesas"]),
+        ...cats.filter(cat => cat.type === transactionType).map(cat => cat.name)
+      ]);
+    };
+    loadCats();
+    // eslint-disable-next-line
+  }, [transactionType]);
+
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) {
+      toast.error('O nome da categoria não pode ser vazio.');
+      return;
+    }
+    const result = await createFinancialCategory({
+      name: newCategoryName,
+      type: transactionType,
+    });
+    if (result) {
+      toast.success('Categoria criada com sucesso!');
+      setNewCategoryName('');
+      setAddingCategory(false);
+      setFinancialCategories((prev) => ([...prev, result.name]));
+    } else {
+      toast.error('Erro ao criar categoria.');
+    }
+  };
 
   const handleSubmit = (data: TransactionFormValues) => {
     onAddTransaction({
@@ -139,20 +167,48 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Categoria</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a categoria" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {availableCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2 items-center">
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a categoria" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {financialCategories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setAddingCategory((prev) => !prev)}
+                    title="Criar nova categoria"
+                  >
+                    +
+                  </Button>
+                </div>
+                {addingCategory && (
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      placeholder="Nova categoria"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      className="w-48"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleAddCategory}
+                    >
+                      Salvar
+                    </Button>
+                  </div>
+                )}
                 <FormMessage />
               </FormItem>
             )}

@@ -1,21 +1,18 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Client, ClientStatus, NextAction, Payment, Transaction, TransactionType, TransactionCategory } from './types';
 import type { Database } from '@/integrations/supabase/types';
+import type { FinancialCategory } from './types';
 
-// Convert Supabase date strings to Date objects
 export const parseDate = (dateString: string | null): Date | null => {
   if (!dateString) return null;
   return new Date(dateString);
 };
 
-// Format Date objects to ISO strings for Supabase
 export const formatDateForSupabase = (date: Date | null): string | null => {
   if (!date) return null;
   return date.toISOString();
 };
 
-// Parse client data from Supabase
 export const parseClient = (client: any): Client => {
   return {
     id: client.id,
@@ -28,13 +25,13 @@ export const parseClient = (client: any): Client => {
     phone: client.phone || '',
     notes: client.notes || '',
     downPayment: Number(client.down_payment) || 0,
-    payments: [], // Payments will be populated separately
+    payments: [],
+    eventCategory: client.event_category || '',
     createdAt: parseDate(client.created_at) || new Date(),
     updatedAt: parseDate(client.updated_at) || new Date(),
   };
 };
 
-// Parse payment data from Supabase
 export const parsePayment = (payment: any): Payment => {
   return {
     id: payment.id,
@@ -44,7 +41,6 @@ export const parsePayment = (payment: any): Payment => {
   };
 };
 
-// Parse transaction data from Supabase
 export const parseTransaction = (transaction: any): Transaction => {
   return {
     id: transaction.id,
@@ -59,7 +55,6 @@ export const parseTransaction = (transaction: any): Transaction => {
   };
 };
 
-// Client API functions
 export const fetchClients = async (): Promise<Client[]> => {
   try {
     const { data: clientsData, error: clientsError } = await supabase
@@ -74,7 +69,6 @@ export const fetchClients = async (): Promise<Client[]> => {
 
     const clients = clientsData?.map(parseClient) || [];
 
-    // Fetch payments for all clients
     for (const client of clients) {
       const { data: paymentsData, error: paymentsError } = await supabase
         .from('wedding_payments')
@@ -109,7 +103,6 @@ export const fetchClient = async (id: string): Promise<Client | null> => {
 
     const client = parseClient(clientData);
 
-    // Fetch payments for this client
     const { data: paymentsData, error: paymentsError } = await supabase
       .from('wedding_payments')
       .select('*')
@@ -143,6 +136,7 @@ export const createClient = async (client: Omit<Client, 'id' | 'createdAt' | 'up
         next_action: client.nextAction,
         notes: client.notes,
         down_payment: client.downPayment,
+        event_category: client.eventCategory || '',
       })
       .select()
       .single();
@@ -161,7 +155,6 @@ export const createClient = async (client: Omit<Client, 'id' | 'createdAt' | 'up
     const newClient = parseClient(data);
     newClient.payments = [];
 
-    // If there's a down payment, create a payment record
     if (client.downPayment > 0 && (client.status === 'fechado' || client.status === 'em andamento' || client.status === 'pago')) {
       await createPayment({
         clientId: newClient.id,
@@ -192,7 +185,6 @@ export const updateClient = async (id: string, updates: Partial<Omit<Client, 'id
     updated_at: new Date().toISOString()
   };
 
-  // Remove undefined fields
   Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
 
   const { data, error } = await supabase
@@ -210,7 +202,6 @@ export const updateClient = async (id: string, updates: Partial<Omit<Client, 'id
   return fetchClient(id);
 };
 
-// Payment API functions
 export const createPayment = async (payment: { clientId: string, amount: number, date: Date, notes?: string }): Promise<Payment | null> => {
   try {
     const { data, error } = await supabase
@@ -229,7 +220,6 @@ export const createPayment = async (payment: { clientId: string, amount: number,
       return null;
     }
 
-    // Create a corresponding transaction entry
     if (data) {
       await createTransaction({
         amount: payment.amount,
@@ -249,7 +239,6 @@ export const createPayment = async (payment: { clientId: string, amount: number,
   }
 };
 
-// Transaction API functions
 export const fetchTransactions = async (): Promise<Transaction[]> => {
   const { data, error } = await supabase
     .from('wedding_transactions')
@@ -292,22 +281,65 @@ export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'c
   }
 };
 
-// Função para limpar dados de teste
+export const fetchFinancialCategories = async (): Promise<FinancialCategory[]> => {
+  const { data, error } = await supabase
+    .from('financial_categories')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Erro ao buscar categorias financeiras:', error);
+    return [];
+  }
+  return (data || []).map((cat: any) => ({
+    id: cat.id,
+    name: cat.name,
+    type: cat.type,
+    createdAt: cat.created_at ? new Date(cat.created_at) : new Date(),
+  }));
+};
+
+export const createFinancialCategory = async ({
+  name,
+  type,
+  photographer_id = '00000000-0000-0000-0000-000000000000',
+}: { name: string; type: "entrada" | "saída"; photographer_id?: string }) => {
+  const { data, error } = await supabase
+    .from('financial_categories')
+    .insert([
+      {
+        name,
+        type,
+        photographer_id
+      }
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Erro ao criar categoria financeira:', error);
+    return null;
+  }
+  return {
+    id: data.id,
+    name: data.name,
+    type: data.type,
+    createdAt: data.created_at ? new Date(data.created_at) : new Date(),
+  } as FinancialCategory;
+};
+
 export const clearAllData = async (): Promise<boolean> => {
   try {
-    // Limpar transações
     await supabase
       .from('wedding_transactions')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000');
     
-    // Limpar pagamentos
     await supabase
       .from('wedding_payments')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000');
     
-    // Limpar clientes
     await supabase
       .from('wedding_clients')
       .delete()

@@ -1,4 +1,3 @@
-
 export type ClientStatus = 
   | "orçamento enviado" 
   | "follow-up" 
@@ -22,7 +21,8 @@ export type TransactionCategory =
   | "serviço terceirizado"
   | "imposto"
   | "outras receitas"
-  | "outras despesas";
+  | "outras despesas"
+  | string;
 
 export interface Payment {
   id: string;
@@ -43,6 +43,13 @@ export interface Transaction {
   createdAt: Date;
 }
 
+export interface FinancialCategory {
+  id: string;
+  name: string;
+  type: TransactionType;
+  createdAt: Date;
+}
+
 export interface Client {
   id: string;
   name: string;
@@ -57,4 +64,5 @@ export interface Client {
   payments: Payment[];
   createdAt: Date;
   updatedAt: Date;
+  eventCategory?: string;
 }

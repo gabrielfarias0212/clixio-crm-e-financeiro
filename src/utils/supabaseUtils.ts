@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Client, ClientStatus, NextAction, Payment, Transaction, TransactionType, TransactionCategory } from './types';
+import { Database } from '@/integrations/supabase/types';
 
 // Convert Supabase date strings to Date objects
 export const parseDate = (dateString: string | null): Date | null => {
@@ -70,7 +71,7 @@ export const fetchClients = async (): Promise<Client[]> => {
     return [];
   }
 
-  const clients = clientsData.map(parseClient);
+  const clients = clientsData?.map(parseClient) || [];
 
   // Fetch payments for all clients
   for (const client of clients) {
@@ -151,7 +152,7 @@ export const createClient = async (client: Omit<Client, 'id' | 'createdAt' | 'up
     });
   }
 
-  return newClient;
+  return fetchClient(newClient.id);
 };
 
 export const updateClient = async (id: string, updates: Partial<Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>>): Promise<Client | null> => {
@@ -205,17 +206,19 @@ export const createPayment = async (payment: { clientId: string, amount: number,
   }
 
   // Create a corresponding transaction entry
-  await createTransaction({
-    amount: payment.amount,
-    date: payment.date,
-    type: 'entrada',
-    category: 'pagamento de cliente',
-    description: `Pagamento de cliente ${payment.clientId}`,
-    clientId: payment.clientId,
-    paymentId: data.id
-  });
+  if (data) {
+    await createTransaction({
+      amount: payment.amount,
+      date: payment.date,
+      type: 'entrada',
+      category: 'pagamento de cliente',
+      description: `Pagamento de cliente ${payment.clientId}`,
+      clientId: payment.clientId,
+      paymentId: data.id
+    });
+  }
 
-  return parsePayment(data);
+  return data ? parsePayment(data) : null;
 };
 
 // Transaction API functions
@@ -230,7 +233,7 @@ export const fetchTransactions = async (): Promise<Transaction[]> => {
     return [];
   }
 
-  return data.map(parseTransaction);
+  return data?.map(parseTransaction) || [];
 };
 
 export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'createdAt'>): Promise<Transaction | null> => {
@@ -253,5 +256,5 @@ export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'c
     return null;
   }
 
-  return parseTransaction(data);
+  return data ? parseTransaction(data) : null;
 };

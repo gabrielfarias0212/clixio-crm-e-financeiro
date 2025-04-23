@@ -6,6 +6,8 @@ import { AddPaymentForm } from "./AddPaymentForm";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { DialogContent, Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { createPayment } from "@/utils/supabaseUtils";
+import { toast } from "sonner";
 
 export interface ClientPaymentsProps {
   client: Client;
@@ -14,12 +16,36 @@ export interface ClientPaymentsProps {
 
 export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
   const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const handlePaymentAdded = (updatedClient: Client) => {
-    if (onUpdate) {
-      onUpdate(updatedClient);
+  const handlePaymentAdded = async (updatedClient: Client) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Get the last payment (the one just added)
+      const newPayment = updatedClient.payments[updatedClient.payments.length - 1];
+      
+      // Save the payment to the database
+      await createPayment({
+        clientId: client.id,
+        amount: newPayment.amount,
+        date: newPayment.date,
+        notes: newPayment.notes
+      });
+      
+      // Update the UI
+      if (onUpdate) {
+        onUpdate(updatedClient);
+      }
+      
+      setIsAddPaymentOpen(false);
+      toast.success("Pagamento registrado com sucesso!");
+    } catch (error) {
+      console.error("Error adding payment:", error);
+      toast.error("Erro ao registrar o pagamento. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsAddPaymentOpen(false);
   };
 
   return (
@@ -36,7 +62,8 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
           <DialogContent className="max-w-md">
             <AddPaymentForm 
               client={client} 
-              onSuccess={handlePaymentAdded} 
+              onSuccess={handlePaymentAdded}
+              onCancel={() => setIsAddPaymentOpen(false)}
             />
           </DialogContent>
         </Dialog>

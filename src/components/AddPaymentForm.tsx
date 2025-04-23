@@ -24,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { v4 as uuidv4 } from 'uuid';
-import { Payment } from "@/utils/types";
+import { Client, Payment } from "@/utils/types";
 
 const paymentFormSchema = z.object({
   amount: z.coerce.number().positive({ message: "O valor deve ser maior que zero" }),
@@ -35,16 +35,19 @@ const paymentFormSchema = z.object({
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
 interface AddPaymentFormProps {
-  maxAmount: number;
-  onAddPayment: (payment: Payment) => void;
-  onCancel: () => void;
+  client: Client;
+  onSuccess: (updatedClient: Client) => void;
+  onCancel?: () => void;
 }
 
-export function AddPaymentForm({ maxAmount, onAddPayment, onCancel }: AddPaymentFormProps) {
+export function AddPaymentForm({ client, onSuccess, onCancel }: AddPaymentFormProps) {
+  const totalPaid = client.payments.reduce((sum, payment) => sum + payment.amount, 0);
+  const maxAmount = client.contractValue - totalPaid;
+
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
-      amount: maxAmount,
+      amount: maxAmount > 0 ? maxAmount : 0,
       date: new Date(),
       notes: "",
     },
@@ -69,7 +72,13 @@ export function AddPaymentForm({ maxAmount, onAddPayment, onCancel }: AddPayment
       notes: data.notes,
     };
 
-    onAddPayment(newPayment);
+    // Create a new client object with the new payment added
+    const updatedClient = {
+      ...client,
+      payments: [...client.payments, newPayment]
+    };
+
+    onSuccess(updatedClient);
   };
 
   return (
@@ -158,9 +167,11 @@ export function AddPaymentForm({ maxAmount, onAddPayment, onCancel }: AddPayment
         />
 
         <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancelar
-          </Button>
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancelar
+            </Button>
+          )}
           <Button type="submit">
             Registrar Pagamento
           </Button>

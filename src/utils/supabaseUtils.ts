@@ -8,6 +8,12 @@ export const parseDate = (dateString: string | null): Date | null => {
   return new Date(dateString);
 };
 
+// Format Date objects to ISO strings for Supabase
+export const formatDateForSupabase = (date: Date | null): string | null => {
+  if (!date) return null;
+  return date.toISOString();
+};
+
 // Parse client data from Supabase
 export const parseClient = (client: any): Client => {
   return {
@@ -117,7 +123,7 @@ export const createClient = async (client: Omit<Client, 'id' | 'createdAt' | 'up
       name: client.name,
       email: client.email,
       phone: client.phone,
-      wedding_date: client.weddingDate,
+      wedding_date: client.weddingDate ? formatDateForSupabase(client.weddingDate) : null,
       contract_value: client.contractValue,
       status: client.status,
       next_action: client.nextAction,
@@ -153,13 +159,13 @@ export const updateClient = async (id: string, updates: Partial<Omit<Client, 'id
     name: updates.name,
     email: updates.email,
     phone: updates.phone,
-    wedding_date: updates.weddingDate,
+    wedding_date: updates.weddingDate ? formatDateForSupabase(updates.weddingDate) : undefined,
     contract_value: updates.contractValue,
     status: updates.status,
     next_action: updates.nextAction,
     notes: updates.notes,
     down_payment: updates.downPayment,
-    updated_at: new Date()
+    updated_at: new Date().toISOString()
   };
 
   // Remove undefined fields
@@ -187,7 +193,7 @@ export const createPayment = async (payment: { clientId: string, amount: number,
     .insert({
       client_id: payment.clientId,
       amount: payment.amount,
-      date: payment.date,
+      date: formatDateForSupabase(payment.date),
       notes: payment.notes
     })
     .select()
@@ -232,7 +238,7 @@ export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'c
     .from('wedding_transactions')
     .insert({
       amount: transaction.amount,
-      date: transaction.date,
+      date: formatDateForSupabase(transaction.date),
       type: transaction.type,
       category: transaction.category,
       description: transaction.description,

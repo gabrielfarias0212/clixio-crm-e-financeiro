@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,31 +17,36 @@ import NotFound from "./pages/NotFound";
 import { ClientsProvider } from "./contexts/ClientsContext";
 import { TransactionsProvider } from "./contexts/TransactionsContext";
 
+// Create a client
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <ClientsProvider>
-        <TransactionsProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/clients" element={<ClientList />} />
-              <Route path="/clients/:id" element={<ClientDetail />} />
-              <Route path="/clients/add" element={<AddClient />} />
-              <Route path="/clients/edit/:id" element={<EditClient />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/cashflow" element={<CashFlow />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TransactionsProvider>
-      </ClientsProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ClientsProvider>
+            <TransactionsProvider>
+              <BrowserRouter>
+                <Toaster />
+                <Sonner />
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/clients" element={<ClientList />} />
+                  <Route path="/clients/:id" element={<ClientDetail />} />
+                  <Route path="/clients/add" element={<AddClient />} />
+                  <Route path="/clients/edit/:id" element={<EditClient />} />
+                  <Route path="/calendar" element={<Calendar />} />
+                  <Route path="/cashflow" element={<CashFlow />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TransactionsProvider>
+          </ClientsProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+}
 
 export default App;

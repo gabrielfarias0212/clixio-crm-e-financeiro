@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { clients } from "@/utils/mockData";
 import { ClientCard } from "@/components/ClientCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,16 +13,23 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Client, ClientStatus } from "@/utils/types";
-import { ChevronDown, Search, X } from "lucide-react";
+import { ChevronDown, Search, Trash2, X } from "lucide-react";
+import { useClients } from "@/contexts/ClientsContext";
+import { clearAllData } from "@/utils/supabaseUtils";
+import { toast } from "sonner";
 
 export default function ClientList() {
   const navigate = useNavigate();
-  const [filteredClients, setFilteredClients] = useState<Client[]>(clients);
+  const { clients, loading, refreshClients } = useClients();
+  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ClientStatus | "all">("all");
+  const [clearingData, setClearingData] = useState(false);
 
   // Apply filters when search or status changes
   useEffect(() => {
+    if (!clients) return;
+    
     let result = [...clients];
 
     // Filter by search query
@@ -32,8 +38,8 @@ export default function ClientList() {
       result = result.filter(
         client =>
           client.name.toLowerCase().includes(query) ||
-          client.email.toLowerCase().includes(query) ||
-          client.phone.toLowerCase().includes(query)
+          (client.email && client.email.toLowerCase().includes(query)) ||
+          (client.phone && client.phone.toLowerCase().includes(query))
       );
     }
 
@@ -43,7 +49,7 @@ export default function ClientList() {
     }
 
     setFilteredClients(result);
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter, clients]);
 
   // Set page title
   useEffect(() => {
@@ -56,16 +62,49 @@ export default function ClientList() {
     setStatusFilter("all");
   };
 
+  const handleClearData = async () => {
+    if (window.confirm("Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.")) {
+      setClearingData(true);
+      try {
+        const success = await clearAllData();
+        if (success) {
+          toast.success("Todos os dados foram excluídos com sucesso");
+          await refreshClients();
+        } else {
+          toast.error("Erro ao limpar dados");
+        }
+      } catch (error) {
+        console.error("Error clearing data:", error);
+        toast.error("Erro ao limpar dados");
+      } finally {
+        setClearingData(false);
+      }
+    }
+  };
+
   return (
     <Layout>
       <div className="max-w-screen-2xl mx-auto px-4 py-8 animate-fade-in">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <h1 className="text-2xl font-bold">Clientes</h1>
-          <Button 
-            onClick={() => navigate("/clients/add")}
-          >
-            Adicionar Cliente
-          </Button>
+          <div className="flex gap-2">
+            {clients && clients.length > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={handleClearData}
+                disabled={clearingData}
+                className="flex items-center gap-1 text-red-500 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+                {clearingData ? "Limpando..." : "Limpar Dados"}
+              </Button>
+            )}
+            <Button 
+              onClick={() => navigate("/clients/add")}
+            >
+              Adicionar Cliente
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -120,7 +159,11 @@ export default function ClientList() {
         </div>
 
         {/* Results */}
-        {filteredClients.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <p>Carregando clientes...</p>
+          </div>
+        ) : filteredClients.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredClients.map((client) => (
               <ClientCard 

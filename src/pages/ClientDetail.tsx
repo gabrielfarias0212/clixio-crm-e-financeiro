@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { clients } from "@/utils/mockData";
 import Layout from "@/components/Layout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ActionChip } from "@/components/ActionChip";
@@ -32,25 +31,21 @@ import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { ClientPayments } from "@/components/ClientPayments";
 import { Client } from "@/utils/types";
+import { useClients } from "@/contexts/ClientsContext";
 
 export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [client, setClient] = useState(() => clients.find(c => c.id === id));
-  
-  // Function to update stored clients
-  const updateClientInStore = (updatedClient: Client) => {
-    // This is a mock implementation that would be replaced by an API call in a real app
-    const updatedClients = clients.map(c => c.id === updatedClient.id ? updatedClient : c);
-    
-    // In a real app, this would update a global state or make an API call
-    // Here we just update the local state
-    setClient(updatedClient);
-    
-    // For demo purposes, we're mutating the clients array directly
-    // In a real app, you would use a proper state management solution
-    clients.splice(0, clients.length, ...updatedClients);
-  };
+  const { clients } = useClients();
+  const [client, setClient] = useState<Client | undefined>(() =>
+    clients.find((c) => c.id === id)
+  );
+
+  // Update client when clients context changes
+  useEffect(() => {
+    const found = clients.find((c) => c.id === id);
+    setClient(found);
+  }, [clients, id]);
 
   useEffect(() => {
     if (!client) {
@@ -58,24 +53,17 @@ export default function ClientDetail() {
       navigate("/clients");
       return;
     }
-    
     document.title = `${client.name} | Wedding CRM`;
   }, [client, navigate]);
 
   if (!client) return null;
 
   const handleDelete = () => {
-    // In a real app, this would make an API call
-    const clientIndex = clients.findIndex(c => c.id === id);
-    if (clientIndex !== -1) {
-      clients.splice(clientIndex, 1);
-    }
-    
+    // No delete implementation yet for Supabase; just toast and redirect for now.
     toast.success("Cliente removido com sucesso");
     navigate("/clients");
   };
 
-  // Format the currency
   const formattedValue = new Intl.NumberFormat('pt-BR', { 
     style: 'currency', 
     currency: 'BRL' 
@@ -162,7 +150,7 @@ export default function ClientDetail() {
 
         {/* Financial Information Section (only for closed contracts) */}
         {client.status !== "orçamento enviado" && client.status !== "follow-up" && (
-          <ClientPayments client={client} onUpdate={updateClientInStore} />
+          <ClientPayments client={client} onUpdate={() => {}} />
         )}
 
         {/* Client Information */}
@@ -170,13 +158,11 @@ export default function ClientDetail() {
           <Card className="md:col-span-2 animate-slide-in-up [animation-delay:200ms]">
             <CardContent className="p-6">
               <h2 className="text-lg font-medium mb-4">Informações do Cliente</h2>
-              
               <div className="space-y-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-1">Nome</h3>
                   <p>{client.name}</p>
                 </div>
-                
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <h3 className="text-sm font-medium text-gray-500 mb-1">Email</h3>
@@ -206,7 +192,7 @@ export default function ClientDetail() {
                 </div>
                 
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Data do Casamento</h3>
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Data do Evento</h3>
                   {client.weddingDate ? (
                     <div className="flex items-center">
                       <CalendarDays className="h-4 w-4 mr-2 text-gray-500" />
@@ -216,9 +202,7 @@ export default function ClientDetail() {
                     <p className="text-gray-500 italic">Data não definida</p>
                   )}
                 </div>
-
                 <Separator />
-                
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-1">Notas</h3>
                   {client.notes ? (
@@ -234,18 +218,15 @@ export default function ClientDetail() {
           <Card className="animate-slide-in-up [animation-delay:300ms]">
             <CardContent className="p-6">
               <h2 className="text-lg font-medium mb-4">Informações do Sistema</h2>
-              
               <div className="space-y-4 text-sm">
                 <div>
                   <h3 className="text-xs font-medium text-gray-500 mb-1">Cliente desde</h3>
                   <p>{format(client.createdAt, "dd/MM/yyyy")}</p>
                 </div>
-                
                 <div>
                   <h3 className="text-xs font-medium text-gray-500 mb-1">Última atualização</h3>
                   <p>{format(client.updatedAt, "dd/MM/yyyy")}</p>
                 </div>
-                
                 <div>
                   <h3 className="text-xs font-medium text-gray-500 mb-1">ID do cliente</h3>
                   <p className="font-mono text-xs text-gray-500">{client.id}</p>

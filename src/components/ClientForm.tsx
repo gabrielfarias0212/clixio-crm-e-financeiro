@@ -1,4 +1,3 @@
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
@@ -159,7 +158,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
             name="weddingDate"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Data do Casamento</FormLabel>
+                <FormLabel>Data do Evento</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>

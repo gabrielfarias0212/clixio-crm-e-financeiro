@@ -34,7 +34,7 @@ const paymentFormSchema = z.object({
 
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
-interface AddPaymentFormProps {
+export interface AddPaymentFormProps {
   client: Client;
   onSuccess: (updatedClient: Client) => void;
   onCancel?: () => void;

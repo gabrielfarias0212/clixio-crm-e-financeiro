@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Client, ClientStatus, NextAction, Payment } from "@/utils/types";
+import { Client, ClientStatus, NextAction } from "@/utils/types";
 import {
   Select,
   SelectContent,
@@ -55,9 +55,10 @@ export type ClientFormValues = z.infer<typeof formSchema>;
 interface ClientFormProps {
   client?: Client;
   onSubmit: (data: ClientFormValues) => void;
+  isSubmitting?: boolean;
 }
 
-export function ClientForm({ client, onSubmit }: ClientFormProps) {
+export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFormProps) {
   const navigate = useNavigate();
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(formSchema),
@@ -337,8 +338,11 @@ export function ClientForm({ client, onSubmit }: ClientFormProps) {
           >
             Cancelar
           </Button>
-          <Button type="submit">
-            {client ? "Atualizar Cliente" : "Adicionar Cliente"}
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Enviando..." : (client ? "Atualizar Cliente" : "Adicionar Cliente")}
           </Button>
         </div>
       </form>

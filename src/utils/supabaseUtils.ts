@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Client, ClientStatus, NextAction, Payment, Transaction, TransactionType, TransactionCategory } from './types';
-import { Database } from '@/integrations/supabase/types';
+import type { Database } from '@/integrations/supabase/types';
 
 // Convert Supabase date strings to Date objects
 export const parseDate = (dateString: string | null): Date | null => {
@@ -118,41 +118,51 @@ export const fetchClient = async (id: string): Promise<Client | null> => {
 };
 
 export const createClient = async (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>): Promise<Client | null> => {
-  const { data, error } = await supabase
-    .from('wedding_clients')
-    .insert({
-      name: client.name,
-      email: client.email,
-      phone: client.phone,
-      wedding_date: client.weddingDate ? formatDateForSupabase(client.weddingDate) : null,
-      contract_value: client.contractValue,
-      status: client.status,
-      next_action: client.nextAction,
-      notes: client.notes,
-      down_payment: client.downPayment,
-    })
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('wedding_clients')
+      .insert({
+        name: client.name,
+        email: client.email,
+        phone: client.phone,
+        wedding_date: client.weddingDate ? formatDateForSupabase(client.weddingDate) : null,
+        contract_value: client.contractValue,
+        status: client.status,
+        next_action: client.nextAction,
+        notes: client.notes,
+        down_payment: client.downPayment,
+      })
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Error creating client:', error);
+    if (error) {
+      console.error('Error creating client:', error);
+      return null;
+    }
+
+    if (!data) {
+      console.error('No data returned after creating client');
+      return null;
+    }
+
+    const newClient = parseClient(data);
+    newClient.payments = [];
+
+    // If there's a down payment, create a payment record
+    if (client.downPayment > 0 && (client.status === 'fechado' || client.status === 'em andamento' || client.status === 'pago')) {
+      await createPayment({
+        clientId: newClient.id,
+        amount: client.downPayment,
+        date: new Date(),
+        notes: 'Entrada inicial'
+      });
+    }
+
+    return fetchClient(newClient.id);
+  } catch (error) {
+    console.error('Exception creating client:', error);
     return null;
   }
-
-  const newClient = parseClient(data);
-  newClient.payments = [];
-
-  // If there's a down payment, create a payment record
-  if (client.downPayment > 0 && (client.status === 'fechado' || client.status === 'em andamento' || client.status === 'pago')) {
-    await createPayment({
-      clientId: newClient.id,
-      amount: client.downPayment,
-      date: new Date(),
-      notes: 'Entrada inicial'
-    });
-  }
-
-  return fetchClient(newClient.id);
 };
 
 export const updateClient = async (id: string, updates: Partial<Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>>): Promise<Client | null> => {
@@ -189,36 +199,41 @@ export const updateClient = async (id: string, updates: Partial<Omit<Client, 'id
 
 // Payment API functions
 export const createPayment = async (payment: { clientId: string, amount: number, date: Date, notes?: string }): Promise<Payment | null> => {
-  const { data, error } = await supabase
-    .from('wedding_payments')
-    .insert({
-      client_id: payment.clientId,
-      amount: payment.amount,
-      date: formatDateForSupabase(payment.date),
-      notes: payment.notes
-    })
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('wedding_payments')
+      .insert({
+        client_id: payment.clientId,
+        amount: payment.amount,
+        date: formatDateForSupabase(payment.date),
+        notes: payment.notes
+      })
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Error creating payment:', error);
+    if (error) {
+      console.error('Error creating payment:', error);
+      return null;
+    }
+
+    // Create a corresponding transaction entry
+    if (data) {
+      await createTransaction({
+        amount: payment.amount,
+        date: payment.date,
+        type: 'entrada',
+        category: 'pagamento de cliente',
+        description: `Pagamento de cliente ${payment.clientId}`,
+        clientId: payment.clientId,
+        paymentId: data.id
+      });
+    }
+
+    return data ? parsePayment(data) : null;
+  } catch (error) {
+    console.error('Exception creating payment:', error);
     return null;
   }
-
-  // Create a corresponding transaction entry
-  if (data) {
-    await createTransaction({
-      amount: payment.amount,
-      date: payment.date,
-      type: 'entrada',
-      category: 'pagamento de cliente',
-      description: `Pagamento de cliente ${payment.clientId}`,
-      clientId: payment.clientId,
-      paymentId: data.id
-    });
-  }
-
-  return data ? parsePayment(data) : null;
 };
 
 // Transaction API functions
@@ -237,24 +252,57 @@ export const fetchTransactions = async (): Promise<Transaction[]> => {
 };
 
 export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'createdAt'>): Promise<Transaction | null> => {
-  const { data, error } = await supabase
-    .from('wedding_transactions')
-    .insert({
-      amount: transaction.amount,
-      date: formatDateForSupabase(transaction.date),
-      type: transaction.type,
-      category: transaction.category,
-      description: transaction.description,
-      client_id: transaction.clientId,
-      payment_id: transaction.paymentId
-    })
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('wedding_transactions')
+      .insert({
+        amount: transaction.amount,
+        date: formatDateForSupabase(transaction.date),
+        type: transaction.type,
+        category: transaction.category,
+        description: transaction.description,
+        client_id: transaction.clientId,
+        payment_id: transaction.paymentId
+      })
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Error creating transaction:', error);
+    if (error) {
+      console.error('Error creating transaction:', error);
+      return null;
+    }
+
+    return data ? parseTransaction(data) : null;
+  } catch (error) {
+    console.error('Exception creating transaction:', error);
     return null;
   }
+};
 
-  return data ? parseTransaction(data) : null;
+// Função para limpar dados de teste
+export const clearAllData = async (): Promise<boolean> => {
+  try {
+    // Limpar transações
+    await supabase
+      .from('wedding_transactions')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+    
+    // Limpar pagamentos
+    await supabase
+      .from('wedding_payments')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+    
+    // Limpar clientes
+    await supabase
+      .from('wedding_clients')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+    
+    return true;
+  } catch (error) {
+    console.error('Error clearing data:', error);
+    return false;
+  }
 };

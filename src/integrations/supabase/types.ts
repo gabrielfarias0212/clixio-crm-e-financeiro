@@ -709,6 +709,7 @@ export type Database = {
           created_at: string | null
           down_payment: number | null
           email: string | null
+          event_category: string | null
           id: string
           name: string
           next_action: string | null
@@ -723,6 +724,7 @@ export type Database = {
           created_at?: string | null
           down_payment?: number | null
           email?: string | null
+          event_category?: string | null
           id?: string
           name: string
           next_action?: string | null
@@ -737,6 +739,7 @@ export type Database = {
           created_at?: string | null
           down_payment?: number | null
           email?: string | null
+          event_category?: string | null
           id?: string
           name?: string
           next_action?: string | null

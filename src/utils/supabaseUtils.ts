@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Client, ClientStatus, NextAction, Payment, Transaction, TransactionType, TransactionCategory } from './types';
 import type { Database } from '@/integrations/supabase/types';

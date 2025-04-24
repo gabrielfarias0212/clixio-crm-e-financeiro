@@ -38,6 +38,7 @@ const EVENT_CATEGORIES = [
   "aniversário",
   "ensaio",
   "evento corporativo",
+  "potencial cliente",
   "outro",
 ];
 
@@ -98,7 +99,11 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
   });
 
   const handleSubmit = (data: ClientFormValues) => {
-    onSubmit(data);
+    const sanitizedData = {
+      ...data,
+      eventCategory: data.eventCategory || 'outro'
+    };
+    onSubmit(sanitizedData);
   };
 
   const watchStatus = form.watch("status");

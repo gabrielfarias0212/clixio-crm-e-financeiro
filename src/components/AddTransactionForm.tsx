@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Client, Transaction, TransactionCategory, TransactionType } from "@/utils/types";
 import { format } from "date-fns";
@@ -67,10 +68,10 @@ interface AddTransactionFormProps {
 
 export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddTransactionFormProps) {
   const [transactionType, setTransactionType] = useState<TransactionType>("entrada");
-  const [availableCategories, setAvailableCategories] = useState<TransactionCategory[]>(incomeCategories);
   const [financialCategories, setFinancialCategories] = useState<TransactionCategory[]>([]);
   const [addingCategory, setAddingCategory] = useState<boolean>(false);
   const [newCategoryName, setNewCategoryName] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
@@ -84,37 +85,79 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
     },
   });
 
-  // Update available categories when transaction type changes
+  // Atualizada para carregar categorias quando o tipo de transação mudar
   useEffect(() => {
-    const loadCats = async () => {
-      const cats = await fetchFinancialCategories();
-      setFinancialCategories([
-        ...(transactionType === "entrada"
-          ? ["pagamento de cliente", "outras receitas"]
-          : ["despesa operacional", "material", "serviço terceirizado", "imposto", "outras despesas"]),
-        ...cats.filter(cat => cat.type === transactionType).map(cat => cat.name)
-      ]);
+    const loadCategories = async () => {
+      try {
+        // Buscar categorias do banco de dados
+        const cats = await fetchFinancialCategories();
+        
+        // Filtrar por tipo (entrada/saída)
+        const filteredCats = cats
+          .filter(cat => cat.type === transactionType)
+          .map(cat => cat.name);
+        
+        // Adicionar categorias padrão conforme o tipo
+        const defaultCats = transactionType === "entrada" 
+          ? ["pagamento de cliente", "outras receitas"] 
+          : ["despesa operacional", "material", "serviço terceirizado", "imposto", "outras despesas"];
+        
+        // Combinar categorias sem duplicatas
+        const combinedCats = [...new Set([...defaultCats, ...filteredCats])];
+        
+        setFinancialCategories(combinedCats);
+        
+        // Resetar a categoria selecionada para a primeira opção
+        if (combinedCats.length > 0) {
+          form.setValue("category", combinedCats[0]);
+        }
+        
+      } catch (error) {
+        console.error("Erro ao carregar categorias:", error);
+        toast.error("Não foi possível carregar as categorias");
+      }
     };
-    loadCats();
-    // eslint-disable-next-line
-  }, [transactionType]);
+    
+    loadCategories();
+  }, [transactionType, form]);
 
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
       toast.error('O nome da categoria não pode ser vazio.');
       return;
     }
-    const result = await createFinancialCategory({
-      name: newCategoryName,
-      type: transactionType,
-    });
-    if (result) {
-      toast.success('Categoria criada com sucesso!');
-      setNewCategoryName('');
-      setAddingCategory(false);
-      setFinancialCategories((prev) => ([...prev, result.name]));
-    } else {
-      toast.error('Erro ao criar categoria.');
+    
+    setIsSubmitting(true);
+    
+    try {
+      const result = await createFinancialCategory({
+        name: newCategoryName,
+        type: transactionType,
+      });
+      
+      if (result) {
+        toast.success('Categoria criada com sucesso!');
+        setNewCategoryName('');
+        setAddingCategory(false);
+        
+        // Adicionar a nova categoria à lista sem duplicar
+        setFinancialCategories(prev => {
+          if (!prev.includes(result.name)) {
+            return [...prev, result.name];
+          }
+          return prev;
+        });
+        
+        // Selecionar a nova categoria no formulário
+        form.setValue("category", result.name);
+      } else {
+        toast.error('Erro ao criar categoria. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro ao criar categoria:', error);
+      toast.error('Falha ao criar nova categoria');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -133,6 +176,7 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Tipo de Transação */}
           <FormField
             control={form.control}
             name="type"
@@ -161,6 +205,7 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
             )}
           />
 
+          {/* Categoria */}
           <FormField
             control={form.control}
             name="category"
@@ -204,8 +249,9 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
                       type="button"
                       size="sm"
                       onClick={handleAddCategory}
+                      disabled={isSubmitting}
                     >
-                      Salvar
+                      {isSubmitting ? 'Salvando...' : 'Salvar'}
                     </Button>
                   </div>
                 )}

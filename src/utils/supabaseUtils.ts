@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Client, ClientStatus, NextAction, Payment, Transaction, TransactionType, TransactionCategory } from './types';
 import type { Database } from '@/integrations/supabase/types';
@@ -304,28 +305,37 @@ export const createFinancialCategory = async ({
   type,
   photographer_id = '00000000-0000-0000-0000-000000000000',
 }: { name: string; type: "entrada" | "saída"; photographer_id?: string }) => {
-  const { data, error } = await supabase
-    .from('financial_categories')
-    .insert([
-      {
-        name,
-        type,
-        photographer_id
-      }
-    ])
-    .select()
-    .single();
+  try {
+    console.log('Criando categoria financeira:', { name, type, photographer_id });
+    
+    const { data, error } = await supabase
+      .from('financial_categories')
+      .insert([
+        {
+          name,
+          type,
+          photographer_id
+        }
+      ])
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Erro ao criar categoria financeira:', error);
+    if (error) {
+      console.error('Erro ao criar categoria financeira:', error);
+      return null;
+    }
+    
+    console.log('Categoria financeira criada com sucesso:', data);
+    return {
+      id: data.id,
+      name: data.name,
+      type: data.type,
+      createdAt: data.created_at ? new Date(data.created_at) : new Date(),
+    } as FinancialCategory;
+  } catch (error) {
+    console.error('Exceção ao criar categoria financeira:', error);
     return null;
   }
-  return {
-    id: data.id,
-    name: data.name,
-    type: data.type,
-    createdAt: data.created_at ? new Date(data.created_at) : new Date(),
-  } as FinancialCategory;
 };
 
 export const clearAllData = async (): Promise<boolean> => {

@@ -4,20 +4,21 @@ import Layout from "@/components/Layout";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Client } from "@/utils/types";
-import { clients } from "@/utils/mockData";
 import { useNavigate } from "react-router-dom";
 import { StatusBadge } from "@/components/StatusBadge";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { useClients } from "@/contexts/ClientsContext";
 
 export default function CalendarPage() {
   const navigate = useNavigate();
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const { clients, loading } = useClients();
   
   // Filter clients with wedding dates
   const clientsWithWeddingDates = useMemo(() => 
     clients.filter(client => client.weddingDate !== null) as (Client & { weddingDate: Date })[],
-  []);
+  [clients]);
 
   // Group clients by date
   const clientsByDate = useMemo(() => {
@@ -54,6 +55,11 @@ export default function CalendarPage() {
     document.title = "Calendário | Wedding CRM";
   }, []);
 
+  // Console log para depuração
+  console.log("Clientes com datas de evento:", clientsWithWeddingDates);
+  console.log("Clientes agrupados por data:", clientsByDate);
+  console.log("Datas com eventos:", Object.keys(clientsByDate).map(date => new Date(date)));
+  
   return (
     <Layout>
       <div className="max-w-screen-xl mx-auto px-4 py-8 animate-fade-in">
@@ -63,7 +69,11 @@ export default function CalendarPage() {
           <div className="order-2 md:order-1 md:col-span-2">
             <Card className="animate-scale-in">
               <CardContent className="pt-6">
-                {selectedDayClients.length > 0 ? (
+                {loading ? (
+                  <div className="py-12 text-center">
+                    <p>Carregando eventos...</p>
+                  </div>
+                ) : selectedDayClients.length > 0 ? (
                   <div>
                     <h2 className="text-lg font-medium mb-4 flex items-center">
                       <CalendarIcon className="mr-2 h-5 w-5" />

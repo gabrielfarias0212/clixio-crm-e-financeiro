@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useClients } from "@/contexts/ClientsContext";
+import { UpcomingEvents } from "@/components/UpcomingEvents";
 
 export default function CalendarPage() {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ export default function CalendarPage() {
     const result: Record<string, Client[]> = {};
     
     clientsWithWeddingDates.forEach(client => {
-      const dateKey = client.weddingDate.toISOString().split('T')[0];
+      const dateKey = new Date(client.weddingDate).toISOString().split('T')[0];
       if (!result[dateKey]) {
         result[dateKey] = [];
       }
@@ -35,7 +36,7 @@ export default function CalendarPage() {
     return result;
   }, [clientsWithWeddingDates]);
 
-  // Get selected day's clients and count of events per day
+  // Get selected day's clients
   const selectedDayClients = useMemo(() => {
     if (!date) return [];
     
@@ -49,16 +50,22 @@ export default function CalendarPage() {
     color: "rgb(126, 34, 206)",
     fontWeight: "bold",
     position: "relative",
+    "&::after": {
+      content: '""',
+      position: "absolute",
+      bottom: "2px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      width: "4px",
+      height: "4px",
+      borderRadius: "50%",
+      backgroundColor: "rgb(126, 34, 206)",
+    },
   } as const;
 
   useEffect(() => {
     document.title = "Calendário | Wedding CRM";
   }, []);
-
-  // Console log para depuração
-  console.log("Clientes com datas de evento:", clientsWithWeddingDates);
-  console.log("Clientes agrupados por data:", clientsByDate);
-  console.log("Datas com eventos:", Object.keys(clientsByDate).map(date => new Date(date)));
   
   return (
     <Layout>
@@ -67,13 +74,11 @@ export default function CalendarPage() {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="order-2 md:order-1 md:col-span-2">
-            <Card className="animate-scale-in">
-              <CardContent className="pt-6">
-                {loading ? (
-                  <div className="py-12 text-center">
-                    <p>Carregando eventos...</p>
-                  </div>
-                ) : selectedDayClients.length > 0 ? (
+            <UpcomingEvents clients={clients} loading={loading} />
+            
+            {selectedDayClients.length > 0 && (
+              <Card className="mt-6 animate-scale-in">
+                <CardContent className="pt-6">
                   <div>
                     <h2 className="text-lg font-medium mb-4 flex items-center">
                       <CalendarIcon className="mr-2 h-5 w-5" />
@@ -107,22 +112,13 @@ export default function CalendarPage() {
                       ))}
                     </div>
                   </div>
-                ) : (
-                  <div className="py-12 text-center">
-                    <h2 className="text-lg font-medium mb-2">
-                      {date ? `Não há eventos em ${format(date, "dd/MM/yyyy")}` : "Selecione uma data"}
-                    </h2>
-                    <p className="text-gray-500">
-                      Selecione uma data no calendário para ver os eventos agendados.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
           
           <div className="order-1 md:order-2">
-            <Card className="animate-scale-in [animation-delay:100ms]">
+            <Card className="animate-scale-in">
               <CardContent className="pt-6">
                 <Calendar
                   mode="single"

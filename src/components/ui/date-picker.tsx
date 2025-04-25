@@ -12,11 +12,12 @@ import {
 import {
   FormControl,
   FormDescription,
+  FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Control } from "react-hook-form";
+import { Control, FieldPath, FieldValues } from "react-hook-form";
 
 interface DatePickerProps {
   value: Date | null;
@@ -66,28 +67,38 @@ export function DatePicker({
   );
 }
 
-export function FormDatePicker<T>({
+export function FormDatePicker<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+>({
   control,
   name,
   label,
   description,
   placeholder,
 }: {
-  control: Control<T>;
-  name: any;
+  control: Control<TFieldValues>;
+  name: TName;
   label?: string;
   description?: string;
   placeholder?: string;
 }) {
   return (
-    <FormItem className="flex flex-col">
-      {label && <FormLabel>{label}</FormLabel>}
-      <DatePicker
-        placeholder={placeholder}
-        {...control.register(name)}
-      />
-      {description && <FormDescription>{description}</FormDescription>}
-      <FormMessage />
-    </FormItem>
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="flex flex-col">
+          {label && <FormLabel>{label}</FormLabel>}
+          <DatePicker
+            value={field.value}
+            onChange={field.onChange}
+            placeholder={placeholder}
+          />
+          {description && <FormDescription>{description}</FormDescription>}
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
 }

@@ -13,7 +13,7 @@ import { Transaction, TransactionType } from "@/utils/types";
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const { clients } = useClients();
-  const { transactions, addTransaction } = useTransactions();
+  const { transactions, addTransaction, deleteTransaction } = useTransactions();
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>(transactions);
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
 
@@ -35,6 +35,10 @@ export default function CashFlow() {
     if (result) {
       setShowAddTransaction(false);
     }
+  };
+
+  const handleDeleteTransaction = async (transactionId: string) => {
+    await deleteTransaction(transactionId);
   };
 
   return (
@@ -91,7 +95,11 @@ export default function CashFlow() {
           </Button>
         </div>
 
-        <TransactionList transactions={filteredTransactions} clients={clients} />
+        <TransactionList 
+          transactions={filteredTransactions} 
+          clients={clients} 
+          onDeleteTransaction={handleDeleteTransaction}
+        />
       </div>
     </Layout>
   );

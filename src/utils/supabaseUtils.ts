@@ -360,3 +360,15 @@ export const clearAllData = async (): Promise<boolean> => {
     return false;
   }
 };
+
+export const deleteTransaction = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('wedding_transactions')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting transaction:', error);
+    throw error;
+  }
+};

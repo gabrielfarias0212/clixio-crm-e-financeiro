@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Transaction } from '@/utils/types';
-import { fetchTransactions, createTransaction } from '@/utils/supabaseUtils';
+import { fetchTransactions, createTransaction, deleteTransaction } from '@/utils/supabaseUtils';
 import { toast } from 'sonner';
 
 type TransactionsContextType = {
@@ -10,6 +10,7 @@ type TransactionsContextType = {
   error: string | null;
   refreshTransactions: () => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt'>) => Promise<Transaction | null>;
+  deleteTransaction: (transactionId: string) => Promise<void>;
 };
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
@@ -50,6 +51,17 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
     }
   };
 
+  const deleteTransaction = async (transactionId: string) => {
+    try {
+      await deleteTransaction(transactionId);
+      setTransactions(prev => prev.filter(t => t.id !== transactionId));
+      toast.success('Transação excluída com sucesso!');
+    } catch (err) {
+      console.error('Error deleting transaction:', err);
+      toast.error('Falha ao excluir transação');
+    }
+  };
+
   useEffect(() => {
     refreshTransactions();
   }, []);
@@ -61,7 +73,8 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
         loading,
         error,
         refreshTransactions,
-        addTransaction
+        addTransaction,
+        deleteTransaction
       }}
     >
       {children}

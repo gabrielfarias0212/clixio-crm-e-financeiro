@@ -4,17 +4,39 @@ import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { ArrowDownCircle, ArrowUpCircle, ExternalLink } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ExternalLink, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
+import { Button } from "./ui/button";
 
 interface TransactionListProps {
   transactions: Transaction[];
   clients: Client[];
+  onDeleteTransaction?: (transactionId: string) => Promise<void>;
 }
 
-export function TransactionList({ transactions, clients }: TransactionListProps) {
+export function TransactionList({ transactions, clients, onDeleteTransaction }: TransactionListProps) {
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+
   const getClientName = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
     return client ? client.name : "Cliente não encontrado";
+  };
+
+  const handleDelete = async () => {
+    if (transactionToDelete && onDeleteTransaction) {
+      await onDeleteTransaction(transactionToDelete);
+      setTransactionToDelete(null);
+    }
   };
 
   return (
@@ -32,6 +54,7 @@ export function TransactionList({ transactions, clients }: TransactionListProps)
               <TableHead>Categoria</TableHead>
               <TableHead className="hidden sm:table-cell">Cliente</TableHead>
               <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="w-[50px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -84,11 +107,38 @@ export function TransactionList({ transactions, clients }: TransactionListProps)
                     currency: 'BRL'
                   }).format(transaction.amount)}
                 </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-gray-500 hover:text-red-600"
+                    onClick={() => setTransactionToDelete(transaction.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       )}
+
+      <AlertDialog open={!!transactionToDelete} onOpenChange={() => setTransactionToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

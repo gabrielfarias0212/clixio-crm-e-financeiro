@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
@@ -14,19 +14,18 @@ export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const { clients } = useClients();
   const { transactions, addTransaction, deleteTransaction } = useTransactions();
-  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>(transactions);
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
 
   useEffect(() => {
     document.title = "Fluxo de Caixa | Wedding CRM";
   }, []);
 
-  useEffect(() => {
+  // Use useMemo to filter transactions for better performance
+  const filteredTransactions = useMemo(() => {
     if (typeFilter === "all") {
-      setFilteredTransactions(transactions);
-    } else {
-      setFilteredTransactions(transactions.filter(t => t.type === typeFilter));
+      return transactions;
     }
+    return transactions.filter(t => t.type === typeFilter);
   }, [transactions, typeFilter]);
 
   const handleAddTransaction = async (newTransaction: Omit<Transaction, "id" | "createdAt">) => {

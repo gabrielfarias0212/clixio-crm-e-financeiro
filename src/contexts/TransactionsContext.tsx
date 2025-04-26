@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Transaction } from '@/utils/types';
-import { fetchTransactions, createTransaction, deleteTransaction } from '@/utils/supabaseUtils';
+import { fetchTransactions, createTransaction, removeTransaction } from '@/utils/supabaseUtils';
 import { toast } from 'sonner';
 
 type TransactionsContextType = {
@@ -53,7 +53,7 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
 
   const deleteTransaction = async (transactionId: string) => {
     try {
-      await deleteTransaction(transactionId);
+      await removeTransaction(transactionId);
       setTransactions(prev => prev.filter(t => t.id !== transactionId));
       toast.success('Transação excluída com sucesso!');
     } catch (err) {

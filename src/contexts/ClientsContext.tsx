@@ -58,6 +58,7 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
 
   const updateClientData = async (id: string, updates: Partial<Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>>) => {
     try {
+      console.log('Updating client via context:', id, updates); // Log the update data
       const updatedClient = await updateClient(id, updates);
       if (updatedClient) {
         setClients(prev => 

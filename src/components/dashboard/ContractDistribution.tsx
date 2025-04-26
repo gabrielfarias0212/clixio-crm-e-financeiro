@@ -3,22 +3,23 @@ import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
-const STATUS_COLORS = {
-  "orçamento enviado": "#FEC6A1",
-  "follow-up": "#D3E4FD",
-  "fechado": "#F2FCE2",
-  "em andamento": "#E5DEFF",
-  "pago": "#D6BCFA"
+const EVENT_COLORS = {
+  "casamento": "#FEC6A1",
+  "casamento civil": "#D3E4FD",
+  "aniversário": "#F2FCE2",
+  "evento corporativo": "#E5DEFF",
+  "ensaio externo": "#D6BCFA",
+  "ensaio estudio": "#FFE4E6",
+  "ensaio corporativo": "#FFEDD5",
+  "outro": "#E2E8F0"
 };
 
 export function ContractDistribution() {
   const { clients } = useClients();
 
   const distribution = clients.reduce((acc, client) => {
-    const status = client.status;
-    if (status) {
-      acc[status] = (acc[status] || 0) + 1;
-    }
+    const category = client.eventCategory || "outro";
+    acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
@@ -30,7 +31,7 @@ export function ContractDistribution() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Distribuição de Contratos</CardTitle>
+        <CardTitle className="text-lg">Distribuição por Tipo de Evento</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[200px]">
@@ -49,7 +50,7 @@ export function ContractDistribution() {
                 {data.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
-                    fill={STATUS_COLORS[entry.name as keyof typeof STATUS_COLORS] || "#gray"}
+                    fill={EVENT_COLORS[entry.name as keyof typeof EVENT_COLORS] || "#E2E8F0"}
                   />
                 ))}
               </Pie>

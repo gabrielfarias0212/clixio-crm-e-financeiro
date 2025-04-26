@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Client, Transaction, TransactionCategory, TransactionType } from "@/utils/types";
 import { format } from "date-fns";
@@ -34,19 +33,15 @@ import { cn } from "@/lib/utils";
 import { fetchFinancialCategories, createFinancialCategory } from "@/utils/supabaseUtils";
 import { toast } from "sonner";
 
-// Income categories
-const incomeCategories: TransactionCategory[] = [
-  "pagamento de cliente",
-  "outras receitas",
-];
-
-// Expense categories
-const expenseCategories: TransactionCategory[] = [
-  "despesa operacional",
-  "material",
-  "serviço terceirizado",
-  "imposto",
-  "outras despesas",
+// Novas categorias adicionadas
+const newCategories: TransactionCategory[] = [
+  "casamento", 
+  "casamento civil", 
+  "aniversario", 
+  "evento corporativo", 
+  "ensaio externo", 
+  "ensaio estudio", 
+  "ensaio corporativo"
 ];
 
 const transactionFormSchema = z.object({
@@ -97,10 +92,10 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
           .filter(cat => cat.type === transactionType)
           .map(cat => cat.name);
         
-        // Adicionar categorias padrão conforme o tipo
+        // Combinar categorias padrão, novas categorias e categorias do banco de dados
         const defaultCats = transactionType === "entrada" 
-          ? ["pagamento de cliente", "outras receitas"] 
-          : ["despesa operacional", "material", "serviço terceirizado", "imposto", "outras despesas"];
+          ? ["pagamento de cliente", "outras receitas", ...newCategories] 
+          : ["despesa operacional", "material", "serviço terceirizado", "imposto", "outras despesas", ...newCategories];
         
         // Combinar categorias sem duplicatas
         const combinedCats = [...new Set([...defaultCats, ...filteredCats])];
@@ -163,7 +158,7 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
 
   const handleSubmit = (data: TransactionFormValues) => {
     onAddTransaction({
-      type: data.type, // Ensure this is included and not marked as optional
+      type: data.type,
       category: data.category as TransactionCategory,
       amount: data.amount,
       date: data.date,

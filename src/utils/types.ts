@@ -64,5 +64,4 @@ export interface Client {
   payments: Payment[];
   createdAt: Date;
   updatedAt: Date;
-  eventCategory?: string;
 }

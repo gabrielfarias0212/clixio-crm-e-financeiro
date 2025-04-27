@@ -12,7 +12,6 @@ export const formSchema = z.object({
   status: z.enum(["orçamento enviado", "follow-up", "fechado", "em andamento", "pago"]),
   nextAction: z.enum(["responder", "enviar proposta", "editar", "entregar", "nenhuma"]),
   notes: z.string().optional(),
-  eventCategory: z.string().min(1, { message: "Selecione uma categoria" }),
 })
 .refine(data => data.downPayment <= data.contractValue, {
   message: "O valor da entrada não pode ser maior que o valor do contrato",

@@ -38,8 +38,7 @@ export default function EditClient() {
   const handleUpdateClient = async (data: ClientFormValues) => {
     if (!client || !id) return;
     
-    console.log("Updating client with data:", data); // Log the data being sent
-    console.log("Event Category being updated:", data.eventCategory); // Add specific log for event category
+    console.log("Updating client with data:", data);
     
     const updatedClient = await updateClient(id, {
       name: data.name,
@@ -51,7 +50,6 @@ export default function EditClient() {
       status: data.status,
       nextAction: data.nextAction,
       notes: data.notes || "",
-      eventCategory: data.eventCategory || "outro", // Ensure eventCategory is included in the update
     });
     
     if (updatedClient) {

@@ -25,7 +25,6 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           status: client.status,
           nextAction: client.nextAction,
           notes: client.notes,
-          eventCategory: client.eventCategory || "outro", // Set default value if not present
         }
       : {
           name: "",
@@ -37,12 +36,10 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           status: "orçamento enviado",
           nextAction: "enviar proposta",
           notes: "",
-          eventCategory: "outro", // Set a default value
         },
   });
 
   const handleSubmit = (data: ClientFormValues) => {
-    console.log("Form submitted with event category:", data.eventCategory); // Add debug log
     onSubmit(data);
   };
 

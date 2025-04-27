@@ -39,13 +39,11 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
   const addClient = async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>) => {
     try {
       console.log('Adding client via context:', clientData);
-      console.log('Event Category being added:', clientData.eventCategory); // Log event category
       
       const newClient = await createClient(clientData);
       
       if (newClient) {
         console.log('Client created successfully:', newClient);
-        console.log('Created client event category:', newClient.eventCategory); // Log the event category in created client
         setClients(prev => [newClient, ...prev]);
         return newClient;
       } else {
@@ -62,13 +60,11 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
 
   const updateClientData = async (id: string, updates: Partial<Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>>) => {
     try {
-      console.log('Updating client via context:', id, updates); // Log the update data
-      console.log('Event Category being updated:', updates.eventCategory); // Log event category
+      console.log('Updating client via context:', id, updates);
       
       const updatedClient = await updateClient(id, updates);
       if (updatedClient) {
         console.log('Client updated successfully:', updatedClient);
-        console.log('Updated client event category:', updatedClient.eventCategory); // Log the event category in updated client
         setClients(prev => 
           prev.map(client => client.id === id ? updatedClient : client)
         );

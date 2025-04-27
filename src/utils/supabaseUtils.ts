@@ -26,7 +26,6 @@ export const parseClient = (client: any): Client => {
     notes: client.notes || '',
     downPayment: Number(client.down_payment) || 0,
     payments: [],
-    eventCategory: client.event_category || '',
     createdAt: parseDate(client.created_at) || new Date(),
     updatedAt: parseDate(client.updated_at) || new Date(),
   };
@@ -136,7 +135,6 @@ export const createClient = async (client: Omit<Client, 'id' | 'createdAt' | 'up
         next_action: client.nextAction,
         notes: client.notes,
         down_payment: client.downPayment,
-        event_category: client.eventCategory || '',
       })
       .select()
       .single();

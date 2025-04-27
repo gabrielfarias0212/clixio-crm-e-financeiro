@@ -20,7 +20,7 @@ export default function AddClient() {
   const handleCreateClient = async (data: ClientFormValues) => {
     setSubmitting(true);
     try {
-      console.info("Creating client with data:", data);
+      console.log("Creating client with data:", data);
       
       const newClient = await addClient({
         name: data.name,
@@ -32,6 +32,7 @@ export default function AddClient() {
         status: data.status,
         nextAction: data.nextAction,
         notes: data.notes || "",
+        eventCategory: data.eventCategory || "outro", // Added eventCategory with default value
       });
       
       if (newClient) {

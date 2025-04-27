@@ -1,0 +1,59 @@
+
+import { Control } from "react-hook-form";
+import { ClientFormValues } from "../types";
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface EventCategoryFieldProps {
+  control: Control<ClientFormValues>;
+}
+
+export function EventCategoryField({ control }: EventCategoryFieldProps) {
+  const categories = [
+    "Casamento",
+    "Aniversario",
+    "Civil",
+    "Ensaio Estudio",
+    "Ensaio externo",
+    "Evento Corporativo"
+  ];
+
+  return (
+    <FormField
+      control={control}
+      name="eventCategory"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Categoria do Evento</FormLabel>
+          <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <FormControl>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma categoria" />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}

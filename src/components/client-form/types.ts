@@ -11,6 +11,7 @@ export const formSchema = z.object({
   downPayment: z.coerce.number().min(0, { message: "O valor deve ser positivo" }),
   status: z.enum(["orçamento enviado", "follow-up", "fechado", "em andamento", "pago"]),
   nextAction: z.enum(["responder", "enviar proposta", "editar", "entregar", "nenhuma"]),
+  eventCategory: z.enum(["Casamento", "Aniversario", "Civil", "Ensaio Estudio", "Ensaio externo", "Evento Corporativo"]),
   notes: z.string().optional(),
 })
 .refine(data => data.downPayment <= data.contractValue, {

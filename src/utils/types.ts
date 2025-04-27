@@ -24,6 +24,14 @@ export type TransactionCategory =
   | "outras despesas"
   | string;
 
+export type EventCategory = 
+  | "Casamento"
+  | "Aniversario"
+  | "Civil"
+  | "Ensaio Estudio"
+  | "Ensaio externo"
+  | "Evento Corporativo";
+
 export interface Payment {
   id: string;
   amount: number;
@@ -61,6 +69,7 @@ export interface Client {
   phone: string;
   notes: string;
   downPayment: number;
+  eventCategory: EventCategory;
   payments: Payment[];
   createdAt: Date;
   updatedAt: Date;

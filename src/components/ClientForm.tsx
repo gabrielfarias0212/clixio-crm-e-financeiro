@@ -24,6 +24,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           downPayment: client.downPayment,
           status: client.status,
           nextAction: client.nextAction,
+          eventCategory: client.eventCategory,
           notes: client.notes,
         }
       : {
@@ -35,6 +36,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           downPayment: 0,
           status: "orçamento enviado",
           nextAction: "enviar proposta",
+          eventCategory: "Casamento",
           notes: "",
         },
   });

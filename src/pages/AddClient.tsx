@@ -21,6 +21,7 @@ export default function AddClient() {
     setSubmitting(true);
     try {
       console.log("Creating client with data:", data);
+      console.log("Event Category:", data.eventCategory); // Add specific log for event category
       
       const newClient = await addClient({
         name: data.name,

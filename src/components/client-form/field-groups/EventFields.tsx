@@ -47,7 +47,7 @@ export function EventFields({ control }: EventFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel>Categoria do Evento</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
+            <Select onValueChange={field.onChange} value={field.value || "outro"}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a categoria do evento" />

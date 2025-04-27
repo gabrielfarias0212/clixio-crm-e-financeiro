@@ -39,6 +39,7 @@ export default function EditClient() {
     if (!client || !id) return;
     
     console.log("Updating client with data:", data); // Log the data being sent
+    console.log("Event Category being updated:", data.eventCategory); // Add specific log for event category
     
     const updatedClient = await updateClient(id, {
       name: data.name,

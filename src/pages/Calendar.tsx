@@ -21,12 +21,18 @@ export default function CalendarPage() {
     clients.filter(client => client.weddingDate !== null) as (Client & { weddingDate: Date })[],
   [clients]);
 
-  // Group clients by date
+  // Group clients by date - fazer parse com new Date para garantir que sejam comparadas datas e não strings
   const clientsByDate = useMemo(() => {
     const result: Record<string, Client[]> = {};
     
     clientsWithWeddingDates.forEach(client => {
-      const dateKey = new Date(client.weddingDate).toISOString().split('T')[0];
+      // Garantir que estamos trabalhando com um objeto Date
+      const weddingDate = new Date(client.weddingDate);
+      // Normalizar a data para UTC para evitar problemas de fuso horário
+      const dateKey = new Date(
+        Date.UTC(weddingDate.getFullYear(), weddingDate.getMonth(), weddingDate.getDate())
+      ).toISOString().split('T')[0];
+      
       if (!result[dateKey]) {
         result[dateKey] = [];
       }
@@ -40,8 +46,12 @@ export default function CalendarPage() {
   const selectedDayClients = useMemo(() => {
     if (!date) return [];
     
-    const dateKey = date.toISOString().split('T')[0];
-    return clientsByDate[dateKey] || [];
+    // Normalizar a data selecionada para garantir que o formato de UTC seja consistente
+    const selectedUTCDate = new Date(
+      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+    ).toISOString().split('T')[0];
+    
+    return clientsByDate[selectedUTCDate] || [];
   }, [date, clientsByDate]);
 
   // Create modifiers styles for days with events
@@ -66,6 +76,14 @@ export default function CalendarPage() {
   useEffect(() => {
     document.title = "Calendário | Wedding CRM";
   }, []);
+
+  // Converter as chaves de strings para objetos Date para usar como modifiers no calendário
+  const eventDates = useMemo(() => {
+    return Object.keys(clientsByDate).map(dateStr => {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return new Date(Date.UTC(year, month - 1, day));
+    });
+  }, [clientsByDate]);
   
   return (
     <Layout>
@@ -95,7 +113,7 @@ export default function CalendarPage() {
                             <div>
                               <h3 className="font-medium">{client.name}</h3>
                               <p className="text-sm text-gray-500 mt-1">
-                                Casamento
+                                {client.eventCategory || "Evento"}
                               </p>
                             </div>
                             <StatusBadge status={client.status} />
@@ -126,7 +144,7 @@ export default function CalendarPage() {
                   onSelect={setDate}
                   className="mx-auto pointer-events-auto"
                   modifiers={{
-                    booked: Object.keys(clientsByDate).map(date => new Date(date))
+                    booked: eventDates
                   }}
                   modifiersStyles={{
                     booked: eventDayStyle

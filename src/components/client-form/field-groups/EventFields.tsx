@@ -1,14 +1,9 @@
 
 import { Control } from "react-hook-form";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
 import { ClientFormValues } from "../types";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { DatePicker } from "@/components/ui/date-picker";
+import { EventCategoryField } from "./EventCategoryField";
 
 interface EventFieldsProps {
   control: Control<ClientFormValues>;
@@ -16,20 +11,27 @@ interface EventFieldsProps {
 
 export function EventFields({ control }: EventFieldsProps) {
   return (
-    <FormField
-      control={control}
-      name="weddingDate"
-      render={({ field }) => (
-        <FormItem className="flex flex-col">
-          <FormLabel>Data do Evento</FormLabel>
-          <DatePicker
-            value={field.value}
-            onChange={field.onChange}
-            placeholder="Selecione uma data"
-          />
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <div className="space-y-4">
+      <h3 className="font-medium text-lg">Informações do Evento</h3>
+      
+      <EventCategoryField control={control} />
+      
+      <FormField
+        control={control}
+        name="weddingDate"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Data do Evento</FormLabel>
+            <FormControl>
+              <DatePicker
+                date={field.value ? new Date(field.value) : undefined}
+                setDate={(date) => field.onChange(date)}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
   );
 }

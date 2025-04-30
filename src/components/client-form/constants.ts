@@ -1,9 +1,9 @@
 
 export const EVENT_CATEGORIES = [
-  "casamento",
-  "aniversário",
-  "ensaio",
-  "evento corporativo",
-  "potencial cliente",
-  "outro",
+  "Casamento",
+  "Aniversario", 
+  "Civil",
+  "Ensaio Estudio",
+  "Ensaio externo",
+  "Evento Corporativo",
 ];

@@ -15,21 +15,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { EVENT_CATEGORIES } from "../constants";
 
 interface EventCategoryFieldProps {
   control: Control<ClientFormValues>;
 }
 
 export function EventCategoryField({ control }: EventCategoryFieldProps) {
-  const categories = [
-    "Casamento",
-    "Aniversario",
-    "Civil",
-    "Ensaio Estudio",
-    "Ensaio externo",
-    "Evento Corporativo"
-  ];
-
   return (
     <FormField
       control={control}
@@ -44,7 +36,7 @@ export function EventCategoryField({ control }: EventCategoryFieldProps) {
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {categories.map((category) => (
+              {EVENT_CATEGORIES.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
                 </SelectItem>

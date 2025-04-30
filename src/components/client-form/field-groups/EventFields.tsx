@@ -24,8 +24,9 @@ export function EventFields({ control }: EventFieldsProps) {
             <FormLabel>Data do Evento</FormLabel>
             <FormControl>
               <DatePicker
-                date={field.value ? new Date(field.value) : undefined}
-                setDate={(date) => field.onChange(date)}
+                value={field.value ? new Date(field.value) : null}
+                onChange={field.onChange}
+                placeholder="Selecione uma data"
               />
             </FormControl>
             <FormMessage />

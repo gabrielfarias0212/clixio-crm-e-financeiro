@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -196,7 +195,12 @@ export default function ClientDetail() {
                   {client.weddingDate ? (
                     <div className="flex items-center">
                       <CalendarDays className="h-4 w-4 mr-2 text-gray-500" />
-                      {format(client.weddingDate, "dd/MM/yyyy")}
+                      {format(new Date(
+                        new Date(client.weddingDate).getFullYear(),
+                        new Date(client.weddingDate).getMonth(),
+                        new Date(client.weddingDate).getDate(),
+                        12, 0, 0
+                      ), "dd/MM/yyyy")}
                     </div>
                   ) : (
                     <p className="text-gray-500 italic">Data não definida</p>

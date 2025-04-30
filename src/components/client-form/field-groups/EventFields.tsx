@@ -25,7 +25,21 @@ export function EventFields({ control }: EventFieldsProps) {
             <FormControl>
               <DatePicker
                 value={field.value ? new Date(field.value) : null}
-                onChange={field.onChange}
+                onChange={(date) => {
+                  // Ensure we're working with the date in the local timezone
+                  if (date) {
+                    // Create a new date at noon on the selected day to avoid timezone issues
+                    const localDate = new Date(
+                      date.getFullYear(),
+                      date.getMonth(),
+                      date.getDate(),
+                      12, 0, 0
+                    );
+                    field.onChange(localDate);
+                  } else {
+                    field.onChange(null);
+                  }
+                }}
                 placeholder="Selecione uma data"
               />
             </FormControl>

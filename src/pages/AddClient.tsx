@@ -22,11 +22,23 @@ export default function AddClient() {
     try {
       console.log("Creating client with data:", data);
       
+      // Ensure date is properly formatted to avoid timezone issues
+      let weddingDate = data.weddingDate;
+      if (weddingDate) {
+        // Create a new date at noon to avoid timezone issues
+        weddingDate = new Date(
+          weddingDate.getFullYear(),
+          weddingDate.getMonth(),
+          weddingDate.getDate(),
+          12, 0, 0
+        );
+      }
+      
       const newClient = await addClient({
         name: data.name,
         email: data.email,
         phone: data.phone,
-        weddingDate: data.weddingDate,
+        weddingDate: weddingDate,
         contractValue: data.contractValue,
         downPayment: data.downPayment,
         status: data.status,

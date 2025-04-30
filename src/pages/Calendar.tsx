@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Client } from "@/utils/types";
 import { useNavigate } from "react-router-dom";
 import { StatusBadge } from "@/components/StatusBadge";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useClients } from "@/contexts/ClientsContext";
 import { UpcomingEvents } from "@/components/UpcomingEvents";
@@ -21,9 +21,10 @@ export default function CalendarPage() {
     clients.filter(client => client.weddingDate !== null) as (Client & { weddingDate: Date })[],
   [clients]);
 
-  // Função para normalizar as datas, removendo a parte de tempo
-  const normalizeDate = (date: Date | string): string => {
-    const d = date instanceof Date ? date : new Date(date);
+  // Utility function to normalize dates to YYYY-MM-DD format without time component
+  const normalizeDate = (date: Date | string | null): string => {
+    if (!date) return "";
+    const d = typeof date === "string" ? new Date(date) : date;
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
 
@@ -32,10 +33,10 @@ export default function CalendarPage() {
     const result: Record<string, Client[]> = {};
     
     clientsWithWeddingDates.forEach(client => {
-      // Garantir que estamos trabalhando com um objeto Date
+      // Make sure we're working with a Date object with the correct day
       const weddingDate = new Date(client.weddingDate);
       
-      // Usar função de normalização para criar a chave da data
+      // Use the normalize function to create the date key
       const dateKey = normalizeDate(weddingDate);
       
       if (!result[dateKey]) {
@@ -51,7 +52,7 @@ export default function CalendarPage() {
   const selectedDayClients = useMemo(() => {
     if (!date) return [];
     
-    // Usar a mesma função de normalização para obter a chave
+    // Use the same normalize function for consistency
     const dateKey = normalizeDate(date);
     return clientsByDate[dateKey] || [];
   }, [date, clientsByDate]);
@@ -83,12 +84,12 @@ export default function CalendarPage() {
   const eventDates = useMemo(() => {
     return Object.keys(clientsByDate).map(dateStr => {
       const [year, month, day] = dateStr.split('-').map(Number);
-      // Criar uma data no fuso horário local, no meio-dia para evitar problemas de offset
+      // Create a date at noon local time to avoid timezone issues
       return new Date(year, month - 1, day, 12, 0, 0);
     });
   }, [clientsByDate]);
   
-  // Debug: Verificar as datas dos eventos
+  // Debug logging to help diagnose the issue
   useEffect(() => {
     console.log("Event dates keys:", Object.keys(clientsByDate));
     console.log("Event date objects:", eventDates.map(d => d.toISOString()));

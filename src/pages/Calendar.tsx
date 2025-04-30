@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Client } from "@/utils/types";
 import { useNavigate } from "react-router-dom";
 import { StatusBadge } from "@/components/StatusBadge";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useClients } from "@/contexts/ClientsContext";
 import { UpcomingEvents } from "@/components/UpcomingEvents";
@@ -21,16 +21,22 @@ export default function CalendarPage() {
     clients.filter(client => client.weddingDate !== null) as (Client & { weddingDate: Date })[],
   [clients]);
 
+  // Função para normalizar as datas, removendo a parte de tempo
+  const normalizeDate = (date: Date | string): string => {
+    const d = date instanceof Date ? date : new Date(date);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
   // Group clients by date - use a consistent date format without time component
   const clientsByDate = useMemo(() => {
     const result: Record<string, Client[]> = {};
     
     clientsWithWeddingDates.forEach(client => {
-      // Convert to Date object if it's not already
+      // Garantir que estamos trabalhando com um objeto Date
       const weddingDate = new Date(client.weddingDate);
       
-      // Format date key as YYYY-MM-DD
-      const dateKey = `${weddingDate.getFullYear()}-${String(weddingDate.getMonth() + 1).padStart(2, '0')}-${String(weddingDate.getDate()).padStart(2, '0')}`;
+      // Usar função de normalização para criar a chave da data
+      const dateKey = normalizeDate(weddingDate);
       
       if (!result[dateKey]) {
         result[dateKey] = [];
@@ -45,8 +51,8 @@ export default function CalendarPage() {
   const selectedDayClients = useMemo(() => {
     if (!date) return [];
     
-    // Create key in same format as above
-    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    // Usar a mesma função de normalização para obter a chave
+    const dateKey = normalizeDate(date);
     return clientsByDate[dateKey] || [];
   }, [date, clientsByDate]);
 
@@ -77,11 +83,19 @@ export default function CalendarPage() {
   const eventDates = useMemo(() => {
     return Object.keys(clientsByDate).map(dateStr => {
       const [year, month, day] = dateStr.split('-').map(Number);
-      // Create date with local timezone to avoid offset issues
-      return new Date(year, month - 1, day);
+      // Criar uma data no fuso horário local, no meio-dia para evitar problemas de offset
+      return new Date(year, month - 1, day, 12, 0, 0);
     });
   }, [clientsByDate]);
   
+  // Debug: Verificar as datas dos eventos
+  useEffect(() => {
+    console.log("Event dates keys:", Object.keys(clientsByDate));
+    console.log("Event date objects:", eventDates.map(d => d.toISOString()));
+    console.log("Selected date:", date ? date.toISOString() : null);
+    console.log("Selected day clients:", selectedDayClients);
+  }, [clientsByDate, eventDates, date, selectedDayClients]);
+
   return (
     <Layout>
       <div className="max-w-screen-xl mx-auto px-4 py-8 animate-fade-in">

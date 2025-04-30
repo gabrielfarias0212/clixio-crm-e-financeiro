@@ -60,7 +60,7 @@ export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
                   <div>
                     <h3 className="font-medium">{client.name}</h3>
                     <p className="text-sm text-gray-500 mt-1">
-                      Casamento
+                      {client.eventCategory}
                     </p>
                   </div>
                   <StatusBadge status={client.status} />

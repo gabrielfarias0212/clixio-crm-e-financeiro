@@ -1,5 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { Client, ClientStatus, NextAction, Payment, Transaction, TransactionType, TransactionCategory } from './types';
+import { Client, ClientStatus, NextAction, EventCategory, Payment, Transaction, TransactionType, TransactionCategory } from './types';
 import type { Database } from '@/integrations/supabase/types';
 import type { FinancialCategory } from './types';
 
@@ -25,6 +26,7 @@ export const parseClient = (client: any): Client => {
     phone: client.phone || '',
     notes: client.notes || '',
     downPayment: Number(client.down_payment) || 0,
+    eventCategory: client.event_category as EventCategory || 'Casamento',
     payments: [],
     createdAt: parseDate(client.created_at) || new Date(),
     updatedAt: parseDate(client.updated_at) || new Date(),
@@ -135,6 +137,7 @@ export const createClient = async (client: Omit<Client, 'id' | 'createdAt' | 'up
         next_action: client.nextAction,
         notes: client.notes,
         down_payment: client.downPayment,
+        event_category: client.eventCategory,
       })
       .select()
       .single();
@@ -180,6 +183,7 @@ export const updateClient = async (id: string, updates: Partial<Omit<Client, 'id
     next_action: updates.nextAction,
     notes: updates.notes,
     down_payment: updates.downPayment,
+    event_category: updates.eventCategory,
     updated_at: new Date().toISOString()
   };
 

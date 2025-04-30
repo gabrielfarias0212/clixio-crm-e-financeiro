@@ -1,5 +1,5 @@
 
-import { Client, ClientStatus, NextAction, Payment } from "./types";
+import { Client, ClientStatus, NextAction, EventCategory, Payment } from "./types";
 import { v4 as uuidv4 } from 'uuid';
 
 // Function to generate a random date within a range
@@ -30,6 +30,16 @@ const nextActionOptions: NextAction[] = [
   "editar",
   "entregar",
   "nenhuma"
+];
+
+// Sample event categories
+const eventCategories: EventCategory[] = [
+  "Casamento",
+  "Aniversario",
+  "Civil",
+  "Ensaio Estudio",
+  "Ensaio externo",
+  "Evento Corporativo"
 ];
 
 // Generate a list of 15 sample clients
@@ -109,6 +119,11 @@ export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
       }
     }
   }
+
+  // Choose a random event category, with higher probability for weddings
+  const eventCategory = Math.random() > 0.6 
+    ? "Casamento" 
+    : eventCategories[Math.floor(Math.random() * eventCategories.length)];
   
   // Create a client with the generated data
   return {
@@ -138,6 +153,7 @@ export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
     phone: `(11) 9${Math.floor(Math.random() * 10000)}-${Math.floor(Math.random() * 10000)}`,
     notes: "Notas sobre o cliente e detalhes específicos do casamento.",
     downPayment,
+    eventCategory,
     payments,
     createdAt: randomDate(new Date(now.getFullYear(), now.getMonth() - 3, 1), now),
     updatedAt: randomDate(new Date(now.getFullYear(), now.getMonth() - 1, 1), now),

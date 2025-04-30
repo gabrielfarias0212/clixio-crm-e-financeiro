@@ -49,6 +49,7 @@ export default function EditClient() {
       downPayment: data.downPayment,
       status: data.status,
       nextAction: data.nextAction,
+      eventCategory: data.eventCategory,
       notes: data.notes || "",
     });
     

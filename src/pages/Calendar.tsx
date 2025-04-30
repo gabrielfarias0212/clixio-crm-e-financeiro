@@ -21,17 +21,16 @@ export default function CalendarPage() {
     clients.filter(client => client.weddingDate !== null) as (Client & { weddingDate: Date })[],
   [clients]);
 
-  // Group clients by date - fazer parse com new Date para garantir que sejam comparadas datas e não strings
+  // Group clients by date - use a consistent date format without time component
   const clientsByDate = useMemo(() => {
     const result: Record<string, Client[]> = {};
     
     clientsWithWeddingDates.forEach(client => {
-      // Garantir que estamos trabalhando com um objeto Date
+      // Convert to Date object if it's not already
       const weddingDate = new Date(client.weddingDate);
-      // Normalizar a data para UTC para evitar problemas de fuso horário
-      const dateKey = new Date(
-        Date.UTC(weddingDate.getFullYear(), weddingDate.getMonth(), weddingDate.getDate())
-      ).toISOString().split('T')[0];
+      
+      // Format date key as YYYY-MM-DD
+      const dateKey = `${weddingDate.getFullYear()}-${String(weddingDate.getMonth() + 1).padStart(2, '0')}-${String(weddingDate.getDate()).padStart(2, '0')}`;
       
       if (!result[dateKey]) {
         result[dateKey] = [];
@@ -46,12 +45,9 @@ export default function CalendarPage() {
   const selectedDayClients = useMemo(() => {
     if (!date) return [];
     
-    // Normalizar a data selecionada para garantir que o formato de UTC seja consistente
-    const selectedUTCDate = new Date(
-      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
-    ).toISOString().split('T')[0];
-    
-    return clientsByDate[selectedUTCDate] || [];
+    // Create key in same format as above
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return clientsByDate[dateKey] || [];
   }, [date, clientsByDate]);
 
   // Create modifiers styles for days with events
@@ -77,11 +73,12 @@ export default function CalendarPage() {
     document.title = "Calendário | Wedding CRM";
   }, []);
 
-  // Converter as chaves de strings para objetos Date para usar como modifiers no calendário
+  // Convert the date strings to Date objects for the calendar
   const eventDates = useMemo(() => {
     return Object.keys(clientsByDate).map(dateStr => {
       const [year, month, day] = dateStr.split('-').map(Number);
-      return new Date(Date.UTC(year, month - 1, day));
+      // Create date with local timezone to avoid offset issues
+      return new Date(year, month - 1, day);
     });
   }, [clientsByDate]);
   

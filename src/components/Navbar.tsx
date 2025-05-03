@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { BarChart, CalendarDays, Menu, Users, X, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { UserMenu } from "./UserMenu";
 
 export function Navbar() {
   const isMobile = useIsMobile();
@@ -91,6 +91,9 @@ export function Navbar() {
             ))}
           </nav>
         )}
+
+        {/* User Menu */}
+        <UserMenu />
 
         {/* Mobile menu button */}
         {isMobile && (

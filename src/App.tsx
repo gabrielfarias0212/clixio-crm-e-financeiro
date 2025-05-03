@@ -14,6 +14,9 @@ import EditClient from "./pages/EditClient";
 import Calendar from "./pages/Calendar";
 import CashFlow from "./pages/CashFlow";
 import NotFound from "./pages/NotFound";
+import Auth from "./pages/Auth";
+import { AuthProvider } from "./contexts/AuthContext";
+import { AuthGuard } from "./components/AuthGuard";
 import { ClientsProvider } from "./contexts/ClientsContext";
 import { TransactionsProvider } from "./contexts/TransactionsContext";
 
@@ -25,24 +28,100 @@ function App() {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <ClientsProvider>
-            <TransactionsProvider>
-              <BrowserRouter>
-                <Toaster />
-                <Sonner />
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/clients" element={<ClientList />} />
-                  <Route path="/clients/:id" element={<ClientDetail />} />
-                  <Route path="/clients/add" element={<AddClient />} />
-                  <Route path="/clients/edit/:id" element={<EditClient />} />
-                  <Route path="/calendar" element={<Calendar />} />
-                  <Route path="/cashflow" element={<CashFlow />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </TransactionsProvider>
-          </ClientsProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route 
+                  path="/" 
+                  element={
+                    <AuthGuard>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <Index />
+                        </TransactionsProvider>
+                      </ClientsProvider>
+                    </AuthGuard>
+                  } 
+                />
+                <Route 
+                  path="/clients" 
+                  element={
+                    <AuthGuard>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <ClientList />
+                        </TransactionsProvider>
+                      </ClientsProvider>
+                    </AuthGuard>
+                  } 
+                />
+                <Route 
+                  path="/clients/:id" 
+                  element={
+                    <AuthGuard>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <ClientDetail />
+                        </TransactionsProvider>
+                      </ClientsProvider>
+                    </AuthGuard>
+                  } 
+                />
+                <Route 
+                  path="/clients/add" 
+                  element={
+                    <AuthGuard>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <AddClient />
+                        </TransactionsProvider>
+                      </ClientsProvider>
+                    </AuthGuard>
+                  } 
+                />
+                <Route 
+                  path="/clients/edit/:id" 
+                  element={
+                    <AuthGuard>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <EditClient />
+                        </TransactionsProvider>
+                      </ClientsProvider>
+                    </AuthGuard>
+                  } 
+                />
+                <Route 
+                  path="/calendar" 
+                  element={
+                    <AuthGuard>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <Calendar />
+                        </TransactionsProvider>
+                      </ClientsProvider>
+                    </AuthGuard>
+                  } 
+                />
+                <Route 
+                  path="/cashflow" 
+                  element={
+                    <AuthGuard>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <CashFlow />
+                        </TransactionsProvider>
+                      </ClientsProvider>
+                    </AuthGuard>
+                  } 
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </AuthProvider>
         </TooltipProvider>
       </QueryClientProvider>
     </React.StrictMode>

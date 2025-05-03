@@ -2,6 +2,7 @@
 import { DashboardStats } from "./DashboardStats";
 import { FinancialSummary } from "./FinancialSummary";
 import { UpcomingEvents } from "@/components/UpcomingEvents";
+import { EventCategoryChart } from "./EventCategoryChart";
 import { useClients } from "@/contexts/ClientsContext";
 
 export function DashboardContent() {
@@ -17,6 +18,7 @@ export function DashboardContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <UpcomingEvents clients={clients} loading={loading} />
+        <EventCategoryChart />
       </div>
     </div>
   );

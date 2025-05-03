@@ -3,6 +3,7 @@ import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useMemo } from "react";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { ChartColumnStacked } from "lucide-react";
 import {
   BarChart,
@@ -57,7 +58,7 @@ export function EventCategoryChart() {
       const date = subMonths(now, i);
       const monthStart = startOfMonth(date);
       const monthEnd = endOfMonth(date);
-      const monthName = format(date, "MMM");
+      const monthName = format(date, "MMM", { locale: ptBR });
       
       // Basic data point with month name
       const dataPoint = {

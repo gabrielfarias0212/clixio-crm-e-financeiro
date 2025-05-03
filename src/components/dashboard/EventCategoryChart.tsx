@@ -129,7 +129,7 @@ export function EventCategoryChart() {
                           <p className="font-medium">{label}</p>
                           <div className="mt-2 space-y-1">
                             {payload
-                              .filter((item) => item.name !== "total" && item.value > 0)
+                              .filter((item) => item.name !== "total" && item.value !== undefined && Number(item.value) > 0)
                               .map((item) => (
                                 <div key={item.name} className="flex items-center justify-between gap-2">
                                   <div className="flex items-center">

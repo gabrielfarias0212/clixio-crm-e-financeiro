@@ -1,7 +1,7 @@
 
 import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent } from "@/components/ui/card";
-import { BadgeAlert, Calendar, CalendarCheck, Users } from "lucide-react";
+import { BadgeAlert, Calendar, CalendarCheck, FileCheck, Users } from "lucide-react";
 import { startOfMonth, endOfMonth } from "date-fns";
 
 export function DashboardStats() {
@@ -17,6 +17,13 @@ export function DashboardStats() {
     }
   ).length;
 
+  const monthlyClosedContracts = clients.filter(
+    client => {
+      const createdAt = new Date(client.createdAt);
+      return createdAt >= monthStart && createdAt <= monthEnd && client.status === "fechado";
+    }
+  ).length;
+
   const deliveredEvents = clients.filter(
     client => client.status === "pago"
   ).length;
@@ -28,7 +35,7 @@ export function DashboardStats() {
   ).length;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card>
         <CardContent className="pt-6">
           <div className="flex justify-between items-start">
@@ -37,6 +44,18 @@ export function DashboardStats() {
               <p className="text-2xl font-bold">{monthlyLeads}</p>
             </div>
             <Users className="h-8 w-8 text-primary" />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Contratos Fechados no Mês</p>
+              <p className="text-2xl font-bold">{monthlyClosedContracts}</p>
+            </div>
+            <FileCheck className="h-8 w-8 text-blue-500" />
           </div>
         </CardContent>
       </Card>

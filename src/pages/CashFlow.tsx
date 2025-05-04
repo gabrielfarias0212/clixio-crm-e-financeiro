@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
@@ -9,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { TransactionSummary } from "@/components/TransactionSummary";
 import { Transaction, TransactionType } from "@/utils/types";
+import { toast } from "sonner";
 
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
-  const { clients } = useClients();
+  const { clients, refreshClients } = useClients();
   const { transactions, addTransaction, deleteTransaction } = useTransactions();
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
 
@@ -33,11 +33,22 @@ export default function CashFlow() {
     
     if (result) {
       setShowAddTransaction(false);
+      
+      // If this transaction is linked to a client and is an income, refresh clients data
+      // to update the client's payment history
+      if (result.clientId && result.type === "entrada") {
+        toast.success("Transação registrada e adicionada ao histórico do cliente!");
+        refreshClients();
+      } else {
+        toast.success("Transação registrada com sucesso!");
+      }
     }
   };
 
   const handleDeleteTransaction = async (transactionId: string) => {
     await deleteTransaction(transactionId);
+    // Refresh client data if needed to update payment history
+    refreshClients();
   };
 
   return (

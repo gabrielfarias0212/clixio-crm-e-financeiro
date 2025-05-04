@@ -257,6 +257,7 @@ export const fetchTransactions = async (): Promise<Transaction[]> => {
 
 export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'createdAt'>): Promise<Transaction | null> => {
   try {
+    // First, create the transaction record
     const { data, error } = await supabase
       .from('wedding_transactions')
       .insert({
@@ -274,6 +275,18 @@ export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'c
     if (error) {
       console.error('Error creating transaction:', error);
       return null;
+    }
+
+    // If this is a client payment and no payment record exists yet, create one
+    if (transaction.type === 'entrada' && transaction.clientId && !transaction.paymentId) {
+      await supabase
+        .from('wedding_payments')
+        .insert({
+          client_id: transaction.clientId,
+          amount: transaction.amount,
+          date: formatDateForSupabase(transaction.date),
+          notes: transaction.description
+        });
     }
 
     return data ? parseTransaction(data) : null;

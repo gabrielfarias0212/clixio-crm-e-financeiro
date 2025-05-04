@@ -68,7 +68,7 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
   const [newCategoryName, setNewCategoryName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const form = useForm<TransactionFormValues>({
+  const form = useForm<z.infer<typeof transactionFormSchema>>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
       type: "entrada",
@@ -79,6 +79,19 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
       clientId: undefined,
     },
   });
+
+  // Update the client field when transaction type changes
+  useEffect(() => {
+    if (transactionType === "entrada") {
+      form.setValue("category", "pagamento de cliente");
+    } else {
+      // For expense transactions, clear client selection if "none" isn't an option
+      const currentClientId = form.getValues("clientId");
+      if (currentClientId === "none" || !currentClientId) {
+        form.setValue("clientId", undefined);
+      }
+    }
+  }, [transactionType, form]);
 
   // Atualizada para carregar categorias quando o tipo de transação mudar
   useEffect(() => {
@@ -156,14 +169,17 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
     }
   };
 
-  const handleSubmit = (data: TransactionFormValues) => {
+  const handleSubmit = (data: z.infer<typeof transactionFormSchema>) => {
+    // Don't include clientId if "none" is selected
+    const clientId = data.clientId === "none" ? undefined : data.clientId;
+    
     onAddTransaction({
       type: data.type,
       category: data.category as TransactionCategory,
       amount: data.amount,
       date: data.date,
       description: data.description,
-      clientId: data.clientId,
+      clientId,
     });
   };
 

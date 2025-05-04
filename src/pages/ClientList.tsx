@@ -13,10 +13,11 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Client, ClientStatus } from "@/utils/types";
-import { ChevronDown, Search, Trash2, X } from "lucide-react";
+import { ChevronDown, Search, Trash2, X, CheckCircle } from "lucide-react";
 import { useClients } from "@/contexts/ClientsContext";
 import { clearAllData } from "@/utils/supabaseUtils";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function ClientList() {
   const navigate = useNavigate();
@@ -25,6 +26,20 @@ export default function ClientList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ClientStatus | "all">("all");
   const [clearingData, setClearingData] = useState(false);
+  const [showDeliveredAlert, setShowDeliveredAlert] = useState(false);
+  
+  // Check if there are any newly delivered clients
+  useEffect(() => {
+    const hasDeliveredClients = sessionStorage.getItem('hasDeliveredWork');
+    if (hasDeliveredClients === 'true') {
+      setShowDeliveredAlert(true);
+      // Clear the flag after showing the alert
+      setTimeout(() => {
+        setShowDeliveredAlert(false);
+        sessionStorage.removeItem('hasDeliveredWork');
+      }, 5000); // Hide after 5 seconds
+    }
+  }, []);
 
   // Apply filters when search or status changes
   useEffect(() => {
@@ -82,11 +97,32 @@ export default function ClientList() {
     }
   };
 
+  // Count delivered works
+  const deliveredWorksCount = clients.filter(client => client.status === "pago").length;
+
   return (
     <Layout>
       <div className="max-w-screen-2xl mx-auto px-4 py-8 animate-fade-in">
+        {showDeliveredAlert && (
+          <Alert className="mb-6 bg-green-50 border-green-200 text-green-800">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription>
+              Trabalho marcado como entregue com sucesso! Total de trabalhos entregues: {deliveredWorksCount}.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-          <h1 className="text-2xl font-bold">Clientes</h1>
+          <div>
+            <h1 className="text-2xl font-bold">Clientes</h1>
+            {deliveredWorksCount > 0 && (
+              <div className="flex items-center gap-1 mt-1 text-sm text-green-700">
+                <CheckCircle className="h-4 w-4" />
+                <span>{deliveredWorksCount} {deliveredWorksCount === 1 ? 'trabalho entregue' : 'trabalhos entregues'}</span>
+              </div>
+            )}
+          </div>
+          
           <div className="flex gap-2">
             {clients && clients.length > 0 && (
               <Button 
@@ -166,11 +202,20 @@ export default function ClientList() {
         ) : filteredClients.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredClients.map((client) => (
-              <ClientCard 
-                key={client.id} 
-                client={client} 
-                onClick={() => navigate(`/clients/${client.id}`)}
-              />
+              <div key={client.id} className="relative">
+                <ClientCard 
+                  client={client} 
+                  onClick={() => navigate(`/clients/${client.id}`)}
+                />
+                {client.status === "pago" && (
+                  <div 
+                    className="absolute -top-2 -right-2 bg-green-100 rounded-full p-1 border border-green-200"
+                    title="Trabalho Entregue"
+                  >
+                    <CheckCircle className="text-green-600 h-4 w-4" />
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         ) : (

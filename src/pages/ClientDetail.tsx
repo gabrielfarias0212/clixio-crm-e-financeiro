@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -12,7 +13,8 @@ import {
   Edit,
   MailIcon,
   PhoneIcon,
-  Trash
+  Trash,
+  CheckSquare
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -31,14 +33,16 @@ import { Separator } from "@/components/ui/separator";
 import { ClientPayments } from "@/components/ClientPayments";
 import { Client } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
+import { updateClient } from "@/utils/supabaseUtils";
 
 export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { clients } = useClients();
+  const { clients, refreshClients } = useClients();
   const [client, setClient] = useState<Client | undefined>(() =>
     clients.find((c) => c.id === id)
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update client when clients context changes
   useEffect(() => {
@@ -63,10 +67,36 @@ export default function ClientDetail() {
     navigate("/clients");
   };
 
+  const handleMarkAsDelivered = async () => {
+    if (!client || isSubmitting) return;
+    
+    try {
+      setIsSubmitting(true);
+      const updatedClient = await updateClient(client.id, {
+        status: "pago",
+        nextAction: "nenhuma"
+      });
+      
+      if (updatedClient) {
+        toast.success("Trabalho marcado como entregue com sucesso!");
+        refreshClients();
+      } else {
+        toast.error("Erro ao marcar trabalho como entregue");
+      }
+    } catch (error) {
+      toast.error("Erro ao atualizar o status do cliente");
+      console.error("Error marking work as delivered:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const formattedValue = new Intl.NumberFormat('pt-BR', { 
     style: 'currency', 
     currency: 'BRL' 
   }).format(client.contractValue);
+
+  const isAlreadyDelivered = client.status === "pago";
 
   return (
     <Layout>
@@ -84,6 +114,18 @@ export default function ClientDetail() {
           </div>
           
           <div className="flex flex-wrap gap-3">
+            {!isAlreadyDelivered && (
+              <Button 
+                variant="default" 
+                onClick={handleMarkAsDelivered}
+                disabled={isSubmitting}
+                className="gap-1 bg-green-600 hover:bg-green-700"
+              >
+                <CheckSquare className="h-4 w-4" />
+                {isSubmitting ? "Salvando..." : "Trabalho Entregue"}
+              </Button>
+            )}
+            
             <Button 
               variant="outline" 
               onClick={() => navigate(`/clients/edit/${client.id}`)}

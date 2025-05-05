@@ -199,14 +199,14 @@ export function AddEventDialog({
                 render={({ field }) => (
                   <Select 
                     onValueChange={field.onChange} 
-                    value={field.value || ""}
-                    defaultValue=""
+                    value={field.value || "none"}
+                    defaultValue="none"
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um cliente (opcional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nenhum</SelectItem>
+                      <SelectItem value="none">Nenhum</SelectItem>
                       {clients.map(client => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.name}

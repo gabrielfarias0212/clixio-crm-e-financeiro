@@ -11,6 +11,7 @@ import ClientList from "./pages/ClientList";
 import ClientDetail from "./pages/ClientDetail";
 import AddClient from "./pages/AddClient";
 import EditClient from "./pages/EditClient";
+import ImportClients from "./pages/ImportClients";
 import Calendar from "./pages/Calendar";
 import CashFlow from "./pages/CashFlow";
 import NotFound from "./pages/NotFound";
@@ -78,6 +79,18 @@ function App() {
                       <ClientsProvider>
                         <TransactionsProvider>
                           <AddClient />
+                        </TransactionsProvider>
+                      </ClientsProvider>
+                    </AuthGuard>
+                  } 
+                />
+                <Route 
+                  path="/clients/import" 
+                  element={
+                    <AuthGuard>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <ImportClients />
                         </TransactionsProvider>
                       </ClientsProvider>
                     </AuthGuard>

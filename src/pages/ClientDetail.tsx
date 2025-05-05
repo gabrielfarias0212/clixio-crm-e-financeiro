@@ -7,7 +7,7 @@ import { Client } from "@/utils/types";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Check, Calendar, Phone, Mail, CreditCard, FileText } from "lucide-react";
-import { formatDate } from "@/utils/clientUtils";
+import { format } from "date-fns"; // Use date-fns directly instead of formatDate
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ActionChip } from "@/components/ActionChip";
@@ -144,7 +144,7 @@ export default function ClientDetail() {
                       <Calendar className="h-4 w-4 mr-2 text-gray-500" />
                       <span>
                         {client.weddingDate 
-                          ? formatDate(new Date(client.weddingDate)) 
+                          ? format(new Date(client.weddingDate), "dd/MM/yyyy") 
                           : "Data não definida"}
                       </span>
                     </div>
@@ -177,7 +177,7 @@ export default function ClientDetail() {
           </div>
           
           <div>
-            <ClientPayments client={client} onPaymentAdded={refreshClients} />
+            <ClientPayments client={client} onUpdate={refreshClients} />
           </div>
         </div>
       </div>

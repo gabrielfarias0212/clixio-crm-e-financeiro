@@ -13,11 +13,13 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { ActionChip } from "@/components/ActionChip";
 import { ClientPayments } from "@/components/ClientPayments";
 import { DeliveredWorkIndicator } from "@/components/DeliveredWorkIndicator";
+import { useTransactions } from "@/contexts/TransactionsContext";
 
 export default function ClientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { clients, updateClient: updateClientData, refreshClients } = useClients();
+  const { refreshTransactions } = useTransactions();
   const [client, setClient] = useState<Client | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -64,6 +66,12 @@ export default function ClientDetail() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleClientUpdate = async (updatedClient: Client) => {
+    await refreshClients();
+    // Also refresh transactions to ensure the financial dashboard stays in sync
+    await refreshTransactions();
   };
 
   // If the client is not found or not loaded yet
@@ -177,7 +185,7 @@ export default function ClientDetail() {
           </div>
           
           <div>
-            <ClientPayments client={client} onUpdate={refreshClients} />
+            <ClientPayments client={client} onUpdate={handleClientUpdate} />
           </div>
         </div>
       </div>

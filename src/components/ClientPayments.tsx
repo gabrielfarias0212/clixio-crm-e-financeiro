@@ -6,7 +6,7 @@ import { AddPaymentForm } from "./AddPaymentForm";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { DialogContent, Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { createPayment } from "@/utils/supabaseUtils";
+import { createPayment, deletePayment } from "@/utils/supabaseUtils";
 import { toast } from "sonner";
 
 export interface ClientPaymentsProps {
@@ -48,6 +48,33 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
     }
   };
 
+  const handleDeletePayment = async (paymentId: string) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Delete the payment from the database (this will also delete related transaction)
+      await deletePayment(paymentId);
+      
+      // Update client locally by removing the payment
+      const updatedClient = {
+        ...client,
+        payments: client.payments.filter(payment => payment.id !== paymentId)
+      };
+      
+      // Update the UI
+      if (onUpdate) {
+        onUpdate(updatedClient);
+      }
+      
+      toast.success("Pagamento excluído com sucesso!");
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+      toast.error("Erro ao excluir o pagamento. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -69,7 +96,11 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
         </Dialog>
       </div>
       
-      <PaymentHistory payments={client.payments} />
+      <PaymentHistory 
+        payments={client.payments} 
+        onDeletePayment={handleDeletePayment}
+        isDeleting={isSubmitting}
+      />
     </div>
   );
 }

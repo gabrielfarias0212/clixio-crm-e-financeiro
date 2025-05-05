@@ -19,6 +19,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { AuthGuard } from "./components/AuthGuard";
 import { ClientsProvider } from "./contexts/ClientsContext";
 import { TransactionsProvider } from "./contexts/TransactionsContext";
+import { CalendarEventsProvider } from "./hooks/useCalendarEvents";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -100,7 +101,9 @@ function App() {
                     <AuthGuard>
                       <ClientsProvider>
                         <TransactionsProvider>
-                          <Calendar />
+                          <CalendarEventsProvider>
+                            <Calendar />
+                          </CalendarEventsProvider>
                         </TransactionsProvider>
                       </ClientsProvider>
                     </AuthGuard>

@@ -1,3 +1,4 @@
+
 export type ClientStatus = 
   | "orçamento enviado" 
   | "follow-up" 
@@ -73,4 +74,31 @@ export interface Client {
   payments: Payment[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export type EventType = 
+  | 'custom' 
+  | 'client' 
+  | 'meeting' 
+  | 'photoshoot' 
+  | 'delivery' 
+  | 'editing';
+
+export type EventColor = 
+  | 'blue' 
+  | 'green' 
+  | 'red' 
+  | 'yellow' 
+  | 'purple' 
+  | 'gray';
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  description: string;
+  date: Date;
+  time: string;
+  type: EventType;
+  color: EventColor;
+  clientId?: string;
 }

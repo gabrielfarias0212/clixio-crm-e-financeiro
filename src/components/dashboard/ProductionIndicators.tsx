@@ -2,8 +2,7 @@
 import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Clock, CheckSquare, ClipboardCheck } from "lucide-react";
-import { startOfMonth, endOfMonth, isWithinInterval, formatDistance } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { useMemo } from "react";
 
 export function ProductionIndicators() {
@@ -22,19 +21,19 @@ export function ProductionIndicators() {
 
     // Count events by status
     const statusCounts = {
-      scheduled: 0, // Pre-wedding scheduled
+      scheduled: 0, // Events scheduled but not delivered
       editing: 0,   // In editing process
       delivered: 0  // Delivered
     };
 
     clients.forEach(client => {
-      // Only count as scheduled if not delivered
+      // Only count as scheduled if not delivered and in progress
       if (client.status === "em andamento") statusCounts.scheduled++;
       if (client.nextAction === "editar") statusCounts.editing++;
       if (client.status === "pago") statusCounts.delivered++;
     });
 
-    // Calculate average delivery time (using nextAction as proxy for delivery status)
+    // Calculate average delivery time (for delivered events)
     let totalDeliveryDays = 0;
     let deliveredCount = 0;
 

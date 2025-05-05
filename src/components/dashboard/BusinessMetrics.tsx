@@ -2,7 +2,7 @@
 import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { startOfYear, endOfYear, isWithinInterval, format } from "date-fns";
+import { startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { FileCheck, TrendingUp, BarChart, PieChart } from "lucide-react";
 
 export function BusinessMetrics() {
@@ -41,12 +41,12 @@ export function BusinessMetrics() {
 
   // 3. Taxa de conversão de leads em contratos
   const totalLeads = clients.filter(client => 
-    client.createdAt && isWithinInterval(client.createdAt, { start: yearStart, end: yearEnd })
+    client.createdAt && isWithinInterval(new Date(client.createdAt), { start: yearStart, end: yearEnd })
   ).length;
   
   const closedContracts = clients.filter(client => 
     (client.status === "fechado" || client.status === "em andamento" || client.status === "pago") &&
-    client.createdAt && isWithinInterval(client.createdAt, { start: yearStart, end: yearEnd })
+    client.createdAt && isWithinInterval(new Date(client.createdAt), { start: yearStart, end: yearEnd })
   ).length;
   
   const conversionRate = totalLeads > 0 ? (closedContracts / totalLeads) * 100 : 0;

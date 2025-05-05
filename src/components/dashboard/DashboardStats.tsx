@@ -2,7 +2,7 @@
 import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { BadgeAlert, Calendar, CalendarCheck, FileCheck, Users } from "lucide-react";
-import { startOfMonth, endOfMonth } from "date-fns";
+import { startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 
 export function DashboardStats() {
   const { clients } = useClients();
@@ -10,24 +10,31 @@ export function DashboardStats() {
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
+  // Novos leads do mês atual
   const monthlyLeads = clients.filter(
     client => {
+      if (!client.createdAt) return false;
       const createdAt = new Date(client.createdAt);
-      return createdAt >= monthStart && createdAt <= monthEnd;
+      return isWithinInterval(createdAt, { start: monthStart, end: monthEnd });
     }
   ).length;
 
+  // Contratos fechados no mês atual
   const monthlyClosedContracts = clients.filter(
     client => {
+      if (!client.createdAt) return false;
       const createdAt = new Date(client.createdAt);
-      return createdAt >= monthStart && createdAt <= monthEnd && client.status === "fechado";
+      return isWithinInterval(createdAt, { start: monthStart, end: monthEnd }) && 
+             (client.status === "fechado" || client.status === "em andamento");
     }
   ).length;
 
+  // Total de eventos entregues (status pago)
   const deliveredEvents = clients.filter(
     client => client.status === "pago"
   ).length;
 
+  // Pendências financeiras (valores pendentes em contratos não entregues)
   const pendingPayments = clients.filter(
     client => 
       (client.status === "em andamento" || client.status === "fechado") &&

@@ -12,10 +12,10 @@ export function BusinessMetrics() {
   const yearStart = startOfYear(new Date());
   const yearEnd = endOfYear(new Date());
 
-  // 1. Total de contratos ativos no ano
+  // 1. Total de contratos ativos no ano (exclude delivered/"pago" status)
   const activeContracts = clients.filter(client => 
-    client.status === "em andamento" || client.status === "fechado" || client.status === "pago" &&
-    client.createdAt && isWithinInterval(client.createdAt, { start: yearStart, end: yearEnd })
+    (client.status === "em andamento" || client.status === "fechado") &&
+    client.createdAt && isWithinInterval(new Date(client.createdAt), { start: yearStart, end: yearEnd })
   ).length;
 
   // 2. Média de faturamento mensal

@@ -28,6 +28,7 @@ export function ProductionIndicators() {
     };
 
     clients.forEach(client => {
+      // Only count as scheduled if not delivered
       if (client.status === "em andamento") statusCounts.scheduled++;
       if (client.nextAction === "editar") statusCounts.editing++;
       if (client.status === "pago") statusCounts.delivered++;

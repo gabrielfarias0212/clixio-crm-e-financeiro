@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Client, ClientStatus } from "@/utils/types";
-import { ChevronDown, Search, Trash2, X, CheckCircle } from "lucide-react";
+import { ChevronDown, Search, Trash2, X, CheckCircle, Upload } from "lucide-react";
 import { useClients } from "@/contexts/ClientsContext";
 import { clearAllData } from "@/utils/supabaseUtils";
 import { toast } from "sonner";
@@ -135,6 +135,14 @@ export default function ClientList() {
                 {clearingData ? "Limpando..." : "Limpar Dados"}
               </Button>
             )}
+            <Button 
+              variant="outline"
+              onClick={() => navigate("/clients/import")}
+              className="flex items-center gap-1"
+            >
+              <Upload className="h-4 w-4" />
+              Importar Clientes
+            </Button>
             <Button 
               onClick={() => navigate("/clients/add")}
             >

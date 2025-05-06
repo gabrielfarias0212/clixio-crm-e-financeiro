@@ -59,7 +59,8 @@ export function ClientImporter({ data, fileName, onReset }: ClientImporterProps)
       
       return clients.some(client => 
         (email && client.email && client.email.toLowerCase() === email.toLowerCase()) || 
-        (phone && client.phone && client.phone.toLowerCase() === phone.toLowerCase())
+        (phone && client.phone && typeof client.phone === 'string' && typeof phone === 'string' && 
+         client.phone.toLowerCase() === phone.toLowerCase())
       );
     });
     
@@ -201,10 +202,10 @@ export function ClientImporter({ data, fileName, onReset }: ClientImporterProps)
         
         // Check if client already exists
         const email = clientData.email.toLowerCase();
-        const phone = clientData.phone.toLowerCase();
+        const phone = typeof clientData.phone === 'string' ? clientData.phone.toLowerCase() : '';
         const existingClient = clients.find(c => 
           (email && c.email && c.email.toLowerCase() === email) || 
-          (phone && c.phone && c.phone.toLowerCase() === phone)
+          (phone && c.phone && typeof c.phone === 'string' && c.phone.toLowerCase() === phone)
         );
         
         if (existingClient) {

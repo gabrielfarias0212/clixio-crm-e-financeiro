@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { createClient, createPayment } from "@/utils/supabaseUtils";
+import { createClient } from "@/utils/supabaseUtils";
 import { toast } from "sonner";
 import { Client, ClientStatus, NextAction, EventCategory } from "@/utils/types";
 import { format } from "date-fns";
@@ -55,10 +55,15 @@ interface BulkClientImporterProps {
   onComplete: () => void;
 }
 
+type UserProfile = {
+  id: string;
+  email: string;
+};
+
 export function BulkClientImporter({ onComplete }: BulkClientImporterProps) {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: clientsToImport.length });
-  const [targetUserEmail, setTargetUserEmail] = useState("gabrielfariasfotografias@gmail.com");
+  const [targetUserEmail, setTargetUserEmail] = useState<string>("gabrielfariasfotografias@gmail.com");
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   
   // Find the user ID for the target email

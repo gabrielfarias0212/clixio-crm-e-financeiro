@@ -8,6 +8,7 @@ interface CalendarEventsContextProps {
   updateEvent: (event: CalendarEvent) => void;
   deleteEvent: (eventId: string) => void;
   getEventById: (eventId: string) => CalendarEvent | undefined;
+  getEventsByDate: (date: Date) => CalendarEvent[];
 }
 
 const CalendarEventsContext = createContext<CalendarEventsContextProps>({
@@ -15,7 +16,8 @@ const CalendarEventsContext = createContext<CalendarEventsContextProps>({
   addEvent: () => {},
   updateEvent: () => {},
   deleteEvent: () => {},
-  getEventById: () => undefined
+  getEventById: () => undefined,
+  getEventsByDate: () => []
 });
 
 export function CalendarEventsProvider({ children }: { children: ReactNode }) {
@@ -67,12 +69,24 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
     [events]
   );
   
+  const getEventsByDate = useCallback(
+    (date: Date) => {
+      const dateString = date.toISOString().split('T')[0];
+      return events.filter(event => {
+        const eventDate = new Date(event.date);
+        return eventDate.toISOString().split('T')[0] === dateString;
+      });
+    },
+    [events]
+  );
+  
   const value = {
     events,
     addEvent,
     updateEvent,
     deleteEvent,
-    getEventById
+    getEventById,
+    getEventsByDate
   };
   
   return (

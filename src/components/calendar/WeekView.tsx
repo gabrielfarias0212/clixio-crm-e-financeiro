@@ -1,5 +1,5 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Client } from "@/utils/types";
 import { 
   format, 
@@ -9,12 +9,13 @@ import {
   isWithinInterval,
   startOfDay,
   endOfDay,
-  addHours
+  isSameDay
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMemo } from "react";
 import { normalizeDate } from "@/utils/dateUtils";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
+import { cn } from "@/lib/utils";
 
 interface WeekViewProps {
   date: Date;
@@ -81,80 +82,81 @@ export function WeekView({ date, clients, onClientClick }: WeekViewProps) {
     });
   };
   
+  const today = new Date();
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          {format(weekStart, "dd/MM", { locale: ptBR })} - {format(weekEnd, "dd/MM/yyyy", { locale: ptBR })}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0 overflow-x-auto">
-        <div className="min-w-[800px]">
-          {/* Header with days */}
-          <div className="grid grid-cols-8 bg-muted/10">
-            <div className="p-2 border-b border-r text-center"></div>
-            {weekDays.map((day, i) => (
-              <div 
-                key={i} 
-                className="p-2 border-b text-center font-medium"
-              >
-                <div className="capitalize">{format(day, "EEE", { locale: ptBR })}</div>
-                <div className="text-sm">{format(day, "dd/MM")}</div>
-              </div>
-            ))}
-          </div>
-          
-          {/* Time slots and events */}
-          {hours.map(hour => {
-            const hourLabel = `${hour}:00`;
+    <div className="p-0 overflow-x-auto">
+      <div className="min-w-[800px]">
+        {/* Header with days */}
+        <div className="grid grid-cols-8 bg-gray-50">
+          <div className="p-2 border-b border-r text-center"></div>
+          {weekDays.map((day, i) => {
+            const isToday = isSameDay(day, today);
+            const dayName = format(day, "E", { locale: ptBR });
+            const dayNumber = format(day, "d");
             
             return (
-              <div key={hour} className="grid grid-cols-8 min-h-[60px]">
-                <div className="border-r p-1 text-xs text-gray-500 text-center">
-                  {hourLabel}
-                </div>
-                
-                {weekDays.map((day, i) => {
-                  const dayEvents = getEventsForDateAndHour(day, hour);
-                  
-                  return (
-                    <div key={i} className={`border border-gray-100 p-1 ${
-                      format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
-                        ? 'bg-blue-50/20'
-                        : ''
-                    }`}>
-                      {dayEvents.length > 0 ? (
-                        <div className="space-y-1">
-                          {dayEvents.map(event => (
-                            <div 
-                              key={event.id} 
-                              className={`p-1 rounded-md text-xs ${
-                                event.type === 'client' 
-                                  ? 'bg-purple-100 hover:bg-purple-200 cursor-pointer' 
-                                  : event.color === 'blue' 
-                                    ? 'bg-blue-100' 
-                                    : event.color === 'green' 
-                                      ? 'bg-green-100' 
-                                      : event.color === 'red' 
-                                        ? 'bg-red-100' 
-                                        : 'bg-gray-100'
-                              }`}
-                              onClick={() => event.clientId && onClientClick(event.clientId)}
-                            >
-                              <div className="font-medium truncate">{event.title}</div>
-                              <div className="text-[10px] text-gray-500 truncate">{event.description}</div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
+              <div 
+                key={i} 
+                className={cn(
+                  "p-2 border-b text-center font-normal",
+                  isToday && "bg-orange-50 text-orange-600"
+                )}
+              >
+                <div className="capitalize text-sm font-medium">{dayName}.</div>
+                <div className="text-xl">{dayNumber}</div>
               </div>
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+        
+        {/* Time slots and events */}
+        {hours.map(hour => {
+          const hourLabel = `${hour}:00`;
+          
+          return (
+            <div key={hour} className="grid grid-cols-8 min-h-[70px]">
+              <div className="border-r p-2 text-xs text-gray-500 text-right pr-3">
+                {hourLabel}
+              </div>
+              
+              {weekDays.map((day, i) => {
+                const isToday = isSameDay(day, today);
+                const dayEvents = getEventsForDateAndHour(day, hour);
+                
+                return (
+                  <div key={i} className={cn(
+                    "border border-gray-100 p-1",
+                    isToday && "bg-orange-50/20"
+                  )}>
+                    {dayEvents.length > 0 ? (
+                      <div className="space-y-1">
+                        {dayEvents.map(event => (
+                          <div 
+                            key={event.id} 
+                            className={cn(
+                              "p-1 rounded-md text-xs cursor-pointer",
+                              event.type === 'client' ? 'bg-purple-100 hover:bg-purple-200' :
+                              event.color === 'blue' ? 'bg-blue-100 hover:bg-blue-200' :
+                              event.color === 'green' ? 'bg-green-100 hover:bg-green-200' :
+                              event.color === 'red' ? 'bg-red-100 hover:bg-red-200' :
+                              'bg-gray-100 hover:bg-gray-200'
+                            )}
+                            onClick={() => event.clientId && onClientClick(event.clientId)}
+                          >
+                            <div className="font-medium truncate">{event.title}</div>
+                            <div className="text-[10px] text-gray-500 truncate">{event.description}</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

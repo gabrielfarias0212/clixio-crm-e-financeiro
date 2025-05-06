@@ -1,13 +1,12 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Client } from "@/utils/types";
-import { format, addHours, startOfDay } from "date-fns";
+import { format, addHours, startOfDay, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Badge } from "@/components/ui/badge";
 import { useMemo } from "react";
 import { normalizeDate } from "@/utils/dateUtils";
 import { CalendarEvent } from "@/utils/types";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
+import { cn } from "@/lib/utils";
 
 interface DayViewProps {
   date: Date;
@@ -21,6 +20,8 @@ export function DayView({ date, clients, onClientClick }: DayViewProps) {
   
   const dayStart = startOfDay(date);
   const formattedDate = format(date, "EEEE, dd 'de' MMMM", { locale: ptBR });
+  const today = new Date();
+  const isToday = isSameDay(date, today);
 
   // Get events and clients for this day
   const dayEvents = useMemo(() => {
@@ -49,58 +50,61 @@ export function DayView({ date, clients, onClientClick }: DayViewProps) {
   }, [date, events, clients]);
   
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="capitalize">{formattedDate}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-1">
-          {hours.map(hour => {
-            const timeSlot = addHours(dayStart, hour);
-            const hourStr = format(timeSlot, "HH:00");
-            
-            // Find events for this hour
-            const hourEvents = dayEvents.filter(event => {
-              const eventHour = event.time.split(':')[0];
-              return eventHour === format(timeSlot, "HH");
-            });
-            
-            return (
-              <div key={hour} className="grid grid-cols-12 min-h-[60px] border-t">
-                <div className="col-span-1 py-2 text-xs text-gray-500">
-                  {hourStr}
-                </div>
-                <div className="col-span-11 py-1">
-                  {hourEvents.length > 0 ? (
-                    <div className="space-y-1">
-                      {hourEvents.map(event => (
-                        <div 
-                          key={event.id} 
-                          className={`p-2 rounded-md text-sm ${
-                            event.type === 'client' 
-                              ? 'bg-purple-100 hover:bg-purple-200 cursor-pointer' 
-                              : event.color === 'blue' 
-                                ? 'bg-blue-100' 
-                                : event.color === 'green' 
-                                  ? 'bg-green-100' 
-                                  : event.color === 'red' 
-                                    ? 'bg-red-100' 
-                                    : 'bg-gray-100'
-                          }`}
-                          onClick={() => event.clientId && onClientClick(event.clientId)}
-                        >
-                          <div className="font-medium">{event.title}</div>
-                          <div className="text-xs text-gray-500">{event.time} - {event.description}</div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
+    <div className="p-4">
+      <h2 className={cn(
+        "text-lg font-medium mb-4 capitalize",
+        isToday && "text-orange-500"
+      )}>
+        {formattedDate}
+      </h2>
+      
+      <div className="space-y-1">
+        {hours.map(hour => {
+          const timeSlot = addHours(dayStart, hour);
+          const hourStr = format(timeSlot, "HH:00");
+          
+          // Find events for this hour
+          const hourEvents = dayEvents.filter(event => {
+            const eventHour = event.time.split(':')[0];
+            return eventHour === format(timeSlot, "HH");
+          });
+          
+          return (
+            <div key={hour} className="grid grid-cols-12 min-h-[70px] border-t border-gray-100">
+              <div className="col-span-1 py-2 text-xs text-gray-500 text-right pr-3">
+                {hourStr}
               </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+              <div className="col-span-11 py-1 pl-3 border-l border-gray-100">
+                {hourEvents.length > 0 ? (
+                  <div className="space-y-1">
+                    {hourEvents.map(event => (
+                      <div 
+                        key={event.id} 
+                        className={cn(
+                          "p-2 rounded-md text-sm",
+                          event.type === 'client' 
+                            ? 'bg-purple-100 hover:bg-purple-200 cursor-pointer' 
+                            : event.color === 'blue' 
+                              ? 'bg-blue-100 hover:bg-blue-200 cursor-pointer' 
+                              : event.color === 'green' 
+                                ? 'bg-green-100 hover:bg-green-200 cursor-pointer' 
+                                : event.color === 'red' 
+                                  ? 'bg-red-100 hover:bg-red-200 cursor-pointer' 
+                                  : 'bg-gray-100 hover:bg-gray-200 cursor-pointer'
+                        )}
+                        onClick={() => event.clientId && onClientClick(event.clientId)}
+                      >
+                        <div className="font-medium">{event.title}</div>
+                        <div className="text-xs text-gray-500">{event.time} - {event.description}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

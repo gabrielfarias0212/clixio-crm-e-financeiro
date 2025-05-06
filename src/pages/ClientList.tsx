@@ -13,11 +13,22 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Client, ClientStatus } from "@/utils/types";
-import { ChevronDown, Search, Trash2, X, CheckCircle, Upload } from "lucide-react";
+import { ChevronDown, Search, Trash2, X, CheckCircle, Upload, List, LayoutGrid } from "lucide-react";
 import { useClients } from "@/contexts/ClientsContext";
 import { clearAllData } from "@/utils/supabaseUtils";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { formatDate } from "@/utils/clientUtils";
+import { StatusBadge } from "@/components/StatusBadge";
 
 export default function ClientList() {
   const navigate = useNavigate();
@@ -27,6 +38,7 @@ export default function ClientList() {
   const [statusFilter, setStatusFilter] = useState<ClientStatus | "all">("all");
   const [clearingData, setClearingData] = useState(false);
   const [showDeliveredAlert, setShowDeliveredAlert] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "card">("list");
   
   // Check if there are any newly delivered clients
   useEffect(() => {
@@ -100,6 +112,30 @@ export default function ClientList() {
   // Count delivered works
   const deliveredWorksCount = clients.filter(client => client.status === "pago").length;
 
+  // Format contract value to Brazilian currency
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', { 
+      style: 'currency', 
+      currency: 'BRL' 
+    }).format(value);
+  };
+
+  // Function to format the wedding date 
+  const formatWeddingDate = (date: Date | null) => {
+    if (!date) return "Não definida";
+    
+    // Create a new date at noon to avoid timezone issues
+    const weddingDateObj = new Date(date);
+    const localDate = new Date(
+      weddingDateObj.getFullYear(),
+      weddingDateObj.getMonth(),
+      weddingDateObj.getDate(),
+      12, 0, 0
+    );
+    
+    return formatDate(localDate);
+  };
+
   return (
     <Layout>
       <div className="max-w-screen-2xl mx-auto px-4 py-8 animate-fade-in">
@@ -151,7 +187,7 @@ export default function ClientList() {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters and View Mode Toggle */}
         <div className="mb-8 flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -191,6 +227,27 @@ export default function ClientList() {
             </DropdownMenuContent>
           </DropdownMenu>
           
+          <div className="flex">
+            <Button 
+              variant="outline" 
+              size="icon"
+              className={cn("rounded-r-none", viewMode === "list" && "bg-gray-100")}
+              onClick={() => setViewMode("list")}
+              aria-label="View as list"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon"
+              className={cn("rounded-l-none border-l-0", viewMode === "card" && "bg-gray-100")}
+              onClick={() => setViewMode("card")}
+              aria-label="View as cards"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
+          
           {(searchQuery || statusFilter !== "all") && (
             <Button 
               variant="ghost" 
@@ -208,24 +265,79 @@ export default function ClientList() {
             <p>Carregando clientes...</p>
           </div>
         ) : filteredClients.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredClients.map((client) => (
-              <div key={client.id} className="relative">
-                <ClientCard 
-                  client={client} 
-                  onClick={() => navigate(`/clients/${client.id}`)}
-                />
-                {client.status === "pago" && (
-                  <div 
-                    className="absolute -top-2 -right-2 bg-green-100 rounded-full p-1 border border-green-200"
-                    title="Trabalho Entregue"
-                  >
-                    <CheckCircle className="text-green-600 h-4 w-4" />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          viewMode === "list" ? (
+            <div className="bg-white rounded-md border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Contato</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredClients.map((client) => (
+                    <TableRow 
+                      key={client.id} 
+                      onClick={() => navigate(`/clients/${client.id}`)}
+                      className="cursor-pointer hover:bg-gray-50"
+                    >
+                      <TableCell className="font-medium">
+                        <div className="flex items-center">
+                          {client.name}
+                          {client.status === "pago" && (
+                            <CheckCircle className="ml-2 text-green-600 h-4 w-4" title="Trabalho Entregue" />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {formatWeddingDate(client.weddingDate)}
+                      </TableCell>
+                      <TableCell>
+                        <span className={client.status === "orçamento enviado" || client.status === "follow-up" ? "text-gray-400 italic" : "font-medium"}>
+                          {formatCurrency(client.contractValue)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={client.status} />
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <div>{client.email}</div>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <div>{client.phone}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredClients.map((client) => (
+                <div key={client.id} className="relative">
+                  <ClientCard 
+                    client={client} 
+                    onClick={() => navigate(`/clients/${client.id}`)}
+                  />
+                  {client.status === "pago" && (
+                    <div 
+                      className="absolute -top-2 -right-2 bg-green-100 rounded-full p-1 border border-green-200"
+                      title="Trabalho Entregue"
+                    >
+                      <CheckCircle className="text-green-600 h-4 w-4" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )
         ) : (
           <div className="text-center py-12">
             <h3 className="text-lg font-medium mb-2">Nenhum cliente encontrado</h3>

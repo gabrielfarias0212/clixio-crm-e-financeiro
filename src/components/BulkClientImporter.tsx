@@ -63,7 +63,8 @@ type UserProfile = {
 export function BulkClientImporter({ onComplete }: BulkClientImporterProps) {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: clientsToImport.length });
-  const [targetUserEmail, setTargetUserEmail] = useState<string>("gabrielfariasfotografias@gmail.com");
+  // Fix: Explicitly provide the type with a simpler form and avoid unnecessary useState type inference
+  const targetUserEmail = "gabrielfariasfotografias@gmail.com";
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   
   // Find the user ID for the target email

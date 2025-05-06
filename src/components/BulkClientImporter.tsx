@@ -1,69 +1,23 @@
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { createClient } from "@/utils/supabaseUtils";
 import { toast } from "sonner";
-import { Client, ClientStatus, NextAction, EventCategory } from "@/utils/types";
-import { format } from "date-fns";
+import { ClientStatus, NextAction, EventCategory } from "@/utils/types";
 import { supabase } from "@/integrations/supabase/client";
-
-// Client data from the spreadsheet
-const clientsToImport = [
-  {
-    name: "Dayadria Cypriano Rabelo Seribeli",
-    weddingDate: new Date("2025-09-06"),
-    location: "Cerimônia: Igreja Matriz / Festa: Simted",
-    contractValue: 3800,
-    downPayment: 380,
-    notes: "10% (380,00) de entrada e restante até o evento"
-  },
-  {
-    name: "LEONARDO GONÇALVES DA SILVA",
-    weddingDate: new Date("2026-04-25"),
-    location: "CERIMONIA: SANTISSIMA TRINDADE / RECEPÇÃO A DEFINIR",
-    contractValue: 3800,
-    downPayment: 380,
-    notes: "10% (380,00) de entrada até o dia 10 e restante até o dia 26/04/26"
-  },
-  {
-    name: "FRANCIENE DE SOUZA DA SILVA",
-    weddingDate: new Date("2025-06-14"),
-    location: "NOSSA SENHORA DE FATIMA/ EZENEZER",
-    contractValue: 3800,
-    downPayment: 380,
-    notes: "10% (380,00) de entrada até o dia 10 e restante até o dia 14/06/25"
-  },
-  {
-    name: "Ariene kelita Medina Pereira",
-    weddingDate: new Date("2025-11-20"),
-    location: "Igreja: palavra profética",
-    contractValue: 3000,
-    downPayment: 300,
-    notes: "ENTRADA DE 10% NO FECHAMENTO DO CONTRATO E RESTANTE ATÉ O DIA 19/11/2025"
-  },
-  {
-    name: "Vanessa Fukuda Mariano",
-    weddingDate: new Date("2025-10-05"),
-    location: "Garden Fest",
-    contractValue: 3800,
-    downPayment: 380,
-    notes: "10% ENTRADA E RESTANTE ATÉ A DATA DO EVENTO."
-  }
-];
+import { createClient } from "@/utils/supabaseUtils";
+import { clientsToImport } from "@/data/sampleClientData";
+import { ImportProgress } from "@/components/bulk-import/ImportProgress";
+import { ImportControls } from "@/components/bulk-import/ImportControls";
+import { ClientImportSummary } from "@/components/bulk-import/ClientImportSummary";
 
 interface BulkClientImporterProps {
   onComplete: () => void;
 }
 
-type UserProfile = {
-  id: string;
-  email: string;
-};
-
 export function BulkClientImporter({ onComplete }: BulkClientImporterProps) {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: clientsToImport.length });
-  // Fix: Explicitly provide the type with a simpler form and avoid unnecessary useState type inference
+  
+  // Using a constant instead of state to avoid excessive type instantiation
   const targetUserEmail = "gabrielfariasfotografias@gmail.com";
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   
@@ -168,42 +122,19 @@ export function BulkClientImporter({ onComplete }: BulkClientImporterProps) {
         </p>
       </div>
       
-      <div className="flex justify-end">
-        <Button 
-          onClick={handleImport} 
-          disabled={loading || !targetUserId}
-        >
-          {loading ? "Importando..." : "Importar Clientes"}
-        </Button>
-      </div>
+      <ImportControls 
+        onImport={handleImport}
+        isLoading={loading}
+        isDisabled={!targetUserId}
+      />
       
-      {loading && (
-        <div className="space-y-2">
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div 
-              className="bg-blue-600 h-2.5 rounded-full" 
-              style={{ width: `${(progress.current / progress.total) * 100}%` }}
-            ></div>
-          </div>
-          <p className="text-sm text-gray-500">
-            Importando {progress.current} de {progress.total} clientes...
-          </p>
-        </div>
-      )}
+      <ImportProgress 
+        current={progress.current}
+        total={progress.total}
+        isVisible={loading}
+      />
       
-      <div className="space-y-2">
-        <h4 className="font-medium">Resumo dos clientes a serem importados:</h4>
-        <ul className="space-y-1 max-h-60 overflow-y-auto border rounded-md p-2">
-          {clientsToImport.map((client, index) => (
-            <li key={index} className="text-sm p-2 hover:bg-gray-50 border-b last:border-0">
-              <span className="font-medium">{client.name}</span> - 
-              {format(client.weddingDate, "dd/MM/yyyy")} - 
-              R$ {client.contractValue.toFixed(2)} (Entrada: R$ {client.downPayment.toFixed(2)})
-              <p className="text-xs text-gray-500 mt-1">{client.location}</p>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <ClientImportSummary clients={clientsToImport} />
     </div>
   );
 }

@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import Layout from "@/components/Layout";
 import { Calendar } from "@/components/ui/calendar";
@@ -18,6 +17,7 @@ import { WeekView } from "@/components/calendar/WeekView";
 import { MonthView } from "@/components/calendar/MonthView";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { normalizeDate } from "@/utils/dateUtils";
+import { cn } from "@/lib/utils";
 
 export default function CalendarPage() {
   const navigate = useNavigate();

@@ -140,7 +140,7 @@ export function ClientTable({ clients }: ClientTableProps) {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/clients/edit/${client.id}`);
+                      navigate(`/clients/${client.id}/edit`);
                     }}
                     className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600"
                   >

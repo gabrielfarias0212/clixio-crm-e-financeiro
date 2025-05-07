@@ -1,87 +1,102 @@
 
-import { RawClientData, MappedClientData } from "./types";
-import { 
-  normalizeText,
-  normalizeDate,
-  normalizeNumber,
-  normalizeStatus,
-  normalizeNextAction,
-  normalizeEventCategory
-} from "./utils/normalizers";
-import { generateExampleData } from "./utils/exampleData";
+import { RawClientData, MappedClientData } from './types';
+import { normalizeClientName, normalizeCoupleName, normalizeAmount, normalizeDate, normalizeStatus, normalizeNextAction, normalizeEventCategory } from './utils/normalizers';
 
-// Função principal para mapear dados brutos para o formato esperado
-export const mapClientData = (data: RawClientData): MappedClientData => {
-  let name = '';
-  let coupleName = '';
-  let email = '';
-  let phone = '';
-  let weddingDate: Date | null = null;
-  let contractValue = 0;
-  let downPayment = 0;
-  let status = 'orçamento enviado';
-  let nextAction = 'enviar proposta';
-  let eventCategory = 'Casamento';
-  let notes = '';
-  
-  // Iterar por todas as chaves e valores para encontrar os campos correspondentes
-  Object.entries(data).forEach(([key, value]) => {
-    const lowercaseKey = key.toLowerCase().trim();
-    
-    if (lowercaseKey.includes('nome') && !lowercaseKey.includes('casal')) {
-      name = normalizeText(value);
-    } 
-    else if (lowercaseKey.includes('nome do casal') || lowercaseKey.includes('casal')) {
-      coupleName = normalizeText(value);
-    }
-    else if (lowercaseKey.includes('email')) {
-      email = normalizeText(value);
-    }
-    else if (lowercaseKey.includes('telefone') || lowercaseKey.includes('phone')) {
-      phone = normalizeText(value);
-    }
-    else if (lowercaseKey.includes('data') || lowercaseKey.includes('casamento')) {
-      weddingDate = normalizeDate(value);
-    }
-    else if (lowercaseKey.includes('valor') || lowercaseKey.includes('contrato')) {
-      contractValue = normalizeNumber(value);
-    }
-    else if (lowercaseKey.includes('entrada') || lowercaseKey.includes('sinal') || lowercaseKey.includes('down')) {
-      downPayment = normalizeNumber(value);
-    }
-    else if (lowercaseKey.includes('status')) {
-      status = normalizeStatus(value);
-    }
-    else if (lowercaseKey.includes('ação') || lowercaseKey.includes('acao') || lowercaseKey.includes('action')) {
-      nextAction = normalizeNextAction(value);
-    }
-    else if (lowercaseKey.includes('categoria') || lowercaseKey.includes('evento') || lowercaseKey.includes('type')) {
-      eventCategory = normalizeEventCategory(value);
-    }
-    else if (lowercaseKey.includes('notas') || lowercaseKey.includes('notes') || lowercaseKey.includes('obs')) {
-      notes = normalizeText(value);
-    }
-  });
-  
-  // Garantir valores padrão para campos obrigatórios
-  if (!name) name = 'Cliente sem nome';
-  if (!email) email = `cliente-${Date.now()}@exemplo.com`;
-  if (!phone) phone = '(00) 00000-0000';
-  
-  return {
-    name,
-    coupleName,
-    email,
-    phone,
-    weddingDate,
-    contractValue,
-    downPayment,
-    status,
-    nextAction,
-    eventCategory,
-    notes
+export const mapImportedClientToModel = (rawData: RawClientData): MappedClientData => {
+  // Initialize with default values
+  const mappedData: MappedClientData = {
+    name: '',
+    email: '',
+    phone: '',
+    weddingDate: null,
+    contractValue: 0,
+    downPayment: 0,
+    status: 'orçamento enviado',
+    nextAction: 'enviar proposta',
+    eventCategory: 'Casamento',
+    notes: ''
   };
+
+  try {
+    // Extract client name (required field)
+    const nameKey = findKeyByPattern(rawData, /nome.*(cliente|contato)/i);
+    if (nameKey) {
+      mappedData.name = normalizeClientName(rawData[nameKey]);
+    }
+
+    // Extract couple name (optional)
+    const coupleNameKey = findKeyByPattern(rawData, /nome.*(casal|noivos)/i);
+    if (coupleNameKey) {
+      mappedData.coupleName = normalizeCoupleName(rawData[coupleNameKey]);
+    }
+
+    // Extract email (required field)
+    const emailKey = findKeyByPattern(rawData, /e-?mail/i);
+    if (emailKey) {
+      mappedData.email = String(rawData[emailKey]).trim();
+    }
+
+    // Extract phone (required field)
+    const phoneKey = findKeyByPattern(rawData, /(telefone|celular|whatsapp|fone)/i);
+    if (phoneKey) {
+      mappedData.phone = String(rawData[phoneKey]).trim();
+    }
+
+    // Extract wedding date (optional)
+    const dateKey = findKeyByPattern(rawData, /(data|dia).*(evento|casamento|wedding)/i);
+    if (dateKey) {
+      mappedData.weddingDate = normalizeDate(rawData[dateKey]);
+    }
+
+    // Extract contract value (optional)
+    const contractValueKey = findKeyByPattern(rawData, /(valor|preço|price).*(contrato|serviço|pacote|total)/i);
+    if (contractValueKey) {
+      mappedData.contractValue = normalizeAmount(rawData[contractValueKey]);
+    }
+
+    // Extract down payment (optional)
+    const downPaymentKey = findKeyByPattern(rawData, /(entrada|sinal|depósito|down.?payment)/i);
+    if (downPaymentKey) {
+      mappedData.downPayment = normalizeAmount(rawData[downPaymentKey]);
+    }
+
+    // Extract status (optional)
+    const statusKey = findKeyByPattern(rawData, /status/i);
+    if (statusKey) {
+      mappedData.status = normalizeStatus(rawData[statusKey]);
+    }
+
+    // Extract next action (optional)
+    const nextActionKey = findKeyByPattern(rawData, /(próxima|próximo|next).*(ação|passo|action|step)/i);
+    if (nextActionKey) {
+      mappedData.nextAction = normalizeNextAction(rawData[nextActionKey]);
+    }
+
+    // Extract event category (optional)
+    const categoryKey = findKeyByPattern(rawData, /(categoria|tipo|category|type).*(evento|event)/i);
+    if (categoryKey) {
+      mappedData.eventCategory = normalizeEventCategory(rawData[categoryKey]);
+    }
+
+    // Extract notes (optional)
+    const notesKey = findKeyByPattern(rawData, /(notas|observa|notes|obs)/i);
+    if (notesKey) {
+      mappedData.notes = String(rawData[notesKey]).trim();
+    }
+  } catch (error) {
+    console.error('Error mapping client data:', error);
+  }
+
+  return mappedData;
 };
 
-// Re-export the example data generator for backward compatibility
-export { generateExampleData } from "./utils/exampleData";
+// Helper function to find keys in object that match a pattern
+const findKeyByPattern = (obj: Record<string, any>, pattern: RegExp): string | null => {
+  const keys = Object.keys(obj);
+  for (const key of keys) {
+    if (pattern.test(key)) {
+      return key;
+    }
+  }
+  return null;
+};

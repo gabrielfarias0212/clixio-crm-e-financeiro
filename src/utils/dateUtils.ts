@@ -1,4 +1,3 @@
-
 import { format, parseISO, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { fromZonedTime, toZonedTime, format as formatInTimeZone } from "date-fns-tz";
@@ -27,8 +26,11 @@ export const formatDate = (date: Date | string | null, formatStr: string = "dd/M
   // Converte para o fuso horário de São Paulo
   const spDate = toZonedTime(d, TIMEZONE);
   
-  // Updated to match the v3 signature: formatInTimeZone(date, timeZone, formatStr, options?)
-  return formatInTimeZone(spDate, TIMEZONE, formatStr, { locale: ptBR });
+  // Updated to match the v3 signature which expects options as 3rd parameter
+  return formatInTimeZone(spDate, TIMEZONE, { 
+    format: formatStr, 
+    locale: ptBR 
+  });
 };
 
 // Format date with time
@@ -41,7 +43,10 @@ export const formatDateTime = (date: Date | string | null, formatStr: string = "
   const spDate = toZonedTime(d, TIMEZONE);
   
   // Updated to match the v3 signature
-  return formatInTimeZone(spDate, TIMEZONE, formatStr, { locale: ptBR });
+  return formatInTimeZone(spDate, TIMEZONE, { 
+    format: formatStr, 
+    locale: ptBR 
+  });
 };
 
 // Get time from date
@@ -54,7 +59,10 @@ export const getTimeFromDate = (date: Date | string | null): string => {
   const spDate = toZonedTime(d, TIMEZONE);
   
   // Updated to match the v3 signature
-  return formatInTimeZone(spDate, TIMEZONE, "HH:mm", { locale: ptBR });
+  return formatInTimeZone(spDate, TIMEZONE, { 
+    format: "HH:mm", 
+    locale: ptBR 
+  });
 };
 
 // Combine date and time

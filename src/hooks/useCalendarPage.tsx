@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -21,8 +20,11 @@ export function useCalendarPage(clients: Client[]) {
   // Get current month and year for header display
   const currentMonthYear = useMemo(() => {
     if (!date) return "";
-    // Use the v3 signature with locale integrated in the options object
-    return formatInTimeZone(date, TIMEZONE, "MMMM 'de' yyyy", { locale: ptBR });
+    // In v3, formatInTimeZone expects options as the 3rd argument which includes locale
+    return formatInTimeZone(date, TIMEZONE, { 
+      format: "MMMM 'de' yyyy", 
+      locale: ptBR 
+    });
   }, [date]);
 
   // Group clients by date - use a consistent date format without time component

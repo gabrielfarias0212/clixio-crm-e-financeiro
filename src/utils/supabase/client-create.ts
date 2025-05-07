@@ -27,6 +27,9 @@ export const createClient = async (client: ClientCreateData): Promise<Client | n
         notes: client.notes,
         down_payment: client.downPayment,
         event_category: client.eventCategory,
+        event_location: client.eventLocation,
+        pre_wedding_date: client.preWeddingDate ? formatDateForSupabase(client.preWeddingDate) : null,
+        contract_link: client.contractLink,
       })
       .select()
       .single();

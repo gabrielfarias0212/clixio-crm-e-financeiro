@@ -54,10 +54,22 @@ export default function EditClient() {
           12, 0, 0
         );
       }
+
+      // Ensure pre-wedding date is properly formatted
+      let preWeddingDate = data.preWeddingDate;
+      if (preWeddingDate) {
+        // Create a new date at noon to avoid timezone issues
+        preWeddingDate = new Date(
+          preWeddingDate.getFullYear(),
+          preWeddingDate.getMonth(),
+          preWeddingDate.getDate(),
+          12, 0, 0
+        );
+      }
       
       const updatedClient = await updateClient(id, {
         name: data.name,
-        coupleName: data.coupleName, // Now including coupleName in the update data
+        coupleName: data.coupleName,
         email: data.email,
         phone: data.phone,
         weddingDate: weddingDate,
@@ -66,6 +78,9 @@ export default function EditClient() {
         status: data.status,
         nextAction: data.nextAction,
         eventCategory: data.eventCategory,
+        eventLocation: data.eventLocation,
+        preWeddingDate: preWeddingDate,
+        contractLink: data.contractLink,
         notes: data.notes || "",
       });
       

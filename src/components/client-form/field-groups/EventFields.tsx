@@ -4,6 +4,7 @@ import { ClientFormValues } from "../types";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { DatePicker } from "@/components/ui/date-picker";
 import { EventCategoryField } from "./EventCategoryField";
+import { Input } from "@/components/ui/input";
 
 interface EventFieldsProps {
   control: Control<ClientFormValues>;
@@ -42,6 +43,66 @@ export function EventFields({ control }: EventFieldsProps) {
                 }}
                 placeholder="Selecione uma data"
               />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={control}
+        name="eventLocation"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Local do Evento</FormLabel>
+            <FormControl>
+              <Input {...field} placeholder="Digite o local do evento" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={control}
+        name="preWeddingDate"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Data do Pré-Wedding (opcional)</FormLabel>
+            <FormControl>
+              <DatePicker
+                value={field.value ? new Date(field.value) : null}
+                onChange={(date) => {
+                  // Ensure we're working with the date in the local timezone
+                  if (date) {
+                    // Create a new date at noon on the selected day to avoid timezone issues
+                    const localDate = new Date(
+                      date.getFullYear(),
+                      date.getMonth(),
+                      date.getDate(),
+                      12, 0, 0
+                    );
+                    field.onChange(localDate);
+                  } else {
+                    field.onChange(null);
+                  }
+                }}
+                placeholder="Selecione uma data (opcional)"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={control}
+        name="contractLink"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Link do Contrato (opcional)</FormLabel>
+            <FormControl>
+              <Input {...field} placeholder="Cole o link do contrato (Google Drive, etc)" />
             </FormControl>
             <FormMessage />
           </FormItem>

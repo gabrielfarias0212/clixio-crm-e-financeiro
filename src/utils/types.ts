@@ -72,6 +72,9 @@ export interface Client {
   notes: string;
   downPayment: number;
   eventCategory: EventCategory;
+  eventLocation?: string; // New field
+  preWeddingDate: Date | null; // New field
+  contractLink?: string; // New field
   payments: Payment[];
   createdAt: Date;
   updatedAt: Date;

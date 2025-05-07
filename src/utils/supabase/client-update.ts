@@ -14,7 +14,7 @@ export const updateClient = async (id: string, updates: ClientUpdateData): Promi
 
   const updateData: any = {
     name: updates.name,
-    couple_name: updates.coupleName, // Now mapping to the correct column
+    couple_name: updates.coupleName,
     email: updates.email,
     phone: updates.phone,
     wedding_date: updates.weddingDate ? formatDateForSupabase(updates.weddingDate) : undefined,
@@ -24,6 +24,9 @@ export const updateClient = async (id: string, updates: ClientUpdateData): Promi
     notes: updates.notes,
     down_payment: updates.downPayment,
     event_category: updates.eventCategory,
+    event_location: updates.eventLocation,
+    pre_wedding_date: updates.preWeddingDate ? formatDateForSupabase(updates.preWeddingDate) : undefined,
+    contract_link: updates.contractLink,
     updated_at: new Date().toISOString()
   };
 

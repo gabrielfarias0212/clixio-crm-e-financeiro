@@ -705,49 +705,58 @@ export type Database = {
       }
       wedding_clients: {
         Row: {
+          contract_link: string | null
           contract_value: number | null
           couple_name: string | null
           created_at: string | null
           down_payment: number | null
           email: string | null
           event_category: string | null
+          event_location: string | null
           id: string
           name: string
           next_action: string | null
           notes: string | null
           phone: string | null
+          pre_wedding_date: string | null
           status: string | null
           updated_at: string | null
           wedding_date: string | null
         }
         Insert: {
+          contract_link?: string | null
           contract_value?: number | null
           couple_name?: string | null
           created_at?: string | null
           down_payment?: number | null
           email?: string | null
           event_category?: string | null
+          event_location?: string | null
           id?: string
           name: string
           next_action?: string | null
           notes?: string | null
           phone?: string | null
+          pre_wedding_date?: string | null
           status?: string | null
           updated_at?: string | null
           wedding_date?: string | null
         }
         Update: {
+          contract_link?: string | null
           contract_value?: number | null
           couple_name?: string | null
           created_at?: string | null
           down_payment?: number | null
           email?: string | null
           event_category?: string | null
+          event_location?: string | null
           id?: string
           name?: string
           next_action?: string | null
           notes?: string | null
           phone?: string | null
+          pre_wedding_date?: string | null
           status?: string | null
           updated_at?: string | null
           wedding_date?: string | null

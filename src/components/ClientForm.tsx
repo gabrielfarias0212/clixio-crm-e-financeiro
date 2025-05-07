@@ -26,6 +26,9 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           status: client.status,
           nextAction: client.nextAction,
           eventCategory: client.eventCategory,
+          eventLocation: client.eventLocation || "",
+          preWeddingDate: client.preWeddingDate,
+          contractLink: client.contractLink || "",
           notes: client.notes,
         }
       : {
@@ -39,6 +42,9 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           status: "orçamento enviado",
           nextAction: "enviar proposta",
           eventCategory: "Casamento",
+          eventLocation: "",
+          preWeddingDate: null,
+          contractLink: "",
           notes: "",
         },
   });

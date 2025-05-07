@@ -13,6 +13,9 @@ export const formSchema = z.object({
   status: z.enum(["orçamento enviado", "follow-up", "fechado", "em andamento", "pago"]),
   nextAction: z.enum(["responder", "enviar proposta", "editar", "entregar", "nenhuma"]),
   eventCategory: z.enum(["Casamento", "Aniversario", "Civil", "Ensaio Estudio", "Ensaio externo", "Evento Corporativo"]),
+  eventLocation: z.string().optional(),
+  preWeddingDate: z.date().nullable(),
+  contractLink: z.string().optional(),
   notes: z.string().optional(),
 })
 .refine(data => data.downPayment <= data.contractValue, {

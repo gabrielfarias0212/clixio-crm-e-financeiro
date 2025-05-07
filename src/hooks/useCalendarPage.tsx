@@ -1,10 +1,11 @@
 
 import { useState, useMemo } from "react";
-import { format, getMonth, getYear, isSameDay, startOfMonth } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
-import { normalizeDate } from "@/utils/dateUtils";
+import { normalizeDate, TIMEZONE } from "@/utils/dateUtils";
 import { Client } from "@/utils/types";
+import { formatTZ } from "date-fns-tz";
 
 export function useCalendarPage(clients: Client[]) {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -20,7 +21,7 @@ export function useCalendarPage(clients: Client[]) {
   // Get current month and year for header display
   const currentMonthYear = useMemo(() => {
     if (!date) return "";
-    return format(date, "MMMM 'de' yyyy", { locale: ptBR });
+    return formatTZ(date, "MMMM 'de' yyyy", { locale: ptBR, timeZone: TIMEZONE });
   }, [date]);
 
   // Group clients by date - use a consistent date format without time component

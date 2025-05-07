@@ -1,38 +1,70 @@
 
-import { format, parseISO } from "date-fns";
+import { format, parseISO, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { zonedTimeToUtc, utcToZonedTime, format as formatTZ } from "date-fns-tz";
+
+// Configuração do fuso horário brasileiro
+export const TIMEZONE = "America/Sao_Paulo";
 
 // Utility function to normalize dates to YYYY-MM-DD format without time component
 export const normalizeDate = (date: Date | string | null): string => {
   if (!date) return "";
   
-  const d = typeof date === "string" ? new Date(date) : date;
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  // Se for string, converte para Date mantendo o fuso horário de São Paulo
+  const d = typeof date === "string" ? parseISO(date) : date;
+  // Converte para o fuso horário de São Paulo
+  const spDate = utcToZonedTime(d, TIMEZONE);
+  
+  return `${spDate.getFullYear()}-${String(spDate.getMonth() + 1).padStart(2, '0')}-${String(spDate.getDate()).padStart(2, '0')}`;
 };
 
 // Format date to locale string
 export const formatDate = (date: Date | string | null, formatStr: string = "dd/MM/yyyy"): string => {
   if (!date) return "";
   
+  // Se for string, converte para Date
   const d = typeof date === "string" ? parseISO(date) : date;
-  return format(d, formatStr, { locale: ptBR });
+  // Converte para o fuso horário de São Paulo
+  const spDate = utcToZonedTime(d, TIMEZONE);
+  
+  return formatTZ(spDate, formatStr, { locale: ptBR, timeZone: TIMEZONE });
+};
+
+// Format date with time
+export const formatDateTime = (date: Date | string | null, formatStr: string = "dd/MM/yyyy HH:mm"): string => {
+  if (!date) return "";
+  
+  // Se for string, converte para Date
+  const d = typeof date === "string" ? parseISO(date) : date;
+  // Converte para o fuso horário de São Paulo
+  const spDate = utcToZonedTime(d, TIMEZONE);
+  
+  return formatTZ(spDate, formatStr, { locale: ptBR, timeZone: TIMEZONE });
 };
 
 // Get time from date
 export const getTimeFromDate = (date: Date | string | null): string => {
   if (!date) return "";
   
-  const d = typeof date === "string" ? new Date(date) : date;
-  return format(d, "HH:mm");
+  // Se for string, converte para Date
+  const d = typeof date === "string" ? parseISO(date) : date;
+  // Converte para o fuso horário de São Paulo
+  const spDate = utcToZonedTime(d, TIMEZONE);
+  
+  return formatTZ(spDate, "HH:mm", { timeZone: TIMEZONE });
 };
 
 // Combine date and time
 export const combineDateAndTime = (date: Date, timeStr: string): Date => {
   const [hours, minutes] = timeStr.split(":").map(Number);
-  const newDate = new Date(date);
-  newDate.setHours(hours);
-  newDate.setMinutes(minutes);
-  return newDate;
+  
+  // Cria uma nova data no fuso horário de São Paulo
+  const spDate = utcToZonedTime(date, TIMEZONE);
+  spDate.setHours(hours);
+  spDate.setMinutes(minutes);
+  
+  // Converte de volta para UTC para armazenamento
+  return zonedTimeToUtc(spDate, TIMEZONE);
 };
 
 // Convert Excel serial number to JavaScript Date
@@ -47,7 +79,8 @@ export const excelSerialDateToJSDate = (serialNumber: number): Date | null => {
   // Convert serial number to milliseconds and add to Excel epoch
   const resultDate = new Date(excelEpoch.getTime() + serialNumber * millisecondsPerDay);
   
-  return resultDate;
+  // Ajusta para o fuso horário de São Paulo
+  return utcToZonedTime(resultDate, TIMEZONE);
 };
 
 // Parse Brazilian date format (DD/MM/YYYY)
@@ -55,7 +88,10 @@ export const parseBrazilianDate = (dateString: string | Date | null | number): D
   if (!dateString) return null;
   
   // Check if the date is already a Date object
-  if (dateString instanceof Date) return dateString;
+  if (dateString instanceof Date) {
+    // Garante que a data esteja no fuso horário de São Paulo
+    return utcToZonedTime(dateString, TIMEZONE);
+  }
   
   // Check if it's an Excel serial number
   if (typeof dateString === "number" || (!isNaN(Number(dateString)) && Number(dateString) > 10000)) {
@@ -76,7 +112,8 @@ export const parseBrazilianDate = (dateString: string | Date | null | number): D
       
       // Validate ranges
       if (day >= 1 && day <= 31 && month >= 0 && month <= 11 && year >= 1900 && year <= 2100) {
-        const parsedDate = new Date(year, month, day, 12, 0, 0); // noon to avoid timezone issues
+        // Cria a data no fuso horário de São Paulo (meio-dia para evitar problemas)
+        const parsedDate = new Date(year, month, day, 12, 0, 0);
         // Check if the date is valid (e.g., not Feb 31)
         if (!isNaN(parsedDate.getTime())) {
           return parsedDate;
@@ -85,11 +122,30 @@ export const parseBrazilianDate = (dateString: string | Date | null | number): D
     }
     
     // Try standard JavaScript date parsing as fallback
+    try {
+      const parsedDate = parseISO(dateString);
+      if (!isNaN(parsedDate.getTime())) {
+        // Garante que a data esteja no fuso horário de São Paulo
+        return utcToZonedTime(parsedDate, TIMEZONE);
+      }
+    } catch (_) {
+      // Ignora erros de parsing
+    }
+    
+    // Última tentativa com o construtor Date
     const fallbackDate = new Date(dateString);
     if (!isNaN(fallbackDate.getTime())) {
-      return fallbackDate;
+      // Garante que a data esteja no fuso horário de São Paulo
+      return utcToZonedTime(fallbackDate, TIMEZONE);
     }
   }
   
   return null;
+};
+
+// Cria uma data segura no fuso horário de São Paulo
+export const createSafeDate = (year: number, month: number, day: number): Date => {
+  // Criar a data com horário meio-dia para evitar problemas de fuso
+  const date = new Date(year, month - 1, day, 12, 0, 0);
+  return date;
 };

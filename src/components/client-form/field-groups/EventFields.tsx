@@ -5,6 +5,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { DatePicker } from "@/components/ui/date-picker";
 import { EventCategoryField } from "./EventCategoryField";
 import { Input } from "@/components/ui/input";
+import { createSafeDate } from "@/utils/dateUtils";
 
 interface EventFieldsProps {
   control: Control<ClientFormValues>;
@@ -28,15 +29,13 @@ export function EventFields({ control }: EventFieldsProps) {
                 <DatePicker
                   value={field.value ? new Date(field.value) : null}
                   onChange={(date) => {
-                    // Ensure we're working with the date in the local timezone
+                    // Ensure we're working with the date in the São Paulo timezone
                     if (date) {
-                      // Create a new date at noon on the selected day to avoid timezone issues
-                      const localDate = new Date(
-                        date.getFullYear(),
-                        date.getMonth(),
-                        date.getDate(),
-                        12, 0, 0
-                      );
+                      // Preserve the day in São Paulo timezone
+                      const year = date.getFullYear();
+                      const month = date.getMonth() + 1;
+                      const day = date.getDate();
+                      const localDate = createSafeDate(year, month, day);
                       field.onChange(localDate);
                     } else {
                       field.onChange(null);
@@ -104,15 +103,13 @@ export function EventFields({ control }: EventFieldsProps) {
                 <DatePicker
                   value={field.value ? new Date(field.value) : null}
                   onChange={(date) => {
-                    // Ensure we're working with the date in the local timezone
+                    // Ensure we're working with the date in the São Paulo timezone
                     if (date) {
-                      // Create a new date at noon on the selected day to avoid timezone issues
-                      const localDate = new Date(
-                        date.getFullYear(),
-                        date.getMonth(),
-                        date.getDate(),
-                        12, 0, 0
-                      );
+                      // Preserve the day in São Paulo timezone
+                      const year = date.getFullYear();
+                      const month = date.getMonth() + 1;
+                      const day = date.getDate();
+                      const localDate = createSafeDate(year, month, day);
                       field.onChange(localDate);
                     } else {
                       field.onChange(null);

@@ -55,9 +55,10 @@ export default function EditClient() {
         );
       }
       
+      // Only pass fields that exist in the database schema
       const updatedClient = await updateClient(id, {
         name: data.name,
-        coupleName: data.coupleName,
+        // Omit coupleName as it doesn't exist in the database schema
         email: data.email,
         phone: data.phone,
         weddingDate: weddingDate,

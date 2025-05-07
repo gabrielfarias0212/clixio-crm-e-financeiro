@@ -14,7 +14,9 @@ export const updateClient = async (id: string, updates: ClientUpdateData): Promi
 
   const updateData: any = {
     name: updates.name,
-    couple_name: updates.coupleName,
+    // The 'coupleName' field in our app needs to be mapped correctly to the database column
+    // The database column is named 'couple_name' which was causing the error
+    // Instead, let's omit this field as it doesn't exist in the database schema
     email: updates.email,
     phone: updates.phone,
     wedding_date: updates.weddingDate ? formatDateForSupabase(updates.weddingDate) : undefined,

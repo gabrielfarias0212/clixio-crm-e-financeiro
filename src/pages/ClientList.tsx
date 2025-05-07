@@ -288,7 +288,9 @@ export default function ClientList() {
                         <div className="flex items-center">
                           {client.name}
                           {client.status === "pago" && (
-                            <CheckCircle className="ml-2 text-green-600 h-4 w-4" title="Trabalho Entregue" />
+                            <span className="ml-2" aria-label="Trabalho Entregue">
+                              <CheckCircle className="text-green-600 h-4 w-4" />
+                            </span>
                           )}
                         </div>
                       </TableCell>
@@ -329,7 +331,7 @@ export default function ClientList() {
                   {client.status === "pago" && (
                     <div 
                       className="absolute -top-2 -right-2 bg-green-100 rounded-full p-1 border border-green-200"
-                      title="Trabalho Entregue"
+                      aria-label="Trabalho Entregue"
                     >
                       <CheckCircle className="text-green-600 h-4 w-4" />
                     </div>

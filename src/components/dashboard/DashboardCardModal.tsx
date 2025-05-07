@@ -1,21 +1,12 @@
-
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Client } from "@/utils/types";
+import { Client, AlertItem } from "@/utils/types"; // Import AlertItem from types.ts
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Bell, Calendar, DollarSign } from "lucide-react";
+import { Bell, Calendar, DollarSign, AlertTriangle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { formatDateTime } from "@/utils/dateUtils";
-
-interface AlertItem {
-  type: "task" | "event" | "payment";
-  title: string;
-  description: string;
-  client: Client;
-  date: Date;
-}
 
 interface DashboardCardModalProps {
   title: string;
@@ -23,7 +14,7 @@ interface DashboardCardModalProps {
   onClose: () => void;
   clients: Client[];
   type: "leads" | "contracts" | "delivered" | "pending";
-  customData?: AlertItem[]; // Add this prop for alerts data
+  customData?: AlertItem[]; // Use the imported AlertItem type
 }
 
 export function DashboardCardModal({ title, open, onClose, clients, type, customData }: DashboardCardModalProps) {
@@ -38,6 +29,8 @@ export function DashboardCardModal({ title, open, onClose, clients, type, custom
         return <Calendar className="h-4 w-4 text-blue-500" />;
       case "payment":
         return <DollarSign className="h-4 w-4 text-green-500" />;
+      case "due_payment":
+        return <AlertTriangle className="h-4 w-4 text-red-500" />;
       default:
         return null;
     }
@@ -51,6 +44,8 @@ export function DashboardCardModal({ title, open, onClose, clients, type, custom
         return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Evento</Badge>;
       case "payment":
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Pagamento</Badge>;
+      case "due_payment":
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Pagamento Vencido</Badge>;
       default:
         return null;
     }

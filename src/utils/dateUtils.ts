@@ -90,7 +90,7 @@ export const parseBrazilianDate = (dateString: string | Date | null | number): D
   // Check if the date is already a Date object
   if (dateString instanceof Date) {
     // Garante que a data esteja no fuso horário de São Paulo
-    return utcToZonedTime(dateString, TIMEZONE);
+    return toZonedTime(dateString, TIMEZONE);
   }
   
   // Check if it's an Excel serial number
@@ -126,7 +126,7 @@ export const parseBrazilianDate = (dateString: string | Date | null | number): D
       const parsedDate = parseISO(dateString);
       if (!isNaN(parsedDate.getTime())) {
         // Garante que a data esteja no fuso horário de São Paulo
-        return utcToZonedTime(parsedDate, TIMEZONE);
+        return toZonedTime(parsedDate, TIMEZONE);
       }
     } catch (_) {
       // Ignora erros de parsing
@@ -136,7 +136,7 @@ export const parseBrazilianDate = (dateString: string | Date | null | number): D
     const fallbackDate = new Date(dateString);
     if (!isNaN(fallbackDate.getTime())) {
       // Garante que a data esteja no fuso horário de São Paulo
-      return utcToZonedTime(fallbackDate, TIMEZONE);
+      return toZonedTime(fallbackDate, TIMEZONE);
     }
   }
   

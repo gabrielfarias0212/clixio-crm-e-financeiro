@@ -12,16 +12,17 @@ interface DeliveryWorkflowProps {
   client: Client;
 }
 
-export function DeliveryWorkflow({ client }: DeliveryWorkflowProps) {
+export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProps) {
   const { updateClient } = useClients();
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [client, setClient] = useState(initialClient);
 
-  // Only show for wedding events
-  if (client.eventCategory !== "Casamento") {
+  // Mostrar para eventos de casamento e aniversário
+  if (client.eventCategory !== "Casamento" && client.eventCategory !== "Aniversario") {
     return (
       <div className="p-4 text-center text-gray-500">
-        O fluxo de entrega está disponível apenas para eventos de casamento.
+        O fluxo de entrega está disponível apenas para eventos de casamento e aniversário.
       </div>
     );
   }
@@ -36,6 +37,12 @@ export function DeliveryWorkflow({ client }: DeliveryWorkflowProps) {
       const result = await updateClient(client.id, updates);
       
       if (result) {
+        // Atualiza o estado local imediatamente
+        setClient({
+          ...client,
+          [field]: value
+        });
+        
         toast({
           title: "Status atualizado",
           description: `O status foi atualizado com sucesso.`,
@@ -134,7 +141,7 @@ export function DeliveryWorkflow({ client }: DeliveryWorkflowProps) {
           />
           
           <CheckboxItem
-            label="Casamento fotografado?"
+            label="Evento fotografado?"
             checked={client.weddingPhotographed}
             onChange={(checked) => updateWorkflowStatus('weddingPhotographed', checked)}
             field="wedding_photographed"

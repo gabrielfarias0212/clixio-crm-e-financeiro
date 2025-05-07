@@ -63,7 +63,7 @@ export default function ClientDetail() {
 
   const isPaid = client.status === "pago";
   const isFinished = isPaid;
-  const isWeddingEvent = client.eventCategory === "Casamento";
+  const hasDeliveryWorkflow = client.eventCategory === "Casamento" || client.eventCategory === "Aniversario";
   
   return (
     <Layout>
@@ -107,7 +107,7 @@ export default function ClientDetail() {
         <Tabs defaultValue="details" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="details">Informações</TabsTrigger>
-            {isWeddingEvent && (
+            {hasDeliveryWorkflow && (
               <TabsTrigger value="workflow">Fluxo de Entrega</TabsTrigger>
             )}
           </TabsList>
@@ -116,7 +116,7 @@ export default function ClientDetail() {
             <ClientDetails client={client} />
           </TabsContent>
           
-          {isWeddingEvent && (
+          {hasDeliveryWorkflow && (
             <TabsContent value="workflow">
               <DeliveryWorkflow client={client} />
             </TabsContent>

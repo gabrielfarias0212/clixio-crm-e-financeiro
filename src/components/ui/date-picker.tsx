@@ -18,10 +18,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
+import { DATE_FORMAT, stringToDate, dateToString } from "@/utils/dateUtils";
 
 interface DatePickerProps {
-  value: Date | null;
-  onChange: (date: Date | null) => void;
+  value: string | null;
+  onChange: (date: string | null) => void;
   label?: string;
   description?: string;
   placeholder?: string;
@@ -34,6 +35,18 @@ export function DatePicker({
   description,
   placeholder = "Selecione uma data",
 }: DatePickerProps) {
+  // Convert string date to Date object for Calendar component
+  const dateValue = stringToDate(value);
+  
+  const handleDateChange = (date: Date | undefined) => {
+    if (!date) {
+      onChange(null);
+    } else {
+      // Convert Date back to string in DD/MM/YYYY format
+      onChange(dateToString(date));
+    }
+  };
+  
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -45,11 +58,7 @@ export function DatePicker({
               !value && "text-muted-foreground"
             )}
           >
-            {value ? (
-              format(value, "dd/MM/yyyy")
-            ) : (
-              <span>{placeholder}</span>
-            )}
+            {value ? value : <span>{placeholder}</span>}
             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
           </Button>
         </FormControl>
@@ -57,8 +66,8 @@ export function DatePicker({
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
-          selected={value || undefined}
-          onSelect={onChange}
+          selected={dateValue || undefined}
+          onSelect={handleDateChange}
           initialFocus
           className="p-3 pointer-events-auto"
         />

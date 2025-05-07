@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Client } from '../types';
-import { formatDateForSupabase } from './base';
+import { formatDateForSupabase } from '../dateUtils';
 import { fetchClient } from './client-fetch';
 import { ClientUpdateData } from './client-types';
 

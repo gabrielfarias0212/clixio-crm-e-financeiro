@@ -1,8 +1,9 @@
+
 import { useState, useMemo } from "react";
-import { format, isSameDay } from "date-fns";
+import { format, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
-import { normalizeDate, TIMEZONE } from "@/utils/dateUtils";
+import { normalizeDate, TIMEZONE, stringToDate, dateToString } from "@/utils/dateUtils";
 import { Client } from "@/utils/types";
 import { formatInTimeZone } from "date-fns-tz";
 
@@ -14,26 +15,24 @@ export function useCalendarPage(clients: Client[]) {
   
   // Filter clients with wedding dates
   const clientsWithWeddingDates = useMemo(() => 
-    clients.filter(client => client.weddingDate !== null) as (Client & { weddingDate: Date })[],
+    clients.filter(client => client.weddingDate !== null) as (Client & { weddingDate: string })[],
   [clients]);
 
   // Get current month and year for header display
   const currentMonthYear = useMemo(() => {
     if (!date) return "";
-    // In v3, formatInTimeZone returns a string directly with the format and locale
+    // Format the current date for display
     return formatInTimeZone(date, TIMEZONE, "MMMM 'de' yyyy", { locale: ptBR });
   }, [date]);
 
-  // Group clients by date - use a consistent date format without time component
+  // Group clients by date
   const clientsByDate = useMemo(() => {
     const result: Record<string, Client[]> = {};
     
     clientsWithWeddingDates.forEach(client => {
-      // Make sure we're working with a Date object with the correct day
-      const weddingDate = new Date(client.weddingDate);
-      
-      // Use the normalize function to create the date key
-      const dateKey = normalizeDate(weddingDate);
+      // The wedding date is now already a string in DD/MM/YYYY format
+      // Convert to YYYY-MM-DD for consistent key format
+      const dateKey = normalizeDate(client.weddingDate);
       
       if (!result[dateKey]) {
         result[dateKey] = [];
@@ -50,14 +49,19 @@ export function useCalendarPage(clients: Client[]) {
     
     // Add client wedding dates
     Object.keys(clientsByDate).forEach(dateStr => {
+      // Convert YYYY-MM-DD to Date object for calendar component
       const [year, month, day] = dateStr.split('-').map(Number);
       dates.push(new Date(year, month - 1, day, 12, 0, 0));
     });
     
     // Add calendar events
     events.forEach(event => {
-      const eventDate = new Date(event.date);
-      if (!dates.some(d => isSameDay(d, eventDate))) {
+      // Convert string date to Date object
+      const eventDate = stringToDate(event.date);
+      if (eventDate && !dates.some(d => 
+        d.getFullYear() === eventDate.getFullYear() && 
+        d.getMonth() === eventDate.getMonth() &&
+        d.getDate() === eventDate.getDate())) {
         dates.push(eventDate);
       }
     });
@@ -69,8 +73,10 @@ export function useCalendarPage(clients: Client[]) {
   const selectedDayItems = useMemo(() => {
     if (!date) return { clients: [], events: [] };
     
-    // Get clients for this date
+    // Convert the selected Date object to a normalized date string
     const dateKey = normalizeDate(date);
+    
+    // Get clients for this date
     const dayClients = clientsByDate[dateKey] || [];
     
     // Get events for this date

@@ -3,7 +3,7 @@ import { Client } from "@/utils/types";
 import { format, addHours, startOfDay, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMemo } from "react";
-import { normalizeDate } from "@/utils/dateUtils";
+import { normalizeDate, stringToDate } from "@/utils/dateUtils";
 import { CalendarEvent } from "@/utils/types";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { cn } from "@/lib/utils";
@@ -38,7 +38,7 @@ export function DayView({ date, clients, onClientClick }: DayViewProps) {
       .map(client => ({
         id: `client-${client.id}`,
         title: `${client.eventCategory}: ${client.name}`,
-        date: client.weddingDate as Date,
+        date: client.weddingDate as string,
         startTime: client.weddingStartTime || "10:00",
         endTime: client.weddingEndTime || "18:00",
         type: "client" as const,

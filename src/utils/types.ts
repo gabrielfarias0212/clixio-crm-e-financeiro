@@ -36,34 +36,34 @@ export type EventCategory =
 export interface Payment {
   id: string;
   amount: number;
-  date: Date;
+  date: string; // Changed from Date to string
   notes?: string;
 }
 
 export interface Transaction {
   id: string;
   amount: number;
-  date: Date;
+  date: string; // Changed from Date to string
   type: TransactionType;
   category: TransactionCategory;
   description: string;
   clientId?: string;
   paymentId?: string;
-  createdAt: Date;
+  createdAt: string; // Changed from Date to string
 }
 
 export interface FinancialCategory {
   id: string;
   name: string;
   type: TransactionType;
-  createdAt: Date;
+  createdAt: string; // Changed from Date to string
 }
 
 export interface Client {
   id: string;
   name: string;
   coupleName?: string;
-  weddingDate: Date | null;
+  weddingDate: string | null; // Changed from Date to string
   weddingStartTime?: string;
   weddingEndTime?: string;
   contractValue: number;
@@ -75,7 +75,7 @@ export interface Client {
   downPayment: number;
   eventCategory: EventCategory;
   eventLocation?: string;
-  preWeddingDate: Date | null;
+  preWeddingDate: string | null; // Changed from Date to string
   preWeddingStartTime?: string;
   preWeddingEndTime?: string;
   contractLink?: string;
@@ -90,8 +90,8 @@ export interface Client {
   albumDesigned?: boolean;
   albumApprovedDelivered?: boolean;
   payments: Payment[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string; // Changed from Date to string
+  updatedAt: string; // Changed from Date to string
 }
 
 export type EventType = 
@@ -114,7 +114,7 @@ export interface CalendarEvent {
   id: string;
   title: string;
   description: string;
-  date: Date;
+  date: string; // Changed from Date to string
   startTime: string;
   endTime: string;
   type: EventType;

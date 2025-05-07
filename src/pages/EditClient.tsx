@@ -44,32 +44,13 @@ export default function EditClient() {
     setIsSubmitting(true);
     
     try {
-      // Ensure date is properly formatted to avoid timezone issues
-      let weddingDate = data.weddingDate;
-      if (weddingDate) {
-        // Preserve the day in São Paulo timezone
-        const year = weddingDate.getFullYear();
-        const month = weddingDate.getMonth() + 1;
-        const day = weddingDate.getDate();
-        weddingDate = createSafeDate(year, month, day);
-      }
-
-      // Ensure pre-wedding date is properly formatted
-      let preWeddingDate = data.preWeddingDate;
-      if (preWeddingDate) {
-        // Preserve the day in São Paulo timezone
-        const year = preWeddingDate.getFullYear();
-        const month = preWeddingDate.getMonth() + 1;
-        const day = preWeddingDate.getDate();
-        preWeddingDate = createSafeDate(year, month, day);
-      }
-      
+      // We're now using string dates directly, no need to format
       const updatedClient = await updateClient(id, {
         name: data.name,
         coupleName: data.coupleName,
         email: data.email,
         phone: data.phone,
-        weddingDate: weddingDate,
+        weddingDate: data.weddingDate,
         weddingStartTime: data.weddingStartTime,
         weddingEndTime: data.weddingEndTime,
         contractValue: data.contractValue,
@@ -78,7 +59,7 @@ export default function EditClient() {
         nextAction: data.nextAction,
         eventCategory: data.eventCategory,
         eventLocation: data.eventLocation,
-        preWeddingDate: preWeddingDate,
+        preWeddingDate: data.preWeddingDate,
         preWeddingStartTime: data.preWeddingStartTime,
         preWeddingEndTime: data.preWeddingEndTime,
         contractLink: data.contractLink,

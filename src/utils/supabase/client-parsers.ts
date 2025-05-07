@@ -1,6 +1,6 @@
 
 import { Client, ClientStatus, NextAction, EventCategory } from '../types';
-import { parseDate } from './base';
+import { formatDate } from '../dateUtils';
 
 /**
  * Parses client data from Supabase format to application format
@@ -10,7 +10,7 @@ export const parseClient = (client: any): Client => {
     id: client.id,
     name: client.name,
     coupleName: client.couple_name || '',
-    weddingDate: parseDate(client.wedding_date),
+    weddingDate: client.wedding_date ? formatDate(client.wedding_date) : null,
     weddingStartTime: client.wedding_start_time || '',
     weddingEndTime: client.wedding_end_time || '',
     contractValue: Number(client.contract_value) || 0,
@@ -22,7 +22,7 @@ export const parseClient = (client: any): Client => {
     downPayment: Number(client.down_payment) || 0,
     eventCategory: client.event_category as EventCategory || 'Casamento',
     eventLocation: client.event_location || '',
-    preWeddingDate: parseDate(client.pre_wedding_date),
+    preWeddingDate: client.pre_wedding_date ? formatDate(client.pre_wedding_date) : null,
     preWeddingStartTime: client.pre_wedding_start_time || '',
     preWeddingEndTime: client.pre_wedding_end_time || '',
     contractLink: client.contract_link || '',
@@ -37,7 +37,7 @@ export const parseClient = (client: any): Client => {
     albumDesigned: client.album_designed || false,
     albumApprovedDelivered: client.album_approved_delivered || false,
     payments: [],
-    createdAt: parseDate(client.created_at) || new Date(),
-    updatedAt: parseDate(client.updated_at) || new Date(),
+    createdAt: formatDate(client.created_at) || formatDate(new Date()),
+    updatedAt: formatDate(client.updated_at) || formatDate(new Date()),
   };
 };

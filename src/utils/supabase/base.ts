@@ -1,33 +1,19 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { TIMEZONE } from '@/utils/dateUtils';
-import { fromZonedTime } from 'date-fns-tz';
+import { formatDateForSupabase, formatDate } from '@/utils/dateUtils';
 
 // Helper functions for date formatting/parsing
-export const parseDate = (dateString: string | null): Date | null => {
+export const parseDate = (dateString: string | null): string | null => {
   if (!dateString) return null;
   
-  // Parse the date and convert it to São Paulo timezone
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return null;
-  
-  // Return the date in the local timezone context
-  return date;
+  // Parse the date and convert it to our standard format DD/MM/YYYY
+  return formatDate(dateString);
 };
 
-export const formatDateForSupabase = (date: Date | null): string | null => {
+export const formatDateForSupabase = (date: string | Date | null): string | null => {
   if (!date) return null;
   
-  // Garante que o dia seja preservado no fuso horário brasileiro
-  // Cria um novo objeto de data para evitar mutar a data original
-  const safeDate = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    12, 0, 0 // Meio-dia para evitar problemas de fuso
-  );
-  
-  return safeDate.toISOString();
+  return formatDateForSupabase(date);
 };
 
 // Generic delete function for clearing all data

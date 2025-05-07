@@ -27,20 +27,8 @@ export function EventFields({ control }: EventFieldsProps) {
               <FormLabel>Data do Evento</FormLabel>
               <FormControl>
                 <DatePicker
-                  value={field.value ? new Date(field.value) : null}
-                  onChange={(date) => {
-                    // Ensure we're working with the date in the São Paulo timezone
-                    if (date) {
-                      // Preserve the day in São Paulo timezone
-                      const year = date.getFullYear();
-                      const month = date.getMonth() + 1;
-                      const day = date.getDate();
-                      const localDate = createSafeDate(year, month, day);
-                      field.onChange(localDate);
-                    } else {
-                      field.onChange(null);
-                    }
-                  }}
+                  value={field.value}
+                  onChange={field.onChange}
                   placeholder="Selecione uma data"
                 />
               </FormControl>
@@ -101,20 +89,8 @@ export function EventFields({ control }: EventFieldsProps) {
               <FormLabel>Data do Pré-Wedding (opcional)</FormLabel>
               <FormControl>
                 <DatePicker
-                  value={field.value ? new Date(field.value) : null}
-                  onChange={(date) => {
-                    // Ensure we're working with the date in the São Paulo timezone
-                    if (date) {
-                      // Preserve the day in São Paulo timezone
-                      const year = date.getFullYear();
-                      const month = date.getMonth() + 1;
-                      const day = date.getDate();
-                      const localDate = createSafeDate(year, month, day);
-                      field.onChange(localDate);
-                    } else {
-                      field.onChange(null);
-                    }
-                  }}
+                  value={field.value}
+                  onChange={field.onChange}
                   placeholder="Selecione uma data (opcional)"
                 />
               </FormControl>

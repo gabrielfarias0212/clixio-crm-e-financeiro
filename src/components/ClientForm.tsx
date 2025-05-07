@@ -20,7 +20,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           coupleName: client.coupleName || "",
           email: client.email,
           phone: client.phone,
-          weddingDate: client.weddingDate,
+          weddingDate: client.weddingDate, // Now a string
           weddingStartTime: client.weddingStartTime || "",
           weddingEndTime: client.weddingEndTime || "",
           contractValue: client.contractValue,
@@ -29,7 +29,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           nextAction: client.nextAction,
           eventCategory: client.eventCategory,
           eventLocation: client.eventLocation || "",
-          preWeddingDate: client.preWeddingDate,
+          preWeddingDate: client.preWeddingDate, // Now a string
           preWeddingStartTime: client.preWeddingStartTime || "",
           preWeddingEndTime: client.preWeddingEndTime || "",
           contractLink: client.contractLink || "",

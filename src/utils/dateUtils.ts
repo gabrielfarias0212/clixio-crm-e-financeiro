@@ -34,3 +34,41 @@ export const combineDateAndTime = (date: Date, timeStr: string): Date => {
   newDate.setMinutes(minutes);
   return newDate;
 };
+
+// Parse Brazilian date format (DD/MM/YYYY)
+export const parseBrazilianDate = (dateString: string): Date | null => {
+  if (!dateString) return null;
+  
+  // Check if the date is already a Date object
+  if (dateString instanceof Date) return dateString;
+  
+  // Try to parse the string date in DD/MM/YYYY format
+  if (typeof dateString === "string") {
+    // Check for DD/MM/YYYY format (with / or -)
+    const brazilianDateRegex = /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/;
+    const match = dateString.match(brazilianDateRegex);
+    
+    if (match) {
+      const day = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10) - 1; // 0-based month
+      const year = parseInt(match[3], 10);
+      
+      // Validate ranges
+      if (day >= 1 && day <= 31 && month >= 0 && month <= 11 && year >= 1900 && year <= 2100) {
+        const parsedDate = new Date(year, month, day, 12, 0, 0); // noon to avoid timezone issues
+        // Check if the date is valid (e.g., not Feb 31)
+        if (!isNaN(parsedDate.getTime())) {
+          return parsedDate;
+        }
+      }
+    }
+    
+    // Try standard JavaScript date parsing as fallback
+    const fallbackDate = new Date(dateString);
+    if (!isNaN(fallbackDate.getTime())) {
+      return fallbackDate;
+    }
+  }
+  
+  return null;
+};

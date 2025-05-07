@@ -21,7 +21,7 @@ import {
 import { Client, ClientStatus, EventCategory, NextAction } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
-import { formatDate } from "@/utils/dateUtils";
+import { formatDate, parseBrazilianDate } from "@/utils/dateUtils";
 
 interface ClientImporterProps {
   data: any[];
@@ -78,25 +78,14 @@ export function ClientImporter({ data, fileName, onReset }: ClientImporterProps)
     // Parse date if available
     let weddingDate = null;
     const dateValue = row["Data do Evento"] || row["data do evento"] || row["Data"] || row["data"];
+    
     if (dateValue) {
-      try {
-        if (typeof dateValue === "string") {
-          // Handle different date formats (DD/MM/YYYY or YYYY-MM-DD)
-          const parts = dateValue.split(/[\/\-\.]/);
-          if (parts.length === 3) {
-            // Assuming DD/MM/YYYY format if the first part is <= 31
-            if (parseInt(parts[0]) <= 31 && parts[0].length <= 2) {
-              weddingDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-            } else {
-              // Otherwise try as YYYY-MM-DD
-              weddingDate = new Date(dateValue);
-            }
-          }
-        } else if (dateValue instanceof Date) {
-          weddingDate = dateValue;
-        }
-      } catch (error) {
-        console.error("Error parsing date:", error);
+      // If it's already a Date object (processed by ImportClients component)
+      if (dateValue instanceof Date) {
+        weddingDate = dateValue;
+      } else {
+        // Otherwise try to parse it
+        weddingDate = parseBrazilianDate(dateValue);
       }
     }
     

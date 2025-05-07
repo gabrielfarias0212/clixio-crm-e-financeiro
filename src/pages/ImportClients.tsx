@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -9,6 +8,7 @@ import { ClientImporter } from "@/components/ClientImporter";
 import { Download, Upload, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from 'xlsx';
+import { parseBrazilianDate } from "@/utils/dateUtils";
 
 export default function ImportClients() {
   const navigate = useNavigate();
@@ -56,7 +56,33 @@ export default function ImportClients() {
         return;
       }
       
-      setFileData(data);
+      // Process date fields in Brazilian format
+      const processedData = data.map(row => {
+        const processedRow = { ...row };
+        
+        // Look for date fields with different possible names
+        const dateFieldNames = [
+          "Data do Evento", 
+          "data do evento", 
+          "Data", 
+          "data"
+        ];
+        
+        // Find the date field that exists in this row
+        const dateFieldName = dateFieldNames.find(field => field in row);
+        
+        if (dateFieldName && row[dateFieldName]) {
+          // Try to parse the date in Brazilian format
+          const parsedDate = parseBrazilianDate(row[dateFieldName]);
+          if (parsedDate) {
+            processedRow[dateFieldName] = parsedDate;
+          }
+        }
+        
+        return processedRow;
+      });
+      
+      setFileData(processedData);
     } catch (error) {
       console.error("Error processing file:", error);
       toast.error("Erro ao processar arquivo");

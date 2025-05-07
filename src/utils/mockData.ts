@@ -1,3 +1,4 @@
+
 import { Client, ClientStatus, NextAction, EventCategory, Payment } from "./types";
 import { v4 as uuidv4 } from 'uuid';
 import { dateToString } from "./dateUtils";
@@ -30,8 +31,7 @@ const nextActionOptions: NextAction[] = [
   "enviar proposta",
   "editar",
   "entregar",
-  "nenhuma",
-  "agendar reunião" // New option added
+  "nenhuma"
 ];
 
 // Sample event categories
@@ -41,17 +41,16 @@ const eventCategories: EventCategory[] = [
   "Civil",
   "Ensaio Estudio",
   "Ensaio externo",
-  "Evento Corporativo",
-  "15 anos" // New category added
+  "Evento Corporativo"
 ];
 
-// Function to generate a single client
-const generateClient = (): Client => {
-  // Randomly determine the client status
+// Generate a list of 15 sample clients
+export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
+  // Determine status randomly but with a distribution
   const statusIndex = Math.floor(Math.random() * statusOptions.length);
   const status = statusOptions[statusIndex];
-
-  // Set the next action based on status
+  
+  // Set next action based on status (more realistic)
   let nextAction: NextAction;
   if (status === "orçamento enviado") {
     nextAction = Math.random() > 0.5 ? "responder" : "enviar proposta";
@@ -64,35 +63,39 @@ const generateClient = (): Client => {
   } else {
     nextAction = "nenhuma";
   }
-
-  // Randomly generate a wedding date if not already closed
+  
+  // Generate a random wedding date, with some nulls for prospects
   const weddingDate = status === "orçamento enviado" && Math.random() > 0.7 
     ? null 
     : randomDate(nextYear, inTwoYears);
-
-  // Contract value varies based on the client status
+  
+  // Contract value varies by status
   let contractValue = 0;
   if (status === "orçamento enviado" || status === "follow-up") {
+    // Potential value
     contractValue = Math.floor(Math.random() * 4000) + 2000;
   } else {
+    // Closed value
     contractValue = Math.floor(Math.random() * 8000) + 3000;
   }
 
-  // Down payment calculation (30-50% for closed contracts)
+  // Generate downpayment (30-50% of contract value for closed contracts)
   const downPayment = (status === "fechado" || status === "em andamento" || status === "pago") 
     ? Math.round(contractValue * (0.3 + Math.random() * 0.2)) 
     : 0;
-
-  // Generate payments history for clients with down payment
+  
+  // Generate payment history for clients with downpayment
   const payments: Payment[] = [];
   if (downPayment > 0) {
+    // Add downpayment as first payment
     payments.push({
       id: uuidv4(),
       amount: downPayment,
       date: randomDate(new Date(now.getFullYear(), now.getMonth() - 2, 1), now),
       notes: "Entrada inicial"
     });
-
+    
+    // Add additional payments for some clients
     if (status === "em andamento" || status === "pago") {
       const numExtraPayments = Math.floor(Math.random() * 3) + (status === "pago" ? 2 : 0);
       
@@ -119,27 +122,44 @@ const generateClient = (): Client => {
     }
   }
 
-  // Randomly select an event category, with higher probability for weddings
+  // Choose a random event category, with higher probability for weddings
   const eventCategory = Math.random() > 0.6 
     ? "Casamento" 
     : eventCategories[Math.floor(Math.random() * eventCategories.length)];
-
-  // Create the client object
+  
+  // Create a client with the generated data
   return {
-    id: uuidv4(),
-    name: "", // Placeholder for name - will need to be populated from actual data
+    id: `client-${i + 1}`,
+    name: [
+      "Ana e Carlos Silva",
+      "Mariana e João Pereira", 
+      "Juliana e Ricardo Costa",
+      "Daniela e Gabriel Santos",
+      "Patricia e Bruno Oliveira",
+      "Camila e André Ferreira",
+      "Fernanda e Lucas Martins",
+      "Beatriz e Rafael Almeida",
+      "Aline e Thiago Rodrigues",
+      "Bruna e Gustavo Lima",
+      "Renata e Felipe Sousa",
+      "Amanda e Daniel Carvalho",
+      "Isabela e Matheus Gomes",
+      "Natália e Eduardo Dias",
+      "Carolina e Leonardo Barbosa"
+    ][i],
     weddingDate,
     contractValue,
     status,
     nextAction,
-    email: "", // Placeholder for email - will need to be populated from actual data
-    phone: "", // Placeholder for phone - will need to be populated from actual data
+    email: `client${i + 1}@example.com`,
+    phone: `(11) 9${Math.floor(Math.random() * 10000)}-${Math.floor(Math.random() * 10000)}`,
     notes: "Notas sobre o cliente e detalhes específicos do casamento.",
     downPayment,
     eventCategory,
     eventLocation: eventCategory === "Casamento" ? "São Paulo, SP" : "",
     preWeddingDate: eventCategory === "Casamento" ? randomDate(new Date(), nextYear) : null,
-    contractLink: "", // Placeholder for contract link
+    contractLink: "",
+    // Delivery workflow fields
     preWeddingScheduled: eventCategory === "Casamento" ? Math.random() > 0.5 : false,
     preWeddingCompleted: eventCategory === "Casamento" ? Math.random() > 0.6 : false,
     preWeddingDelivered: eventCategory === "Casamento" ? Math.random() > 0.7 : false,
@@ -153,8 +173,4 @@ const generateClient = (): Client => {
     createdAt: randomDate(new Date(now.getFullYear(), now.getMonth() - 3, 1), now),
     updatedAt: randomDate(new Date(now.getFullYear(), now.getMonth() - 1, 1), now),
   };
-};
-
-export const clients: Client[] = []; // Empty array to store clients from your actual database or imported data
-
-// Now, clients can be populated using actual data or integrated with your existing system.
+});

@@ -7,13 +7,13 @@ export const parseTransaction = (transaction: any): Transaction => {
   return {
     id: transaction.id,
     amount: Number(transaction.amount),
-    date: parseDate(transaction.date) || new Date(),
+    date: parseDate(transaction.date) || "",
     type: transaction.type as TransactionType,
     category: transaction.category as TransactionCategory,
     description: transaction.description,
     clientId: transaction.client_id,
     paymentId: transaction.payment_id,
-    createdAt: parseDate(transaction.created_at) || new Date(),
+    createdAt: parseDate(transaction.created_at) || "",
   };
 };
 

@@ -8,7 +8,7 @@ export const parsePayment = (payment: any): Payment => {
   return {
     id: payment.id,
     amount: Number(payment.amount),
-    date: parseDate(payment.date) || new Date(),
+    date: parseDate(payment.date) || "",
     notes: payment.notes,
   };
 };
@@ -28,7 +28,7 @@ export const fetchPaymentsForClient = async (clientId: string): Promise<Payment[
   return paymentsData?.map(parsePayment) || [];
 };
 
-export const createPayment = async (payment: { clientId: string, amount: number, date: Date, notes?: string }): Promise<Payment | null> => {
+export const createPayment = async (payment: { clientId: string, amount: number, date: string, notes?: string }): Promise<Payment | null> => {
   try {
     const { data, error } = await supabase
       .from('wedding_payments')

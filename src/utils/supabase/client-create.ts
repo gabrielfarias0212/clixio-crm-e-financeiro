@@ -54,7 +54,7 @@ export const createClient = async (client: ClientCreateData): Promise<Client | n
       await createPayment({
         clientId: newClient.id,
         amount: client.downPayment,
-        date: new Date(),
+        date: new Date().toLocaleDateString('pt-BR'),
         notes: 'Entrada inicial'
       });
     }

@@ -1,3 +1,4 @@
+
 export type ClientStatus = 
   | "orçamento enviado" 
   | "follow-up" 
@@ -124,4 +125,15 @@ export interface CalendarEvent {
   type: EventType;
   color: EventColor;
   clientId?: string;
+}
+
+// Update the AlertItem type in the same file to include the 'due_payment' type
+export interface AlertItem {
+  type: "task" | "payment" | "due_payment" | "event";  // Added 'due_payment' type
+  title: string;
+  description: string;
+  client: Client;
+  date: Date;
+  payment?: Payment;
+  urgency?: "high" | "medium" | "low";
 }

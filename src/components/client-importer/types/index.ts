@@ -1,20 +1,19 @@
 
-import { EventCategory, ClientStatus, NextAction } from "@/utils/types";
+export type ImportOption = "skip" | "update" | "replace";
 
-export interface RawClientData {
-  [key: string]: any;
+export interface ImportSummary {
+  total: number;
+  added: number;
+  updated: number;
+  skipped: number;
+  errors: number;
 }
 
-export interface MappedClientData {
-  name: string;
-  coupleName?: string;
-  email: string;
-  phone: string;
-  weddingDate: Date | null;
-  contractValue: number;
-  downPayment: number;
-  status: ClientStatus;
-  nextAction: NextAction;
-  eventCategory: EventCategory;
-  notes: string;
+export interface DuplicateDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  duplicateCount: number;
+  importOption: ImportOption;
+  setImportOption: (option: ImportOption) => void;
+  onConfirm: () => Promise<void>;
 }

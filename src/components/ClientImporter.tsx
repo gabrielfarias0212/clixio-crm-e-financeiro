@@ -6,6 +6,7 @@ import { ImportWarning } from "./client-importer/ImportWarning";
 import { ImportTable } from "./client-importer/ImportTable";
 import { DuplicateDialog } from "./client-importer/DuplicateDialog";
 import { useClientImporter } from "./client-importer/useClientImporter";
+import { ImportOption } from "./client-importer/types";
 
 interface ClientImporterProps {
   data: any[];

@@ -1,90 +1,152 @@
 
 import { useState } from "react";
-import { useClients } from "@/contexts/ClientsContext";
+import { mapClientData } from "./mapClientData";
+import { createClient, fetchClients, updateClient } from "@/utils/supabaseUtils";
+import { Client } from "@/utils/types";
 import { toast } from "sonner";
-import { mapImportedClientToModel } from "./mapClientData";
+import { ImportOption, ImportSummary } from "./types";
 
 export function useClientImporter(data: any[]) {
-  const { addClient } = useClients();
   const [importing, setImporting] = useState(false);
-  const [summary, setSummary] = useState<{
-    total: number;
-    added: number;
-    updated: number;
-    skipped: number;
-    errors: number;
-  } | null>(null);
+  const [summary, setSummary] = useState<ImportSummary | null>(null);
   const [duplicateCount, setDuplicateCount] = useState(0);
-  const [importOption, setImportOption] = useState<"skip" | "update">("skip");
+  const [importOption, setImportOption] = useState<ImportOption>("skip");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  
-  // Check for potential duplicates based on email
-  const checkForDuplicates = () => {
-    // For this example, we'll just set a random number
-    // In a real implementation, this would check against existing clients
-    setDuplicateCount(Math.floor(Math.random() * data.length));
-    if (duplicateCount > 0) {
-      setShowConfirmDialog(true);
-    } else {
-      startImport();
-    }
-  };
 
-  const handleStartImport = () => {
-    checkForDuplicates();
-  };
-  
-  const startImport = async () => {
-    setImporting(true);
-    
-    const results = {
-      total: data.length,
-      added: 0,
-      updated: 0,
-      skipped: 0,
-      errors: 0
-    };
-    
+  const checkForDuplicates = async () => {
     try {
-      for (const item of data) {
-        try {
-          const mappedClient = mapImportedClientToModel(item);
-          
-          // Basic validation - require name and email
-          if (!mappedClient.name || !mappedClient.email) {
-            results.skipped += 1;
-            continue;
-          }
-          
-          // Add the client (in a real implementation, we would check for duplicates here)
-          const result = await addClient(mappedClient);
-          
-          if (result) {
-            results.added += 1;
-          } else {
-            results.errors += 1;
-          }
-        } catch (error) {
-          console.error("Error importing client:", error);
-          results.errors += 1;
+      // Get existing clients
+      const existingClients = await fetchClients();
+      
+      // Map incoming data to client structure
+      const mappedClients = data
+        .filter(row => Object.keys(row).length > 0)
+        .map(row => mapClientData(row));
+      
+      // Count how many have duplicate emails
+      let duplicates = 0;
+      
+      for (const newClient of mappedClients) {
+        if (!newClient.email) continue;
+        
+        const duplicate = existingClients.find(
+          client => client.email === newClient.email
+        );
+        
+        if (duplicate) {
+          duplicates++;
         }
       }
       
-      setSummary(results);
+      return duplicates;
+    } catch (error) {
+      console.error("Error checking for duplicates:", error);
+      return 0;
+    }
+  };
+
+  const handleStartImport = async () => {
+    try {
+      // Check for duplicates
+      const duplicates = await checkForDuplicates();
+      setDuplicateCount(duplicates);
       
-      if (results.errors > 0) {
-        toast.error(`Import completed with ${results.errors} errors.`);
+      if (duplicates > 0) {
+        // Show the confirmation dialog
+        setShowConfirmDialog(true);
       } else {
-        toast.success("Clients imported successfully!");
+        // No duplicates, proceed with import
+        await startImport();
       }
     } catch (error) {
+      console.error("Error during import preparation:", error);
+      toast.error("Erro ao preparar a importação");
+    }
+  };
+
+  const startImport = async () => {
+    setImporting(true);
+    setShowConfirmDialog(false);
+    
+    try {
+      // Get existing clients
+      const existingClients = await fetchClients();
+      
+      // Initialize counters for summary
+      let total = 0;
+      let added = 0;
+      let updated = 0;
+      let skipped = 0;
+      let errors = 0;
+      
+      // Map incoming data to client structure and filter out empty rows
+      const mappedClients = data
+        .filter(row => Object.keys(row).length > 0 && Object.values(row).some(v => v !== null && v !== ""))
+        .map(row => mapClientData(row));
+      
+      total = mappedClients.length;
+      
+      // Process each client
+      for (const clientData of mappedClients) {
+        try {
+          // Check if this client already exists (by email)
+          const existingClient = clientData.email 
+            ? existingClients.find(c => c.email === clientData.email)
+            : null;
+          
+          if (existingClient) {
+            // Handling based on the selected import option
+            if (importOption === "skip") {
+              // Skip this client
+              skipped++;
+              continue;
+            } else if (importOption === "update") {
+              // Update the existing client
+              const result = await updateClient(existingClient.id, clientData);
+              if (result) {
+                updated++;
+              } else {
+                errors++;
+              }
+              continue;
+            }
+            // For "replace", we'll just add new clients and ignore duplicates
+          }
+          
+          // Add as a new client
+          const result = await createClient(clientData as Omit<Client, "id" | "createdAt" | "updatedAt" | "payments">);
+          if (result) {
+            added++;
+          } else {
+            errors++;
+          }
+          
+        } catch (error) {
+          console.error("Error importing client:", error);
+          errors++;
+        }
+      }
+      
+      // Update the summary
+      setSummary({
+        total,
+        added,
+        updated,
+        skipped,
+        errors
+      });
+      
+      // Show toast with results
+      toast.success(`Importação concluída: ${added} adicionados, ${updated} atualizados`);
+      
+    } catch (error) {
       console.error("Error during import:", error);
-      toast.error("Error during import process.");
+      toast.error("Erro durante a importação");
     } finally {
       setImporting(false);
     }
   };
-
+  
   return {
     importing,
     summary,

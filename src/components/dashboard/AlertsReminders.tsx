@@ -1,28 +1,16 @@
-
 import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Bell, DollarSign, Eye } from "lucide-react";
+import { Bell, DollarSign } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Client, Payment } from "@/utils/types";
+import { Client, Payment, AlertItem } from "@/utils/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DashboardCardModal } from "./DashboardCardModal";
 import { formatDateTime, stringToDate } from "@/utils/dateUtils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { differenceInDays, isAfter, isBefore } from "date-fns";
-
-// Define an interface for alerts with all necessary properties
-interface AlertItem {
-  type: "task" | "payment" | "due_payment";
-  title: string;
-  description: string;
-  client: Client;
-  date: Date;
-  payment?: Payment;
-  urgency?: "high" | "medium" | "low";
-}
+import { differenceInDays, isBefore } from "date-fns";
 
 export function AlertsReminders() {
   const { clients } = useClients();
@@ -34,7 +22,7 @@ export function AlertsReminders() {
     const now = new Date();
     
     // Pending tasks (based on nextAction not being "nenhuma")
-    const pendingTasks = clients
+    const pendingTasks: AlertItem[] = clients
       .filter(client => client.nextAction !== "nenhuma")
       .map(client => ({
         type: "task" as const,
@@ -46,7 +34,7 @@ export function AlertsReminders() {
       }));
     
     // Payment alerts (contracts without full payment)
-    const paymentAlerts = clients
+    const paymentAlerts: AlertItem[] = clients
       .filter(client => {
         if (client.status !== "fechado" && client.status !== "em andamento") return false;
         const totalPaid = client.payments.reduce((sum, payment) => sum + payment.amount, 0);
@@ -124,7 +112,7 @@ export function AlertsReminders() {
 
     return { 
       tasks: pendingTasks, 
-      payments: [...paymentAlerts, ...sortedDuePaymentAlerts]
+      payments: [...paymentAlerts, ...sortedDuePaymentAlerts] as AlertItem[]
     };
   }, [clients]);
 

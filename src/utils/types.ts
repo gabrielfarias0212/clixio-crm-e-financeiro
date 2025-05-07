@@ -129,7 +129,7 @@ export interface CalendarEvent {
 
 // Update the AlertItem type in the same file to include the 'due_payment' type
 export interface AlertItem {
-  type: "task" | "payment" | "due_payment" | "event";  // Added 'due_payment' type
+  type: "task" | "payment" | "due_payment" | "event";  // Includes all required types
   title: string;
   description: string;
   client: Client;

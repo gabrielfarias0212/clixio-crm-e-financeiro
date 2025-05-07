@@ -28,13 +28,18 @@ export function DayView({ date, clients, onClientClick }: DayViewProps) {
     const dateKey = normalizeDate(date);
     
     // Get custom events for this day
-    const customEvents = events.filter(event => 
-      normalizeDate(event.date) === dateKey
-    );
+    const customEvents = events.filter(event => {
+      const eventDate = stringToDate(event.date);
+      return eventDate && normalizeDate(eventDate) === dateKey;
+    });
     
     // Get client events (weddings, etc)
     const clientEvents = clients
-      .filter(client => client.weddingDate && normalizeDate(client.weddingDate) === dateKey)
+      .filter(client => {
+        if (!client.weddingDate) return false;
+        const weddingDate = stringToDate(client.weddingDate);
+        return weddingDate && normalizeDate(weddingDate) === dateKey;
+      })
       .map(client => ({
         id: `client-${client.id}`,
         title: `${client.eventCategory}: ${client.name}`,

@@ -23,25 +23,11 @@ export default function AddClient() {
     try {
       console.log("Creating client with data:", data);
       
-      // Ensure date is properly formatted to avoid timezone issues
+      // Process wedding date directly as string
       let weddingDate = data.weddingDate;
-      if (weddingDate) {
-        // Preserve the day in São Paulo timezone
-        const year = weddingDate.getFullYear();
-        const month = weddingDate.getMonth() + 1;
-        const day = weddingDate.getDate();
-        weddingDate = createSafeDate(year, month, day);
-      }
       
-      // Ensure pre-wedding date is properly formatted
+      // Process pre-wedding date directly as string
       let preWeddingDate = data.preWeddingDate;
-      if (preWeddingDate) {
-        // Preserve the day in São Paulo timezone
-        const year = preWeddingDate.getFullYear();
-        const month = preWeddingDate.getMonth() + 1;
-        const day = preWeddingDate.getDate();
-        preWeddingDate = createSafeDate(year, month, day);
-      }
       
       const newClient = await addClient({
         name: data.name,

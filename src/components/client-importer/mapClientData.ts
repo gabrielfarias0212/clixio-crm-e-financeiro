@@ -1,6 +1,6 @@
 
 import { Client, ClientStatus, NextAction, EventCategory } from "@/utils/types";
-import { formatDateForSupabase } from "@/utils/supabaseUtils";
+import { formatDateForSupabase } from "@/utils/supabase/base";
 import { 
   normalizeStatus, 
   normalizeNextAction, 
@@ -8,6 +8,7 @@ import {
   normalizeDate,
   normalizePhoneNumber
 } from "./utils/normalizers";
+import { dateToString } from "@/utils/dateUtils";
 
 /**
  * Maps data from an Excel/CSV row to a Client object
@@ -91,10 +92,11 @@ export function mapClientData(row: any): Partial<Client> {
   // Parse values
   const phone = normalizePhoneNumber(rawPhone);
   
-  // Parse wedding date
-  let weddingDate: Date | null = null;
+  // Parse wedding date as string
+  let weddingDate: string | null = null;
   if (rawWeddingDate) {
-    weddingDate = normalizeDate(rawWeddingDate);
+    const date = normalizeDate(rawWeddingDate);
+    weddingDate = date ? dateToString(date) : null;
   }
 
   // Parse contract value

@@ -1,6 +1,5 @@
 
 import { Client } from "@/utils/types";
-import { formatDate } from "@/utils/clientUtils";
 import { CalendarIcon, Mail, Phone, Users } from "lucide-react";
 
 interface ClientInfoProps {
@@ -9,9 +8,7 @@ interface ClientInfoProps {
 
 export function ClientInfo({ client }: ClientInfoProps) {
   // Format wedding date for display
-  const weddingDateFormatted = client.weddingDate 
-    ? formatDate(client.weddingDate)
-    : "Não definida";
+  const weddingDateFormatted = client.weddingDate || "Não definida";
 
   return (
     <div className="space-y-4">

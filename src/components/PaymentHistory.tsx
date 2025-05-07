@@ -1,6 +1,5 @@
 
 import { Payment } from "@/utils/types";
-import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { parseDate } from "@/utils/supabase/base";
 
 interface PaymentHistoryProps {
   payments: Payment[];
@@ -28,8 +28,15 @@ interface PaymentHistoryProps {
 export function PaymentHistory({ payments, className, onDeletePayment, isDeleting = false }: PaymentHistoryProps) {
   const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
   
-  // Sort payments by date (newest first)
-  const sortedPayments = [...payments].sort((a, b) => b.date.getTime() - a.date.getTime());
+  // Sort payments by date (newest first) - using string comparison instead of Date.getTime()
+  const sortedPayments = [...payments].sort((a, b) => {
+    // Convert to Date objects for comparison if they are strings
+    const dateA = typeof a.date === 'string' ? new Date(parseDate(a.date) || '') : a.date;
+    const dateB = typeof b.date === 'string' ? new Date(parseDate(b.date) || '') : b.date;
+    
+    // Compare the dates
+    return dateB.getTime() - dateA.getTime();
+  });
   
   const handleDelete = () => {
     if (paymentToDelete && onDeletePayment) {
@@ -57,7 +64,7 @@ export function PaymentHistory({ payments, className, onDeletePayment, isDeletin
           <TableBody>
             {sortedPayments.map((payment) => (
               <TableRow key={payment.id}>
-                <TableCell>{format(payment.date, "dd/MM/yyyy")}</TableCell>
+                <TableCell>{payment.date}</TableCell>
                 <TableCell className="font-medium">
                   {new Intl.NumberFormat('pt-BR', {
                     style: 'currency',

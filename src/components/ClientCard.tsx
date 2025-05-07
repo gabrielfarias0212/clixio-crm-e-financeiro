@@ -3,7 +3,6 @@ import { Client } from "@/utils/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "./StatusBadge";
 import { ActionChip } from "./ActionChip";
-import { format } from "date-fns";
 import { CalendarIcon, DollarSign, MailIcon, PhoneIcon, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,22 +21,6 @@ export function ClientCard({ client, className, onClick }: ClientCardProps) {
   }).format(contractValue);
 
   const isPotential = status === "orçamento enviado" || status === "follow-up";
-
-  // Ensure we format the date correctly, preserving the day
-  const formatWeddingDate = (date: Date | null) => {
-    if (!date) return null;
-    
-    // Create a new date at noon to avoid timezone issues
-    const weddingDateObj = new Date(date);
-    const localDate = new Date(
-      weddingDateObj.getFullYear(),
-      weddingDateObj.getMonth(),
-      weddingDateObj.getDate(),
-      12, 0, 0
-    );
-    
-    return format(localDate, "dd/MM/yyyy");
-  };
 
   return (
     <Card 
@@ -63,7 +46,7 @@ export function ClientCard({ client, className, onClick }: ClientCardProps) {
               {weddingDate ? (
                 <div className="flex items-center">
                   <CalendarIcon className="h-3.5 w-3.5 mr-1 text-gray-400" />
-                  {formatWeddingDate(weddingDate)}
+                  {weddingDate}
                 </div>
               ) : (
                 <div className="text-gray-400 text-xs italic">Data não definida</div>

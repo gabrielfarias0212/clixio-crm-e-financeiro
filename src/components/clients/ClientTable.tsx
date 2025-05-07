@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CheckCircle, Edit, Trash2 } from "lucide-react";
-import { formatDate } from "@/utils/clientUtils";
 import { Button } from "@/components/ui/button";
 import { DeleteClientDialog } from "@/components/client-detail/DeleteClientDialog";
 import { useClients } from "@/contexts/ClientsContext";
@@ -32,22 +31,6 @@ export function ClientTable({ clients }: ClientTableProps) {
       style: 'currency', 
       currency: 'BRL' 
     }).format(value);
-  };
-
-  // Function to format the wedding date 
-  const formatWeddingDate = (date: Date | null) => {
-    if (!date) return "Não definida";
-    
-    // Create a new date at noon to avoid timezone issues
-    const weddingDateObj = new Date(date);
-    const localDate = new Date(
-      weddingDateObj.getFullYear(),
-      weddingDateObj.getMonth(),
-      weddingDateObj.getDate(),
-      12, 0, 0
-    );
-    
-    return formatDate(localDate);
   };
 
   const handleDelete = async (clientId: string) => {
@@ -95,64 +78,32 @@ export function ClientTable({ clients }: ClientTableProps) {
                   {client.name}
                   {client.status === "pago" && (
                     <span className="ml-2" aria-label="Trabalho Entregue">
-                      <CheckCircle className="text-green-600 h-4 w-4" />
+                      <CheckCircle className="h-4 w-4 text-green-500" />
                     </span>
                   )}
                 </div>
               </TableCell>
-              <TableCell 
-                className="cursor-pointer" 
-                onClick={() => handleRowClick(client.id)}
-              >
-                {formatWeddingDate(client.weddingDate)}
-              </TableCell>
-              <TableCell 
-                className="cursor-pointer" 
-                onClick={() => handleRowClick(client.id)}
-              >
-                <span className={client.status === "orçamento enviado" || client.status === "follow-up" ? "text-gray-400 italic" : "font-medium"}>
-                  {formatCurrency(client.contractValue)}
-                </span>
-              </TableCell>
-              <TableCell 
-                className="cursor-pointer" 
-                onClick={() => handleRowClick(client.id)}
-              >
+              <TableCell>{client.weddingDate || "Não definida"}</TableCell>
+              <TableCell>{formatCurrency(client.contractValue)}</TableCell>
+              <TableCell>
                 <StatusBadge status={client.status} />
               </TableCell>
-              <TableCell 
-                className="cursor-pointer" 
-                onClick={() => handleRowClick(client.id)}
-              >
-                <div className="text-sm text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <div>{client.email}</div>
-                  </div>
-                  <div className="flex items-center gap-1 mt-1">
-                    <div>{client.phone}</div>
-                  </div>
-                </div>
+              <TableCell className="text-sm text-gray-500">
+                {client.email}
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/clients/${client.id}/edit`);
+                      navigate(`/clients/edit/${client.id}`);
                     }}
-                    className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600"
                   >
-                    <Edit className="h-4 w-4" />
-                    <span className="sr-only">Editar cliente</span>
+                    <Edit className="h-4 w-4 text-gray-500" />
                   </Button>
-                  
-                  <TableClientDeleteButton 
-                    clientId={client.id} 
-                    clientName={client.name}
-                    onDelete={() => handleDelete(client.id)}
-                  />
+                  <DeleteClientDialog clientId={client.id} onDelete={handleDelete} />
                 </div>
               </TableCell>
             </TableRow>
@@ -160,32 +111,5 @@ export function ClientTable({ clients }: ClientTableProps) {
         </TableBody>
       </Table>
     </div>
-  );
-}
-
-// Helper component for delete button with confirmation dialog
-function TableClientDeleteButton({ 
-  clientId, 
-  clientName,
-  onDelete 
-}: { 
-  clientId: string;
-  clientName: string;
-  onDelete: () => Promise<void>;
-}) {
-  return (
-    <DeleteClientDialog onDelete={onDelete}>
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        className="h-8 w-8 p-0 text-gray-500 hover:text-red-600"
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-      >
-        <Trash2 className="h-4 w-4" />
-        <span className="sr-only">Excluir cliente</span>
-      </Button>
-    </DeleteClientDialog>
   );
 }

@@ -2,6 +2,7 @@
 import { Transaction, TransactionCategory } from "./types";
 import { clients } from "./mockData";
 import { v4 as uuidv4 } from 'uuid';
+import { dateToString } from "./dateUtils";
 
 // Generate some sample transactions based on existing client payments
 export const transactions: Transaction[] = [];
@@ -18,7 +19,7 @@ clients.forEach(client => {
       description: `Pagamento de ${client.name}`,
       clientId: client.id,
       paymentId: payment.id,
-      createdAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000))
+      createdAt: dateToString(new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)))
     });
   });
 });
@@ -51,13 +52,19 @@ for (let i = 0; i < 15; i++) {
   transactions.push({
     id: uuidv4(),
     amount: Math.floor(Math.random() * 2000) + 100,
-    date: new Date(Date.now() - Math.floor(Math.random() * 60 * 24 * 60 * 60 * 1000)),
+    date: dateToString(new Date(Date.now() - Math.floor(Math.random() * 60 * 24 * 60 * 60 * 1000))),
     type: "saída",
     category: randomCategory,
     description: randomDescription,
-    createdAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000))
+    createdAt: dateToString(new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)))
   });
 }
 
 // Sort transactions by date (newest first)
-transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
+// Using string comparison with custom sorting function
+transactions.sort((a, b) => {
+  // Convert to Date objects for comparison
+  const dateA = new Date(a.date.split('/').reverse().join('-'));
+  const dateB = new Date(b.date.split('/').reverse().join('-'));
+  return dateB.getTime() - dateA.getTime();
+});

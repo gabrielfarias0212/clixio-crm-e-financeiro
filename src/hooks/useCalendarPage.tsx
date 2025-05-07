@@ -30,9 +30,10 @@ export function useCalendarPage(clients: Client[]) {
     const result: Record<string, Client[]> = {};
     
     clientsWithWeddingDates.forEach(client => {
-      // The wedding date is now already a string in DD/MM/YYYY format
-      // Convert to YYYY-MM-DD for consistent key format
-      const dateKey = normalizeDate(client.weddingDate);
+      if (!client.weddingDate) return;
+      
+      // Convert DD/MM/YYYY to YYYY-MM-DD for consistent key format
+      const dateKey = normalizeDate(stringToDate(client.weddingDate) || new Date());
       
       if (!result[dateKey]) {
         result[dateKey] = [];
@@ -80,9 +81,10 @@ export function useCalendarPage(clients: Client[]) {
     const dayClients = clientsByDate[dateKey] || [];
     
     // Get events for this date
-    const dayEvents = events.filter(event => 
-      normalizeDate(event.date) === dateKey
-    );
+    const dayEvents = events.filter(event => {
+      const eventDate = stringToDate(event.date);
+      return eventDate && normalizeDate(eventDate) === dateKey;
+    });
     
     return { clients: dayClients, events: dayEvents };
   }, [date, clientsByDate, events]);

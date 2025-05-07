@@ -1,59 +1,59 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { FinancialCategory } from '../types';
+import { dateToString } from '../dateUtils';
 
+// Fetch all financial categories
 export const fetchFinancialCategories = async (): Promise<FinancialCategory[]> => {
-  const { data, error } = await supabase
-    .from('financial_categories')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Erro ao buscar categorias financeiras:', error);
-    return [];
-  }
-  return (data || []).map((cat: any) => ({
-    id: cat.id,
-    name: cat.name,
-    type: cat.type,
-    createdAt: cat.created_at ? new Date(cat.created_at) : new Date(),
-  }));
-};
-
-export const createFinancialCategory = async ({
-  name,
-  type,
-  photographer_id = '00000000-0000-0000-0000-000000000000',
-}: { name: string; type: "entrada" | "saída"; photographer_id?: string }) => {
   try {
-    console.log('Criando categoria financeira:', { name, type, photographer_id });
-    
     const { data, error } = await supabase
       .from('financial_categories')
-      .insert([
-        {
-          name,
-          type,
-          photographer_id
-        }
-      ])
+      .select('*');
+    
+    if (error) throw error;
+    
+    // Map to our FinancialCategory type, converting dates to strings
+    return data.map(category => ({
+      id: category.id,
+      name: category.name,
+      type: category.type,
+      createdAt: dateToString(new Date(category.created_at))
+    }));
+  } catch (error) {
+    console.error('Error fetching financial categories:', error);
+    return [];
+  }
+};
+
+// Create a new financial category
+export const createFinancialCategory = async ({ 
+  name, 
+  type 
+}: { 
+  name: string; 
+  type: 'entrada' | 'saída';
+}): Promise<FinancialCategory | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('financial_categories')
+      .insert({
+        name,
+        type
+      })
       .select()
       .single();
-
-    if (error) {
-      console.error('Erro ao criar categoria financeira:', error);
-      return null;
-    }
     
-    console.log('Categoria financeira criada com sucesso:', data);
+    if (error) throw error;
+    
+    // Return the created category
     return {
       id: data.id,
       name: data.name,
       type: data.type,
-      createdAt: data.created_at ? new Date(data.created_at) : new Date(),
-    } as FinancialCategory;
+      createdAt: dateToString(new Date(data.created_at))
+    };
   } catch (error) {
-    console.error('Exceção ao criar categoria financeira:', error);
+    console.error('Error creating financial category:', error);
     return null;
   }
 };

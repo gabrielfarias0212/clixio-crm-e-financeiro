@@ -12,7 +12,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMemo } from "react";
-import { normalizeDate } from "@/utils/dateUtils";
+import { normalizeDate, stringToDate } from "@/utils/dateUtils";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { cn } from "@/lib/utils";
 
@@ -39,8 +39,8 @@ export function WeekView({ date, clients, onClientClick }: WeekViewProps) {
   const weekEvents = useMemo(() => {
     // Get custom events for this week
     const customEvents = events.filter(event => {
-      const eventDate = new Date(event.date);
-      return isWithinInterval(eventDate, {
+      const eventDate = stringToDate(event.date);
+      return eventDate && isWithinInterval(eventDate, {
         start: startOfDay(weekStart),
         end: endOfDay(weekEnd)
       });
@@ -50,8 +50,8 @@ export function WeekView({ date, clients, onClientClick }: WeekViewProps) {
     const clientEvents = clients
       .filter(client => {
         if (!client.weddingDate) return false;
-        const weddingDate = new Date(client.weddingDate);
-        return isWithinInterval(weddingDate, {
+        const weddingDate = stringToDate(client.weddingDate);
+        return weddingDate && isWithinInterval(weddingDate, {
           start: startOfDay(weekStart),
           end: endOfDay(weekEnd)
         });
@@ -59,7 +59,7 @@ export function WeekView({ date, clients, onClientClick }: WeekViewProps) {
       .map(client => ({
         id: `client-${client.id}`,
         title: client.name,
-        date: client.weddingDate as Date,
+        date: client.weddingDate as string,
         startTime: client.weddingStartTime || "10:00",
         endTime: client.weddingEndTime || "18:00",
         type: "client" as const,
@@ -82,7 +82,8 @@ export function WeekView({ date, clients, onClientClick }: WeekViewProps) {
     const hourStr = hour.toString().padStart(2, '0');
     
     return weekEvents.filter(event => {
-      const eventDate = normalizeDate(event.date);
+      // Convert string date to normalized date for comparison
+      const eventDate = normalizeDate(stringToDate(event.date) || new Date());
       const startHour = getHourFromTimeString(event.startTime);
       const endHour = getHourFromTimeString(event.endTime);
       

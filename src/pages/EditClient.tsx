@@ -7,7 +7,6 @@ import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Client } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
-import { createSafeDate } from "@/utils/dateUtils";
 
 export default function EditClient() {
   const { id } = useParams<{ id: string }>();
@@ -44,7 +43,7 @@ export default function EditClient() {
     setIsSubmitting(true);
     
     try {
-      // We're now using string dates directly, no need to format
+      // Use the string dates directly
       const updatedClient = await updateClient(id, {
         name: data.name,
         coupleName: data.coupleName,

@@ -25,10 +25,12 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { v4 as uuidv4 } from 'uuid';
 import { Client, Payment } from "@/utils/types";
+import { dateToString, stringToDate } from "@/utils/dateUtils";
 
 const paymentFormSchema = z.object({
   amount: z.coerce.number().positive({ message: "O valor deve ser maior que zero" }),
-  date: z.date(),
+  // Changed from z.date() to z.string()
+  date: z.string(),
   notes: z.string().optional(),
 });
 
@@ -48,7 +50,8 @@ export function AddPaymentForm({ client, onSuccess, onCancel }: AddPaymentFormPr
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
       amount: maxAmount > 0 ? maxAmount : 0,
-      date: new Date(),
+      // Initialize with current date as string
+      date: dateToString(new Date()),
       notes: "",
     },
   });
@@ -125,7 +128,7 @@ export function AddPaymentForm({ client, onSuccess, onCancel }: AddPaymentFormPr
                       )}
                     >
                       {field.value ? (
-                        format(field.value, "dd/MM/yyyy")
+                        field.value
                       ) : (
                         <span>Selecione uma data</span>
                       )}
@@ -136,8 +139,8 @@ export function AddPaymentForm({ client, onSuccess, onCancel }: AddPaymentFormPr
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
-                    selected={field.value || undefined}
-                    onSelect={field.onChange}
+                    selected={stringToDate(field.value) || undefined}
+                    onSelect={(date) => field.onChange(date ? dateToString(date) : "")}
                     initialFocus
                     className="p-3 pointer-events-auto"
                   />

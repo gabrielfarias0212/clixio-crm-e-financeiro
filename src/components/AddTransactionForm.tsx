@@ -1,6 +1,6 @@
+
 import { useState, useEffect } from "react";
 import { Client, Transaction, TransactionCategory, TransactionType } from "@/utils/types";
-import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -32,6 +32,7 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchFinancialCategories, createFinancialCategory } from "@/utils/supabaseUtils";
 import { toast } from "sonner";
+import { dateToString, stringToDate } from "@/utils/dateUtils";
 
 // Novas categorias adicionadas
 const newCategories: TransactionCategory[] = [
@@ -48,7 +49,8 @@ const transactionFormSchema = z.object({
   type: z.enum(["entrada", "saída"]),
   category: z.string(),
   amount: z.coerce.number().positive({ message: "O valor deve ser maior que zero" }),
-  date: z.date(),
+  // Changed from z.date() to z.string()
+  date: z.string(),
   description: z.string().min(3, { message: "A descrição deve ter pelo menos 3 caracteres" }),
   clientId: z.string().optional(),
 });
@@ -74,7 +76,8 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
       type: "entrada",
       category: "pagamento de cliente",
       amount: undefined,
-      date: new Date(),
+      // Initialize with current date as string
+      date: dateToString(new Date()),
       description: "",
       clientId: undefined,
     },
@@ -312,7 +315,7 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
                         )}
                       >
                         {field.value ? (
-                          format(field.value, "dd/MM/yyyy")
+                          field.value
                         ) : (
                           <span>Selecione uma data</span>
                         )}
@@ -323,9 +326,10 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
+                      selected={stringToDate(field.value) || undefined}
+                      onSelect={(date) => field.onChange(date ? dateToString(date) : "")}
                       initialFocus
+                      className="p-3 pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>

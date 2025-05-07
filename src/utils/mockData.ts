@@ -1,10 +1,12 @@
 
 import { Client, ClientStatus, NextAction, EventCategory, Payment } from "./types";
 import { v4 as uuidv4 } from 'uuid';
+import { dateToString } from "./dateUtils";
 
 // Function to generate a random date within a range
-const randomDate = (start: Date, end: Date): Date => {
-  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+const randomDate = (start: Date, end: Date): string => {
+  const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+  return dateToString(date);
 };
 
 // Current date
@@ -100,7 +102,7 @@ export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
       let remainingAmount = contractValue - downPayment;
       const paymentDates = Array(numExtraPayments).fill(0)
         .map(() => randomDate(new Date(now.getFullYear(), now.getMonth() - 3, 1), now))
-        .sort((a, b) => a.getTime() - b.getTime());
+        .sort();
       
       for (let j = 0; j < numExtraPayments; j++) {
         const isLastPayment = j === numExtraPayments - 1 && status === "pago";
@@ -155,7 +157,7 @@ export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
     downPayment,
     eventCategory,
     eventLocation: eventCategory === "Casamento" ? "São Paulo, SP" : "",
-    preWeddingDate: eventCategory === "Casamento" ? randomDate(new Date(), weddingDate || nextYear) : null,
+    preWeddingDate: eventCategory === "Casamento" ? randomDate(new Date(), nextYear) : null,
     contractLink: "",
     // Delivery workflow fields
     preWeddingScheduled: eventCategory === "Casamento" ? Math.random() > 0.5 : false,

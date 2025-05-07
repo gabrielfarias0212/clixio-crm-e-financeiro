@@ -4,11 +4,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Client } from "@/utils/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge } from "@/components/StatusBadge";
-import { format } from "date-fns";
-import { formatDate } from "@/utils/clientUtils";
 import { Bell, Calendar, DollarSign } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { formatDateTime } from "@/utils/dateUtils";
 
 interface AlertItem {
   type: "task" | "event" | "payment";
@@ -54,6 +53,18 @@ export function DashboardCardModal({ title, open, onClose, clients, type, custom
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Pagamento</Badge>;
       default:
         return null;
+    }
+  };
+
+  // Function to safely format a date string
+  const safeFormatDate = (dateValue: string | null) => {
+    if (!dateValue) return "Não definida";
+    
+    try {
+      return formatDateTime(dateValue);
+    } catch (error) {
+      console.error("Error formatting date:", dateValue, error);
+      return "Data inválida";
     }
   };
 
@@ -116,7 +127,7 @@ export function DashboardCardModal({ title, open, onClose, clients, type, custom
                   <TableRow key={client.id}>
                     <TableCell className="font-medium">{client.name}</TableCell>
                     <TableCell>
-                      {client.weddingDate ? formatDate(new Date(client.weddingDate)) : "Não definida"}
+                      {safeFormatDate(client.weddingDate)}
                     </TableCell>
                     <TableCell>
                       <span className={client.status === "orçamento enviado" || client.status === "follow-up" ? "text-gray-400 italic" : "font-medium"}>

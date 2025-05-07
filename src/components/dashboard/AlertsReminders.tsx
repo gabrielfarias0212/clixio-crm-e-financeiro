@@ -11,6 +11,7 @@ import { useMemo, useState } from "react";
 import { Client } from "@/utils/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DashboardCardModal } from "./DashboardCardModal";
+import { formatDateTime, stringToDate } from "@/utils/dateUtils";
 
 // Define an interface for alerts with all necessary properties
 interface AlertItem {
@@ -46,15 +47,20 @@ export function AlertsReminders() {
     const upcomingEvents = clients
       .filter(client => {
         if (!client.weddingDate) return false;
-        const eventDate = new Date(client.weddingDate);
-        return isAfter(eventDate, now) && isBefore(eventDate, nextWeek);
+        try {
+          const eventDate = stringToDate(client.weddingDate);
+          return eventDate && isAfter(eventDate, now) && isBefore(eventDate, nextWeek);
+        } catch (error) {
+          console.error("Error processing wedding date:", client.weddingDate, error);
+          return false;
+        }
       })
       .map(client => ({
         type: "event" as const,
         title: `Evento próximo: ${client.eventCategory}`,
-        description: `Cliente: ${client.name} - ${client.weddingDate ? format(new Date(client.weddingDate), "dd/MM/yyyy") : ""}`,
+        description: `Cliente: ${client.name} - ${client.weddingDate ? formatDateTime(client.weddingDate) : ""}`,
         client,
-        date: client.weddingDate ? new Date(client.weddingDate) : now
+        date: stringToDate(client.weddingDate) || now
       }));
     
     // Payment alerts (contracts without full payment)

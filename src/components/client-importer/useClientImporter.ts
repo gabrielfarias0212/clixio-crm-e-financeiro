@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
-import { mapImportedClientToModel } from "./mapClientData";
+import { mapClientData } from "./mapClientData";
 import { ImportOption } from "./DuplicateDialog";
 
 export interface ImportSummary {
@@ -58,7 +59,7 @@ export function useClientImporter(data: any[]) {
     
     for (const row of data) {
       try {
-        const clientData = mapImportedClientToModel(row);
+        const clientData = mapClientData(row);
         
         // Check if client already exists
         const email = clientData.email.toLowerCase();

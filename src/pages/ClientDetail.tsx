@@ -123,7 +123,7 @@ export default function ClientDetail() {
             </Link>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">{client.name}</h1>
-              {isFinished && <DeliveredWorkIndicator />}
+              {isFinished && <DeliveredWorkIndicator isDelivered={true} />}
             </div>
 
             {client.coupleName && (
@@ -177,7 +177,7 @@ export default function ClientDetail() {
         
         {/* Status e Ação */}
         <div className="flex flex-wrap gap-2 mb-6">
-          <StatusBadge status={client.status} large />
+          <StatusBadge status={client.status} />
           <ActionChip action={client.nextAction} />
           <Badge variant="outline" className="border-gray-300">
             {client.eventCategory}
@@ -231,8 +231,7 @@ export default function ClientDetail() {
         
         {/* Histórico de Pagamentos */}
         <ClientPayments 
-          client={client} 
-          isPaid={isPaid} 
+          client={client}
         />
         
         {/* Notas */}

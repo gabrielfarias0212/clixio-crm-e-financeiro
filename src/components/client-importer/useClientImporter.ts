@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
 import { mapClientData } from "./mapClientData";
 import { ImportOption } from "./DuplicateDialog";
+import { MappedClientData } from "./types";
 
 export interface ImportSummary {
   total: number;
@@ -59,7 +59,7 @@ export function useClientImporter(data: any[]) {
     
     for (const row of data) {
       try {
-        const clientData = mapClientData(row);
+        const clientData: MappedClientData = mapClientData(row);
         
         // Check if client already exists
         const email = clientData.email.toLowerCase();
@@ -79,7 +79,11 @@ export function useClientImporter(data: any[]) {
             continue;
           } else {
             // Keep both - add as new
-            const newClient = await addClient(clientData);
+            // Ensure notes is never undefined (required by the Client type)
+            const newClient = await addClient({
+              ...clientData,
+              notes: clientData.notes || ''
+            });
             if (newClient) {
               results.added++;
             } else {
@@ -88,7 +92,11 @@ export function useClientImporter(data: any[]) {
           }
         } else {
           // Add new client
-          const newClient = await addClient(clientData);
+          // Ensure notes is never undefined (required by the Client type)
+          const newClient = await addClient({
+            ...clientData,
+            notes: clientData.notes || ''
+          });
           if (newClient) {
             results.added++;
           } else {

@@ -6,7 +6,7 @@ import { ClientImporter } from "@/components/ClientImporter";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowDownToLine, ChevronLeft, FileSpreadsheet, Upload } from "lucide-react";
-import { generateExampleData } from "@/components/client-importer/mapClientData";
+import { generateExampleData } from "@/components/client-importer/utils/exampleData";
 import * as XLSX from 'xlsx';
 
 export default function ImportClients() {

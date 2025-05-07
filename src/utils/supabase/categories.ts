@@ -1,7 +1,13 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { FinancialCategory } from '../types';
+import { FinancialCategory, TransactionType } from '../types';
 import { dateToString } from '../dateUtils';
+import { useAuth } from '@/contexts/AuthContext';
+
+// Helper function to convert database type to app type
+const mapDbTypeToAppType = (dbType: string): TransactionType => {
+  return dbType === 'entrada' || dbType === 'income' ? 'entrada' : 'saída';
+};
 
 // Fetch all financial categories
 export const fetchFinancialCategories = async (): Promise<FinancialCategory[]> => {
@@ -16,7 +22,7 @@ export const fetchFinancialCategories = async (): Promise<FinancialCategory[]> =
     return data.map(category => ({
       id: category.id,
       name: category.name,
-      type: category.type,
+      type: mapDbTypeToAppType(category.type),
       createdAt: dateToString(new Date(category.created_at))
     }));
   } catch (error) {
@@ -31,14 +37,23 @@ export const createFinancialCategory = async ({
   type 
 }: { 
   name: string; 
-  type: 'entrada' | 'saída';
+  type: TransactionType;
 }): Promise<FinancialCategory | null> => {
   try {
+    // Get the current user's ID to use as photographer_id
+    const { data: { session } } = await supabase.auth.getSession();
+    const photographerId = session?.user?.id;
+    
+    if (!photographerId) {
+      throw new Error('User not authenticated');
+    }
+    
     const { data, error } = await supabase
       .from('financial_categories')
       .insert({
         name,
-        type
+        type,
+        photographer_id: photographerId
       })
       .select()
       .single();
@@ -49,7 +64,7 @@ export const createFinancialCategory = async ({
     return {
       id: data.id,
       name: data.name,
-      type: data.type,
+      type: mapDbTypeToAppType(data.type),
       createdAt: dateToString(new Date(data.created_at))
     };
   } catch (error) {

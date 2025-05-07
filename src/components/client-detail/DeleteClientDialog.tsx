@@ -16,6 +16,7 @@ import { useState, ReactNode } from "react";
 
 interface DeleteClientDialogProps {
   onDelete: () => Promise<void>;
+  clientId?: string; // Make clientId optional to maintain compatibility
   children?: ReactNode;
 }
 

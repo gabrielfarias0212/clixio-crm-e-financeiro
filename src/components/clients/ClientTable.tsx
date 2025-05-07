@@ -103,7 +103,17 @@ export function ClientTable({ clients }: ClientTableProps) {
                   >
                     <Edit className="h-4 w-4 text-gray-500" />
                   </Button>
-                  <DeleteClientDialog clientId={client.id} onDelete={handleDelete} />
+                  <DeleteClientDialog 
+                    onDelete={() => handleDelete(client.id)}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </DeleteClientDialog>
                 </div>
               </TableCell>
             </TableRow>

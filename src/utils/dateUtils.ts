@@ -51,7 +51,7 @@ export const getTimeFromDate = (date: Date | string | null): string => {
   // Converte para o fuso horário de São Paulo
   const spDate = toZonedTime(d, TIMEZONE);
   
-  return formatInTimeZone(spDate, TIMEZONE, "HH:mm");
+  return formatInTimeZone(spDate, TIMEZONE, "HH:mm", { locale: ptBR });
 };
 
 // Combine date and time

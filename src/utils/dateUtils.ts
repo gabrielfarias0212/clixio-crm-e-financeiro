@@ -36,7 +36,7 @@ export const combineDateAndTime = (date: Date, timeStr: string): Date => {
 };
 
 // Parse Brazilian date format (DD/MM/YYYY)
-export const parseBrazilianDate = (dateString: string): Date | null => {
+export const parseBrazilianDate = (dateString: string | Date | null): Date | null => {
   if (!dateString) return null;
   
   // Check if the date is already a Date object

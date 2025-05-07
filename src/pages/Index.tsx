@@ -4,6 +4,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
 
 export default function Index() {
   useEffect(() => {
@@ -16,6 +17,7 @@ export default function Index() {
         <DashboardHeader />
         <DashboardContent />
         <Toaster />
+        <Sonner />
       </div>
     </Layout>
   );

@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -107,7 +106,7 @@ export default function ImportClients() {
           const json = XLSX.utils.sheet_to_json(worksheet, { raw: false });
           
           // Handle Excel date serial numbers
-          const processedJson = json.map(row => {
+          const processedJson = json.map((row: any) => {
             const processedRow = { ...row };
             Object.keys(row).forEach(key => {
               if (typeof row[key] === 'number' && key.toLowerCase().includes('data')) {

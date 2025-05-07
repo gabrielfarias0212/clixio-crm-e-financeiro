@@ -11,6 +11,8 @@ export const parseClient = (client: any): Client => {
     name: client.name,
     coupleName: client.couple_name || '',
     weddingDate: parseDate(client.wedding_date),
+    weddingStartTime: client.wedding_start_time || '',
+    weddingEndTime: client.wedding_end_time || '',
     contractValue: Number(client.contract_value) || 0,
     status: client.status as ClientStatus,
     nextAction: client.next_action as NextAction,
@@ -21,6 +23,8 @@ export const parseClient = (client: any): Client => {
     eventCategory: client.event_category as EventCategory || 'Casamento',
     eventLocation: client.event_location || '',
     preWeddingDate: parseDate(client.pre_wedding_date),
+    preWeddingStartTime: client.pre_wedding_start_time || '',
+    preWeddingEndTime: client.pre_wedding_end_time || '',
     contractLink: client.contract_link || '',
     // Delivery workflow fields
     preWeddingScheduled: client.pre_wedding_scheduled || false,

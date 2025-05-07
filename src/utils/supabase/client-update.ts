@@ -18,6 +18,8 @@ export const updateClient = async (id: string, updates: ClientUpdateData): Promi
     email: updates.email,
     phone: updates.phone,
     wedding_date: updates.weddingDate ? formatDateForSupabase(updates.weddingDate) : undefined,
+    wedding_start_time: updates.weddingStartTime,
+    wedding_end_time: updates.weddingEndTime,
     contract_value: updates.contractValue,
     status: updates.status,
     next_action: updates.nextAction,
@@ -26,6 +28,8 @@ export const updateClient = async (id: string, updates: ClientUpdateData): Promi
     event_category: updates.eventCategory,
     event_location: updates.eventLocation,
     pre_wedding_date: updates.preWeddingDate ? formatDateForSupabase(updates.preWeddingDate) : undefined,
+    pre_wedding_start_time: updates.preWeddingStartTime,
+    pre_wedding_end_time: updates.preWeddingEndTime,
     contract_link: updates.contractLink,
     // Delivery workflow fields
     pre_wedding_scheduled: updates.preWeddingScheduled,

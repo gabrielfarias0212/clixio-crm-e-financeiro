@@ -726,11 +726,15 @@ export type Database = {
           pre_wedding_completed: boolean | null
           pre_wedding_date: string | null
           pre_wedding_delivered: boolean | null
+          pre_wedding_end_time: string | null
           pre_wedding_scheduled: boolean | null
+          pre_wedding_start_time: string | null
           status: string | null
           updated_at: string | null
           wedding_date: string | null
+          wedding_end_time: string | null
           wedding_photographed: boolean | null
+          wedding_start_time: string | null
         }
         Insert: {
           album_approved_delivered?: boolean | null
@@ -754,11 +758,15 @@ export type Database = {
           pre_wedding_completed?: boolean | null
           pre_wedding_date?: string | null
           pre_wedding_delivered?: boolean | null
+          pre_wedding_end_time?: string | null
           pre_wedding_scheduled?: boolean | null
+          pre_wedding_start_time?: string | null
           status?: string | null
           updated_at?: string | null
           wedding_date?: string | null
+          wedding_end_time?: string | null
           wedding_photographed?: boolean | null
+          wedding_start_time?: string | null
         }
         Update: {
           album_approved_delivered?: boolean | null
@@ -782,11 +790,15 @@ export type Database = {
           pre_wedding_completed?: boolean | null
           pre_wedding_date?: string | null
           pre_wedding_delivered?: boolean | null
+          pre_wedding_end_time?: string | null
           pre_wedding_scheduled?: boolean | null
+          pre_wedding_start_time?: string | null
           status?: string | null
           updated_at?: string | null
           wedding_date?: string | null
+          wedding_end_time?: string | null
           wedding_photographed?: boolean | null
+          wedding_start_time?: string | null
         }
         Relationships: []
       }

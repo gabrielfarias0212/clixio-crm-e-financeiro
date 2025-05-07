@@ -3,7 +3,7 @@ import { Client } from "@/utils/types";
 import { format, addHours, startOfDay, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMemo } from "react";
-import { normalizeDate, stringToDate } from "@/utils/dateUtils";
+import { normalizeDate, stringToDate } from "@/utils/dates";
 import { CalendarEvent } from "@/utils/types";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { cn } from "@/lib/utils";

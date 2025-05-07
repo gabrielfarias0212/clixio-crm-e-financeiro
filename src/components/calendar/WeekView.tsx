@@ -12,7 +12,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMemo } from "react";
-import { normalizeDate, stringToDate } from "@/utils/dateUtils";
+import { normalizeDate, stringToDate } from "@/utils/dates";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { cn } from "@/lib/utils";
 

@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,7 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
-import { DATE_FORMAT, stringToDate, dateToString } from "@/utils/dateUtils";
+import { DATE_FORMAT, stringToDate, dateToString } from "@/utils/dates";
 
 interface DatePickerProps {
   value: string | null;

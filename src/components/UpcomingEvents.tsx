@@ -1,4 +1,3 @@
-
 import { useMemo } from "react";
 import { format, addDays, isBefore, isAfter, startOfDay } from "date-fns";
 import { Client } from "@/utils/types";
@@ -6,7 +5,7 @@ import { StatusBadge } from "./StatusBadge";
 import { CalendarIcon, MapPinIcon } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { useNavigate } from "react-router-dom";
-import { stringToDate } from "@/utils/dateUtils";
+import { stringToDate } from "@/utils/dates";
 
 interface UpcomingEventsProps {
   clients: Client[];

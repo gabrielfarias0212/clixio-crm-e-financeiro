@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { format, parse, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
-import { normalizeDate, TIMEZONE, stringToDate, dateToString } from "@/utils/dateUtils";
+import { normalizeDate, TIMEZONE, stringToDate, dateToString } from "@/utils/dates";
 import { Client } from "@/utils/types";
 import { formatInTimeZone } from "date-fns-tz";
 

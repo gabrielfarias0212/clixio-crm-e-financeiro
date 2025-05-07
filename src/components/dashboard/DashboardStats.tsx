@@ -1,4 +1,3 @@
-
 import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { BadgeAlert, Calendar, CalendarCheck, FileCheck, Users } from "lucide-react";
@@ -6,7 +5,7 @@ import { startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { useState, useMemo } from "react";
 import { DashboardCardModal } from "./DashboardCardModal";
 import { Client } from "@/utils/types";
-import { stringToDate } from "@/utils/dateUtils";
+import { stringToDate } from "@/utils/dates";
 
 export function DashboardStats() {
   const { clients } = useClients();

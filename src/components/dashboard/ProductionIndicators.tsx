@@ -1,4 +1,3 @@
-
 import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Clock, CheckSquare, ClipboardCheck } from "lucide-react";
@@ -6,7 +5,7 @@ import { startOfMonth, endOfMonth, isWithinInterval, parseISO, differenceInDays 
 import { useMemo, useState } from "react";
 import { DashboardCardModal } from "./DashboardCardModal";
 import { Client } from "@/utils/types";
-import { stringToDate } from "@/utils/dateUtils";
+import { stringToDate } from "@/utils/dates";
 
 export function ProductionIndicators() {
   const { clients } = useClients();

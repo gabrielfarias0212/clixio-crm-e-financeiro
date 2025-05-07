@@ -72,9 +72,19 @@ export interface Client {
   notes: string;
   downPayment: number;
   eventCategory: EventCategory;
-  eventLocation?: string; // New field
-  preWeddingDate: Date | null; // New field
-  contractLink?: string; // New field
+  eventLocation?: string;
+  preWeddingDate: Date | null;
+  contractLink?: string;
+  // Delivery workflow fields
+  preWeddingScheduled?: boolean;
+  preWeddingCompleted?: boolean;
+  preWeddingDelivered?: boolean;
+  weddingPhotographed?: boolean;
+  inEditing?: boolean;
+  linkSent?: boolean;
+  boxDelivered?: boolean;
+  albumDesigned?: boolean;
+  albumApprovedDelivered?: boolean;
   payments: Payment[];
   createdAt: Date;
   updatedAt: Date;

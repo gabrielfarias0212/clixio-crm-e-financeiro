@@ -27,6 +27,16 @@ export const updateClient = async (id: string, updates: ClientUpdateData): Promi
     event_location: updates.eventLocation,
     pre_wedding_date: updates.preWeddingDate ? formatDateForSupabase(updates.preWeddingDate) : undefined,
     contract_link: updates.contractLink,
+    // Delivery workflow fields
+    pre_wedding_scheduled: updates.preWeddingScheduled,
+    pre_wedding_completed: updates.preWeddingCompleted,
+    pre_wedding_delivered: updates.preWeddingDelivered,
+    wedding_photographed: updates.weddingPhotographed,
+    in_editing: updates.inEditing,
+    link_sent: updates.linkSent,
+    box_delivered: updates.boxDelivered,
+    album_designed: updates.albumDesigned,
+    album_approved_delivered: updates.albumApprovedDelivered,
     updated_at: new Date().toISOString()
   };
 

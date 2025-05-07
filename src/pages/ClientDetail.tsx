@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { ClientPayments } from "@/components/ClientPayments";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -11,10 +10,10 @@ import { DeliveredWorkIndicator } from "@/components/DeliveredWorkIndicator";
 import { ChevronLeft, Edit } from "lucide-react";
 import { useClients } from "@/contexts/ClientsContext";
 import { Client } from "@/utils/types";
-import { ClientInfo } from "@/components/client-detail/ClientInfo";
-import { FinancialInfo } from "@/components/client-detail/FinancialInfo";
 import { DeleteClientDialog } from "@/components/client-detail/DeleteClientDialog";
-import { ClientNotes } from "@/components/client-detail/ClientNotes";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ClientDetails } from "@/components/client-detail/ClientDetails";
+import { DeliveryWorkflow } from "@/components/client-detail/DeliveryWorkflow";
 
 export default function ClientDetail() {
   const { id } = useParams();
@@ -64,6 +63,7 @@ export default function ClientDetail() {
 
   const isPaid = client.status === "pago";
   const isFinished = isPaid;
+  const isWeddingEvent = client.eventCategory === "Casamento";
   
   return (
     <Layout>
@@ -103,17 +103,25 @@ export default function ClientDetail() {
           </Badge>
         </div>
 
-        {/* Informações gerais */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          <ClientInfo client={client} />
-          <FinancialInfo client={client} />
-        </div>
-        
-        {/* Histórico de Pagamentos */}
-        <ClientPayments client={client} />
-        
-        {/* Notas */}
-        <ClientNotes notes={client.notes} />
+        {/* Tabs for client details and delivery workflow */}
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="details">Informações</TabsTrigger>
+            {isWeddingEvent && (
+              <TabsTrigger value="workflow">Fluxo de Entrega</TabsTrigger>
+            )}
+          </TabsList>
+          
+          <TabsContent value="details">
+            <ClientDetails client={client} />
+          </TabsContent>
+          
+          {isWeddingEvent && (
+            <TabsContent value="workflow">
+              <DeliveryWorkflow client={client} />
+            </TabsContent>
+          )}
+        </Tabs>
       </div>
     </Layout>
   );

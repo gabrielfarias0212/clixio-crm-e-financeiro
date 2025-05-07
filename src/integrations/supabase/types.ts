@@ -705,6 +705,9 @@ export type Database = {
       }
       wedding_clients: {
         Row: {
+          album_approved_delivered: boolean | null
+          album_designed: boolean | null
+          box_delivered: boolean | null
           contract_link: string | null
           contract_value: number | null
           couple_name: string | null
@@ -714,16 +717,25 @@ export type Database = {
           event_category: string | null
           event_location: string | null
           id: string
+          in_editing: boolean | null
+          link_sent: boolean | null
           name: string
           next_action: string | null
           notes: string | null
           phone: string | null
+          pre_wedding_completed: boolean | null
           pre_wedding_date: string | null
+          pre_wedding_delivered: boolean | null
+          pre_wedding_scheduled: boolean | null
           status: string | null
           updated_at: string | null
           wedding_date: string | null
+          wedding_photographed: boolean | null
         }
         Insert: {
+          album_approved_delivered?: boolean | null
+          album_designed?: boolean | null
+          box_delivered?: boolean | null
           contract_link?: string | null
           contract_value?: number | null
           couple_name?: string | null
@@ -733,16 +745,25 @@ export type Database = {
           event_category?: string | null
           event_location?: string | null
           id?: string
+          in_editing?: boolean | null
+          link_sent?: boolean | null
           name: string
           next_action?: string | null
           notes?: string | null
           phone?: string | null
+          pre_wedding_completed?: boolean | null
           pre_wedding_date?: string | null
+          pre_wedding_delivered?: boolean | null
+          pre_wedding_scheduled?: boolean | null
           status?: string | null
           updated_at?: string | null
           wedding_date?: string | null
+          wedding_photographed?: boolean | null
         }
         Update: {
+          album_approved_delivered?: boolean | null
+          album_designed?: boolean | null
+          box_delivered?: boolean | null
           contract_link?: string | null
           contract_value?: number | null
           couple_name?: string | null
@@ -752,14 +773,20 @@ export type Database = {
           event_category?: string | null
           event_location?: string | null
           id?: string
+          in_editing?: boolean | null
+          link_sent?: boolean | null
           name?: string
           next_action?: string | null
           notes?: string | null
           phone?: string | null
+          pre_wedding_completed?: boolean | null
           pre_wedding_date?: string | null
+          pre_wedding_delivered?: boolean | null
+          pre_wedding_scheduled?: boolean | null
           status?: string | null
           updated_at?: string | null
           wedding_date?: string | null
+          wedding_photographed?: boolean | null
         }
         Relationships: []
       }

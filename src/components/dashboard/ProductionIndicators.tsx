@@ -3,13 +3,20 @@ import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Clock, CheckSquare, ClipboardCheck } from "lucide-react";
 import { startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { DashboardCardModal } from "./DashboardCardModal";
+import { Client } from "@/utils/types";
 
 export function ProductionIndicators() {
   const { clients } = useClients();
   const now = new Date();
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
+  
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalType, setModalType] = useState<"leads" | "contracts" | "delivered" | "pending">("delivered");
+  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
 
   const stats = useMemo(() => {
     // Count events scheduled this month
@@ -17,7 +24,7 @@ export function ProductionIndicators() {
       if (!client.weddingDate) return false;
       const eventDate = new Date(client.weddingDate);
       return isWithinInterval(eventDate, { start: monthStart, end: monthEnd });
-    }).length;
+    });
 
     // Count events by status
     const statusCounts = {
@@ -57,54 +64,103 @@ export function ProductionIndicators() {
     };
   }, [clients, monthStart, monthEnd, now]);
 
+  // Handle card clicks
+  const handleCardClick = (type: string) => {
+    let title = "";
+    let clientsToShow: Client[] = [];
+    let modalType: "leads" | "contracts" | "delivered" | "pending" = "delivered";
+
+    switch (type) {
+      case "events-month":
+        title = "Eventos Agendados no Mês";
+        clientsToShow = stats.eventsThisMonth;
+        modalType = "contracts";
+        break;
+      case "editing":
+        title = "Eventos em Edição";
+        clientsToShow = clients.filter(client => client.nextAction === "editar");
+        modalType = "contracts";
+        break;
+      case "delivered":
+        title = "Eventos Entregues";
+        clientsToShow = clients.filter(client => client.status === "pago");
+        modalType = "delivered";
+        break;
+    }
+
+    setModalTitle(title);
+    setModalType(modalType);
+    setFilteredClients(clientsToShow);
+    setModalOpen(true);
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Indicadores de Produção</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-start space-x-4">
-            <div className="bg-blue-100 p-2 rounded-full">
-              <CalendarDays className="h-6 w-6 text-blue-700" />
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Indicadores de Produção</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div 
+              className="flex items-start space-x-4 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
+              onClick={() => handleCardClick("events-month")}
+            >
+              <div className="bg-blue-100 p-2 rounded-full">
+                <CalendarDays className="h-6 w-6 text-blue-700" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Eventos Agendados no Mês</p>
+                <p className="text-xl font-bold">{stats.eventsThisMonth.length}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Eventos Agendados no Mês</p>
-              <p className="text-xl font-bold">{stats.eventsThisMonth}</p>
+            
+            <div className="flex items-start space-x-4">
+              <div className="bg-amber-100 p-2 rounded-full">
+                <Clock className="h-6 w-6 text-amber-700" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Prazo Médio de Entrega</p>
+                <p className="text-xl font-bold">{stats.averageDeliveryDays} dias</p>
+              </div>
+            </div>
+            
+            <div 
+              className="flex items-start space-x-4 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
+              onClick={() => handleCardClick("editing")}
+            >
+              <div className="bg-purple-100 p-2 rounded-full">
+                <ClipboardCheck className="h-6 w-6 text-purple-700" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Eventos em Edição</p>
+                <p className="text-xl font-bold">{stats.statusCounts.editing}</p>
+              </div>
+            </div>
+            
+            <div 
+              className="flex items-start space-x-4 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
+              onClick={() => handleCardClick("delivered")}
+            >
+              <div className="bg-green-100 p-2 rounded-full">
+                <CheckSquare className="h-6 w-6 text-green-700" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Eventos Entregues</p>
+                <p className="text-xl font-bold">{stats.statusCounts.delivered}</p>
+              </div>
             </div>
           </div>
-          
-          <div className="flex items-start space-x-4">
-            <div className="bg-amber-100 p-2 rounded-full">
-              <Clock className="h-6 w-6 text-amber-700" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Prazo Médio de Entrega</p>
-              <p className="text-xl font-bold">{stats.averageDeliveryDays} dias</p>
-            </div>
-          </div>
-          
-          <div className="flex items-start space-x-4">
-            <div className="bg-purple-100 p-2 rounded-full">
-              <ClipboardCheck className="h-6 w-6 text-purple-700" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Eventos em Edição</p>
-              <p className="text-xl font-bold">{stats.statusCounts.editing}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-start space-x-4">
-            <div className="bg-green-100 p-2 rounded-full">
-              <CheckSquare className="h-6 w-6 text-green-700" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Eventos Entregues</p>
-              <p className="text-xl font-bold">{stats.statusCounts.delivered}</p>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <DashboardCardModal
+        title={modalTitle}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        clients={filteredClients}
+        type={modalType}
+      />
+    </>
   );
 }

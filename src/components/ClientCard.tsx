@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "./StatusBadge";
 import { ActionChip } from "./ActionChip";
 import { format } from "date-fns";
-import { CalendarIcon, DollarSign, MailIcon, PhoneIcon } from "lucide-react";
+import { CalendarIcon, DollarSign, MailIcon, PhoneIcon, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ClientCardProps {
@@ -14,7 +14,7 @@ interface ClientCardProps {
 }
 
 export function ClientCard({ client, className, onClick }: ClientCardProps) {
-  const { name, weddingDate, contractValue, status, nextAction, email, phone } = client;
+  const { name, coupleName, weddingDate, contractValue, status, nextAction, email, phone } = client;
   
   const formattedValue = new Intl.NumberFormat('pt-BR', { 
     style: 'currency', 
@@ -53,6 +53,12 @@ export function ClientCard({ client, className, onClick }: ClientCardProps) {
         <div className="flex justify-between items-start mb-3">
           <div>
             <h3 className="font-medium text-lg">{name}</h3>
+            {coupleName && (
+              <div className="flex items-center gap-1 mt-0.5 text-gray-600 text-sm">
+                <Users className="h-3 w-3" />
+                <span>{coupleName}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 mt-1 text-gray-500 text-sm">
               {weddingDate ? (
                 <div className="flex items-center">

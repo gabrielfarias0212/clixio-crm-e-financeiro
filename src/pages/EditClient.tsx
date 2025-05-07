@@ -54,6 +54,7 @@ export default function EditClient() {
     
     const updatedClient = await updateClient(id, {
       name: data.name,
+      coupleName: data.coupleName,
       email: data.email,
       phone: data.phone,
       weddingDate: weddingDate,

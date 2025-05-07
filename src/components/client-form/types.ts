@@ -4,6 +4,7 @@ import { Client } from "@/utils/types";
 
 export const formSchema = z.object({
   name: z.string().min(1, { message: "O nome é obrigatório" }),
+  coupleName: z.string().optional(),
   email: z.string().email({ message: "Email inválido" }),
   phone: z.string().min(1, { message: "O telefone é obrigatório" }),
   weddingDate: z.date().nullable(),

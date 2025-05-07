@@ -17,6 +17,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
     defaultValues: client
       ? {
           name: client.name,
+          coupleName: client.coupleName || "",
           email: client.email,
           phone: client.phone,
           weddingDate: client.weddingDate,
@@ -29,6 +30,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
         }
       : {
           name: "",
+          coupleName: "",
           email: "",
           phone: "",
           weddingDate: null,

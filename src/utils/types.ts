@@ -62,6 +62,7 @@ export interface FinancialCategory {
 export interface Client {
   id: string;
   name: string;
+  coupleName?: string;
   weddingDate: Date | null;
   contractValue: number;
   status: ClientStatus;

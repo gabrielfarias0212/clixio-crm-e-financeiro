@@ -7,6 +7,7 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { ClientFormValues } from "../types";
 
@@ -22,14 +23,39 @@ export function ContactFields({ control }: ContactFieldsProps) {
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Nome do Cliente</FormLabel>
+            <FormLabel>Nome do Responsável</FormLabel>
             <FormControl>
               <Input 
-                placeholder="Nome dos noivos"
+                placeholder="Nome do responsável"
                 {...field}
                 className="focus:ring-1 focus:ring-black dark:focus:ring-white transition-shadow"
               />
             </FormControl>
+            <FormDescription className="text-xs text-gray-500">
+              Nome do titular do contrato
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="coupleName"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Nome do Casal <span className="text-gray-500">(opcional)</span></FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="Nome do casal (se aplicável)"
+                {...field}
+                value={field.value || ""}
+                className="focus:ring-1 focus:ring-black dark:focus:ring-white transition-shadow"
+              />
+            </FormControl>
+            <FormDescription className="text-xs text-gray-500">
+              Nome dos noivos ou casal (se aplicável)
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}

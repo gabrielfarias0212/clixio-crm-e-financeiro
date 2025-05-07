@@ -36,6 +36,7 @@ export default function AddClient() {
       
       const newClient = await addClient({
         name: data.name,
+        coupleName: data.coupleName,
         email: data.email,
         phone: data.phone,
         weddingDate: weddingDate,

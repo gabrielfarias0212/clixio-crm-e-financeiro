@@ -15,6 +15,7 @@ export default function EditClient() {
   const [client, setClient] = useState<Client | undefined>(
     () => clients.find(c => c.id === id)
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!client && clients.length > 0) {
@@ -39,36 +40,46 @@ export default function EditClient() {
     if (!client || !id) return;
     
     console.log("Updating client with data:", data);
+    setIsSubmitting(true);
     
-    // Ensure date is properly formatted to avoid timezone issues
-    let weddingDate = data.weddingDate;
-    if (weddingDate) {
-      // Create a new date at noon to avoid timezone issues
-      weddingDate = new Date(
-        weddingDate.getFullYear(),
-        weddingDate.getMonth(),
-        weddingDate.getDate(),
-        12, 0, 0
-      );
-    }
-    
-    const updatedClient = await updateClient(id, {
-      name: data.name,
-      coupleName: data.coupleName,
-      email: data.email,
-      phone: data.phone,
-      weddingDate: weddingDate,
-      contractValue: data.contractValue,
-      downPayment: data.downPayment,
-      status: data.status,
-      nextAction: data.nextAction,
-      eventCategory: data.eventCategory,
-      notes: data.notes || "",
-    });
-    
-    if (updatedClient) {
-      toast.success("Cliente atualizado com sucesso!");
-      navigate(`/clients/${id}`);
+    try {
+      // Ensure date is properly formatted to avoid timezone issues
+      let weddingDate = data.weddingDate;
+      if (weddingDate) {
+        // Create a new date at noon to avoid timezone issues
+        weddingDate = new Date(
+          weddingDate.getFullYear(),
+          weddingDate.getMonth(),
+          weddingDate.getDate(),
+          12, 0, 0
+        );
+      }
+      
+      const updatedClient = await updateClient(id, {
+        name: data.name,
+        coupleName: data.coupleName,
+        email: data.email,
+        phone: data.phone,
+        weddingDate: weddingDate,
+        contractValue: data.contractValue,
+        downPayment: data.downPayment,
+        status: data.status,
+        nextAction: data.nextAction,
+        eventCategory: data.eventCategory,
+        notes: data.notes || "",
+      });
+      
+      if (updatedClient) {
+        toast.success("Cliente atualizado com sucesso!");
+        navigate(`/clients/${id}`);
+      } else {
+        toast.error("Erro ao atualizar cliente");
+      }
+    } catch (error) {
+      console.error("Error updating client:", error);
+      toast.error("Erro ao atualizar cliente");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -94,7 +105,11 @@ export default function EditClient() {
           <h1 className="text-2xl font-bold">Editar Cliente</h1>
         </div>
         
-        <ClientForm client={client} onSubmit={handleUpdateClient} />
+        <ClientForm 
+          client={client} 
+          onSubmit={handleUpdateClient} 
+          isSubmitting={isSubmitting}
+        />
       </div>
     </Layout>
   );

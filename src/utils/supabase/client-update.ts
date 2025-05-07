@@ -9,6 +9,9 @@ import { ClientUpdateData } from './client-types';
  * Updates an existing client in the database
  */
 export const updateClient = async (id: string, updates: ClientUpdateData): Promise<Client | null> => {
+  console.log("Attempting to update client with ID:", id);
+  console.log("Update data:", updates);
+
   const updateData: any = {
     name: updates.name,
     couple_name: updates.coupleName,
@@ -26,17 +29,23 @@ export const updateClient = async (id: string, updates: ClientUpdateData): Promi
 
   Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
 
-  const { data, error } = await supabase
-    .from('wedding_clients')
-    .update(updateData)
-    .eq('id', id)
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('wedding_clients')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Error updating client:', error);
+    if (error) {
+      console.error('Error updating client:', error);
+      return null;
+    }
+
+    console.log('Client updated successfully:', data);
+    return await fetchClient(id);
+  } catch (error) {
+    console.error('Exception updating client:', error);
     return null;
   }
-
-  return fetchClient(id);
 };

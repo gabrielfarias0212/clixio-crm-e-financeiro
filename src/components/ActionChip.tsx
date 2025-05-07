@@ -1,7 +1,7 @@
 
 import { NextAction } from "@/utils/types";
 import { cn } from "@/lib/utils";
-import { CheckCircle, Clock, Edit, Mail, Send } from "lucide-react";
+import { CheckCircle, Clock, Edit, Mail, Send, Calendar } from "lucide-react";
 
 interface ActionChipProps {
   action: NextAction;
@@ -45,6 +45,12 @@ export function ActionChip({ action, className }: ActionChipProps) {
       bg: "bg-gray-50",
       text: "text-gray-500",
       border: "border-gray-100"
+    },
+    "agendar reunião": {
+      icon: <Calendar className="h-3 w-3 mr-1" />,
+      bg: "bg-indigo-50",
+      text: "text-indigo-600",
+      border: "border-indigo-100"
     }
   };
 

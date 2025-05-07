@@ -27,6 +27,7 @@ export const formatDate = (date: Date | string | null, formatStr: string = "dd/M
   // Converte para o fuso horário de São Paulo
   const spDate = toZonedTime(d, TIMEZONE);
   
+  // Updated to use the v3 signature: formatInTimeZone(date, timeZone, formatStr)
   return formatInTimeZone(spDate, TIMEZONE, formatStr, { locale: ptBR });
 };
 
@@ -39,6 +40,7 @@ export const formatDateTime = (date: Date | string | null, formatStr: string = "
   // Converte para o fuso horário de São Paulo
   const spDate = toZonedTime(d, TIMEZONE);
   
+  // Updated to use the v3 signature
   return formatInTimeZone(spDate, TIMEZONE, formatStr, { locale: ptBR });
 };
 
@@ -51,6 +53,7 @@ export const getTimeFromDate = (date: Date | string | null): string => {
   // Converte para o fuso horário de São Paulo
   const spDate = toZonedTime(d, TIMEZONE);
   
+  // Updated to use the v3 signature
   return formatInTimeZone(spDate, TIMEZONE, "HH:mm", { locale: ptBR });
 };
 

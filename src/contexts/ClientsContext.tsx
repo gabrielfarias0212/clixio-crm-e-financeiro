@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Client } from '@/utils/types';
-import { fetchClients, createClient, updateClient } from '@/utils/supabaseUtils';
+import { fetchClients, createClient, updateClient, deleteClient } from '@/utils/supabaseUtils';
 import { toast } from 'sonner';
 
 type ClientsContextType = {
@@ -11,6 +11,7 @@ type ClientsContextType = {
   refreshClients: () => Promise<void>;
   addClient: (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>) => Promise<Client | null>;
   updateClient: (id: string, updates: Partial<Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>>) => Promise<Client | null>;
+  removeClient: (id: string) => Promise<boolean>;
 };
 
 const ClientsContext = createContext<ClientsContextType | undefined>(undefined);
@@ -79,6 +80,24 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const removeClient = async (id: string) => {
+    try {
+      const success = await deleteClient(id);
+      if (success) {
+        setClients(prev => prev.filter(client => client.id !== id));
+        toast.success('Cliente excluído com sucesso!');
+        return true;
+      } else {
+        toast.error('Falha ao excluir cliente');
+        return false;
+      }
+    } catch (err) {
+      console.error('Error deleting client:', err);
+      toast.error('Falha ao excluir cliente');
+      return false;
+    }
+  };
+
   useEffect(() => {
     refreshClients();
   }, []);
@@ -91,7 +110,8 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
         error,
         refreshClients,
         addClient,
-        updateClient: updateClientData
+        updateClient: updateClientData,
+        removeClient
       }}
     >
       {children}

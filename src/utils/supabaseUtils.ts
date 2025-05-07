@@ -17,6 +17,7 @@ export const parseClient = (client: any): Client => {
   return {
     id: client.id,
     name: client.name,
+    coupleName: client.couple_name || '',
     weddingDate: parseDate(client.wedding_date),
     contractValue: Number(client.contract_value) || 0,
     status: client.status as ClientStatus,
@@ -128,6 +129,7 @@ export const createClient = async (client: Omit<Client, 'id' | 'createdAt' | 'up
       .from('wedding_clients')
       .insert({
         name: client.name,
+        couple_name: client.coupleName,
         email: client.email,
         phone: client.phone,
         wedding_date: client.weddingDate ? formatDateForSupabase(client.weddingDate) : null,
@@ -174,6 +176,7 @@ export const createClient = async (client: Omit<Client, 'id' | 'createdAt' | 'up
 export const updateClient = async (id: string, updates: Partial<Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>>): Promise<Client | null> => {
   const updateData: any = {
     name: updates.name,
+    couple_name: updates.coupleName,
     email: updates.email,
     phone: updates.phone,
     wedding_date: updates.weddingDate ? formatDateForSupabase(updates.weddingDate) : undefined,
@@ -201,6 +204,48 @@ export const updateClient = async (id: string, updates: Partial<Omit<Client, 'id
   }
 
   return fetchClient(id);
+};
+
+export const deleteClient = async (id: string): Promise<boolean> => {
+  try {
+    // Primeiro, excluímos os pagamentos relacionados a esse cliente
+    const { error: paymentsError } = await supabase
+      .from('wedding_payments')
+      .delete()
+      .eq('client_id', id);
+
+    if (paymentsError) {
+      console.error('Error deleting client payments:', paymentsError);
+      return false;
+    }
+
+    // Excluímos as transações relacionadas a esse cliente
+    const { error: transactionsError } = await supabase
+      .from('wedding_transactions')
+      .delete()
+      .eq('client_id', id);
+
+    if (transactionsError) {
+      console.error('Error deleting client transactions:', transactionsError);
+      return false;
+    }
+
+    // Por fim, excluímos o cliente
+    const { error: clientError } = await supabase
+      .from('wedding_clients')
+      .delete()
+      .eq('id', id);
+
+    if (clientError) {
+      console.error('Error deleting client:', clientError);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Exception deleting client:', error);
+    return false;
+  }
 };
 
 export const createPayment = async (payment: { clientId: string, amount: number, date: Date, notes?: string }): Promise<Payment | null> => {

@@ -1,193 +1,249 @@
 
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { useClients } from "@/contexts/ClientsContext";
-import { Client } from "@/utils/types";
+import { ClientPayments } from "@/components/ClientPayments";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { Check, Calendar, Phone, Mail, CreditCard, FileText } from "lucide-react";
-import { format } from "date-fns"; // Use date-fns directly instead of formatDate
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ActionChip } from "@/components/ActionChip";
-import { ClientPayments } from "@/components/ClientPayments";
 import { DeliveredWorkIndicator } from "@/components/DeliveredWorkIndicator";
-import { useTransactions } from "@/contexts/TransactionsContext";
+import { formatDate } from "@/utils/clientUtils";
+import { 
+  CalendarIcon, 
+  ChevronLeft, 
+  DollarSign, 
+  Edit, 
+  Mail, 
+  Phone, 
+  Plus,
+  Trash2,
+  Users
+} from "lucide-react";
+import { useClients } from "@/contexts/ClientsContext";
+import { Client } from "@/utils/types";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function ClientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { clients, updateClient: updateClientData, refreshClients } = useClients();
-  const { refreshTransactions } = useTransactions();
-  const [client, setClient] = useState<Client | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { clients, removeClient } = useClients();
+  
+  const [client, setClient] = useState<Client | undefined>(
+    () => clients.find(c => c.id === id)
+  );
+  
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   useEffect(() => {
-    // Find the client with the matching ID
-    if (id && clients) {
+    if (!client && clients.length > 0) {
       const foundClient = clients.find(c => c.id === id);
-      setClient(foundClient || null);
+      if (foundClient) {
+        setClient(foundClient);
+      } else {
+        // Cliente não encontrado, redirecione para a lista
+        navigate("/clients");
+      }
     }
-  }, [id, clients]);
+  }, [client, id, clients, navigate]);
 
   useEffect(() => {
-    // Set page title
-    document.title = client ? `${client.name} | Wedding CRM` : "Cliente | Wedding CRM";
+    if (client) {
+      document.title = `${client.name} | Wedding CRM`;
+    }
   }, [client]);
 
-  // Handle back button click
-  const handleBack = () => {
-    navigate("/clients");
-  };
-
-  // Update the handleMarkAsDelivered function to set sessionStorage
-  const handleMarkAsDelivered = async () => {
-    if (!client || isSubmitting) return;
+  const handleDeleteClient = async () => {
+    if (!id) return;
     
+    setIsDeleting(true);
     try {
-      setIsSubmitting(true);
-      const updatedClient = await updateClientData(client.id, {
-        status: "pago",
-        nextAction: "nenhuma"
-      });
-      
-      if (updatedClient) {
-        toast.success("Trabalho marcado como entregue com sucesso!");
-        // Set flag in sessionStorage to show alert on clients list page
-        sessionStorage.setItem('hasDeliveredWork', 'true');
-        refreshClients();
-      } else {
-        toast.error("Erro ao marcar trabalho como entregue");
+      const success = await removeClient(id);
+      if (success) {
+        // Direcionar para lista de clientes após excluir
+        navigate("/clients");
       }
-    } catch (error) {
-      toast.error("Erro ao atualizar o status do cliente");
-      console.error("Error marking work as delivered:", error);
     } finally {
-      setIsSubmitting(false);
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
     }
   };
 
-  const handleClientUpdate = async (updatedClient: Client) => {
-    await refreshClients();
-    // Also refresh transactions to ensure the financial dashboard stays in sync
-    await refreshTransactions();
-  };
-
-  // If the client is not found or not loaded yet
   if (!client) {
     return (
       <Layout>
-        <div className="max-w-5xl mx-auto px-4 py-12">
-          <h2 className="text-xl font-semibold mb-4">Cliente não encontrado</h2>
-          <Button onClick={handleBack}>Voltar para a lista de clientes</Button>
+        <div className="max-w-screen-lg mx-auto px-4 py-8 text-center">
+          Carregando...
         </div>
       </Layout>
     );
   }
 
-  const isDelivered = client.status === "pago";
+  // Formatar para exibição
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', { 
+      style: 'currency', 
+      currency: 'BRL' 
+    }).format(value);
+  };
+
+  const isPaid = client.status === "pago";
+  const isFinished = isPaid;
   
+  const totalPayments = client.payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
+  const remainingValue = client.contractValue - totalPayments;
+  
+  // Formatação da data do casamento
+  const weddingDateFormatted = client.weddingDate 
+    ? formatDate(client.weddingDate)
+    : "Não definida";
+
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
-        <div className="flex flex-col sm:flex-row justify-between items-start mb-8 gap-4">
+      <div className="max-w-screen-lg mx-auto px-4 py-8 animate-fade-in">
+        <div className="mb-6 flex flex-col sm:flex-row justify-between gap-4">
           <div>
-            <Button variant="outline" onClick={handleBack} className="mb-4">
-              Voltar para clientes
-            </Button>
-            <h1 className="text-3xl font-bold">{client.name}</h1>
-            <div className="flex items-center gap-3 mt-2">
-              <StatusBadge status={client.status} />
-              {client.nextAction !== "nenhuma" && <ActionChip action={client.nextAction} />}
+            <Link 
+              to="/clients"
+              className="text-gray-600 hover:text-gray-900 inline-flex items-center mb-3"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Voltar para Clientes
+            </Link>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold">{client.name}</h1>
+              {isFinished && <DeliveredWorkIndicator />}
+            </div>
+
+            {client.coupleName && (
+              <div className="flex items-center gap-1 mt-1 text-gray-600">
+                <Users className="h-4 w-4" />
+                <span>{client.coupleName}</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-2">
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Excluir
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir cliente</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita e todos os dados relacionados a este cliente serão excluídos permanentemente.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteClient}
+                    disabled={isDeleting}
+                    className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                  >
+                    {isDeleting ? 'Excluindo...' : 'Sim, excluir cliente'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <Link to={`/clients/${client.id}/edit`}>
+              <Button size="sm">
+                <Edit className="h-4 w-4 mr-1" />
+                Editar
+              </Button>
+            </Link>
+          </div>
+        </div>
+        
+        {/* Status e Ação */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <StatusBadge status={client.status} large />
+          <ActionChip action={client.nextAction} />
+          <Badge variant="outline" className="border-gray-300">
+            {client.eventCategory}
+          </Badge>
+        </div>
+
+        {/* Informações gerais */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+          <div className="space-y-4">
+            <h2 className="text-lg font-medium">Informações de Contato</h2>
+            <div className="space-y-3 text-gray-700">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-gray-500" />
+                <span>{client.email || "Não informado"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-gray-500" />
+                <span>{client.phone || "Não informado"}</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CalendarIcon className="h-4 w-4 text-gray-500 mt-1" />
+                <div>
+                  <div>{weddingDateFormatted}</div>
+                </div>
+              </div>
             </div>
           </div>
           
-          <div className="flex gap-3 mt-4 sm:mt-0">
-            <Button 
-              variant={isDelivered ? "outline" : "default"}
-              className={isDelivered ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100" : ""}
-              onClick={handleMarkAsDelivered}
-              disabled={isSubmitting || isDelivered}
-            >
-              {isDelivered ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Trabalho Entregue
-                </>
-              ) : (
-                "Marcar como entregue"
-              )}
-            </Button>
-            <Button onClick={() => navigate(`/clients/edit/${client.id}`)}>
-              Editar Cliente
-            </Button>
+          <div className="space-y-4">
+            <h2 className="text-lg font-medium">Informações Financeiras</h2>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-700">Valor do Contrato:</span>
+                <span className="font-medium">{formatCurrency(client.contractValue)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-700">Valor Pago:</span>
+                <span className="font-medium text-green-600">
+                  {formatCurrency(totalPayments)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-700">Valor Restante:</span>
+                <span className={`font-medium ${remainingValue > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {formatCurrency(remainingValue)}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2">
-            <Card className="relative mb-6">
-              <DeliveredWorkIndicator isDelivered={isDelivered} />
-              <CardHeader>
-                <CardTitle>Informações do Cliente</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6">
-                  {/* Contact information */}
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                      <span>{client.phone || "Não informado"}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Mail className="h-4 w-4 mr-2 text-gray-500" />
-                      <span>{client.email || "Não informado"}</span>
-                    </div>
-                  </div>
-                  
-                  {/* Event information */}
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                      <span>
-                        {client.weddingDate 
-                          ? format(new Date(client.weddingDate), "dd/MM/yyyy") 
-                          : "Data não definida"}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <CreditCard className="h-4 w-4 mr-2 text-gray-500" />
-                      <span>
-                        {new Intl.NumberFormat('pt-BR', { 
-                          style: 'currency', 
-                          currency: 'BRL' 
-                        }).format(client.contractValue)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Notes */}
-                {client.notes && (
-                  <div className="mt-6 pt-4 border-t">
-                    <div className="flex items-start mb-2">
-                      <FileText className="h-4 w-4 mr-2 text-gray-500 mt-1" />
-                      <h3 className="font-medium">Observações</h3>
-                    </div>
-                    <p className="text-gray-700 whitespace-pre-line">{client.notes}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            {/* Client Timeline or Activities section could go here */}
+        
+        {/* Histórico de Pagamentos */}
+        <ClientPayments 
+          client={client} 
+          isPaid={isPaid} 
+        />
+        
+        {/* Notas */}
+        {client.notes && (
+          <div className="mt-8">
+            <h2 className="text-lg font-medium mb-3">Notas</h2>
+            <div className="bg-gray-50 p-4 rounded-md whitespace-pre-wrap">
+              {client.notes}
+            </div>
           </div>
-          
-          <div>
-            <ClientPayments client={client} onUpdate={handleClientUpdate} />
-          </div>
-        </div>
+        )}
       </div>
     </Layout>
   );

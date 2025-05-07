@@ -6,19 +6,22 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Bell, DollarSign, Eye } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Client } from "@/utils/types";
+import { Client, Payment } from "@/utils/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DashboardCardModal } from "./DashboardCardModal";
 import { formatDateTime, stringToDate } from "@/utils/dateUtils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { differenceInDays, isAfter, isBefore } from "date-fns";
 
 // Define an interface for alerts with all necessary properties
 interface AlertItem {
-  type: "task" | "payment";
+  type: "task" | "payment" | "due_payment";
   title: string;
   description: string;
   client: Client;
   date: Date;
+  payment?: Payment;
+  urgency?: "high" | "medium" | "low";
 }
 
 export function AlertsReminders() {
@@ -38,7 +41,8 @@ export function AlertsReminders() {
         title: `Ação pendente: ${client.nextAction}`,
         description: `Cliente: ${client.name}`,
         client,
-        date: now // Current date as these are already pending
+        date: now, // Current date as these are already pending
+        urgency: "medium" as const
       }));
     
     // Payment alerts (contracts without full payment)
@@ -56,11 +60,72 @@ export function AlertsReminders() {
           title: `Pagamento pendente: R$ ${pendingAmount.toFixed(2)}`,
           description: `Cliente: ${client.name}`,
           client,
-          date: now // Current date as these are already pending
+          date: now, // Current date as these are already pending
+          urgency: "medium" as const
         };
       });
+
+    // Due payment alerts (payments with due dates)
+    const duePaymentAlerts: AlertItem[] = [];
+    clients.forEach(client => {
+      client.payments.forEach(payment => {
+        if (payment.due_date && payment.payment_status === "pendente") {
+          const dueDate = stringToDate(payment.due_date);
+          if (dueDate) {
+            const daysUntilDue = differenceInDays(dueDate, now);
+            
+            // If due date is in the past or today
+            if (daysUntilDue <= 0) {
+              duePaymentAlerts.push({
+                type: "due_payment",
+                title: `Pagamento ATRASADO: R$ ${payment.amount.toFixed(2)}`,
+                description: `Cliente: ${client.name} - Venceu em ${payment.due_date}`,
+                client,
+                date: dueDate,
+                payment,
+                urgency: "high"
+              });
+            } 
+            // If due date is within the next 7 days
+            else if (daysUntilDue <= 7) {
+              duePaymentAlerts.push({
+                type: "due_payment",
+                title: `Pagamento a vencer: R$ ${payment.amount.toFixed(2)}`,
+                description: `Cliente: ${client.name} - Vence em ${daysUntilDue} ${daysUntilDue === 1 ? 'dia' : 'dias'} (${payment.due_date})`,
+                client,
+                date: dueDate,
+                payment,
+                urgency: "medium"
+              });
+            }
+            // If due date is within the next 15 days
+            else if (daysUntilDue <= 15) {
+              duePaymentAlerts.push({
+                type: "due_payment",
+                title: `Pagamento próximo: R$ ${payment.amount.toFixed(2)}`,
+                description: `Cliente: ${client.name} - Vence em ${daysUntilDue} dias (${payment.due_date})`,
+                client,
+                date: dueDate,
+                payment,
+                urgency: "low"
+              });
+            }
+          }
+        }
+      });
+    });
     
-    return { tasks: pendingTasks, payments: paymentAlerts };
+    // Combine and sort all due payment alerts by urgency (high -> medium -> low)
+    const sortedDuePaymentAlerts = [...duePaymentAlerts].sort((a, b) => {
+      const urgencyOrder = { high: 0, medium: 1, low: 2 };
+      return (urgencyOrder[a.urgency || 'medium'] - urgencyOrder[b.urgency || 'medium']) || 
+             differenceInDays(a.date, b.date);
+    });
+
+    return { 
+      tasks: pendingTasks, 
+      payments: [...paymentAlerts, ...sortedDuePaymentAlerts]
+    };
   }, [clients]);
 
   const getAlertIcon = (type: string) => {
@@ -68,10 +133,22 @@ export function AlertsReminders() {
       case "task":
         return <Bell className="h-5 w-5 text-amber-500" />;
       case "payment":
+      case "due_payment":
         return <DollarSign className="h-5 w-5 text-green-500" />;
       default:
         return <Bell className="h-5 w-5" />;
     }
+  };
+
+  const getAlertClassName = (alert: AlertItem) => {
+    if (alert.type === "due_payment") {
+      if (alert.urgency === "high") return "cursor-pointer border-l-4 border-l-red-500";
+      if (alert.urgency === "medium") return "cursor-pointer border-l-4 border-l-amber-500";
+      return "cursor-pointer border-l-4 border-l-blue-500";
+    }
+    
+    if (alert.type === "task") return "cursor-pointer border-l-4 border-l-amber-500";
+    return "cursor-pointer border-l-4 border-l-green-500";
   };
 
   const handleShowAll = (type: "tasks" | "payments") => {
@@ -140,7 +217,7 @@ export function AlertsReminders() {
                       alerts.tasks.map((alert, index) => (
                         <Alert 
                           key={index} 
-                          className="cursor-pointer border-l-4 border-l-amber-500"
+                          className={getAlertClassName(alert)}
                           onClick={() => navigate(`/clients/${alert.client.id}`)}
                         >
                           <div className="flex items-start">
@@ -168,7 +245,7 @@ export function AlertsReminders() {
                       alerts.payments.map((alert, index) => (
                         <Alert 
                           key={index} 
-                          className="cursor-pointer border-l-4 border-l-green-500"
+                          className={getAlertClassName(alert)}
                           onClick={() => navigate(`/clients/${alert.client.id}`)}
                         >
                           <div className="flex items-start">

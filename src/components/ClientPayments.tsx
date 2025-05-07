@@ -30,7 +30,9 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
         clientId: client.id,
         amount: newPayment.amount,
         date: newPayment.date,
-        notes: newPayment.notes
+        notes: newPayment.notes,
+        due_date: newPayment.due_date,
+        payment_status: newPayment.payment_status
       });
       
       // Update the UI

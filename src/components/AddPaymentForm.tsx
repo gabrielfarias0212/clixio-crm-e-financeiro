@@ -13,6 +13,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,11 +27,14 @@ import { cn } from "@/lib/utils";
 import { v4 as uuidv4 } from 'uuid';
 import { Client, Payment } from "@/utils/types";
 import { dateToString, stringToDate } from "@/utils/dateUtils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { addDays } from "date-fns";
 
 const paymentFormSchema = z.object({
   amount: z.coerce.number().positive({ message: "O valor deve ser maior que zero" }),
-  // Changed from z.date() to z.string()
   date: z.string(),
+  due_date: z.string().optional(),
+  add_due_date: z.boolean().default(false),
   notes: z.string().optional(),
 });
 
@@ -45,16 +49,24 @@ export interface AddPaymentFormProps {
 export function AddPaymentForm({ client, onSuccess, onCancel }: AddPaymentFormProps) {
   const totalPaid = client.payments.reduce((sum, payment) => sum + payment.amount, 0);
   const maxAmount = client.contractValue - totalPaid;
+  
+  // Default due date is 7 days before the wedding date (if available)
+  const defaultDueDate = client.weddingDate 
+    ? dateToString(addDays(stringToDate(client.weddingDate) || new Date(), -7))
+    : dateToString(new Date());
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
       amount: maxAmount > 0 ? maxAmount : 0,
-      // Initialize with current date as string
       date: dateToString(new Date()),
+      due_date: defaultDueDate,
+      add_due_date: false,
       notes: "",
     },
   });
+
+  const addDueDate = form.watch("add_due_date");
 
   const handleSubmit = (data: PaymentFormValues) => {
     if (data.amount > maxAmount) {
@@ -73,6 +85,8 @@ export function AddPaymentForm({ client, onSuccess, onCancel }: AddPaymentFormPr
       amount: data.amount,
       date: data.date,
       notes: data.notes,
+      payment_status: data.add_due_date ? "pendente" : "pago",
+      due_date: data.add_due_date ? data.due_date : undefined,
     };
 
     // Create a new client object with the new payment added
@@ -150,6 +164,74 @@ export function AddPaymentForm({ client, onSuccess, onCancel }: AddPaymentFormPr
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="add_due_date"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Adicionar data de vencimento
+                </FormLabel>
+                <FormDescription>
+                  Marque esta opção se este é um pagamento com data de vencimento futura
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        {addDueDate && (
+          <FormField
+            control={form.control}
+            name="due_date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Data de Vencimento</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          field.value
+                        ) : (
+                          <span>Selecione uma data</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={stringToDate(field.value) || undefined}
+                      onSelect={(date) => field.onChange(date ? dateToString(date) : "")}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormDescription>
+                  Por padrão, 7 dias antes do evento. Você pode alterar conforme necessário.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}

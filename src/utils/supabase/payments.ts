@@ -10,6 +10,8 @@ export const parsePayment = (payment: any): Payment => {
     amount: Number(payment.amount),
     date: parseDate(payment.date) || "",
     notes: payment.notes,
+    due_date: payment.due_date ? parseDate(payment.due_date) : undefined,
+    payment_status: payment.payment_status || "pendente"
   };
 };
 
@@ -28,7 +30,14 @@ export const fetchPaymentsForClient = async (clientId: string): Promise<Payment[
   return paymentsData?.map(parsePayment) || [];
 };
 
-export const createPayment = async (payment: { clientId: string, amount: number, date: string, notes?: string }): Promise<Payment | null> => {
+export const createPayment = async (payment: { 
+  clientId: string, 
+  amount: number, 
+  date: string, 
+  notes?: string,
+  due_date?: string,
+  payment_status?: string
+}): Promise<Payment | null> => {
   try {
     const { data, error } = await supabase
       .from('wedding_payments')
@@ -36,7 +45,9 @@ export const createPayment = async (payment: { clientId: string, amount: number,
         client_id: payment.clientId,
         amount: payment.amount,
         date: formatDateForSupabase(payment.date),
-        notes: payment.notes
+        notes: payment.notes,
+        due_date: payment.due_date ? formatDateForSupabase(payment.due_date) : null,
+        payment_status: payment.payment_status || 'pendente'
       })
       .select()
       .single();
@@ -108,5 +119,80 @@ export const deletePayment = async (paymentId: string): Promise<boolean> => {
   } catch (error) {
     console.error('Exception deleting payment:', error);
     return false;
+  }
+};
+
+// Update a payment's status
+export const updatePaymentStatus = async (paymentId: string, status: PaymentStatus): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('wedding_payments')
+      .update({ payment_status: status })
+      .eq('id', paymentId);
+    
+    if (error) {
+      console.error('Error updating payment status:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Exception updating payment status:', error);
+    return false;
+  }
+};
+
+// Update payment due date
+export const updatePaymentDueDate = async (paymentId: string, dueDate: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('wedding_payments')
+      .update({ due_date: formatDateForSupabase(dueDate) })
+      .eq('id', paymentId);
+    
+    if (error) {
+      console.error('Error updating payment due date:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Exception updating payment due date:', error);
+    return false;
+  }
+};
+
+// Utility function to check for overdue payments
+export const checkAndUpdateOverduePayments = async (): Promise<void> => {
+  const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+  
+  try {
+    // First get all payments that are due but still marked as 'pendente'
+    const { data, error } = await supabase
+      .from('wedding_payments')
+      .select('id')
+      .eq('payment_status', 'pendente')
+      .lt('due_date', today);
+    
+    if (error) {
+      console.error('Error checking for overdue payments:', error);
+      return;
+    }
+    
+    // Update all overdue payments to 'atrasado' status
+    if (data && data.length > 0) {
+      const paymentIds = data.map(p => p.id);
+      
+      const { error: updateError } = await supabase
+        .from('wedding_payments')
+        .update({ payment_status: 'atrasado' })
+        .in('id', paymentIds);
+      
+      if (updateError) {
+        console.error('Error updating overdue payments:', updateError);
+      }
+    }
+  } catch (error) {
+    console.error('Exception in checking overdue payments:', error);
   }
 };

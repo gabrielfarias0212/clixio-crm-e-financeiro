@@ -1,4 +1,3 @@
-
 export type ClientStatus = 
   | "orçamento enviado" 
   | "follow-up" 
@@ -35,37 +34,41 @@ export type EventCategory =
   | "Evento Corporativo"
   | "15 anos";
 
+export type PaymentStatus = "pendente" | "pago" | "atrasado";
+
 export interface Payment {
   id: string;
   amount: number;
-  date: string; // Changed from Date to string
+  date: string;
   notes?: string;
+  due_date?: string;
+  payment_status?: PaymentStatus;
 }
 
 export interface Transaction {
   id: string;
   amount: number;
-  date: string; // Changed from Date to string
+  date: string;
   type: TransactionType;
   category: TransactionCategory;
   description: string;
   clientId?: string;
   paymentId?: string;
-  createdAt: string; // Changed from Date to string
+  createdAt: string;
 }
 
 export interface FinancialCategory {
   id: string;
   name: string;
   type: TransactionType;
-  createdAt: string; // Changed from Date to string
+  createdAt: string;
 }
 
 export interface Client {
   id: string;
   name: string;
   coupleName?: string;
-  weddingDate: string | null; // Changed from Date to string
+  weddingDate: string | null;
   weddingStartTime?: string;
   weddingEndTime?: string;
   contractValue: number;
@@ -77,11 +80,10 @@ export interface Client {
   downPayment: number;
   eventCategory: EventCategory;
   eventLocation?: string;
-  preWeddingDate: string | null; // Changed from Date to string
+  preWeddingDate: string | null;
   preWeddingStartTime?: string;
   preWeddingEndTime?: string;
   contractLink?: string;
-  // Delivery workflow fields
   preWeddingScheduled?: boolean;
   preWeddingCompleted?: boolean;
   preWeddingDelivered?: boolean;
@@ -92,8 +94,8 @@ export interface Client {
   albumDesigned?: boolean;
   albumApprovedDelivered?: boolean;
   payments: Payment[];
-  createdAt: string; // Changed from Date to string
-  updatedAt: string; // Changed from Date to string
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type EventType = 
@@ -116,7 +118,7 @@ export interface CalendarEvent {
   id: string;
   title: string;
   description: string;
-  date: string; // Changed from Date to string
+  date: string;
   startTime: string;
   endTime: string;
   type: EventType;

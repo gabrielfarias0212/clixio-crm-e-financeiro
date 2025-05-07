@@ -808,24 +808,30 @@ export type Database = {
           client_id: string
           created_at: string | null
           date: string
+          due_date: string | null
           id: string
           notes: string | null
+          payment_status: string | null
         }
         Insert: {
           amount: number
           client_id: string
           created_at?: string | null
           date: string
+          due_date?: string | null
           id?: string
           notes?: string | null
+          payment_status?: string | null
         }
         Update: {
           amount?: number
           client_id?: string
           created_at?: string | null
           date?: string
+          due_date?: string | null
           id?: string
           notes?: string | null
+          payment_status?: string | null
         }
         Relationships: [
           {

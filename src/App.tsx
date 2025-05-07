@@ -97,7 +97,7 @@ function App() {
                   } 
                 />
                 <Route 
-                  path="/clients/edit/:id" 
+                  path="/clients/:id/edit" 
                   element={
                     <AuthGuard>
                       <ClientsProvider>

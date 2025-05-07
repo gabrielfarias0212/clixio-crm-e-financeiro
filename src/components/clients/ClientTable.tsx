@@ -11,8 +11,12 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/StatusBadge";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Edit, Trash2 } from "lucide-react";
 import { formatDate } from "@/utils/clientUtils";
+import { Button } from "@/components/ui/button";
+import { DeleteClientDialog } from "@/components/client-detail/DeleteClientDialog";
+import { useClients } from "@/contexts/ClientsContext";
+import { toast } from "sonner";
 
 interface ClientTableProps {
   clients: Client[];
@@ -20,6 +24,7 @@ interface ClientTableProps {
 
 export function ClientTable({ clients }: ClientTableProps) {
   const navigate = useNavigate();
+  const { removeClient } = useClients();
 
   // Format contract value to Brazilian currency
   const formatCurrency = (value: number) => {
@@ -45,6 +50,24 @@ export function ClientTable({ clients }: ClientTableProps) {
     return formatDate(localDate);
   };
 
+  const handleDelete = async (clientId: string) => {
+    try {
+      const success = await removeClient(clientId);
+      if (success) {
+        toast.success("Cliente excluído com sucesso");
+      } else {
+        toast.error("Erro ao excluir cliente");
+      }
+    } catch (error) {
+      console.error("Error deleting client:", error);
+      toast.error("Erro ao excluir cliente");
+    }
+  };
+
+  const handleRowClick = (clientId: string) => {
+    navigate(`/clients/${clientId}`);
+  };
+
   return (
     <div className="bg-white rounded-md border overflow-hidden">
       <Table>
@@ -55,16 +78,19 @@ export function ClientTable({ clients }: ClientTableProps) {
             <TableHead>Valor</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Contato</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {clients.map((client) => (
             <TableRow 
               key={client.id} 
-              onClick={() => navigate(`/clients/${client.id}`)}
-              className="cursor-pointer hover:bg-gray-50"
+              className="hover:bg-gray-50"
             >
-              <TableCell className="font-medium">
+              <TableCell 
+                className="font-medium cursor-pointer" 
+                onClick={() => handleRowClick(client.id)}
+              >
                 <div className="flex items-center">
                   {client.name}
                   {client.status === "pago" && (
@@ -74,18 +100,30 @@ export function ClientTable({ clients }: ClientTableProps) {
                   )}
                 </div>
               </TableCell>
-              <TableCell>
+              <TableCell 
+                className="cursor-pointer" 
+                onClick={() => handleRowClick(client.id)}
+              >
                 {formatWeddingDate(client.weddingDate)}
               </TableCell>
-              <TableCell>
+              <TableCell 
+                className="cursor-pointer" 
+                onClick={() => handleRowClick(client.id)}
+              >
                 <span className={client.status === "orçamento enviado" || client.status === "follow-up" ? "text-gray-400 italic" : "font-medium"}>
                   {formatCurrency(client.contractValue)}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell 
+                className="cursor-pointer" 
+                onClick={() => handleRowClick(client.id)}
+              >
                 <StatusBadge status={client.status} />
               </TableCell>
-              <TableCell>
+              <TableCell 
+                className="cursor-pointer" 
+                onClick={() => handleRowClick(client.id)}
+              >
                 <div className="text-sm text-gray-500">
                   <div className="flex items-center gap-1">
                     <div>{client.email}</div>
@@ -95,10 +133,59 @@ export function ClientTable({ clients }: ClientTableProps) {
                   </div>
                 </div>
               </TableCell>
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/clients/edit/${client.id}`);
+                    }}
+                    className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600"
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span className="sr-only">Editar cliente</span>
+                  </Button>
+                  
+                  <TableClientDeleteButton 
+                    clientId={client.id} 
+                    clientName={client.name}
+                    onDelete={() => handleDelete(client.id)}
+                  />
+                </div>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </div>
+  );
+}
+
+// Helper component for delete button with confirmation dialog
+function TableClientDeleteButton({ 
+  clientId, 
+  clientName,
+  onDelete 
+}: { 
+  clientId: string;
+  clientName: string;
+  onDelete: () => Promise<void>;
+}) {
+  return (
+    <DeleteClientDialog onDelete={onDelete}>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="h-8 w-8 p-0 text-gray-500 hover:text-red-600"
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      >
+        <Trash2 className="h-4 w-4" />
+        <span className="sr-only">Excluir cliente</span>
+      </Button>
+    </DeleteClientDialog>
   );
 }

@@ -12,13 +12,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 
 interface DeleteClientDialogProps {
   onDelete: () => Promise<void>;
+  children?: ReactNode;
 }
 
-export function DeleteClientDialog({ onDelete }: DeleteClientDialogProps) {
+export function DeleteClientDialog({ onDelete, children }: DeleteClientDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -35,14 +36,16 @@ export function DeleteClientDialog({ onDelete }: DeleteClientDialogProps) {
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm"
-          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-        >
-          <Trash2 className="h-4 w-4 mr-1" />
-          Excluir
-        </Button>
+        {children || (
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Excluir
+          </Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

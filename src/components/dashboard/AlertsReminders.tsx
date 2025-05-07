@@ -35,7 +35,7 @@ export function AlertsReminders() {
     const pendingTasks = clients
       .filter(client => client.nextAction !== "nenhuma")
       .map(client => ({
-        type: "task",
+        type: "task" as const,
         title: `Ação pendente: ${client.nextAction}`,
         description: `Cliente: ${client.name}`,
         client,
@@ -50,7 +50,7 @@ export function AlertsReminders() {
         return isAfter(eventDate, now) && isBefore(eventDate, nextWeek);
       })
       .map(client => ({
-        type: "event",
+        type: "event" as const,
         title: `Evento próximo: ${client.eventCategory}`,
         description: `Cliente: ${client.name} - ${client.weddingDate ? format(new Date(client.weddingDate), "dd/MM/yyyy") : ""}`,
         client,
@@ -68,7 +68,7 @@ export function AlertsReminders() {
         const totalPaid = client.payments.reduce((sum, payment) => sum + payment.amount, 0);
         const pendingAmount = client.contractValue - totalPaid;
         return {
-          type: "payment",
+          type: "payment" as const,
           title: `Pagamento pendente: R$ ${pendingAmount.toFixed(2)}`,
           description: `Cliente: ${client.name}`,
           client,

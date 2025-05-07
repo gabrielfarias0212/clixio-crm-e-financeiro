@@ -1,6 +1,7 @@
 
 import { useCallback, useEffect, useState, createContext, useContext, ReactNode } from "react";
 import { CalendarEvent } from "@/utils/types";
+import { formatDate } from "@/utils/dateUtils";
 
 interface CalendarEventsContextProps {
   events: CalendarEvent[];
@@ -29,11 +30,23 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
     if (storedEvents) {
       try {
         const parsedEvents = JSON.parse(storedEvents);
-        // Convert date strings back to Date objects
-        const eventsWithDates = parsedEvents.map((event: any) => ({
-          ...event,
-          date: new Date(event.date)
-        }));
+        // Fix timezone issue by creating proper date objects
+        const eventsWithDates = parsedEvents.map((event: any) => {
+          // Create a new Date object with the date components from the stored date string
+          const dateObj = new Date(event.date);
+          // Create a new date using local year, month, day with noon time to avoid timezone issues
+          const localDate = new Date(
+            dateObj.getFullYear(),
+            dateObj.getMonth(),
+            dateObj.getDate(),
+            12, 0, 0
+          );
+          
+          return {
+            ...event,
+            date: localDate
+          };
+        });
         setEvents(eventsWithDates);
       } catch (error) {
         console.error("Failed to parse calendar events from localStorage", error);
@@ -44,18 +57,46 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   // Save events to localStorage whenever they change
   useEffect(() => {
     if (events.length > 0) {
-      localStorage.setItem("calendarEvents", JSON.stringify(events));
+      // When saving events, let's ensure dates are properly serialized
+      const eventsToStore = events.map(event => ({
+        ...event,
+        // No special handling needed here as JSON.stringify() will handle the serialization
+        // The fix is in how we load the dates back
+      }));
+      localStorage.setItem("calendarEvents", JSON.stringify(eventsToStore));
     }
   }, [events]);
   
   const addEvent = useCallback((event: CalendarEvent) => {
-    setEvents(prev => [...prev, event]);
+    // Ensure the date is set to noon to avoid timezone issues
+    const normalizedDate = new Date(
+      event.date.getFullYear(),
+      event.date.getMonth(),
+      event.date.getDate(),
+      12, 0, 0
+    );
+    
+    setEvents(prev => [...prev, {
+      ...event,
+      date: normalizedDate
+    }]);
   }, []);
   
   const updateEvent = useCallback((updatedEvent: CalendarEvent) => {
+    // Ensure the date is set to noon to avoid timezone issues
+    const normalizedDate = new Date(
+      updatedEvent.date.getFullYear(),
+      updatedEvent.date.getMonth(),
+      updatedEvent.date.getDate(),
+      12, 0, 0
+    );
+    
     setEvents(prev => 
       prev.map(event => 
-        event.id === updatedEvent.id ? updatedEvent : event
+        event.id === updatedEvent.id ? {
+          ...updatedEvent,
+          date: normalizedDate
+        } : event
       )
     );
   }, []);

@@ -706,6 +706,7 @@ export type Database = {
       wedding_clients: {
         Row: {
           contract_value: number | null
+          couple_name: string | null
           created_at: string | null
           down_payment: number | null
           email: string | null
@@ -721,6 +722,7 @@ export type Database = {
         }
         Insert: {
           contract_value?: number | null
+          couple_name?: string | null
           created_at?: string | null
           down_payment?: number | null
           email?: string | null
@@ -736,6 +738,7 @@ export type Database = {
         }
         Update: {
           contract_value?: number | null
+          couple_name?: string | null
           created_at?: string | null
           down_payment?: number | null
           email?: string | null

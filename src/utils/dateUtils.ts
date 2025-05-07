@@ -1,5 +1,22 @@
 
-import { isValid, format, parse } from 'date-fns';
+import { isValid, format, parse, addDays, isSameDay } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
+
+// Define timezone constant
+export const TIMEZONE = 'America/Sao_Paulo';
+
+// Normalize date to YYYY-MM-DD format for consistent comparison
+export function normalizeDate(input: string | Date | null): string {
+  if (!input) return '';
+  
+  const date = input instanceof Date ? input : stringToDate(input);
+  if (!date) return '';
+  
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
 
 function parseToValidDate(input?: string | Date | null): Date | null {
   if (!input) return null;
@@ -50,6 +67,9 @@ export function formatDateTime(input?: string | Date | null): string {
   }
 }
 
+// Add formatDate as alias to formatDateTime for backward compatibility
+export const formatDate = formatDateTime;
+
 export function toISOStringDateTime(input?: string | Date | null): string {
   try {
     const date = parseToValidDate(input);
@@ -86,3 +106,23 @@ export function dateToString(date: Date): string {
 
 // Format for display
 export const DATE_FORMAT = 'dd/MM/yyyy';
+
+// Create a safe date utility (renamed from createSafeDate to createValidDate)
+export function createValidDate(input?: string | Date | null): Date | null {
+  return parseToValidDate(input);
+}
+
+// Provide createSafeDate as alias for backward compatibility
+export const createSafeDate = createValidDate;
+
+// Add safe format function for use in components
+export function safeFormatDate(dateValue: string | Date | null): string {
+  if (!dateValue) return "Não definida";
+  
+  try {
+    return formatDateTime(dateValue);
+  } catch (error) {
+    console.error("Error formatting date:", dateValue, error);
+    return "Data inválida";
+  }
+}

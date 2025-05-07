@@ -11,7 +11,8 @@ export type NextAction =
   | "enviar proposta" 
   | "editar" 
   | "entregar" 
-  | "nenhuma";
+  | "nenhuma"
+  | "agendar reunião";
 
 export type TransactionType = "entrada" | "saída";
 
@@ -31,7 +32,8 @@ export type EventCategory =
   | "Civil"
   | "Ensaio Estudio"
   | "Ensaio externo"
-  | "Evento Corporativo";
+  | "Evento Corporativo"
+  | "15 anos";
 
 export interface Payment {
   id: string;

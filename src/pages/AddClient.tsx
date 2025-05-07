@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -7,7 +6,7 @@ import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useClients } from "@/contexts/ClientsContext";
-import { createSafeDate } from "@/utils/dateUtils";
+import { createValidDate } from "@/utils/dateUtils";
 
 export default function AddClient() {
   const navigate = useNavigate();

@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -56,7 +57,7 @@ export default function ImportClients() {
         return;
       }
       
-      // Process date fields in Brazilian format
+      // Process date fields - recognize both Brazilian format and Excel serial numbers
       const processedData = data.map(row => {
         const processedRow = { ...row };
         
@@ -72,7 +73,7 @@ export default function ImportClients() {
         const dateFieldName = dateFieldNames.find(field => field in row);
         
         if (dateFieldName && row[dateFieldName]) {
-          // Try to parse the date in Brazilian format
+          // Parse the date value - handles Brazilian format, Excel serial numbers, and other formats
           const parsedDate = parseBrazilianDate(row[dateFieldName]);
           if (parsedDate) {
             processedRow[dateFieldName] = parsedDate;
@@ -101,8 +102,23 @@ export default function ImportClients() {
           const workbook = XLSX.read(data, { type: 'binary' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet);
-          resolve(json);
+          
+          // Use raw: false to handle dates correctly
+          const json = XLSX.utils.sheet_to_json(worksheet, { raw: false });
+          
+          // Handle Excel date serial numbers
+          const processedJson = json.map(row => {
+            const processedRow = { ...row };
+            Object.keys(row).forEach(key => {
+              if (typeof row[key] === 'number' && key.toLowerCase().includes('data')) {
+                // Let the parseBrazilianDate function handle the conversion
+                processedRow[key] = row[key];
+              }
+            });
+            return processedRow;
+          });
+          
+          resolve(processedJson);
         } catch (error) {
           reject(error);
         }

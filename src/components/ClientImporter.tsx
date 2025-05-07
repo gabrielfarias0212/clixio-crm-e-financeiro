@@ -80,13 +80,8 @@ export function ClientImporter({ data, fileName, onReset }: ClientImporterProps)
     const dateValue = row["Data do Evento"] || row["data do evento"] || row["Data"] || row["data"];
     
     if (dateValue) {
-      // If it's already a Date object (processed by ImportClients component)
-      if (dateValue instanceof Date) {
-        weddingDate = dateValue;
-      } else {
-        // Otherwise try to parse it
-        weddingDate = parseBrazilianDate(dateValue);
-      }
+      // Handle Excel serial numbers, Date objects, or string dates
+      weddingDate = parseBrazilianDate(dateValue);
     }
     
     // Parse contract value

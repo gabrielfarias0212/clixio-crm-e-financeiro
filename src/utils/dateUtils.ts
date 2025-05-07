@@ -35,12 +35,33 @@ export const combineDateAndTime = (date: Date, timeStr: string): Date => {
   return newDate;
 };
 
+// Convert Excel serial number to JavaScript Date
+export const excelSerialDateToJSDate = (serialNumber: number): Date | null => {
+  if (!serialNumber) return null;
+  
+  // Excel's date system starts on January 0, 1900,
+  // which is actually December 31, 1899
+  const excelEpoch = new Date(1899, 11, 30);
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+  
+  // Convert serial number to milliseconds and add to Excel epoch
+  const resultDate = new Date(excelEpoch.getTime() + serialNumber * millisecondsPerDay);
+  
+  return resultDate;
+};
+
 // Parse Brazilian date format (DD/MM/YYYY)
-export const parseBrazilianDate = (dateString: string | Date | null): Date | null => {
+export const parseBrazilianDate = (dateString: string | Date | null | number): Date | null => {
   if (!dateString) return null;
   
   // Check if the date is already a Date object
   if (dateString instanceof Date) return dateString;
+  
+  // Check if it's an Excel serial number
+  if (typeof dateString === "number" || (!isNaN(Number(dateString)) && Number(dateString) > 10000)) {
+    const numericDate = typeof dateString === "number" ? dateString : Number(dateString);
+    return excelSerialDateToJSDate(numericDate);
+  }
   
   // Try to parse the string date in DD/MM/YYYY format
   if (typeof dateString === "string") {

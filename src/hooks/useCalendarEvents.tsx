@@ -42,9 +42,18 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
             12, 0, 0
           );
           
+          // Handle legacy events that use 'time' instead of 'startTime'/'endTime'
+          const startTime = event.startTime || event.time || "09:00";
+          const endTime = event.endTime || (event.time ? 
+            // If there's only 'time', create an endTime 1 hour later
+            incrementTimeByOneHour(event.time) : 
+            "10:00");
+          
           return {
             ...event,
-            date: localDate
+            date: localDate,
+            startTime,
+            endTime
           };
         });
         setEvents(eventsWithDates);
@@ -54,16 +63,18 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
   
+  // Helper to increment time by one hour for legacy events
+  const incrementTimeByOneHour = (time: string): string => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const newHours = (hours + 1) % 24;
+    return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
+  
   // Save events to localStorage whenever they change
   useEffect(() => {
     if (events.length > 0) {
       // When saving events, let's ensure dates are properly serialized
-      const eventsToStore = events.map(event => ({
-        ...event,
-        // No special handling needed here as JSON.stringify() will handle the serialization
-        // The fix is in how we load the dates back
-      }));
-      localStorage.setItem("calendarEvents", JSON.stringify(eventsToStore));
+      localStorage.setItem("calendarEvents", JSON.stringify(events));
     }
   }, [events]);
   

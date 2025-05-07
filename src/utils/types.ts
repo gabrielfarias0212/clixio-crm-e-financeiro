@@ -64,6 +64,8 @@ export interface Client {
   name: string;
   coupleName?: string;
   weddingDate: Date | null;
+  weddingStartTime?: string;
+  weddingEndTime?: string;
   contractValue: number;
   status: ClientStatus;
   nextAction: NextAction;
@@ -74,6 +76,8 @@ export interface Client {
   eventCategory: EventCategory;
   eventLocation?: string;
   preWeddingDate: Date | null;
+  preWeddingStartTime?: string;
+  preWeddingEndTime?: string;
   contractLink?: string;
   // Delivery workflow fields
   preWeddingScheduled?: boolean;
@@ -111,7 +115,8 @@ export interface CalendarEvent {
   title: string;
   description: string;
   date: Date;
-  time: string;
+  startTime: string;
+  endTime: string;
   type: EventType;
   color: EventColor;
   clientId?: string;

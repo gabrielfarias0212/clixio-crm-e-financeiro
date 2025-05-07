@@ -30,18 +30,22 @@ export function AddEventDialog({
   const { addEvent, updateEvent } = useCalendarEvents();
   const isEditing = !!initialData?.id;
   
-  const { control, handleSubmit, reset, setValue } = useForm<CalendarEvent>({
+  const { control, handleSubmit, reset, setValue, watch } = useForm<CalendarEvent>({
     defaultValues: {
       id: '',
       title: '',
       description: '',
       date: new Date(),
-      time: '10:00',
+      startTime: '10:00',
+      endTime: '11:00',
       type: 'custom',
       color: 'blue',
       clientId: undefined
     }
   });
+  
+  // Watch for startTime to validate endTime
+  const startTime = watch("startTime");
   
   useEffect(() => {
     if (initialData) {
@@ -56,7 +60,8 @@ export function AddEventDialog({
         title: '',
         description: '',
         date: new Date(),
-        time: '10:00',
+        startTime: '10:00',
+        endTime: '11:00',
         type: 'custom',
         color: 'blue',
         clientId: undefined
@@ -66,6 +71,16 @@ export function AddEventDialog({
 
   const onSubmit = (data: CalendarEvent) => {
     try {
+      // Validar que o horário de término é depois do início
+      if (data.startTime >= data.endTime) {
+        toast({
+          title: "Erro de validação",
+          description: "O horário de término deve ser depois do horário de início",
+          variant: "destructive"
+        });
+        return;
+      }
+
       if (isEditing) {
         updateEvent({...data});
         toast({
@@ -141,30 +156,49 @@ export function AddEventDialog({
               />
             </div>
             
+            <div className="space-y-2">
+              <Label>Data</Label>
+              <Controller
+                name="date"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            </div>
+            
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Data</Label>
+                <Label htmlFor="startTime">Horário Início</Label>
                 <Controller
-                  name="date"
+                  name="startTime"
                   control={control}
                   render={({ field }) => (
-                    <DatePicker
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
+                    <Input id="startTime" type="time" {...field} />
                   )}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="time">Horário</Label>
+                <Label htmlFor="endTime">Horário Término</Label>
                 <Controller
-                  name="time"
+                  name="endTime"
                   control={control}
                   render={({ field }) => (
-                    <Input id="time" type="time" {...field} />
+                    <Input 
+                      id="endTime" 
+                      type="time" 
+                      {...field} 
+                      className={field.value <= startTime ? "border-red-500" : ""}
+                    />
                   )}
                 />
+                {watch("endTime") <= startTime && (
+                  <p className="text-xs text-red-500">O horário de término deve ser após o início</p>
+                )}
               </div>
             </div>
             

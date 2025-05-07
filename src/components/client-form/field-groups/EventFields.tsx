@@ -17,37 +17,67 @@ export function EventFields({ control }: EventFieldsProps) {
       
       <EventCategoryField control={control} />
       
-      <FormField
-        control={control}
-        name="weddingDate"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Data do Evento</FormLabel>
-            <FormControl>
-              <DatePicker
-                value={field.value ? new Date(field.value) : null}
-                onChange={(date) => {
-                  // Ensure we're working with the date in the local timezone
-                  if (date) {
-                    // Create a new date at noon on the selected day to avoid timezone issues
-                    const localDate = new Date(
-                      date.getFullYear(),
-                      date.getMonth(),
-                      date.getDate(),
-                      12, 0, 0
-                    );
-                    field.onChange(localDate);
-                  } else {
-                    field.onChange(null);
-                  }
-                }}
-                placeholder="Selecione uma data"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <FormField
+          control={control}
+          name="weddingDate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Data do Evento</FormLabel>
+              <FormControl>
+                <DatePicker
+                  value={field.value ? new Date(field.value) : null}
+                  onChange={(date) => {
+                    // Ensure we're working with the date in the local timezone
+                    if (date) {
+                      // Create a new date at noon on the selected day to avoid timezone issues
+                      const localDate = new Date(
+                        date.getFullYear(),
+                        date.getMonth(),
+                        date.getDate(),
+                        12, 0, 0
+                      );
+                      field.onChange(localDate);
+                    } else {
+                      field.onChange(null);
+                    }
+                  }}
+                  placeholder="Selecione uma data"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={control}
+          name="weddingStartTime"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Horário Início</FormLabel>
+              <FormControl>
+                <Input type="time" {...field} placeholder="Hora início" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={control}
+          name="weddingEndTime"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Horário Término</FormLabel>
+              <FormControl>
+                <Input type="time" {...field} placeholder="Hora término" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
       
       <FormField
         control={control}
@@ -63,37 +93,67 @@ export function EventFields({ control }: EventFieldsProps) {
         )}
       />
       
-      <FormField
-        control={control}
-        name="preWeddingDate"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Data do Pré-Wedding (opcional)</FormLabel>
-            <FormControl>
-              <DatePicker
-                value={field.value ? new Date(field.value) : null}
-                onChange={(date) => {
-                  // Ensure we're working with the date in the local timezone
-                  if (date) {
-                    // Create a new date at noon on the selected day to avoid timezone issues
-                    const localDate = new Date(
-                      date.getFullYear(),
-                      date.getMonth(),
-                      date.getDate(),
-                      12, 0, 0
-                    );
-                    field.onChange(localDate);
-                  } else {
-                    field.onChange(null);
-                  }
-                }}
-                placeholder="Selecione uma data (opcional)"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <FormField
+          control={control}
+          name="preWeddingDate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Data do Pré-Wedding (opcional)</FormLabel>
+              <FormControl>
+                <DatePicker
+                  value={field.value ? new Date(field.value) : null}
+                  onChange={(date) => {
+                    // Ensure we're working with the date in the local timezone
+                    if (date) {
+                      // Create a new date at noon on the selected day to avoid timezone issues
+                      const localDate = new Date(
+                        date.getFullYear(),
+                        date.getMonth(),
+                        date.getDate(),
+                        12, 0, 0
+                      );
+                      field.onChange(localDate);
+                    } else {
+                      field.onChange(null);
+                    }
+                  }}
+                  placeholder="Selecione uma data (opcional)"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={control}
+          name="preWeddingStartTime"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Horário Início</FormLabel>
+              <FormControl>
+                <Input type="time" {...field} placeholder="Hora início" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={control}
+          name="preWeddingEndTime"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Horário Término</FormLabel>
+              <FormControl>
+                <Input type="time" {...field} placeholder="Hora término" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
       
       <FormField
         control={control}

@@ -39,15 +39,22 @@ export function DayView({ date, clients, onClientClick }: DayViewProps) {
         id: `client-${client.id}`,
         title: `${client.eventCategory}: ${client.name}`,
         date: client.weddingDate as Date,
-        time: "10:00", // Default if not specified
-        type: "client",
+        startTime: client.weddingStartTime || "10:00",
+        endTime: client.weddingEndTime || "18:00",
+        type: "client" as const,
         clientId: client.id,
         description: `${client.eventCategory} de ${client.name}`,
-        color: "purple"
+        color: "purple" as const
       }));
     
     return [...customEvents, ...clientEvents];
   }, [date, events, clients]);
+
+  // Converter horário string para número de hora
+  const getHourFromTimeString = (timeString: string): number => {
+    const [hours] = timeString.split(':').map(Number);
+    return hours;
+  };
   
   return (
     <div className="p-4">
@@ -65,8 +72,11 @@ export function DayView({ date, clients, onClientClick }: DayViewProps) {
           
           // Find events for this hour
           const hourEvents = dayEvents.filter(event => {
-            const eventHour = event.time.split(':')[0];
-            return eventHour === format(timeSlot, "HH");
+            const startHour = getHourFromTimeString(event.startTime);
+            const endHour = getHourFromTimeString(event.endTime);
+            
+            // Evento começa nesta hora ou já começou e ainda está em andamento
+            return hour === startHour || (hour > startHour && hour < endHour);
           });
           
           return (
@@ -77,27 +87,35 @@ export function DayView({ date, clients, onClientClick }: DayViewProps) {
               <div className="col-span-11 py-1 pl-3 border-l border-gray-100">
                 {hourEvents.length > 0 ? (
                   <div className="space-y-1">
-                    {hourEvents.map(event => (
-                      <div 
-                        key={event.id} 
-                        className={cn(
-                          "p-2 rounded-md text-sm",
-                          event.type === 'client' 
-                            ? 'bg-purple-100 hover:bg-purple-200 cursor-pointer' 
-                            : event.color === 'blue' 
-                              ? 'bg-blue-100 hover:bg-blue-200 cursor-pointer' 
-                              : event.color === 'green' 
-                                ? 'bg-green-100 hover:bg-green-200 cursor-pointer' 
-                                : event.color === 'red' 
-                                  ? 'bg-red-100 hover:bg-red-200 cursor-pointer' 
-                                  : 'bg-gray-100 hover:bg-gray-200 cursor-pointer'
-                        )}
-                        onClick={() => event.clientId && onClientClick(event.clientId)}
-                      >
-                        <div className="font-medium">{event.title}</div>
-                        <div className="text-xs text-gray-500">{event.time} - {event.description}</div>
-                      </div>
-                    ))}
+                    {hourEvents.map(event => {
+                      const eventStartHour = getHourFromTimeString(event.startTime);
+                      const isStartingNow = eventStartHour === hour;
+                      
+                      return (
+                        <div 
+                          key={event.id} 
+                          className={cn(
+                            "p-2 rounded-md text-sm",
+                            isStartingNow ? "border-l-4" : "border-l", // Destacar eventos que estão começando
+                            event.type === 'client' 
+                              ? 'bg-purple-100 hover:bg-purple-200 cursor-pointer border-purple-500' 
+                              : event.color === 'blue' 
+                                ? 'bg-blue-100 hover:bg-blue-200 cursor-pointer border-blue-500' 
+                                : event.color === 'green' 
+                                  ? 'bg-green-100 hover:bg-green-200 cursor-pointer border-green-500' 
+                                  : event.color === 'red' 
+                                    ? 'bg-red-100 hover:bg-red-200 cursor-pointer border-red-500' 
+                                    : 'bg-gray-100 hover:bg-gray-200 cursor-pointer border-gray-500'
+                          )}
+                          onClick={() => event.clientId && onClientClick(event.clientId)}
+                        >
+                          <div className="font-medium">{event.title}</div>
+                          <div className="text-xs text-gray-500">
+                            {event.startTime} - {event.endTime} | {event.description}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : null}
               </div>

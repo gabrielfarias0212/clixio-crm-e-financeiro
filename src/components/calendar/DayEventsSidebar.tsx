@@ -21,6 +21,19 @@ interface DayEventsSidebarProps {
 export function DayEventsSidebar({ date, selectedDayItems, setAddEventOpen }: DayEventsSidebarProps) {
   const navigate = useNavigate();
   
+  // Formatar horário de início e término
+  const formatTimeRange = (startTime: string, endTime: string) => {
+    return `${startTime} - ${endTime}`;
+  };
+
+  // Obter horário do cliente se disponível
+  const getClientTimeRange = (client: Client) => {
+    if (client.weddingStartTime && client.weddingEndTime) {
+      return formatTimeRange(client.weddingStartTime, client.weddingEndTime);
+    }
+    return "";
+  };
+
   return (
     <Card className="border-none shadow-sm bg-white h-full">
       <CardContent className="p-4">
@@ -42,6 +55,11 @@ export function DayEventsSidebar({ date, selectedDayItems, setAddEventOpen }: Da
                     <h3 className="font-medium">{client.name}</h3>
                     <p className="text-sm text-gray-500 mt-1">
                       {client.eventCategory || "Evento"}
+                      {getClientTimeRange(client) && (
+                        <span className="block text-xs text-gray-600">
+                          {getClientTimeRange(client)}
+                        </span>
+                      )}
                     </p>
                   </div>
                   <StatusBadge status={client.status} />
@@ -65,7 +83,7 @@ export function DayEventsSidebar({ date, selectedDayItems, setAddEventOpen }: Da
                 <div>
                   <h3 className="font-medium">{event.title}</h3>
                   <p className="text-sm text-gray-500 mt-1">
-                    {event.time} - {event.description}
+                    {formatTimeRange(event.startTime, event.endTime)} - {event.description}
                   </p>
                 </div>
                 
@@ -77,7 +95,11 @@ export function DayEventsSidebar({ date, selectedDayItems, setAddEventOpen }: Da
                     event.color === 'red' ? 'bg-red-100 text-red-800' :
                     'bg-gray-100 text-gray-800'
                   }`}>
-                    {event.type || "Evento"}
+                    {event.type === 'client' ? 'Cliente' :
+                     event.type === 'meeting' ? 'Reunião' :
+                     event.type === 'photoshoot' ? 'Ensaio' :
+                     event.type === 'delivery' ? 'Entrega' :
+                     event.type === 'editing' ? 'Edição' : 'Evento'}
                   </span>
                 </div>
               </div>

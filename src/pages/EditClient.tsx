@@ -73,6 +73,8 @@ export default function EditClient() {
         email: data.email,
         phone: data.phone,
         weddingDate: weddingDate,
+        weddingStartTime: data.weddingStartTime,
+        weddingEndTime: data.weddingEndTime,
         contractValue: data.contractValue,
         downPayment: data.downPayment,
         status: data.status,
@@ -80,6 +82,8 @@ export default function EditClient() {
         eventCategory: data.eventCategory,
         eventLocation: data.eventLocation,
         preWeddingDate: preWeddingDate,
+        preWeddingStartTime: data.preWeddingStartTime,
+        preWeddingEndTime: data.preWeddingEndTime,
         contractLink: data.contractLink,
         notes: data.notes || "",
       });

@@ -1,5 +1,4 @@
 
-import { Card, CardContent } from "@/components/ui/card";
 import { Client } from "@/utils/types";
 import { 
   format, 
@@ -61,15 +60,22 @@ export function WeekView({ date, clients, onClientClick }: WeekViewProps) {
         id: `client-${client.id}`,
         title: client.name,
         date: client.weddingDate as Date,
-        time: "10:00", // Default if not specified
-        type: "client",
+        startTime: client.weddingStartTime || "10:00",
+        endTime: client.weddingEndTime || "18:00",
+        type: "client" as const,
         clientId: client.id,
         description: client.eventCategory || "Evento",
-        color: "purple"
+        color: "purple" as const
       }));
     
     return [...customEvents, ...clientEvents];
   }, [weekStart, weekEnd, events, clients]);
+
+  // Converter horário string para número de hora
+  const getHourFromTimeString = (timeString: string): number => {
+    const [hours] = timeString.split(':').map(Number);
+    return hours;
+  };
 
   const getEventsForDateAndHour = (day: Date, hour: number) => {
     const dayDate = normalizeDate(day);
@@ -77,8 +83,10 @@ export function WeekView({ date, clients, onClientClick }: WeekViewProps) {
     
     return weekEvents.filter(event => {
       const eventDate = normalizeDate(event.date);
-      const eventHour = event.time.split(':')[0];
-      return eventDate === dayDate && eventHour === hourStr;
+      const startHour = getHourFromTimeString(event.startTime);
+      const endHour = getHourFromTimeString(event.endTime);
+      
+      return eventDate === dayDate && (hour === startHour || (hour > startHour && hour < endHour));
     });
   };
   
@@ -131,23 +139,31 @@ export function WeekView({ date, clients, onClientClick }: WeekViewProps) {
                   )}>
                     {dayEvents.length > 0 ? (
                       <div className="space-y-1">
-                        {dayEvents.map(event => (
-                          <div 
-                            key={event.id} 
-                            className={cn(
-                              "p-1 rounded-md text-xs cursor-pointer",
-                              event.type === 'client' ? 'bg-purple-100 hover:bg-purple-200' :
-                              event.color === 'blue' ? 'bg-blue-100 hover:bg-blue-200' :
-                              event.color === 'green' ? 'bg-green-100 hover:bg-green-200' :
-                              event.color === 'red' ? 'bg-red-100 hover:bg-red-200' :
-                              'bg-gray-100 hover:bg-gray-200'
-                            )}
-                            onClick={() => event.clientId && onClientClick(event.clientId)}
-                          >
-                            <div className="font-medium truncate">{event.title}</div>
-                            <div className="text-[10px] text-gray-500 truncate">{event.description}</div>
-                          </div>
-                        ))}
+                        {dayEvents.map(event => {
+                          const eventStartHour = getHourFromTimeString(event.startTime);
+                          const isStartingNow = eventStartHour === hour;
+                          
+                          return (
+                            <div 
+                              key={event.id} 
+                              className={cn(
+                                "p-1 rounded-md text-xs cursor-pointer",
+                                isStartingNow ? "border-l-2" : "",
+                                event.type === 'client' ? 'bg-purple-100 hover:bg-purple-200 border-purple-500' :
+                                event.color === 'blue' ? 'bg-blue-100 hover:bg-blue-200 border-blue-500' :
+                                event.color === 'green' ? 'bg-green-100 hover:bg-green-200 border-green-500' :
+                                event.color === 'red' ? 'bg-red-100 hover:bg-red-200 border-red-500' :
+                                'bg-gray-100 hover:bg-gray-200 border-gray-500'
+                              )}
+                              onClick={() => event.clientId && onClientClick(event.clientId)}
+                            >
+                              <div className="font-medium truncate">{event.title}</div>
+                              <div className="text-[10px] text-gray-500 truncate">
+                                {event.startTime}-{event.endTime}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : null}
                   </div>

@@ -2,10 +2,11 @@
 import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Clock, CheckSquare, ClipboardCheck } from "lucide-react";
-import { startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
+import { startOfMonth, endOfMonth, isWithinInterval, parseISO, differenceInDays } from "date-fns";
 import { useMemo, useState } from "react";
 import { DashboardCardModal } from "./DashboardCardModal";
 import { Client } from "@/utils/types";
+import { stringToDate } from "@/utils/dateUtils";
 
 export function ProductionIndicators() {
   const { clients } = useClients();
@@ -22,7 +23,10 @@ export function ProductionIndicators() {
     // Count events scheduled this month
     const eventsThisMonth = clients.filter(client => {
       if (!client.weddingDate) return false;
-      const eventDate = new Date(client.weddingDate);
+      
+      const eventDate = stringToDate(client.weddingDate);
+      if (!eventDate) return false;
+      
       return isWithinInterval(eventDate, { start: monthStart, end: monthEnd });
     });
 
@@ -46,11 +50,17 @@ export function ProductionIndicators() {
 
     clients.forEach(client => {
       if (client.status === "pago" && client.weddingDate) {
-        const weddingDate = new Date(client.weddingDate);
-        const deliveryTime = Math.abs(now.getTime() - weddingDate.getTime());
-        const deliveryDays = Math.ceil(deliveryTime / (1000 * 60 * 60 * 24));
-        totalDeliveryDays += deliveryDays;
-        deliveredCount++;
+        const weddingDate = stringToDate(client.weddingDate);
+        if (weddingDate) {
+          const deliveryTime = Math.abs(now.getTime() - weddingDate.getTime());
+          const deliveryDays = Math.ceil(deliveryTime / (1000 * 60 * 60 * 24));
+          
+          // Only count reasonable values to avoid skewing the average
+          if (deliveryDays > 0 && deliveryDays < 1000) {
+            totalDeliveryDays += deliveryDays;
+            deliveredCount++;
+          }
+        }
       }
     });
 

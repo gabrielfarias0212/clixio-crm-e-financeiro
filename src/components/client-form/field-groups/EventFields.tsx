@@ -1,10 +1,10 @@
+
 import { Control } from "react-hook-form";
 import { ClientFormValues } from "../types";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { DatePicker } from "@/components/ui/date-picker";
 import { EventCategoryField } from "./EventCategoryField";
 import { Input } from "@/components/ui/input";
-import { createValidDate } from "@/utils/dateUtils";
 
 interface EventFieldsProps {
   control: Control<ClientFormValues>;

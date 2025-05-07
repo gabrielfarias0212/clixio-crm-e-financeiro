@@ -6,6 +6,7 @@ import { StatusBadge } from "./StatusBadge";
 import { CalendarIcon, MapPinIcon } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { useNavigate } from "react-router-dom";
+import { stringToDate } from "@/utils/dateUtils";
 
 interface UpcomingEventsProps {
   clients: Client[];
@@ -22,12 +23,15 @@ export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
     return clients
       .filter(client => {
         if (!client.weddingDate) return false;
-        const eventDate = new Date(client.weddingDate);
-        return isAfter(eventDate, today) && isBefore(eventDate, twoWeeksFromNow);
+        
+        const eventDate = stringToDate(client.weddingDate);
+        return eventDate && isAfter(eventDate, today) && isBefore(eventDate, twoWeeksFromNow);
       })
       .sort((a, b) => {
-        const dateA = new Date(a.weddingDate!);
-        const dateB = new Date(b.weddingDate!);
+        const dateA = stringToDate(a.weddingDate!);
+        const dateB = stringToDate(b.weddingDate!);
+        
+        if (!dateA || !dateB) return 0;
         return dateA.getTime() - dateB.getTime();
       });
   }, [clients]);
@@ -69,12 +73,12 @@ export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
                 <div className="mt-3 space-y-1">
                   <div className="flex items-center text-sm text-gray-600">
                     <CalendarIcon className="h-4 w-4 mr-2" />
-                    {client.weddingDate && format(new Date(client.weddingDate), "dd/MM/yyyy")}
+                    {client.weddingDate}
                   </div>
-                  {client.notes && (
+                  {client.eventLocation && (
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPinIcon className="h-4 w-4 mr-2" />
-                      {client.notes}
+                      {client.eventLocation}
                     </div>
                   )}
                 </div>

@@ -1,6 +1,7 @@
+
 import { format, parseISO, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { fromZonedTime, toZonedTime, formatInTimeZone } from "date-fns-tz";
+import { fromZonedTime, formatInTimeZone } from "date-fns-tz";
 
 // Configuração do fuso horário brasileiro
 export const TIMEZONE = "America/Sao_Paulo";
@@ -121,22 +122,26 @@ export const getTimeFromDate = (date: string | Date | null): string => {
 export const stringToDate = (dateStr: string | null): Date | null => {
   if (!dateStr) return null;
   
-  // Check if it's in DD/MM/YYYY format
-  if (dateStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-    const [day, month, year] = dateStr.split('/').map(Number);
-    return new Date(year, month - 1, day, 12, 0, 0);
-  }
-  
-  // Check if it's in YYYY-MM-DD format
-  if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    return new Date(year, month - 1, day, 12, 0, 0);
-  }
-  
-  // Try to parse as ISO string
   try {
-    return parseISO(dateStr);
-  } catch (e) {
+    // Check if it's in DD/MM/YYYY format
+    if (dateStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+      const [day, month, year] = dateStr.split('/').map(Number);
+      const date = new Date(year, month - 1, day, 12, 0, 0);
+      return isNaN(date.getTime()) ? null : date;
+    }
+    
+    // Check if it's in YYYY-MM-DD format
+    if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const date = new Date(year, month - 1, day, 12, 0, 0);
+      return isNaN(date.getTime()) ? null : date;
+    }
+    
+    // Try to parse as ISO string
+    const parsedDate = parseISO(dateStr);
+    return isNaN(parsedDate.getTime()) ? null : parsedDate;
+  } catch (error) {
+    console.error("Error parsing date string:", dateStr, error);
     return null;
   }
 };
@@ -144,6 +149,7 @@ export const stringToDate = (dateStr: string | null): Date | null => {
 // Date object to string (DD/MM/YYYY)
 export const dateToString = (date: Date | null): string => {
   if (!date) return "";
+  if (isNaN(date.getTime())) return "";
   return format(date, DATE_FORMAT);
 };
 
@@ -153,6 +159,7 @@ export const parseBrazilianDate = (dateString: string | Date | null | number): s
   
   // Check if the date is already a Date object
   if (dateString instanceof Date) {
+    if (isNaN(dateString.getTime())) return null;
     return format(dateString, DATE_FORMAT);
   }
   
@@ -245,5 +252,34 @@ export const formatDateForSupabase = (date: string | Date | null): string | null
 
 // Cria uma data segura como string no formato DD/MM/YYYY
 export const createSafeDate = (year: number, month: number, day: number): string => {
-  return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+  if (year < 1900 || year > 2100 || month < 1 || month > 12 || day < 1 || day > 31) {
+    console.error("Invalid date parameters:", year, month, day);
+    return "";
+  }
+  
+  try {
+    const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime())) {
+      return "";
+    }
+    return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+  } catch (error) {
+    console.error("Error creating safe date:", error);
+    return "";
+  }
+};
+
+// Create a valid date as a string in DD/MM/YYYY format
+export const createValidDate = (year: number, month: number, day: number): string | null => {
+  if (!year || !month || !day) return null;
+  
+  try {
+    const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime()) || date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+      return null; // Date is invalid
+    }
+    return dateToString(date);
+  } catch (error) {
+    return null;
+  }
 };

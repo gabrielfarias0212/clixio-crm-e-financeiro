@@ -3,9 +3,10 @@ import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { BadgeAlert, Calendar, CalendarCheck, FileCheck, Users } from "lucide-react";
 import { startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardCardModal } from "./DashboardCardModal";
 import { Client } from "@/utils/types";
+import { stringToDate } from "@/utils/dateUtils";
 
 export function DashboardStats() {
   const { clients } = useClients();
@@ -19,38 +20,46 @@ export function DashboardStats() {
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
 
   // Monthly leads
-  const monthlyLeadsClients = clients.filter(
-    client => {
+  const monthlyLeadsClients = useMemo(() => {
+    return clients.filter(client => {
       if (!client.createdAt) return false;
-      const createdAt = new Date(client.createdAt);
-      return isWithinInterval(createdAt, { start: monthStart, end: monthEnd });
-    }
-  );
+      
+      const createdAt = stringToDate(client.createdAt);
+      return createdAt && isWithinInterval(createdAt, { start: monthStart, end: monthEnd });
+    });
+  }, [clients, monthStart, monthEnd]);
+  
   const monthlyLeads = monthlyLeadsClients.length;
 
   // Monthly closed contracts
-  const monthlyClosedContractsClients = clients.filter(
-    client => {
+  const monthlyClosedContractsClients = useMemo(() => {
+    return clients.filter(client => {
       if (!client.createdAt) return false;
-      const createdAt = new Date(client.createdAt);
-      return isWithinInterval(createdAt, { start: monthStart, end: monthEnd }) && 
+      
+      const createdAt = stringToDate(client.createdAt);
+      return createdAt && 
+             isWithinInterval(createdAt, { start: monthStart, end: monthEnd }) && 
              (client.status === "fechado" || client.status === "em andamento");
-    }
-  );
+    });
+  }, [clients, monthStart, monthEnd]);
+  
   const monthlyClosedContracts = monthlyClosedContractsClients.length;
 
   // Delivered events (status pago)
-  const deliveredEventsClients = clients.filter(
-    client => client.status === "pago"
-  );
+  const deliveredEventsClients = useMemo(() => {
+    return clients.filter(client => client.status === "pago");
+  }, [clients]);
+  
   const deliveredEvents = deliveredEventsClients.length;
 
   // Pending payments
-  const pendingPaymentsClients = clients.filter(
-    client => 
+  const pendingPaymentsClients = useMemo(() => {
+    return clients.filter(client => 
       (client.status === "em andamento" || client.status === "fechado") &&
       client.payments.reduce((sum, payment) => sum + payment.amount, 0) < client.contractValue
-  );
+    );
+  }, [clients]);
+  
   const pendingPayments = pendingPaymentsClients.length;
 
   // Handle card clicks

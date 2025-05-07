@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { TIMEZONE } from '@/utils/dateUtils';
-import { zonedTimeToUtc } from 'date-fns-tz';
+import { fromZonedTime } from 'date-fns-tz';
 
 // Helper functions for date formatting/parsing
 export const parseDate = (dateString: string | null): Date | null => {

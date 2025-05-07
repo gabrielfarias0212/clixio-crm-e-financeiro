@@ -1,7 +1,7 @@
 
 import { format, parseISO, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { zonedTimeToUtc, utcToZonedTime, format as formatTZ } from "date-fns-tz";
+import { fromZonedTime, toZonedTime, format as formatInTimeZone } from "date-fns-tz";
 
 // Configuração do fuso horário brasileiro
 export const TIMEZONE = "America/Sao_Paulo";
@@ -13,7 +13,7 @@ export const normalizeDate = (date: Date | string | null): string => {
   // Se for string, converte para Date mantendo o fuso horário de São Paulo
   const d = typeof date === "string" ? parseISO(date) : date;
   // Converte para o fuso horário de São Paulo
-  const spDate = utcToZonedTime(d, TIMEZONE);
+  const spDate = toZonedTime(d, TIMEZONE);
   
   return `${spDate.getFullYear()}-${String(spDate.getMonth() + 1).padStart(2, '0')}-${String(spDate.getDate()).padStart(2, '0')}`;
 };
@@ -25,9 +25,9 @@ export const formatDate = (date: Date | string | null, formatStr: string = "dd/M
   // Se for string, converte para Date
   const d = typeof date === "string" ? parseISO(date) : date;
   // Converte para o fuso horário de São Paulo
-  const spDate = utcToZonedTime(d, TIMEZONE);
+  const spDate = toZonedTime(d, TIMEZONE);
   
-  return formatTZ(spDate, formatStr, { locale: ptBR, timeZone: TIMEZONE });
+  return formatInTimeZone(spDate, TIMEZONE, formatStr, { locale: ptBR });
 };
 
 // Format date with time
@@ -37,9 +37,9 @@ export const formatDateTime = (date: Date | string | null, formatStr: string = "
   // Se for string, converte para Date
   const d = typeof date === "string" ? parseISO(date) : date;
   // Converte para o fuso horário de São Paulo
-  const spDate = utcToZonedTime(d, TIMEZONE);
+  const spDate = toZonedTime(d, TIMEZONE);
   
-  return formatTZ(spDate, formatStr, { locale: ptBR, timeZone: TIMEZONE });
+  return formatInTimeZone(spDate, TIMEZONE, formatStr, { locale: ptBR });
 };
 
 // Get time from date
@@ -49,9 +49,9 @@ export const getTimeFromDate = (date: Date | string | null): string => {
   // Se for string, converte para Date
   const d = typeof date === "string" ? parseISO(date) : date;
   // Converte para o fuso horário de São Paulo
-  const spDate = utcToZonedTime(d, TIMEZONE);
+  const spDate = toZonedTime(d, TIMEZONE);
   
-  return formatTZ(spDate, "HH:mm", { timeZone: TIMEZONE });
+  return formatInTimeZone(spDate, TIMEZONE, "HH:mm");
 };
 
 // Combine date and time
@@ -59,12 +59,12 @@ export const combineDateAndTime = (date: Date, timeStr: string): Date => {
   const [hours, minutes] = timeStr.split(":").map(Number);
   
   // Cria uma nova data no fuso horário de São Paulo
-  const spDate = utcToZonedTime(date, TIMEZONE);
+  const spDate = toZonedTime(date, TIMEZONE);
   spDate.setHours(hours);
   spDate.setMinutes(minutes);
   
   // Converte de volta para UTC para armazenamento
-  return zonedTimeToUtc(spDate, TIMEZONE);
+  return fromZonedTime(spDate, TIMEZONE);
 };
 
 // Convert Excel serial number to JavaScript Date
@@ -80,7 +80,7 @@ export const excelSerialDateToJSDate = (serialNumber: number): Date | null => {
   const resultDate = new Date(excelEpoch.getTime() + serialNumber * millisecondsPerDay);
   
   // Ajusta para o fuso horário de São Paulo
-  return utcToZonedTime(resultDate, TIMEZONE);
+  return toZonedTime(resultDate, TIMEZONE);
 };
 
 // Parse Brazilian date format (DD/MM/YYYY)

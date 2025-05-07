@@ -5,7 +5,7 @@ import { ptBR } from "date-fns/locale";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { normalizeDate, TIMEZONE } from "@/utils/dateUtils";
 import { Client } from "@/utils/types";
-import { formatTZ } from "date-fns-tz";
+import { format as formatInTimeZone } from "date-fns-tz";
 
 export function useCalendarPage(clients: Client[]) {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -21,7 +21,7 @@ export function useCalendarPage(clients: Client[]) {
   // Get current month and year for header display
   const currentMonthYear = useMemo(() => {
     if (!date) return "";
-    return formatTZ(date, "MMMM 'de' yyyy", { locale: ptBR, timeZone: TIMEZONE });
+    return formatInTimeZone(date, TIMEZONE, "MMMM 'de' yyyy", { locale: ptBR });
   }, [date]);
 
   // Group clients by date - use a consistent date format without time component

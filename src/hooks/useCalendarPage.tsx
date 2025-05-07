@@ -21,7 +21,7 @@ export function useCalendarPage(clients: Client[]) {
   // Get current month and year for header display
   const currentMonthYear = useMemo(() => {
     if (!date) return "";
-    // Updated to use the v3 signature
+    // Use the v3 signature with locale integrated in the options object
     return formatInTimeZone(date, TIMEZONE, "MMMM 'de' yyyy", { locale: ptBR });
   }, [date]);
 

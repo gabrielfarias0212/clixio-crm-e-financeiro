@@ -8,10 +8,11 @@ import { FinancialBarChart } from "./financial/FinancialBarChart";
 import { FinancialPieChart } from "./financial/FinancialPieChart";
 import { Button } from "@/components/ui/button";
 import { useTransactions } from "@/contexts/TransactionsContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function FinancialSummary() {
   const [chartType, setChartType] = useState<"bar" | "pie">("bar");
-  const { chartData, monthlyTotals, pieData, refreshTransactions } = useFinancialData();
+  const { chartData, monthlyTotals, pieData, refreshTransactions, loading } = useFinancialData();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
@@ -19,6 +20,13 @@ export function FinancialSummary() {
     await refreshTransactions();
     setTimeout(() => setIsRefreshing(false), 500);
   };
+  
+  useEffect(() => {
+    // Garante que os dados são carregados quando o componente é montado
+    if (!loading && (chartData.length === 0 || !monthlyTotals.income)) {
+      handleRefresh();
+    }
+  }, [chartData.length, monthlyTotals.income, loading]);
 
   return (
     <Card className="overflow-hidden shadow-md border-gray-100 dark:border-gray-800">
@@ -30,11 +38,11 @@ export function FinancialSummary() {
               variant="ghost" 
               size="icon" 
               onClick={handleRefresh} 
-              disabled={isRefreshing}
+              disabled={isRefreshing || loading}
               title="Atualizar dados financeiros"
               className="h-8 w-8"
             >
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${isRefreshing || loading ? "animate-spin" : ""}`} />
             </Button>
             <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
               <button
@@ -64,18 +72,30 @@ export function FinancialSummary() {
         </div>
       </CardHeader>
       <CardContent>
-        <FinancialStatCards monthlyTotals={monthlyTotals} />
-
-        <div className="h-[240px] mt-4">
-          {chartType === "bar" ? (
-            <FinancialBarChart chartData={chartData} />
-          ) : (
-            <FinancialPieChart 
-              pieData={pieData}
-              monthlyTotals={monthlyTotals}
-            />
-          )}
-        </div>
+        {loading ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-20" />
+              ))}
+            </div>
+            <Skeleton className="h-[240px]" />
+          </div>
+        ) : (
+          <>
+            <FinancialStatCards monthlyTotals={monthlyTotals} />
+            <div className="h-[240px] mt-4">
+              {chartType === "bar" ? (
+                <FinancialBarChart chartData={chartData} />
+              ) : (
+                <FinancialPieChart 
+                  pieData={pieData}
+                  monthlyTotals={monthlyTotals}
+                />
+              )}
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );

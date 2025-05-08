@@ -15,9 +15,20 @@ export default function Index() {
   useEffect(() => {
     document.title = "Dashboard | Wedding CRM";
     
-    // Ensure we have the latest data when the dashboard loads
-    refreshTransactions();
-    refreshClients();
+    // Garantimos que temos os dados mais recentes quando o dashboard é carregado
+    const loadData = async () => {
+      try {
+        await Promise.all([
+          refreshTransactions(),
+          refreshClients()
+        ]);
+        console.log("Dashboard data refreshed successfully");
+      } catch (error) {
+        console.error("Error refreshing dashboard data:", error);
+      }
+    };
+    
+    loadData();
   }, [refreshTransactions, refreshClients]);
   
   return (

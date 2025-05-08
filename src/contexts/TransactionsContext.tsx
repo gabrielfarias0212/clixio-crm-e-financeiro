@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Transaction } from '@/utils/types';
 import { fetchTransactions, createTransaction, deleteTransaction as removeTransactionFromDB } from '@/utils/supabaseUtils';
@@ -28,12 +27,10 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
       const data = await fetchTransactions();
       setTransactions(data);
       setLastRefreshTime(Date.now());
-      return data;
     } catch (err) {
       console.error('Error fetching transactions:', err);
       setError('Falha ao carregar as transações. Por favor, tente novamente.');
       toast.error('Falha ao carregar as transações');
-      return [];
     } finally {
       setLoading(false);
     }

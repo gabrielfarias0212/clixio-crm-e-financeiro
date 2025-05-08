@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { Button } from "./ui/button";
+import { stringToDate } from "@/utils/dates";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -52,6 +53,25 @@ export function TransactionList({ transactions, clients, onDeleteTransaction }: 
     }
   };
 
+  // Safely format a date with fallback
+  const safeFormatDate = (dateStr: string | Date | null): string => {
+    if (!dateStr) return "Data inválida";
+    
+    try {
+      // Convert string to Date object safely using our utility
+      const dateObj = typeof dateStr === 'string' ? stringToDate(dateStr) : dateStr;
+      
+      // Only format if we have a valid date
+      if (dateObj && !isNaN(dateObj.getTime())) {
+        return format(dateObj, "dd/MM/yyyy");
+      }
+      return "Data inválida";
+    } catch (error) {
+      console.error("Error formatting date:", dateStr, error);
+      return "Data inválida";
+    }
+  };
+
   return (
     <div className="space-y-3 overflow-x-auto">
       {transactions.length === 0 ? (
@@ -75,7 +95,7 @@ export function TransactionList({ transactions, clients, onDeleteTransaction }: 
               {transactions.map((transaction) => (
                 <TableRow key={transaction.id} className="group">
                   <TableCell className="font-medium whitespace-nowrap">
-                    {format(new Date(transaction.date), "dd/MM/yyyy")}
+                    {safeFormatDate(transaction.date)}
                   </TableCell>
                   <TableCell className="max-w-[180px] sm:max-w-none truncate">
                     <div className="flex items-center">

@@ -98,7 +98,7 @@ export function ProductionIndicators() {
     setModalOpen(true);
   };
   return <>
-      <Card className="py-0">
+      <Card className="py-0 my-[46px]">
         <CardHeader>
           <CardTitle className="text-lg">Indicadores de Produção</CardTitle>
         </CardHeader>

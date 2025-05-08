@@ -80,11 +80,8 @@ export function BusinessMetrics() {
       </h2>
       
       <Card className="overflow-hidden border-0 shadow-md bg-white dark:bg-slate-900">
-        <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 pb-2">
-          <CardTitle className="text-lg font-medium text-gray-700 dark:text-gray-300 flex items-center">
-            <BarChart3 className="mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" />
-            Métricas principais
-          </CardTitle>
+        <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 pb-2 py-0">
+          
         </CardHeader>
         <CardContent className="p-0">
           <ul className="divide-y divide-gray-100 dark:divide-gray-800">

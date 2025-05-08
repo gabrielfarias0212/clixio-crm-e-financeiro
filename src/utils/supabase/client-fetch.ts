@@ -4,15 +4,21 @@ import { Client } from '../types';
 import { parseClient } from './client-parsers';
 import { fetchPaymentsForClient } from './payments';
 
+export type ClientSortOption = 'name' | 'created_at' | 'wedding_date';
+export type SortDirection = 'asc' | 'desc';
+
 /**
- * Fetches all clients from the database
+ * Fetches all clients from the database with optional sorting
  */
-export const fetchClients = async (): Promise<Client[]> => {
+export const fetchClients = async (
+  sortBy: ClientSortOption = 'created_at', 
+  direction: SortDirection = 'desc'
+): Promise<Client[]> => {
   try {
     const { data: clientsData, error: clientsError } = await supabase
       .from('wedding_clients')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order(sortBy, { ascending: direction === 'asc' });
 
     if (clientsError) {
       console.error('Error fetching clients:', clientsError);

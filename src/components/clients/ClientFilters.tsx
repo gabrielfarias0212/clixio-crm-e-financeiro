@@ -12,6 +12,8 @@ import {
 import { Search, X, ChevronDown, List, LayoutGrid } from "lucide-react";
 import { ClientStatus } from "@/utils/types";
 import { cn } from "@/lib/utils";
+import { SortMenu } from "./SortMenu";
+import { ClientSortOption, SortDirection } from "@/utils/supabase/client-fetch";
 
 interface ClientFiltersProps {
   searchQuery: string;
@@ -22,6 +24,9 @@ interface ClientFiltersProps {
   setViewMode: (mode: "list" | "card") => void;
   clearFilters: () => void;
   hasActiveFilters: boolean;
+  sortBy: ClientSortOption;
+  sortDirection: SortDirection;
+  onSortChange: (sortBy: ClientSortOption, direction: SortDirection) => void;
 }
 
 export function ClientFilters({
@@ -32,7 +37,10 @@ export function ClientFilters({
   viewMode,
   setViewMode,
   clearFilters,
-  hasActiveFilters
+  hasActiveFilters,
+  sortBy,
+  sortDirection,
+  onSortChange
 }: ClientFiltersProps) {
   return (
     <div className="mb-8 flex flex-col sm:flex-row gap-3">
@@ -54,6 +62,12 @@ export function ClientFilters({
           </button>
         )}
       </div>
+      
+      <SortMenu 
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
+      />
       
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

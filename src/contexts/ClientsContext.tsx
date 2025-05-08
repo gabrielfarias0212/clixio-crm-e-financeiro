@@ -1,13 +1,16 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Client } from '@/utils/types';
-import { fetchClients, createClient, updateClient, deleteClient } from '@/utils/supabaseUtils';
+import { fetchClients, createClient, updateClient, deleteClient, ClientSortOption, SortDirection } from '@/utils/supabaseUtils';
 import { toast } from 'sonner';
 
 type ClientsContextType = {
   clients: Client[];
   loading: boolean;
   error: string | null;
+  sortBy: ClientSortOption;
+  sortDirection: SortDirection;
+  setSorting: (sortBy: ClientSortOption, direction: SortDirection) => void;
   refreshClients: () => Promise<void>;
   addClient: (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>) => Promise<Client | null>;
   updateClient: (id: string, updates: Partial<Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>>) => Promise<Client | null>;
@@ -20,12 +23,20 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<ClientSortOption>('created_at');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const setSorting = (newSortBy: ClientSortOption, direction: SortDirection) => {
+    setSortBy(newSortBy);
+    setSortDirection(direction);
+    refreshClients();
+  };
 
   const refreshClients = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchClients();
+      const data = await fetchClients(sortBy, sortDirection);
       console.log("Fetched clients:", data);
       setClients(data);
     } catch (err) {
@@ -100,7 +111,7 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refreshClients();
-  }, []);
+  }, [sortBy, sortDirection]);
 
   return (
     <ClientsContext.Provider
@@ -108,6 +119,9 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
         clients,
         loading,
         error,
+        sortBy,
+        sortDirection,
+        setSorting,
         refreshClients,
         addClient,
         updateClient: updateClientData,

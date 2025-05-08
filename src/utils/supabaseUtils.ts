@@ -14,7 +14,9 @@ export {
   fetchClient, 
   createClient, 
   updateClient, 
-  deleteClient 
+  deleteClient,
+  ClientSortOption,
+  SortDirection
 } from './supabase/clients';
 
 export { 

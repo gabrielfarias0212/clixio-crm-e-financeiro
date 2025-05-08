@@ -6,16 +6,24 @@ import { useClients } from "@/contexts/ClientsContext";
 import { clearAllData } from "@/utils/supabaseUtils";
 import { toast } from "sonner";
 
-// Import our new component files
+// Import our component files
 import { ClientHeader } from "@/components/clients/ClientHeader";
 import { ClientFilters } from "@/components/clients/ClientFilters";
 import { ClientTable } from "@/components/clients/ClientTable";
 import { ClientCards } from "@/components/clients/ClientCards";
 import { EmptyClientState } from "@/components/clients/EmptyClientState";
 import { DeliveryAlert } from "@/components/clients/DeliveryAlert";
+import { ClientSortOption, SortDirection } from "@/utils/supabase/client-fetch";
 
 export default function ClientList() {
-  const { clients, loading, refreshClients } = useClients();
+  const { 
+    clients, 
+    loading, 
+    refreshClients,
+    sortBy,
+    sortDirection,
+    setSorting
+  } = useClients();
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ClientStatus | "all">("all");
@@ -65,6 +73,11 @@ export default function ClientList() {
   useEffect(() => {
     document.title = "Clientes | Wedding CRM";
   }, []);
+
+  // Handle sort change
+  const handleSortChange = (newSortBy: ClientSortOption, newDirection: SortDirection) => {
+    setSorting(newSortBy, newDirection);
+  };
 
   // Clear filters
   const clearFilters = () => {
@@ -122,6 +135,9 @@ export default function ClientList() {
           setViewMode={setViewMode}
           clearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSortChange={handleSortChange}
         />
 
         {/* Results */}

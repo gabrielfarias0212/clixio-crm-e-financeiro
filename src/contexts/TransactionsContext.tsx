@@ -21,10 +21,14 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
   const [error, setError] = useState<string | null>(null);
   const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshCount, setRefreshCount] = useState(0);
 
   const refreshTransactions = useCallback(async () => {
     // Prevent multiple refreshes within a short time period
     if (isRefreshing) return;
+    
+    // Use refresh count to force re-run even with same transactions
+    const currentRefreshCount = refreshCount;
     
     try {
       setIsRefreshing(true);
@@ -35,18 +39,23 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
       console.log(`Fetched ${data.length} transactions`);
       setTransactions(data);
       setLastRefreshTime(Date.now());
+      setRefreshCount(prev => prev + 1);
     } catch (err) {
       console.error('Error fetching transactions:', err);
       setError('Falha ao carregar as transações. Por favor, tente novamente.');
       toast.error('Falha ao carregar as transações');
     } finally {
-      setLoading(false);
+      // Only change loading state if this is still the latest refresh request
+      if (currentRefreshCount === refreshCount) {
+        setLoading(false);
+      }
+      
       // Add a small delay before allowing another refresh
       setTimeout(() => {
         setIsRefreshing(false);
       }, 300);
     }
-  }, [isRefreshing]);
+  }, [isRefreshing, refreshCount]);
 
   const addTransaction = async (transactionData: Omit<Transaction, 'id' | 'createdAt'>) => {
     try {
@@ -56,9 +65,7 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
         setTransactions(prev => [newTransaction, ...prev]);
         toast.success('Transação registrada com sucesso!');
         
-        // Refresh transactions to ensure consistency
-        refreshTransactions();
-        
+        // No need to call refreshTransactions immediately as we've already updated the state
         return newTransaction;
       }
       return null;
@@ -76,16 +83,18 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
       setTransactions(prev => prev.filter(t => t.id !== transactionId));
       toast.success('Transação excluída com sucesso!');
       
-      // Refresh transactions to ensure consistency
-      refreshTransactions();
+      // No need to call refreshTransactions as we've already updated the local state
     } catch (err) {
       console.error('Error deleting transaction:', err);
       toast.error('Falha ao excluir transação');
     }
   };
 
+  // Load transactions on initial mount
   useEffect(() => {
     refreshTransactions();
+    // Exclude refreshTransactions from deps to avoid refresh loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

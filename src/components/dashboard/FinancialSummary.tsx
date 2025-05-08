@@ -1,18 +1,23 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, PieChart, RefreshCw } from "lucide-react";
+import { BarChart, PieChart, RefreshCw, CalendarDays } from "lucide-react";
 import { useFinancialData } from "@/hooks/useFinancialData";
+import { useAnnualFinancialData } from "@/hooks/useAnnualFinancialData";
 import { FinancialStatCards } from "./financial/FinancialStatCards";
 import { FinancialBarChart } from "./financial/FinancialBarChart";
 import { FinancialPieChart } from "./financial/FinancialPieChart";
+import { AnnualFinancialBarChart } from "./financial/AnnualFinancialBarChart";
 import { Button } from "@/components/ui/button";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { Skeleton } from "@/components/ui/skeleton";
 
+type ChartViewType = "bar" | "pie" | "annual";
+
 export function FinancialSummary() {
-  const [chartType, setChartType] = useState<"bar" | "pie">("bar");
+  const [chartType, setChartType] = useState<ChartViewType>("bar");
   const { chartData, monthlyTotals, pieData, loading, hasCalculated } = useFinancialData();
+  const { chartData: annualChartData, currentYear, loading: annualLoading, hasCalculated: annualHasCalculated } = useAnnualFinancialData();
   const { refreshTransactions, loading: transactionsLoading } = useTransactions();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -34,16 +39,20 @@ export function FinancialSummary() {
   };
 
   // Determine if we should show empty state
-  const showEmptyState = hasCalculated && chartData.length === 0 && !loading;
+  const showEmptyState = 
+    (chartType !== "annual" && hasCalculated && chartData.length === 0 && !loading) || 
+    (chartType === "annual" && annualHasCalculated && annualChartData.length === 0 && !annualLoading);
   
   // Determine if data is ready to display
-  const dataReady = !loading && chartData.length > 0;
+  const dataReady = 
+    (chartType !== "annual" && !loading && chartData.length > 0) ||
+    (chartType === "annual" && !annualLoading && annualChartData.length > 0);
 
   return (
     <Card className="overflow-hidden shadow-md border-gray-100 dark:border-gray-800">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">Resumo Financeiro do Mês</CardTitle>
+          <CardTitle className="text-lg font-semibold">Resumo Financeiro</CardTitle>
           <div className="flex gap-2">
             <Button 
               variant="ghost" 
@@ -66,7 +75,7 @@ export function FinancialSummary() {
                 disabled={loading}
               >
                 <BarChart className="h-4 w-4 mr-1.5" />
-                Barras
+                Mês Atual
               </button>
               <button
                 onClick={() => setChartType("pie")}
@@ -80,12 +89,24 @@ export function FinancialSummary() {
                 <PieChart className="h-4 w-4 mr-1.5" />
                 Pizza
               </button>
+              <button
+                onClick={() => setChartType("annual")}
+                className={`flex items-center px-3 py-1.5 text-sm ${
+                  chartType === "annual"
+                    ? "bg-primary text-white"
+                    : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                } transition-colors`}
+                disabled={annualLoading}
+              >
+                <CalendarDays className="h-4 w-4 mr-1.5" />
+                Anual
+              </button>
             </div>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        {loading && (
+        {(loading || annualLoading) && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
               {[1, 2, 3].map((i) => (
@@ -103,7 +124,7 @@ export function FinancialSummary() {
               <h3 className="text-lg font-medium">Nenhum dado financeiro encontrado</h3>
             </div>
             <p className="text-gray-500 max-w-md mx-auto mb-4">
-              Adicione transações financeiras para visualizar o resumo financeiro do mês.
+              Adicione transações financeiras para visualizar o resumo financeiro.
             </p>
             <Button 
               variant="outline" 
@@ -118,17 +139,32 @@ export function FinancialSummary() {
         
         {dataReady && (
           <>
-            <FinancialStatCards monthlyTotals={monthlyTotals} />
+            {chartType !== "annual" && <FinancialStatCards monthlyTotals={monthlyTotals} />}
+            
             <div className="h-[240px] mt-4">
-              {chartType === "bar" ? (
+              {chartType === "bar" && (
                 <FinancialBarChart chartData={chartData} />
-              ) : (
+              )}
+              {chartType === "pie" && (
                 <FinancialPieChart 
                   pieData={pieData}
                   monthlyTotals={monthlyTotals}
                 />
               )}
+              {chartType === "annual" && (
+                <AnnualFinancialBarChart 
+                  chartData={annualChartData}
+                  loading={annualLoading}
+                  currentYear={currentYear}
+                />
+              )}
             </div>
+            
+            {chartType === "annual" && (
+              <div className="mt-4 text-sm text-center text-gray-500">
+                Resumo financeiro anual de {currentYear}
+              </div>
+            )}
           </>
         )}
       </CardContent>

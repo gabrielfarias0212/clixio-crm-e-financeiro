@@ -2,7 +2,7 @@
 import Layout from "@/components/Layout";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { useTransactions } from "@/contexts/TransactionsContext";
@@ -11,12 +11,15 @@ import { useClients } from "@/contexts/ClientsContext";
 export default function Index() {
   const { refreshTransactions } = useTransactions();
   const { refreshClients } = useClients();
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   
   useEffect(() => {
     document.title = "Dashboard | Wedding CRM";
     
-    // Load initial data when the dashboard is first loaded
+    // Load initial data only once when the dashboard is first loaded
     const loadData = async () => {
+      if (initialDataLoaded) return;
+      
       try {
         console.log("Dashboard page: Loading initial data");
         await Promise.all([
@@ -24,14 +27,15 @@ export default function Index() {
           refreshClients()
         ]);
         console.log("Dashboard data refreshed successfully");
+        setInitialDataLoaded(true);
       } catch (error) {
         console.error("Error refreshing dashboard data:", error);
       }
     };
     
     loadData();
-    // Don't include refreshTransactions or refreshClients in the dependency array
-    // to avoid unnecessary reloads
+    // We intentionally only want this to run once on component mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   return (

@@ -51,6 +51,10 @@ export default function ClientDetail() {
     }
   };
 
+  const handleClientUpdate = (updatedClient: Client) => {
+    setClient(updatedClient);
+  };
+
   if (!client) {
     return (
       <Layout>
@@ -113,7 +117,7 @@ export default function ClientDetail() {
           </TabsList>
           
           <TabsContent value="details">
-            <ClientDetails client={client} />
+            <ClientDetails client={client} onUpdate={handleClientUpdate} />
           </TabsContent>
           
           {hasDeliveryWorkflow && (

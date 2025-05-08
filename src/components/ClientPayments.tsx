@@ -85,15 +85,22 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
     }
   };
 
-  const handleUpdatePayment = async (updatedPayment: Payment) => {
+  const handleUpdatePayment = async (paymentId: string, updates: Partial<Payment>) => {
     try {
       setIsSubmitting(true);
+
+      // Update the payment in the database
+      const updatedPayment = await updatePayment({ id: paymentId, ...updates });
+      
+      if (!updatedPayment) {
+        throw new Error("Falha ao atualizar pagamento no servidor");
+      }
 
       // Update client locally with the updated payment
       const updatedClient = {
         ...client,
         payments: client.payments.map(payment => 
-          payment.id === updatedPayment.id ? updatedPayment : payment
+          payment.id === paymentId ? { ...payment, ...updates } : payment
         )
       };
 

@@ -12,7 +12,7 @@ interface PaymentHistoryProps {
   payments: Payment[];
   className?: string;
   onDeletePayment?: (paymentId: string) => void;
-  onUpdatePayment?: (updatedPayment: Payment) => void;
+  onUpdatePayment?: (paymentId: string, updates: Partial<Payment>) => void;
   isDeleting?: boolean;
 }
 
@@ -50,8 +50,7 @@ export function PaymentHistory({
       
       // Update the payment through the parent component
       if (onUpdatePayment) {
-        const updatedPayment = { ...paymentToEdit!, ...updates, id: paymentId };
-        await onUpdatePayment(updatedPayment);
+        await onUpdatePayment(paymentId, updates);
       }
       
       setPaymentToEdit(null);

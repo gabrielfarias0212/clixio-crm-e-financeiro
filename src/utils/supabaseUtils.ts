@@ -14,10 +14,9 @@ export {
   fetchClient, 
   createClient, 
   updateClient, 
-  deleteClient,
-  ClientSortOption,
-  SortDirection
+  deleteClient
 } from './supabase/clients';
+export type { ClientSortOption, SortDirection } from './supabase/clients';
 
 export { 
   parsePayment, 

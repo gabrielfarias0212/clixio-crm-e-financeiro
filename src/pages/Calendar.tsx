@@ -16,8 +16,9 @@ import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 export default function CalendarPage() {
   const navigate = useNavigate();
   const { clients, loading: clientsLoading } = useClients();
-  const { loading: eventsLoading, refreshEvents } = useCalendarEvents();
+  const { loading: eventsLoading, refreshEvents, events } = useCalendarEvents();
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [loadingTimeout, setLoadingTimeout] = useState<boolean>(false);
   
   const {
     date,
@@ -31,10 +32,19 @@ export default function CalendarPage() {
     selectedDayItems
   } = useCalendarPage(clients);
 
+  // Set a timeout to prevent showing loading indefinitely
   useEffect(() => {
     document.title = "Calendário | Wedding CRM";
     // Refresh events when page loads to ensure we have the latest data
     refreshEvents();
+    
+    // Add a timeout of 8 seconds to force hide the loading state
+    // This ensures users won't see a loading indicator forever if something goes wrong
+    const timer = setTimeout(() => {
+      setLoadingTimeout(true);
+    }, 8000);
+    
+    return () => clearTimeout(timer);
   }, [refreshEvents]);
   
   const handleOpenEditEvent = (event: CalendarEvent) => {
@@ -49,7 +59,10 @@ export default function CalendarPage() {
     }
   };
 
-  const loading = clientsLoading || eventsLoading;
+  // Consider loading to be done if:
+  // 1. Both clients and events are loaded, or
+  // 2. The loading timeout has been reached
+  const loading = (clientsLoading || eventsLoading) && !loadingTimeout;
 
   return (
     <Layout>
@@ -94,10 +107,12 @@ export default function CalendarPage() {
           </div>
         )}
         
-        {/* Upcoming Events Section */}
-        <div className="mt-6">
-          <UpcomingEvents clients={clients} loading={loading} />
-        </div>
+        {/* Upcoming Events Section - Only show if we have data */}
+        {!loading && (
+          <div className="mt-6">
+            <UpcomingEvents clients={clients} loading={loading} />
+          </div>
+        )}
         
         <AddEventDialog 
           open={addEventOpen} 

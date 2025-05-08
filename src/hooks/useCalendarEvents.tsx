@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState, createContext, useContext, ReactNode } from "react";
 import { CalendarEvent } from "@/utils/types";
 import { toast } from "@/hooks/use-toast";
@@ -9,7 +8,6 @@ import {
   deleteCalendarEvent 
 } from "@/utils/supabase/calendar-events";
 import { migrateLocalEventsToDatabase } from "@/utils/migrateLocalEvents";
-import { v4 as uuidv4 } from "uuid";
 
 interface CalendarEventsContextProps {
   events: CalendarEvent[];
@@ -53,9 +51,20 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   // Load events from Supabase on component mount
   const loadEvents = useCallback(async () => {
     setLoading(true);
+    
     try {
+      // Set a timeout to ensure loading state doesn't stay indefinitely
+      const timeoutId = setTimeout(() => {
+        setLoading(false);
+      }, 5000); // 5 seconds timeout as a fallback
+      
       const fetchedEvents = await fetchCalendarEvents();
+      
+      // Clear timeout if fetch completes successfully
+      clearTimeout(timeoutId);
+      
       setEvents(fetchedEvents);
+      setLoading(false);
     } catch (error) {
       console.error("Failed to fetch calendar events from Supabase", error);
       toast({
@@ -63,8 +72,7 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
         description: "Não foi possível carregar os eventos do calendário.",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
+      setLoading(false); // Ensure loading is set to false even on error
     }
   }, []);
   

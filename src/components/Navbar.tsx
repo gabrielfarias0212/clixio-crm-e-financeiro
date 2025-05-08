@@ -53,7 +53,7 @@ export function Navbar() {
     icon: <CalendarDays className="h-5 w-5" />
   }, {
     name: "Fluxo de Caixa",
-    path: "/cashflow",
+    path: "/cash-flow",
     icon: <DollarSign className="h-5 w-5" />
   }];
 

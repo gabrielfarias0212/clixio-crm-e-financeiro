@@ -1,7 +1,7 @@
 
 import { useMemo } from "react";
 import { format, addDays, isBefore, isAfter, startOfDay } from "date-fns";
-import { Client } from "@/utils/types";
+import { Client, EventCategory, CalendarEvent } from "@/utils/types";
 import { StatusBadge } from "./StatusBadge";
 import { CalendarIcon, MapPinIcon } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
@@ -14,6 +14,28 @@ interface UpcomingEventsProps {
   loading: boolean;
 }
 
+// Define proper types for our combined events
+type ClientEventItem = {
+  type: "client";
+  client: Client;
+  title: string;
+  date: string;
+  location: string;
+  category: EventCategory;
+};
+
+type CalendarEventItem = {
+  type: "calendar";
+  event: CalendarEvent;
+  client: Client | null;
+  title: string;
+  date: string;
+  location: string;
+  time: string;
+};
+
+type CombinedEventItem = ClientEventItem | CalendarEventItem;
+
 export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
   const navigate = useNavigate();
   const { events } = useCalendarEvents();
@@ -23,7 +45,7 @@ export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
     const twoWeeksFromNow = addDays(today, 15);
     
     // Filter clients with upcoming wedding dates
-    const clientEvents = clients
+    const clientEvents: ClientEventItem[] = clients
       .filter(client => {
         if (!client.weddingDate) return false;
         
@@ -40,7 +62,7 @@ export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
       }));
     
     // Filter calendar events for the next two weeks
-    const calendarEvents = events
+    const calendarEvents: CalendarEventItem[] = events
       .filter(event => {
         const eventDate = stringToDate(event.date);
         return eventDate && isAfter(eventDate, today) && isBefore(eventDate, twoWeeksFromNow);
@@ -78,7 +100,7 @@ export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
     );
   }
 
-  const handleEventClick = (event: any) => {
+  const handleEventClick = (event: CombinedEventItem) => {
     if (event.type === "client" && event.client) {
       navigate(`/clients/${event.client.id}`);
     } else {
@@ -124,7 +146,7 @@ export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
                   <div className="flex items-center text-sm text-gray-600">
                     <CalendarIcon className="h-4 w-4 mr-2" />
                     {event.date}
-                    {event.time && ` às ${event.time}`}
+                    {event.type === "calendar" && event.time && ` às ${event.time}`}
                   </div>
                   {event.location && (
                     <div className="flex items-center text-sm text-gray-600">

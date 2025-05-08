@@ -1,106 +1,145 @@
 
 import { useCallback, useEffect, useState, createContext, useContext, ReactNode } from "react";
 import { CalendarEvent } from "@/utils/types";
-import { formatDate, stringToDate, dateToString, normalizeDate } from "@/utils/dateUtils";
+import { toast } from "@/hooks/use-toast";
+import { 
+  fetchCalendarEvents, 
+  createCalendarEvent, 
+  updateCalendarEvent, 
+  deleteCalendarEvent 
+} from "@/utils/supabase/calendar-events";
+import { migrateLocalEventsToDatabase } from "@/utils/migrateLocalEvents";
+import { v4 as uuidv4 } from "uuid";
 
 interface CalendarEventsContextProps {
   events: CalendarEvent[];
-  addEvent: (event: CalendarEvent) => void;
-  updateEvent: (event: CalendarEvent) => void;
-  deleteEvent: (eventId: string) => void;
+  addEvent: (event: Omit<CalendarEvent, "id">) => Promise<void>;
+  updateEvent: (event: CalendarEvent) => Promise<void>;
+  deleteEvent: (eventId: string) => Promise<void>;
   getEventById: (eventId: string) => CalendarEvent | undefined;
   getEventsByDate: (date: string) => CalendarEvent[];
+  loading: boolean;
+  refreshEvents: () => Promise<void>;
 }
 
 const CalendarEventsContext = createContext<CalendarEventsContextProps>({
   events: [],
-  addEvent: () => {},
-  updateEvent: () => {},
-  deleteEvent: () => {},
+  addEvent: async () => {},
+  updateEvent: async () => {},
+  deleteEvent: async () => {},
   getEventById: () => undefined,
-  getEventsByDate: () => []
+  getEventsByDate: () => [],
+  loading: true,
+  refreshEvents: async () => {}
 });
 
 export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   
-  // Load events from localStorage on component mount
+  // Migrate local events to database when component mounts
   useEffect(() => {
-    const storedEvents = localStorage.getItem("calendarEvents");
-    if (storedEvents) {
+    const doMigration = async () => {
       try {
-        const parsedEvents = JSON.parse(storedEvents);
-        // Fix legacy events that have Date objects stored as strings
-        const formattedEvents = parsedEvents.map((event: any) => {
-          // If the date is an object (from older versions), convert to our string format
-          if (typeof event.date === 'object') {
-            const dateObj = new Date(event.date);
-            return {
-              ...event,
-              date: dateToString(dateObj),
-              startTime: event.startTime || event.time || "09:00",
-              endTime: event.endTime || (event.time ? 
-                incrementTimeByOneHour(event.time) : "10:00")
-            };
-          }
-          
-          // Handle legacy events with ISO date strings
-          if (typeof event.date === 'string' && event.date.includes('T')) {
-            const dateObj = new Date(event.date);
-            return {
-              ...event,
-              date: dateToString(dateObj),
-              startTime: event.startTime || event.time || "09:00",
-              endTime: event.endTime || (event.time ? 
-                incrementTimeByOneHour(event.time) : "10:00")
-            };
-          }
-          
-          // If date is already properly formatted as DD/MM/YYYY, just ensure time fields
-          return {
-            ...event,
-            startTime: event.startTime || event.time || "09:00",
-            endTime: event.endTime || (event.time ? 
-              incrementTimeByOneHour(event.time) : "10:00")
-          };
-        });
-        
-        setEvents(formattedEvents);
+        await migrateLocalEventsToDatabase();
       } catch (error) {
-        console.error("Failed to parse calendar events from localStorage", error);
+        console.error("Error migrating local events to database", error);
       }
+    };
+    
+    doMigration();
+  }, []);
+  
+  // Load events from Supabase on component mount
+  const loadEvents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const fetchedEvents = await fetchCalendarEvents();
+      setEvents(fetchedEvents);
+    } catch (error) {
+      console.error("Failed to fetch calendar events from Supabase", error);
+      toast({
+        title: "Erro ao carregar eventos",
+        description: "Não foi possível carregar os eventos do calendário.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   }, []);
   
-  // Helper to increment time by one hour for legacy events
-  const incrementTimeByOneHour = (time: string): string => {
-    const [hours, minutes] = time.split(':').map(Number);
-    const newHours = (hours + 1) % 24;
-    return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  };
-  
-  // Save events to localStorage whenever they change
   useEffect(() => {
-    if (events.length > 0) {
-      localStorage.setItem("calendarEvents", JSON.stringify(events));
+    loadEvents();
+  }, [loadEvents]);
+  
+  const addEvent = useCallback(async (event: Omit<CalendarEvent, "id">) => {
+    try {
+      // Create event in Supabase
+      const createdEvent = await createCalendarEvent(event);
+      
+      if (createdEvent) {
+        // Update local state
+        setEvents(prev => [...prev, createdEvent]);
+        return;
+      }
+      
+      throw new Error("Failed to create event");
+    } catch (error) {
+      console.error("Error adding event:", error);
+      toast({
+        title: "Erro ao adicionar evento",
+        description: "Não foi possível adicionar o evento ao calendário.",
+        variant: "destructive"
+      });
     }
-  }, [events]);
-  
-  const addEvent = useCallback((event: CalendarEvent) => {
-    // Ensure the date is in the correct string format (DD/MM/YYYY)
-    setEvents(prev => [...prev, event]);
   }, []);
   
-  const updateEvent = useCallback((updatedEvent: CalendarEvent) => {
-    setEvents(prev => 
-      prev.map(event => 
-        event.id === updatedEvent.id ? updatedEvent : event
-      )
-    );
+  const updateEvent = useCallback(async (updatedEvent: CalendarEvent) => {
+    try {
+      // Update event in Supabase
+      const result = await updateCalendarEvent(updatedEvent.id, updatedEvent);
+      
+      if (result) {
+        // Update local state
+        setEvents(prev => 
+          prev.map(event => 
+            event.id === updatedEvent.id ? updatedEvent : event
+          )
+        );
+        return;
+      }
+      
+      throw new Error("Failed to update event");
+    } catch (error) {
+      console.error("Error updating event:", error);
+      toast({
+        title: "Erro ao atualizar evento",
+        description: "Não foi possível atualizar o evento no calendário.",
+        variant: "destructive"
+      });
+    }
   }, []);
   
-  const deleteEvent = useCallback((eventId: string) => {
-    setEvents(prev => prev.filter(event => event.id !== eventId));
+  const deleteEvent = useCallback(async (eventId: string) => {
+    try {
+      // Delete event from Supabase
+      const success = await deleteCalendarEvent(eventId);
+      
+      if (success) {
+        // Update local state
+        setEvents(prev => prev.filter(event => event.id !== eventId));
+        return;
+      }
+      
+      throw new Error("Failed to delete event");
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast({
+        title: "Erro ao excluir evento",
+        description: "Não foi possível excluir o evento do calendário.",
+        variant: "destructive"
+      });
+    }
   }, []);
   
   const getEventById = useCallback(
@@ -110,12 +149,7 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   
   const getEventsByDate = useCallback(
     (date: string) => {
-      // Normalize the date to YYYY-MM-DD format for comparison
-      const dateKey = normalizeDate(date);
-      return events.filter(event => {
-        const eventDateKey = normalizeDate(event.date);
-        return eventDateKey === dateKey;
-      });
+      return events.filter(event => event.date === date);
     },
     [events]
   );
@@ -126,7 +160,9 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
     updateEvent,
     deleteEvent,
     getEventById,
-    getEventsByDate
+    getEventsByDate,
+    loading,
+    refreshEvents: loadEvents
   };
   
   return (

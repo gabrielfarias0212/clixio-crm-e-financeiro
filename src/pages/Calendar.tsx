@@ -10,10 +10,13 @@ import { CalendarGrid } from "@/components/calendar/CalendarGrid";
 import { DayEventsSidebar } from "@/components/calendar/DayEventsSidebar";
 import { useCalendarPage } from "@/hooks/useCalendarPage";
 import { CalendarEvent } from "@/utils/types";
+import { Loader2 } from "lucide-react";
+import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 
 export default function CalendarPage() {
   const navigate = useNavigate();
-  const { clients, loading } = useClients();
+  const { clients, loading: clientsLoading } = useClients();
+  const { loading: eventsLoading, refreshEvents } = useCalendarEvents();
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   
   const {
@@ -30,7 +33,9 @@ export default function CalendarPage() {
 
   useEffect(() => {
     document.title = "Calendário | Wedding CRM";
-  }, []);
+    // Refresh events when page loads to ensure we have the latest data
+    refreshEvents();
+  }, [refreshEvents]);
   
   const handleOpenEditEvent = (event: CalendarEvent) => {
     setEditingEvent(event);
@@ -44,6 +49,8 @@ export default function CalendarPage() {
     }
   };
 
+  const loading = clientsLoading || eventsLoading;
+
   return (
     <Layout>
       <div className="max-w-screen-xl mx-auto px-4 py-8 animate-fade-in">
@@ -54,31 +61,38 @@ export default function CalendarPage() {
           setAddEventOpen={setAddEventOpen}
         />
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Calendar Grid */}
-          <div className="lg:col-span-2">
-            <CalendarGrid 
-              date={date}
-              setDate={setDate}
-              view={view}
-              setView={setView}
-              currentMonthYear={currentMonthYear}
-              eventDates={eventDates}
-              clients={clients}
-              onClientClick={(clientId) => navigate(`/clients/${clientId}`)}
-            />
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+            <span className="ml-2 text-lg text-gray-600">Carregando calendário...</span>
           </div>
-          
-          {/* Events Sidebar */}
-          <div className="lg:col-span-1">
-            <DayEventsSidebar 
-              date={date}
-              selectedDayItems={selectedDayItems}
-              setAddEventOpen={setAddEventOpen}
-              openEditEvent={handleOpenEditEvent}
-            />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Calendar Grid */}
+            <div className="lg:col-span-2">
+              <CalendarGrid 
+                date={date}
+                setDate={setDate}
+                view={view}
+                setView={setView}
+                currentMonthYear={currentMonthYear}
+                eventDates={eventDates}
+                clients={clients}
+                onClientClick={(clientId) => navigate(`/clients/${clientId}`)}
+              />
+            </div>
+            
+            {/* Events Sidebar */}
+            <div className="lg:col-span-1">
+              <DayEventsSidebar 
+                date={date}
+                selectedDayItems={selectedDayItems}
+                setAddEventOpen={setAddEventOpen}
+                openEditEvent={handleOpenEditEvent}
+              />
+            </div>
           </div>
-        </div>
+        )}
         
         {/* Upcoming Events Section */}
         <div className="mt-6">

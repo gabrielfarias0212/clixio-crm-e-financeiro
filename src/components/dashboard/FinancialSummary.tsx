@@ -19,7 +19,7 @@ import {
   Legend,
   LabelList
 } from "recharts";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Updated modern color palette
 const CHART_COLORS = {
@@ -36,31 +36,76 @@ const CHART_COLORS = {
 };
 
 export function FinancialSummary() {
-  const { transactions } = useTransactions();
+  const { transactions, refreshTransactions } = useTransactions();
   const [chartType, setChartType] = useState<"bar" | "pie">("bar");
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [monthlyTotals, setMonthlyTotals] = useState({
+    income: 0,
+    expenses: 0,
+    balance: 0
+  });
+  
+  // Use effect to process transactions whenever they change
+  useEffect(() => {
+    calculateFinancialData();
+  }, [transactions]);
+  
+  // Function to calculate all financial data
+  const calculateFinancialData = () => {
+    // Get current month's transactions
+    const now = new Date();
+    const currentMonthStart = startOfMonth(now);
+    const currentMonthEnd = endOfMonth(now);
 
-  // Get current month's transactions
-  const now = new Date();
-  const currentMonthStart = startOfMonth(now);
-  const currentMonthEnd = endOfMonth(now);
+    const currentMonthTransactions = transactions.filter(
+      (t) => {
+        const date = new Date(t.date);
+        return date >= currentMonthStart && date <= currentMonthEnd;
+      }
+    );
 
-  const currentMonthTransactions = transactions.filter(
-    (t) => {
-      const date = new Date(t.date);
-      return date >= currentMonthStart && date <= currentMonthEnd;
-    }
-  );
+    // Calculate monthly totals
+    const totals = {
+      income: currentMonthTransactions
+        .filter((t) => t.type === "entrada")
+        .reduce((sum, t) => sum + Number(t.amount), 0),
+      expenses: currentMonthTransactions
+        .filter((t) => t.type === "saída")
+        .reduce((sum, t) => sum + Number(t.amount), 0),
+    };
+    
+    const balance = totals.income - totals.expenses;
+    setMonthlyTotals({ ...totals, balance });
 
-  const monthlyTotals = {
-    income: currentMonthTransactions
-      .filter((t) => t.type === "entrada")
-      .reduce((sum, t) => sum + Number(t.amount), 0),
-    expenses: currentMonthTransactions
-      .filter((t) => t.type === "saída")
-      .reduce((sum, t) => sum + Number(t.amount), 0),
+    // Prepare last 6 months data for chart
+    const monthsData = Array.from({ length: 6 }).map((_, i) => {
+      const date = subMonths(now, i);
+      const monthStart = startOfMonth(date);
+      const monthEnd = endOfMonth(date);
+      
+      const monthTransactions = transactions.filter((t) => {
+        const transDate = new Date(t.date);
+        return transDate >= monthStart && transDate <= monthEnd;
+      });
+
+      const income = monthTransactions
+        .filter((t) => t.type === "entrada")
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+
+      const expenses = monthTransactions
+        .filter((t) => t.type === "saída")
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+
+      return {
+        name: format(date, "MMM", { locale: ptBR }),
+        income,
+        expenses,
+        balance: income - expenses
+      };
+    }).reverse();
+    
+    setChartData(monthsData);
   };
-
-  const balance = monthlyTotals.income - monthlyTotals.expenses;
 
   // Format currency
   const formatCurrency = (value: number) => {
@@ -70,38 +115,13 @@ export function FinancialSummary() {
     }).format(value);
   };
 
-  // Prepare last 6 months data for chart
-  const monthsData = Array.from({ length: 6 }).map((_, i) => {
-    const date = subMonths(now, i);
-    const monthStart = startOfMonth(date);
-    const monthEnd = endOfMonth(date);
-    
-    const monthTransactions = transactions.filter((t) => {
-      const transDate = new Date(t.date);
-      return transDate >= monthStart && transDate <= monthEnd;
-    });
-
-    const income = monthTransactions
-      .filter((t) => t.type === "entrada")
-      .reduce((sum, t) => sum + Number(t.amount), 0);
-
-    const expenses = monthTransactions
-      .filter((t) => t.type === "saída")
-      .reduce((sum, t) => sum + Number(t.amount), 0);
-
-    return {
-      name: format(date, "MMM", { locale: ptBR }),
-      income,
-      expenses,
-      balance: income - expenses
-    };
-  }).reverse();
-
+  // Prepare pie chart data
   const pieData = [
     { name: "Entradas", value: monthlyTotals.income, fill: CHART_COLORS.income },
     { name: "Saídas", value: monthlyTotals.expenses, fill: CHART_COLORS.expenses },
   ];
 
+  // Custom tooltip components
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -140,7 +160,7 @@ export function FinancialSummary() {
           <p className="text-sm mt-1">
             {formatCurrency(payload[0].value)}
             <span className="text-xs text-gray-500 ml-2">
-              ({((payload[0].value / (monthlyTotals.income + monthlyTotals.expenses)) * 100).toFixed(1)}%)
+              ({((payload[0].value / (monthlyTotals.income + monthlyTotals.expenses || 1)) * 100).toFixed(1)}%)
             </span>
           </p>
         </div>
@@ -164,6 +184,12 @@ export function FinancialSummary() {
       </div>
     );
   };
+
+  // Effect to refresh financial data when component mounts
+  useEffect(() => {
+    // Ensure we have the latest transactions when component mounts
+    refreshTransactions();
+  }, []);
 
   return (
     <Card className="overflow-hidden shadow-md border-gray-100 dark:border-gray-800">
@@ -219,29 +245,29 @@ export function FinancialSummary() {
           </div>
           
           <div className={`bg-gradient-to-r ${
-            balance >= 0 
+            monthlyTotals.balance >= 0 
               ? "from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/30" 
               : "from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/30"
           } p-4 rounded-xl`}>
             <p className={`text-sm ${
-              balance >= 0 
+              monthlyTotals.balance >= 0 
                 ? "text-purple-700 dark:text-purple-400" 
                 : "text-red-700 dark:text-red-400"
             } mb-1`}>Saldo</p>
             <div className="flex items-center">
-              {balance >= 0 ? (
+              {monthlyTotals.balance >= 0 ? (
                 <TrendingUp className="h-5 w-5 mr-2 text-purple-500" />
               ) : (
                 <TrendingDown className="h-5 w-5 mr-2 text-red-500" />
               )}
               <span 
                 className={`text-xl font-bold ${
-                  balance >= 0 
+                  monthlyTotals.balance >= 0 
                     ? "text-purple-600 dark:text-purple-400" 
                     : "text-red-600 dark:text-red-400"
                 }`}
               >
-                {formatCurrency(balance)}
+                {formatCurrency(monthlyTotals.balance)}
               </span>
             </div>
           </div>
@@ -251,7 +277,7 @@ export function FinancialSummary() {
           {chartType === "bar" ? (
             <ResponsiveContainer width="100%" height="100%">
               <RechartsBarChart
-                data={monthsData}
+                data={chartData}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 barGap={4}
               >
@@ -313,7 +339,12 @@ export function FinancialSummary() {
                     position="outside"
                     offset={20}
                     fill="#6B7280"
-                    formatter={(value: string) => `${value} (${((pieData.find(item => item.name === value)?.value || 0) / (monthlyTotals.income + monthlyTotals.expenses) * 100).toFixed(1)}%)`}
+                    formatter={(value: string) => {
+                      const entry = pieData.find(item => item.name === value);
+                      const total = monthlyTotals.income + monthlyTotals.expenses;
+                      if (!entry || total === 0) return value;
+                      return `${value} (${((entry.value / total) * 100).toFixed(1)}%)`;
+                    }}
                   />
                 </Pie>
                 <Tooltip content={<CustomPieTooltip />} />

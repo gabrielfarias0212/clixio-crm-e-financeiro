@@ -5,11 +5,20 @@ import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { useTransactions } from "@/contexts/TransactionsContext";
+import { useClients } from "@/contexts/ClientsContext";
 
 export default function Index() {
+  const { refreshTransactions } = useTransactions();
+  const { refreshClients } = useClients();
+  
   useEffect(() => {
     document.title = "Dashboard | Wedding CRM";
-  }, []);
+    
+    // Ensure we have the latest data when the dashboard loads
+    refreshTransactions();
+    refreshClients();
+  }, [refreshTransactions, refreshClients]);
   
   return (
     <Layout>

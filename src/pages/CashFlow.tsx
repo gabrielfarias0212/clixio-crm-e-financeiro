@@ -13,12 +13,15 @@ import { toast } from "sonner";
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const { clients, refreshClients } = useClients();
-  const { transactions, addTransaction, deleteTransaction } = useTransactions();
+  const { transactions, addTransaction, deleteTransaction, refreshTransactions } = useTransactions();
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
 
   useEffect(() => {
     document.title = "Fluxo de Caixa | Wedding CRM";
-  }, []);
+    
+    // Ensure we have the latest data when the page loads
+    refreshTransactions();
+  }, [refreshTransactions]);
 
   // Use useMemo to filter transactions for better performance
   const filteredTransactions = useMemo(() => {
@@ -42,13 +45,20 @@ export default function CashFlow() {
       } else {
         toast.success("Transação registrada com sucesso!");
       }
+      
+      // Refresh transactions to update all views that depend on transaction data
+      refreshTransactions();
     }
   };
 
   const handleDeleteTransaction = async (transactionId: string) => {
     await deleteTransaction(transactionId);
-    // Refresh client data if needed to update payment history
+    
+    // Refresh client data to update payment history
     refreshClients();
+    
+    // Also refresh transactions to update all views
+    refreshTransactions();
   };
 
   return (

@@ -89,8 +89,8 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
     try {
       setIsSubmitting(true);
 
-      // Update the payment in the database
-      const updatedPayment = await updatePayment({ id: paymentId, ...updates });
+      // Update the payment in the database - Fix: Pass paymentId and updates as separate arguments
+      const updatedPayment = await updatePayment(paymentId, updates);
       
       if (!updatedPayment) {
         throw new Error("Falha ao atualizar pagamento no servidor");

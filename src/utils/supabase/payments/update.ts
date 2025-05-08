@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Payment, PaymentStatus } from '../../types';
 import { formatDateForSupabase } from '../base';
 import { parsePayment } from './parsers';
-import { UpdatePaymentParams } from './types';
 
 /**
  * Update an existing payment

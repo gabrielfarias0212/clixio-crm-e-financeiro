@@ -32,7 +32,6 @@ export async function migrateLocalEventsToDatabase(): Promise<boolean> {
     // Format events for database insertion
     const formattedEvents = events.map((event: any) => {
       return {
-        id: event.id,
         title: event.title,
         description: event.description || '',
         date: event.date,

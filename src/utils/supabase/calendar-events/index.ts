@@ -28,9 +28,21 @@ export const fetchCalendarEvents = async (): Promise<CalendarEvent[]> => {
  */
 export const createCalendarEvent = async (event: Omit<CalendarEvent, 'id'>): Promise<CalendarEvent | null> => {
   try {
+    // Convert camelCase object to snake_case for database
+    const dbEvent = {
+      title: event.title,
+      description: event.description || '',
+      date: event.date,
+      start_time: event.startTime,
+      end_time: event.endTime,
+      type: event.type,
+      color: event.color,
+      client_id: event.clientId
+    };
+
     const { data, error } = await supabase
       .from('calendar_events')
-      .insert([event])
+      .insert([dbEvent])
       .select()
       .single();
 
@@ -51,9 +63,21 @@ export const createCalendarEvent = async (event: Omit<CalendarEvent, 'id'>): Pro
  */
 export const updateCalendarEvent = async (eventId: string, updates: Partial<CalendarEvent>): Promise<CalendarEvent | null> => {
   try {
+    // Convert camelCase object to snake_case for database
+    const dbUpdates: any = {};
+    
+    if (updates.title !== undefined) dbUpdates.title = updates.title;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    if (updates.date !== undefined) dbUpdates.date = updates.date;
+    if (updates.startTime !== undefined) dbUpdates.start_time = updates.startTime;
+    if (updates.endTime !== undefined) dbUpdates.end_time = updates.endTime;
+    if (updates.type !== undefined) dbUpdates.type = updates.type;
+    if (updates.color !== undefined) dbUpdates.color = updates.color;
+    if (updates.clientId !== undefined) dbUpdates.client_id = updates.clientId;
+
     const { data, error } = await supabase
       .from('calendar_events')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', eventId)
       .select()
       .single();

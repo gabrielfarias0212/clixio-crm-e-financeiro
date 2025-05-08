@@ -7,8 +7,19 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { useClients } from "@/contexts/ClientsContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { Navigate } from "react-router-dom";
 
 export default function Index() {
+  const { user } = useAuth();
+  
+  // If user is not authenticated, redirect to auth page
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Safe to use these hooks now as we've confirmed the user is logged in
+  // and we're within the proper context providers (see App.tsx)
   const { refreshTransactions } = useTransactions();
   const { refreshClients } = useClients();
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);

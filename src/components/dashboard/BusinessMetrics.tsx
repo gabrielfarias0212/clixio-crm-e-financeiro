@@ -3,7 +3,7 @@ import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { Card } from "@/components/ui/card";
 import { startOfYear, endOfYear, isWithinInterval } from "date-fns";
-import { FileCheck, TrendingUp, DollarSign, BarChart3 } from "lucide-react";
+import { FileCheck, TrendingUp, DollarSign, BarChart3, CalendarDays, Clock } from "lucide-react";
 import { useMemo, useState } from "react";
 import { stringToDate } from "@/utils/dateUtils";
 import { Client } from "@/utils/types";
@@ -295,107 +295,75 @@ export function BusinessMetrics() {
         Indicadores de Desempenho do Negócio ({currentYear})
       </h2>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Contratos Ativos */}
-        <Card 
-          className="relative overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer border-0 ring-1 ring-slate-200 dark:ring-slate-800"
-          onClick={() => handleCardClick('contracts')}
-        >
-          <div className="relative z-10 p-5">
-            <div className="flex flex-col h-full">
-              <div className="flex items-center mb-4">
-                <div className="rounded-full bg-blue-100 dark:bg-blue-900/40 p-3">
-                  <FileCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <h3 className="text-sm font-medium ml-3 text-slate-600 dark:text-slate-300">
-                  Contratos Ativos no Ano
-                </h3>
-              </div>
-              <div>
-                <p className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-white truncate">
-                  {metrics.activeContracts}
-                </p>
-              </div>
+      <Card className="p-6 border rounded-xl shadow-sm">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-2 lg:grid-cols-4">
+          {/* Contratos Ativos */}
+          <div 
+            className="flex items-center gap-4 cursor-pointer group"
+            onClick={() => handleCardClick('contracts')}
+          >
+            <div className="rounded-full bg-blue-100 p-3 flex-shrink-0">
+              <FileCheck className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Contratos Ativos no Ano</p>
+              <p className="text-3xl font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 transition-colors">
+                {metrics.activeContracts}
+              </p>
             </div>
           </div>
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent dark:from-blue-950/20 dark:to-transparent opacity-50"></div>
-        </Card>
 
-        {/* Card 2: Média Faturamento */}
-        <Card 
-          className="relative overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer border-0 ring-1 ring-slate-200 dark:ring-slate-800"
-          onClick={() => handleCardClick('revenue')}
-        >
-          <div className="relative z-10 p-5">
-            <div className="flex flex-col h-full">
-              <div className="flex items-center mb-4">
-                <div className="rounded-full bg-green-100 dark:bg-green-900/40 p-3">
-                  <BarChart3 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                </div>
-                <h3 className="text-sm font-medium ml-3 text-slate-600 dark:text-slate-300">
-                  Média de Faturamento Mensal
-                </h3>
-              </div>
-              <div>
-                <p className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400 truncate">
-                  {formatCurrency(metrics.averageMonthlyRevenue)}
-                </p>
-              </div>
+          {/* Média de Faturamento */}
+          <div 
+            className="flex items-center gap-4 cursor-pointer group"
+            onClick={() => handleCardClick('revenue')}
+          >
+            <div className="rounded-full bg-green-100 p-3 flex-shrink-0">
+              <BarChart3 className="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Faturamento Mensal Médio</p>
+              <p className="text-3xl font-bold text-green-600 group-hover:text-green-500 transition-colors">
+                {formatCurrency(metrics.averageMonthlyRevenue)}
+              </p>
             </div>
           </div>
-          <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent dark:from-green-950/20 dark:to-transparent opacity-50"></div>
-        </Card>
 
-        {/* Card 3: Taxa de Conversão */}
-        <Card 
-          className="relative overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer border-0 ring-1 ring-slate-200 dark:ring-slate-800"
-          onClick={() => handleCardClick('conversion')}
-        >
-          <div className="relative z-10 p-5">
-            <div className="flex flex-col h-full">
-              <div className="flex items-center mb-4">
-                <div className="rounded-full bg-orange-100 dark:bg-orange-900/40 p-3">
-                  <TrendingUp className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                </div>
-                <h3 className="text-sm font-medium ml-3 text-slate-600 dark:text-slate-300">
-                  Taxa de Conversão
-                </h3>
-              </div>
-              <div>
-                <p className="text-3xl md:text-4xl font-bold text-orange-600 dark:text-orange-400 truncate">
-                  {metrics.conversionRate.toFixed(1)}%
-                </p>
-              </div>
+          {/* Taxa de Conversão */}
+          <div 
+            className="flex items-center gap-4 cursor-pointer group"
+            onClick={() => handleCardClick('conversion')}
+          >
+            <div className="rounded-full bg-orange-100 p-3 flex-shrink-0">
+              <TrendingUp className="h-6 w-6 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Taxa de Conversão</p>
+              <p className="text-3xl font-bold text-orange-600 group-hover:text-orange-500 transition-colors">
+                {metrics.conversionRate.toFixed(1)}%
+              </p>
             </div>
           </div>
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-transparent dark:from-orange-950/20 dark:to-transparent opacity-50"></div>
-        </Card>
 
-        {/* Card 4: Lucro Líquido */}
-        <Card 
-          className="relative overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer border-0 ring-1 ring-slate-200 dark:ring-slate-800"
-          onClick={() => handleCardClick('profit')}
-        >
-          <div className="relative z-10 p-5">
-            <div className="flex flex-col h-full">
-              <div className="flex items-center mb-4">
-                <div className="rounded-full bg-purple-100 dark:bg-purple-900/40 p-3">
-                  <DollarSign className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                </div>
-                <h3 className="text-sm font-medium ml-3 text-slate-600 dark:text-slate-300">
-                  Lucro Líquido
-                </h3>
-              </div>
-              <div>
-                <p className={`text-3xl md:text-4xl font-bold truncate ${metrics.netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                  {formatCurrency(metrics.netProfit)}
-                </p>
-              </div>
+          {/* Lucro Líquido */}
+          <div 
+            className="flex items-center gap-4 cursor-pointer group"
+            onClick={() => handleCardClick('profit')}
+          >
+            <div className="rounded-full bg-purple-100 p-3 flex-shrink-0">
+              <DollarSign className="h-6 w-6 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Lucro Líquido</p>
+              <p className={`text-3xl font-bold group-hover:opacity-80 transition-colors ${
+                metrics.netProfit >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {formatCurrency(metrics.netProfit)}
+              </p>
             </div>
           </div>
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-transparent dark:from-purple-950/20 dark:to-transparent opacity-50"></div>
-        </Card>
-      </div>
+        </div>
+      </Card>
 
       {/* Modal para exibição de informações detalhadas */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

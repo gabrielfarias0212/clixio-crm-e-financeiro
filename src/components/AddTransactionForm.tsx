@@ -1,61 +1,15 @@
 
-import { useState, useEffect } from "react";
-import { Client, Transaction, TransactionCategory, TransactionType } from "@/utils/types";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import React from "react";
+import { Client, Transaction } from "@/utils/types";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { fetchFinancialCategories, createFinancialCategory } from "@/utils/supabaseUtils";
-import { toast } from "sonner";
-import { dateToString, stringToDate } from "@/utils/dateUtils";
-
-// Novas categorias adicionadas
-const newCategories: TransactionCategory[] = [
-  "casamento", 
-  "casamento civil", 
-  "aniversario", 
-  "evento corporativo", 
-  "ensaio externo", 
-  "ensaio estudio", 
-  "ensaio corporativo"
-];
-
-const transactionFormSchema = z.object({
-  type: z.enum(["entrada", "saída"]),
-  category: z.string(),
-  amount: z.coerce.number().positive({ message: "O valor deve ser maior que zero" }),
-  // Changed from z.date() to z.string()
-  date: z.string(),
-  description: z.string().min(3, { message: "A descrição deve ter pelo menos 3 caracteres" }),
-  clientId: z.string().optional(),
-});
-
-type TransactionFormValues = z.infer<typeof transactionFormSchema>;
+import { Button } from "@/components/ui/button";
+import { TypeSelector } from "./transaction-form/TypeSelector";
+import { CategorySelector } from "./transaction-form/CategorySelector";
+import { DateSelector } from "./transaction-form/DateSelector";
+import { ClientSelector } from "./transaction-form/ClientSelector";
+import { useTransactionForm } from "./transaction-form/useTransactionForm";
 
 interface AddTransactionFormProps {
   clients: Client[];
@@ -63,217 +17,55 @@ interface AddTransactionFormProps {
   onCancel: () => void;
 }
 
-export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddTransactionFormProps) {
-  const [transactionType, setTransactionType] = useState<TransactionType>("entrada");
-  const [financialCategories, setFinancialCategories] = useState<TransactionCategory[]>([]);
-  const [addingCategory, setAddingCategory] = useState<boolean>(false);
-  const [newCategoryName, setNewCategoryName] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  const form = useForm<z.infer<typeof transactionFormSchema>>({
-    resolver: zodResolver(transactionFormSchema),
-    defaultValues: {
-      type: "entrada",
-      category: "pagamento de cliente",
-      amount: undefined,
-      // Initialize with current date as string
-      date: dateToString(new Date()),
-      description: "",
-      clientId: undefined,
-    },
-  });
-
-  // Update the client field when transaction type changes
-  useEffect(() => {
-    if (transactionType === "entrada") {
-      form.setValue("category", "pagamento de cliente");
-    } else {
-      // For expense transactions, clear client selection if "none" isn't an option
-      const currentClientId = form.getValues("clientId");
-      if (currentClientId === "none" || !currentClientId) {
-        form.setValue("clientId", undefined);
-      }
-    }
-  }, [transactionType, form]);
-
-  // Atualizada para carregar categorias quando o tipo de transação mudar
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        // Buscar categorias do banco de dados
-        const cats = await fetchFinancialCategories();
-        
-        // Filtrar por tipo (entrada/saída)
-        const filteredCats = cats
-          .filter(cat => cat.type === transactionType)
-          .map(cat => cat.name);
-        
-        // Combinar categorias padrão, novas categorias e categorias do banco de dados
-        const defaultCats = transactionType === "entrada" 
-          ? ["pagamento de cliente", "outras receitas", ...newCategories] 
-          : ["despesa operacional", "material", "serviço terceirizado", "imposto", "outras despesas", ...newCategories];
-        
-        // Combinar categorias sem duplicatas
-        const combinedCats = [...new Set([...defaultCats, ...filteredCats])];
-        
-        setFinancialCategories(combinedCats);
-        
-        // Resetar a categoria selecionada para a primeira opção
-        if (combinedCats.length > 0) {
-          form.setValue("category", combinedCats[0]);
-        }
-        
-      } catch (error) {
-        console.error("Erro ao carregar categorias:", error);
-        toast.error("Não foi possível carregar as categorias");
-      }
-    };
-    
-    loadCategories();
-  }, [transactionType, form]);
-
-  const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) {
-      toast.error('O nome da categoria não pode ser vazio.');
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      const result = await createFinancialCategory({
-        name: newCategoryName,
-        type: transactionType,
-      });
-      
-      if (result) {
-        toast.success('Categoria criada com sucesso!');
-        setNewCategoryName('');
-        setAddingCategory(false);
-        
-        // Adicionar a nova categoria à lista sem duplicar
-        setFinancialCategories(prev => {
-          if (!prev.includes(result.name)) {
-            return [...prev, result.name];
-          }
-          return prev;
-        });
-        
-        // Selecionar a nova categoria no formulário
-        form.setValue("category", result.name);
-      } else {
-        toast.error('Erro ao criar categoria. Tente novamente.');
-      }
-    } catch (error) {
-      console.error('Erro ao criar categoria:', error);
-      toast.error('Falha ao criar nova categoria');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSubmit = (data: z.infer<typeof transactionFormSchema>) => {
-    // Don't include clientId if "none" is selected
-    const clientId = data.clientId === "none" ? undefined : data.clientId;
-    
-    onAddTransaction({
-      type: data.type,
-      category: data.category as TransactionCategory,
-      amount: data.amount,
-      date: data.date,
-      description: data.description,
-      clientId,
-    });
-  };
+export function AddTransactionForm({ 
+  clients, 
+  onAddTransaction, 
+  onCancel 
+}: AddTransactionFormProps) {
+  const { 
+    form,
+    transactionType,
+    setTransactionType,
+    financialCategories,
+    isSubmitting,
+    handleSubmit,
+    handleCancel
+  } = useTransactionForm(onAddTransaction, onCancel);
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Tipo de Transação */}
+          {/* Transaction Type */}
           <FormField
             control={form.control}
             name="type"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tipo de Transação</FormLabel>
-                <Select
-                  onValueChange={(value: TransactionType) => {
-                    field.onChange(value);
-                    setTransactionType(value);
-                  }}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo de transação" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="entrada">Entrada</SelectItem>
-                    <SelectItem value="saída">Saída</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
+              <TypeSelector 
+                value={field.value} 
+                onChange={(value) => {
+                  field.onChange(value);
+                  setTransactionType(value);
+                }}
+              />
             )}
           />
 
-          {/* Categoria */}
+          {/* Category */}
           <FormField
             control={form.control}
             name="category"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Categoria</FormLabel>
-                <div className="flex gap-2 items-center">
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a categoria" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {financialCategories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setAddingCategory((prev) => !prev)}
-                    title="Criar nova categoria"
-                  >
-                    +
-                  </Button>
-                </div>
-                {addingCategory && (
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      placeholder="Nova categoria"
-                      value={newCategoryName}
-                      onChange={(e) => setNewCategoryName(e.target.value)}
-                      className="w-48"
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={handleAddCategory}
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? 'Salvando...' : 'Salvar'}
-                    </Button>
-                  </div>
-                )}
-                <FormMessage />
-              </FormItem>
+              <CategorySelector 
+                categories={financialCategories}
+                value={field.value}
+                onChange={field.onChange}
+                transactionType={transactionType}
+              />
             )}
           />
 
+          {/* Amount */}
           <FormField
             control={form.control}
             name="amount"
@@ -298,81 +90,33 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
             )}
           />
 
+          {/* Date */}
           <FormField
             control={form.control}
             name="date"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Data</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          field.value
-                        ) : (
-                          <span>Selecione uma data</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={stringToDate(field.value) || undefined}
-                      onSelect={(date) => field.onChange(date ? dateToString(date) : "")}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
+              <DateSelector 
+                value={field.value}
+                onChange={field.onChange}
+              />
             )}
           />
 
+          {/* Client */}
           <FormField
             control={form.control}
             name="clientId"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cliente {transactionType === "saída" && "(opcional)"}</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={
-                        transactionType === "entrada" 
-                          ? "Selecione o cliente" 
-                          : "Selecione o cliente (opcional)"
-                      } />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {transactionType === "saída" && (
-                      <SelectItem value="none">Nenhum cliente</SelectItem>
-                    )}
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
+              <ClientSelector 
+                clients={clients}
+                transactionType={transactionType}
+                value={field.value}
+                onChange={field.onChange}
+              />
             )}
           />
 
+          {/* Description */}
           <FormField
             control={form.control}
             name="description"
@@ -393,10 +137,10 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel }: AddT
         </div>
 
         <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={handleCancel}>
             Cancelar
           </Button>
-          <Button type="submit">
+          <Button type="submit" disabled={isSubmitting}>
             Registrar Transação
           </Button>
         </div>

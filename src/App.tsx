@@ -42,7 +42,9 @@ function App() {
                     <AuthGuard>
                       <ClientsProvider>
                         <TransactionsProvider>
-                          <Index />
+                          <CalendarEventsProvider>
+                            <Index />
+                          </CalendarEventsProvider>
                         </TransactionsProvider>
                       </ClientsProvider>
                     </AuthGuard>

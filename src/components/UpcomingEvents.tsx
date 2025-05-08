@@ -1,3 +1,4 @@
+
 import { useMemo } from "react";
 import { format, addDays, isBefore, isAfter, startOfDay } from "date-fns";
 import { Client } from "@/utils/types";
@@ -6,6 +7,7 @@ import { CalendarIcon, MapPinIcon } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { useNavigate } from "react-router-dom";
 import { stringToDate } from "@/utils/dates";
+import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 
 interface UpcomingEventsProps {
   clients: Client[];
@@ -14,26 +16,59 @@ interface UpcomingEventsProps {
 
 export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
   const navigate = useNavigate();
-  
+  const { events } = useCalendarEvents();
+
   const upcomingEvents = useMemo(() => {
     const today = startOfDay(new Date());
     const twoWeeksFromNow = addDays(today, 15);
     
-    return clients
+    // Filter clients with upcoming wedding dates
+    const clientEvents = clients
       .filter(client => {
         if (!client.weddingDate) return false;
         
         const eventDate = stringToDate(client.weddingDate);
         return eventDate && isAfter(eventDate, today) && isBefore(eventDate, twoWeeksFromNow);
       })
-      .sort((a, b) => {
-        const dateA = stringToDate(a.weddingDate!);
-        const dateB = stringToDate(b.weddingDate!);
+      .map(client => ({
+        type: "client",
+        client,
+        title: client.name,
+        date: client.weddingDate!,
+        location: client.eventLocation || "",
+        category: client.eventCategory
+      }));
+    
+    // Filter calendar events for the next two weeks
+    const calendarEvents = events
+      .filter(event => {
+        const eventDate = stringToDate(event.date);
+        return eventDate && isAfter(eventDate, today) && isBefore(eventDate, twoWeeksFromNow);
+      })
+      .map(event => {
+        // If the event is linked to a client, find that client
+        const linkedClient = event.clientId ? clients.find(c => c.id === event.clientId) : null;
         
-        if (!dateA || !dateB) return 0;
-        return dateA.getTime() - dateB.getTime();
+        return {
+          type: "calendar",
+          event,
+          client: linkedClient,
+          title: event.title,
+          date: event.date,
+          location: event.description || "",
+          time: event.startTime
+        };
       });
-  }, [clients]);
+    
+    // Combine and sort all events by date
+    return [...clientEvents, ...calendarEvents].sort((a, b) => {
+      const dateA = stringToDate(a.date);
+      const dateB = stringToDate(b.date);
+      
+      if (!dateA || !dateB) return 0;
+      return dateA.getTime() - dateB.getTime();
+    });
+  }, [clients, events]);
 
   if (loading) {
     return (
@@ -42,6 +77,15 @@ export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
       </div>
     );
   }
+
+  const handleEventClick = (event: any) => {
+    if (event.type === "client" && event.client) {
+      navigate(`/clients/${event.client.id}`);
+    } else {
+      // For calendar events, navigate to calendar page
+      navigate('/calendar');
+    }
+  };
 
   return (
     <Card>
@@ -53,31 +97,39 @@ export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
           </p>
         ) : (
           <div className="space-y-4">
-            {upcomingEvents.map((client) => (
+            {upcomingEvents.map((event, index) => (
               <div
-                key={client.id}
+                key={`${event.type}-${index}`}
                 className="p-4 rounded-lg border border-gray-100 hover:border-gray-200 cursor-pointer transition-all hover:shadow-sm"
-                onClick={() => navigate(`/clients/${client.id}`)}
+                onClick={() => handleEventClick(event)}
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-medium">{client.name}</h3>
+                    <h3 className="font-medium">{event.title}</h3>
                     <p className="text-sm text-gray-500 mt-1">
-                      {client.eventCategory}
+                      {event.type === "client" ? event.category : "Evento de Calendário"}
                     </p>
                   </div>
-                  <StatusBadge status={client.status} />
+                  {event.type === "client" && event.client && (
+                    <StatusBadge status={event.client.status} />
+                  )}
+                  {event.type === "calendar" && (
+                    <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                      Calendário
+                    </span>
+                  )}
                 </div>
                 
                 <div className="mt-3 space-y-1">
                   <div className="flex items-center text-sm text-gray-600">
                     <CalendarIcon className="h-4 w-4 mr-2" />
-                    {client.weddingDate}
+                    {event.date}
+                    {event.time && ` às ${event.time}`}
                   </div>
-                  {client.eventLocation && (
+                  {event.location && (
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPinIcon className="h-4 w-4 mr-2" />
-                      {client.eventLocation}
+                      {event.location}
                     </div>
                   )}
                 </div>

@@ -4,9 +4,9 @@ import { Payment } from "@/utils/types";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { EditPaymentDialog } from "../EditPaymentDialog";
 import { PaymentRow } from "./PaymentRow";
 import { DeletePaymentDialog } from "./DeletePaymentDialog";
+import { EditPaymentDialog } from "./edit/EditPaymentDialog";
 
 interface PaymentHistoryProps {
   payments: Payment[];

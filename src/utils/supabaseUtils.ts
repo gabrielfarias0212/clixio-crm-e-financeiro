@@ -22,7 +22,10 @@ export {
   fetchPaymentsForClient, 
   createPayment, 
   deletePayment,
-  updatePayment 
+  updatePayment,
+  updatePaymentStatus,
+  updatePaymentDueDate,
+  checkAndUpdateOverduePayments
 } from './supabase/payments';
 
 export { 

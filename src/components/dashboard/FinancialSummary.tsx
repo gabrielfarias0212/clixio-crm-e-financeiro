@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RefreshCw, CalendarDays } from "lucide-react";
 import { useAnnualFinancialData } from "@/hooks/useAnnualFinancialData";
+import { useFinancialData } from "@/hooks/useFinancialData";
 import { FinancialStatCards } from "./financial/FinancialStatCards";
 import { AnnualFinancialBarChart } from "./financial/AnnualFinancialBarChart";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function FinancialSummary() {
   const { chartData: annualChartData, currentYear, loading: annualLoading, hasCalculated: annualHasCalculated } = useAnnualFinancialData();
+  const { monthlyTotals, loading: monthlyLoading } = useFinancialData();
   const { refreshTransactions, loading: transactionsLoading } = useTransactions();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -19,10 +21,7 @@ export function FinancialSummary() {
     
     setIsRefreshing(true);
     try {
-      console.log("Manual refresh of financial data requested");
       await refreshTransactions();
-    } catch (error) {
-      console.error("Error refreshing transactions:", error);
     } finally {
       // Set a small timeout to ensure the UI shows the refresh animation
       setTimeout(() => {
@@ -31,11 +30,10 @@ export function FinancialSummary() {
     }
   };
 
-  // Determine if we should show empty state
-  const showEmptyState = annualHasCalculated && annualChartData.length === 0 && !annualLoading;
-  
-  // Determine if data is ready to display
-  const dataReady = !annualLoading && annualChartData.length > 0;
+  // Determine loading and empty states
+  const isLoading = annualLoading || monthlyLoading;
+  const showEmptyState = annualHasCalculated && annualChartData.length === 0 && !isLoading;
+  const dataReady = !isLoading && annualChartData.length > 0;
 
   return (
     <Card className="overflow-hidden shadow-md border-gray-100 dark:border-gray-800">
@@ -57,7 +55,7 @@ export function FinancialSummary() {
         </div>
       </CardHeader>
       <CardContent>
-        {annualLoading && (
+        {isLoading && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
               {[1, 2, 3].map((i) => (
@@ -90,7 +88,7 @@ export function FinancialSummary() {
         
         {dataReady && (
           <>
-            <FinancialStatCards monthlyTotals={{ income: 0, expenses: 0, balance: 0 }} />
+            <FinancialStatCards monthlyTotals={monthlyTotals} />
             
             <div className="h-[240px] mt-4">
               <AnnualFinancialBarChart 

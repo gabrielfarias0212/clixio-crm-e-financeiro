@@ -1,149 +1,55 @@
 
-import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ClientsProvider } from "@/contexts/ClientsContext";
+import { TransactionsProvider } from "@/contexts/TransactionsContext";
+import { TransactionDataProvider } from "@/contexts/TransactionDataProvider";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import AuthGuard from "@/components/AuthGuard";
+import Index from "@/pages/Index";
+import Auth from "@/pages/Auth";
+import ClientList from "@/pages/ClientList";
+import ClientDetail from "@/pages/ClientDetail";
+import EditClient from "@/pages/EditClient";
+import AddClient from "@/pages/AddClient";
+import CashFlow from "@/pages/CashFlow";
+import Calendar from "@/pages/Calendar";
+import ImportClients from "@/pages/ImportClients";
+import NotFound from "@/pages/NotFound";
 
-import Index from "./pages/Index";
-import ClientList from "./pages/ClientList";
-import ClientDetail from "./pages/ClientDetail";
-import AddClient from "./pages/AddClient";
-import EditClient from "./pages/EditClient";
-import ImportClients from "./pages/ImportClients";
-import Calendar from "./pages/Calendar";
-import CashFlow from "./pages/CashFlow";
-import NotFound from "./pages/NotFound";
-import Auth from "./pages/Auth";
-import { AuthProvider } from "./contexts/AuthContext";
-import { AuthGuard } from "./components/AuthGuard";
-import { ClientsProvider } from "./contexts/ClientsContext";
-import { TransactionsProvider } from "./contexts/TransactionsContext";
-import { CalendarEventsProvider } from "./hooks/useCalendarEvents";
-
-// Create a client
-const queryClient = new QueryClient();
-
-function App() {
+export default function App() {
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <AuthProvider>
-            <BrowserRouter>
-              <Toaster />
-              <Sonner />
-              <Routes>
-                <Route path="/auth" element={<Auth />} />
-                <Route 
-                  path="/" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <CalendarEventsProvider>
-                            <Index />
-                          </CalendarEventsProvider>
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/clients" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <ClientList />
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/clients/:id" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <ClientDetail />
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/clients/add" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <AddClient />
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/clients/import" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <ImportClients />
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/clients/:id/edit" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <EditClient />
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/calendar" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <CalendarEventsProvider>
-                            <Calendar />
-                          </CalendarEventsProvider>
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/cashflow" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <CashFlow />
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </AuthProvider>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+    <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+      <Router>
+        <AuthProvider>
+          <ClientsProvider>
+            <TransactionsProvider>
+              <TransactionDataProvider>
+                <Routes>
+                  <Route path="/auth" element={<Auth />} />
+                  
+                  <Route element={<AuthGuard />}>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/clients" element={<ClientList />} />
+                    <Route path="/clients/:id" element={<ClientDetail />} />
+                    <Route path="/clients/:id/edit" element={<EditClient />} />
+                    <Route path="/add-client" element={<AddClient />} />
+                    <Route path="/import" element={<ImportClients />} />
+                    <Route path="/cash-flow" element={<CashFlow />} />
+                    <Route path="/calendar" element={<Calendar />} />
+                  </Route>
+                  
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <Toaster />
+                <Sonner />
+              </TransactionDataProvider>
+            </TransactionsProvider>
+          </ClientsProvider>
+        </AuthProvider>
+      </Router>
+    </ThemeProvider>
   );
 }
-
-export default App;

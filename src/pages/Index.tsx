@@ -15,9 +15,10 @@ export default function Index() {
   useEffect(() => {
     document.title = "Dashboard | Wedding CRM";
     
-    // Garantimos que temos os dados mais recentes quando o dashboard é carregado
+    // Load initial data when the dashboard is first loaded
     const loadData = async () => {
       try {
+        console.log("Dashboard page: Loading initial data");
         await Promise.all([
           refreshTransactions(),
           refreshClients()
@@ -29,7 +30,9 @@ export default function Index() {
     };
     
     loadData();
-  }, [refreshTransactions, refreshClients]);
+    // Don't include refreshTransactions or refreshClients in the dependency array
+    // to avoid unnecessary reloads
+  }, []);
   
   return (
     <Layout>

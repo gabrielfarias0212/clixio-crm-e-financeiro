@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Transaction } from '@/utils/types';
 import { fetchTransactions, createTransaction, deleteTransaction as removeTransactionFromDB } from '@/utils/supabaseUtils';
@@ -19,12 +20,19 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const refreshTransactions = useCallback(async () => {
+    // Prevent multiple refreshes within a short time period
+    if (isRefreshing) return;
+    
     try {
+      setIsRefreshing(true);
       setLoading(true);
       setError(null);
+      console.log("Fetching transactions from database...");
       const data = await fetchTransactions();
+      console.log(`Fetched ${data.length} transactions`);
       setTransactions(data);
       setLastRefreshTime(Date.now());
     } catch (err) {
@@ -33,20 +41,23 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
       toast.error('Falha ao carregar as transações');
     } finally {
       setLoading(false);
+      // Add a small delay before allowing another refresh
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 300);
     }
-  }, []);
+  }, [isRefreshing]);
 
   const addTransaction = async (transactionData: Omit<Transaction, 'id' | 'createdAt'>) => {
     try {
       const newTransaction = await createTransaction(transactionData);
       if (newTransaction) {
+        // Immediately update the local state for responsive UI
         setTransactions(prev => [newTransaction, ...prev]);
         toast.success('Transação registrada com sucesso!');
         
-        // Set a small timeout to ensure UI updates before refreshing data
-        setTimeout(() => {
-          refreshTransactions();
-        }, 300);
+        // Refresh transactions to ensure consistency
+        refreshTransactions();
         
         return newTransaction;
       }
@@ -61,13 +72,12 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
   const deleteTransaction = async (transactionId: string) => {
     try {
       await removeTransactionFromDB(transactionId);
+      // Immediately update the local state for responsive UI
       setTransactions(prev => prev.filter(t => t.id !== transactionId));
       toast.success('Transação excluída com sucesso!');
       
-      // Set a small timeout to ensure UI updates before refreshing data
-      setTimeout(() => {
-        refreshTransactions();
-      }, 300);
+      // Refresh transactions to ensure consistency
+      refreshTransactions();
     } catch (err) {
       console.error('Error deleting transaction:', err);
       toast.error('Falha ao excluir transação');

@@ -75,7 +75,7 @@ export function BusinessMetrics() {
     border: 'border-purple-100 dark:border-purple-800'
   }];
   return <div className="w-full">
-      <h2 className="font-bold mb-6 text-slate-800 dark:text-slate-200 text-lg">
+      <h2 className="font-bold mb-6 text-lg text-slate-800">
         Indicadores de Desempenho do Negócio ({metrics.currentYear})
       </h2>
       

@@ -68,7 +68,7 @@ export default function Auth() {
             <img 
               src="/lovable-uploads/6b189f38-b0b9-4a2e-8ff2-6635102e14a9.png" 
               alt="GCLIXIO Logo" 
-              className="h-16 mb-2" 
+              className="w-[180px] h-auto mb-2" 
             />
           </div>
           <CardTitle className="text-2xl font-bold text-center">

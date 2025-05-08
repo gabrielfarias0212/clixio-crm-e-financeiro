@@ -64,7 +64,7 @@ export function Navbar() {
             <img 
               src="/lovable-uploads/6b189f38-b0b9-4a2e-8ff2-6635102e14a9.png" 
               alt="GCLIXIO Logo" 
-              className="h-10 mr-2"
+              className="h-auto w-[180px]"
             />
           </Link>
         </div>

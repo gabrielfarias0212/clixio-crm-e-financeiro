@@ -6,36 +6,37 @@ import { useMemo, useState } from "react";
 import { DashboardCardModal } from "./DashboardCardModal";
 import { Client } from "@/utils/types";
 import { stringToDate } from "@/utils/dates";
-
 export function ProductionIndicators() {
-  const { clients } = useClients();
+  const {
+    clients
+  } = useClients();
   const now = new Date();
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
-  
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [modalType, setModalType] = useState<"leads" | "contracts" | "delivered" | "pending">("delivered");
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
-
   const stats = useMemo(() => {
     // Count events scheduled this month
     const eventsThisMonth = clients.filter(client => {
       if (!client.weddingDate) return false;
-      
       const eventDate = stringToDate(client.weddingDate);
       if (!eventDate) return false;
-      
-      return isWithinInterval(eventDate, { start: monthStart, end: monthEnd });
+      return isWithinInterval(eventDate, {
+        start: monthStart,
+        end: monthEnd
+      });
     });
 
     // Count events by status
     const statusCounts = {
-      scheduled: 0, // Events scheduled but not delivered
-      editing: 0,   // In editing process
-      delivered: 0  // Delivered
+      scheduled: 0,
+      // Events scheduled but not delivered
+      editing: 0,
+      // In editing process
+      delivered: 0 // Delivered
     };
-
     clients.forEach(client => {
       // Only count as scheduled if not delivered and in progress
       if (client.status === "em andamento") statusCounts.scheduled++;
@@ -46,14 +47,13 @@ export function ProductionIndicators() {
     // Calculate average delivery time (for delivered events)
     let totalDeliveryDays = 0;
     let deliveredCount = 0;
-
     clients.forEach(client => {
       if (client.status === "pago" && client.weddingDate) {
         const weddingDate = stringToDate(client.weddingDate);
         if (weddingDate) {
           const deliveryTime = Math.abs(now.getTime() - weddingDate.getTime());
           const deliveryDays = Math.ceil(deliveryTime / (1000 * 60 * 60 * 24));
-          
+
           // Only count reasonable values to avoid skewing the average
           if (deliveryDays > 0 && deliveryDays < 1000) {
             totalDeliveryDays += deliveryDays;
@@ -62,10 +62,7 @@ export function ProductionIndicators() {
         }
       }
     });
-
-    const averageDeliveryDays = deliveredCount > 0 ? 
-      Math.round(totalDeliveryDays / deliveredCount) : 0;
-
+    const averageDeliveryDays = deliveredCount > 0 ? Math.round(totalDeliveryDays / deliveredCount) : 0;
     return {
       eventsThisMonth,
       statusCounts,
@@ -78,7 +75,6 @@ export function ProductionIndicators() {
     let title = "";
     let clientsToShow: Client[] = [];
     let modalType: "leads" | "contracts" | "delivered" | "pending" = "delivered";
-
     switch (type) {
       case "events-month":
         title = "Eventos Agendados no Mês";
@@ -96,25 +92,19 @@ export function ProductionIndicators() {
         modalType = "delivered";
         break;
     }
-
     setModalTitle(title);
     setModalType(modalType);
     setFilteredClients(clientsToShow);
     setModalOpen(true);
   };
-
-  return (
-    <>
-      <Card>
+  return <>
+      <Card className="py-0">
         <CardHeader>
           <CardTitle className="text-lg">Indicadores de Produção</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div 
-              className="flex items-start space-x-4 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
-              onClick={() => handleCardClick("events-month")}
-            >
+            <div className="flex items-start space-x-4 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors" onClick={() => handleCardClick("events-month")}>
               <div className="bg-blue-100 p-2 rounded-full">
                 <CalendarDays className="h-6 w-6 text-blue-700" />
               </div>
@@ -134,10 +124,7 @@ export function ProductionIndicators() {
               </div>
             </div>
             
-            <div 
-              className="flex items-start space-x-4 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
-              onClick={() => handleCardClick("editing")}
-            >
+            <div className="flex items-start space-x-4 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors" onClick={() => handleCardClick("editing")}>
               <div className="bg-purple-100 p-2 rounded-full">
                 <ClipboardCheck className="h-6 w-6 text-purple-700" />
               </div>
@@ -147,10 +134,7 @@ export function ProductionIndicators() {
               </div>
             </div>
             
-            <div 
-              className="flex items-start space-x-4 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
-              onClick={() => handleCardClick("delivered")}
-            >
+            <div className="flex items-start space-x-4 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors" onClick={() => handleCardClick("delivered")}>
               <div className="bg-green-100 p-2 rounded-full">
                 <CheckSquare className="h-6 w-6 text-green-700" />
               </div>
@@ -163,13 +147,6 @@ export function ProductionIndicators() {
         </CardContent>
       </Card>
 
-      <DashboardCardModal
-        title={modalTitle}
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        clients={filteredClients}
-        type={modalType}
-      />
-    </>
-  );
+      <DashboardCardModal title={modalTitle} open={modalOpen} onClose={() => setModalOpen(false)} clients={filteredClients} type={modalType} />
+    </>;
 }

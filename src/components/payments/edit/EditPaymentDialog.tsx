@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Payment } from "@/utils/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import { Form } from "@/components/ui/form";
 import {
@@ -71,36 +71,34 @@ export function EditPaymentDialog({
           <DialogTitle>Editar Pagamento</DialogTitle>
         </DialogHeader>
         
-        <FormProvider {...form}>
-          <Form>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {formError && (
-                <div className="p-3 bg-red-100 border border-red-300 text-red-800 rounded">
-                  {formError}
-                </div>
-              )}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {formError && (
+              <div className="p-3 bg-red-100 border border-red-300 text-red-800 rounded">
+                {formError}
+              </div>
+            )}
 
-              <PaymentAmountField />
-              <PaymentDateFields />
-              <PaymentStatusField />
-              <PaymentNotesField />
+            <PaymentAmountField />
+            <PaymentDateFields />
+            <PaymentStatusField />
+            <PaymentNotesField />
 
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  disabled={isSubmitting}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Salvando..." : "Salvar"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </FormProvider>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Salvando..." : "Salvar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

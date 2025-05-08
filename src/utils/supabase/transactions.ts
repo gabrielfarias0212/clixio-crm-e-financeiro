@@ -61,7 +61,8 @@ export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'c
           client_id: transaction.clientId,
           amount: transaction.amount,
           date: formatDateForSupabase(transaction.date),
-          notes: transaction.description
+          notes: transaction.description,
+          payment_status: 'pago' // Change from 'pendente' (default) to 'pago'
         });
     }
 

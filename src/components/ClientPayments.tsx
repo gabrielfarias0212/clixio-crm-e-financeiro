@@ -1,12 +1,12 @@
 
 import { useState } from "react";
-import { Client } from "@/utils/types";
+import { Client, Payment } from "@/utils/types";
 import { PaymentHistory } from "./PaymentHistory";
 import { AddPaymentForm } from "./AddPaymentForm";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { DialogContent, Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { createPayment, deletePayment } from "@/utils/supabaseUtils";
+import { createPayment, deletePayment, updatePayment } from "@/utils/supabaseUtils";
 import { toast } from "sonner";
 import { useTransactions } from "@/contexts/TransactionsContext";
 
@@ -85,6 +85,35 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
     }
   };
 
+  const handleUpdatePayment = async (updatedPayment: Payment) => {
+    try {
+      setIsSubmitting(true);
+
+      // Update client locally with the updated payment
+      const updatedClient = {
+        ...client,
+        payments: client.payments.map(payment => 
+          payment.id === updatedPayment.id ? updatedPayment : payment
+        )
+      };
+
+      // Update the UI
+      if (onUpdate) {
+        onUpdate(updatedClient);
+      }
+
+      // Refresh transactions to update the financial summary chart
+      refreshTransactions();
+
+      toast.success("Pagamento atualizado com sucesso! O fluxo de caixa e resumo financeiro foram atualizados.");
+    } catch (error) {
+      console.error("Error updating payment:", error);
+      toast.error("Erro ao atualizar o pagamento. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -109,6 +138,7 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
       <PaymentHistory 
         payments={client.payments} 
         onDeletePayment={handleDeletePayment}
+        onUpdatePayment={handleUpdatePayment}
         isDeleting={isSubmitting}
       />
     </div>

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Payment, PaymentStatus } from '../types';
 import { parseDate, formatDateForSupabase } from './base';
@@ -78,6 +77,77 @@ export const createPayment = async (payment: {
     return data ? parsePayment(data) : null;
   } catch (error) {
     console.error('Exception creating payment:', error);
+    return null;
+  }
+};
+
+export const updatePayment = async (
+  paymentId: string, 
+  updates: {
+    amount?: number,
+    date?: string,
+    due_date?: string | null,
+    notes?: string,
+    payment_status?: PaymentStatus
+  }
+): Promise<Payment | null> => {
+  try {
+    // Prepare update object
+    const updateData: any = {};
+    if (updates.amount !== undefined) updateData.amount = updates.amount;
+    if (updates.date) updateData.date = formatDateForSupabase(updates.date);
+    if (updates.due_date !== undefined) updateData.due_date = updates.due_date ? formatDateForSupabase(updates.due_date) : null;
+    if (updates.notes !== undefined) updateData.notes = updates.notes;
+    if (updates.payment_status) updateData.payment_status = updates.payment_status;
+
+    // Update the payment
+    const { data, error } = await supabase
+      .from('wedding_payments')
+      .update(updateData)
+      .eq('id', paymentId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating payment:', error);
+      return null;
+    }
+
+    // If payment status is changed to "pago" and there's no transaction yet, create one
+    if (updates.payment_status === 'pago') {
+      // Check if there's already a transaction for this payment
+      const { data: existingTransaction } = await supabase
+        .from('wedding_transactions')
+        .select('id')
+        .eq('payment_id', paymentId)
+        .single();
+      
+      if (!existingTransaction && data) {
+        // Get client ID from the payment
+        const { data: clientData } = await supabase
+          .from('wedding_payments')
+          .select('client_id')
+          .eq('id', paymentId)
+          .single();
+          
+        if (clientData) {
+          // Create a transaction for this payment
+          await createTransaction({
+            amount: data.amount,
+            date: parseDate(data.date) || "",
+            type: 'entrada',
+            category: 'pagamento de cliente',
+            description: data.notes ? `Pagamento de cliente: ${data.notes}` : 'Pagamento de cliente',
+            clientId: clientData.client_id,
+            paymentId: data.id
+          });
+        }
+      }
+    }
+
+    return data ? parsePayment(data) : null;
+  } catch (error) {
+    console.error('Exception updating payment:', error);
     return null;
   }
 };

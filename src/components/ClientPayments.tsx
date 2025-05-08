@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Client, Payment } from "@/utils/types";
-import { PaymentHistory } from "./PaymentHistory";
+import { PaymentHistory } from "./payments/PaymentHistory";
 import { AddPaymentForm } from "./AddPaymentForm";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";

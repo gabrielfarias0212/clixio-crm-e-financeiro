@@ -1,8 +1,8 @@
 
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
+export function AuthGuard() {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -19,5 +19,5 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  return <>{children}</>;
+  return <Outlet />;
 }

@@ -7,7 +7,7 @@ import { ClientsProvider } from "@/contexts/ClientsContext";
 import { TransactionsProvider } from "@/contexts/TransactionsContext";
 import { TransactionDataProvider } from "@/contexts/TransactionDataProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import AuthGuard from "@/components/AuthGuard";
+import { AuthGuard } from "@/components/AuthGuard";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import ClientList from "@/pages/ClientList";

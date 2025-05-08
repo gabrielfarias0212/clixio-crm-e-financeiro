@@ -2,22 +2,38 @@
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { Transaction } from "@/utils/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowDownCircle, ArrowUpCircle, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, TrendingDown, TrendingUp, BarChart, PieChart } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
-  BarChart,
+  BarChart as RechartsBarChart,
   Bar,
   XAxis,
   YAxis,
+  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
+  PieChart as RechartsPieChart,
   Pie,
   Cell,
+  Legend,
+  LabelList
 } from "recharts";
 import { useState } from "react";
 
-const COLORS = ["#9b87f5", "#ea384c"];
+// Updated modern color palette
+const CHART_COLORS = {
+  income: "#8B5CF6",  // purple
+  expenses: "#F43F5E", // rose
+  graph: {
+    gridLines: "#e5e7eb",
+    axisText: "#6b7280",
+  },
+  background: {
+    light: "rgba(255, 255, 255, 0.5)",
+    dark: "rgba(30, 41, 59, 0.5)"
+  }
+};
 
 export function FinancialSummary() {
   const { transactions } = useTransactions();
@@ -46,6 +62,14 @@ export function FinancialSummary() {
 
   const balance = monthlyTotals.income - monthlyTotals.expenses;
 
+  // Format currency
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
   // Prepare last 6 months data for chart
   const monthsData = Array.from({ length: 6 }).map((_, i) => {
     const date = subMonths(now, i);
@@ -66,128 +90,244 @@ export function FinancialSummary() {
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
     return {
-      month: format(date, "MMM"),
+      name: format(date, "MMM", { locale: ptBR }),
       income,
       expenses,
+      balance: income - expenses
     };
   }).reverse();
 
   const pieData = [
-    { name: "Entradas", value: monthlyTotals.income },
-    { name: "Saídas", value: monthlyTotals.expenses },
+    { name: "Entradas", value: monthlyTotals.income, fill: CHART_COLORS.income },
+    { name: "Saídas", value: monthlyTotals.expenses, fill: CHART_COLORS.expenses },
   ];
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-gray-900 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+          <p className="text-sm font-medium">{label}</p>
+          <div className="mt-2 space-y-1">
+            {payload.map((item: any, index: number) => (
+              <div key={index} className="flex items-center gap-2 text-xs">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: item.fill }}
+                />
+                <span className="text-gray-600 dark:text-gray-300">
+                  {item.name}: {formatCurrency(item.value)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const CustomPieTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-gray-900 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+          <div className="flex items-center gap-2">
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: payload[0].payload.fill }}
+            />
+            <span className="text-sm font-medium">{payload[0].name}</span>
+          </div>
+          <p className="text-sm mt-1">
+            {formatCurrency(payload[0].value)}
+            <span className="text-xs text-gray-500 ml-2">
+              ({((payload[0].value / (monthlyTotals.income + monthlyTotals.expenses)) * 100).toFixed(1)}%)
+            </span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const CustomLegend = ({ payload }: any) => {
+    return (
+      <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 mt-2">
+        {payload.map((entry: any, index: number) => (
+          <div key={`legend-${index}`} className="flex items-center gap-2">
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-sm text-gray-600 dark:text-gray-300">{entry.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <Card>
+    <Card className="overflow-hidden shadow-md border-gray-100 dark:border-gray-800">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Resumo Financeiro do Mês</CardTitle>
-          <div className="space-x-2">
+          <CardTitle className="text-lg font-semibold">Resumo Financeiro do Mês</CardTitle>
+          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
             <button
               onClick={() => setChartType("bar")}
-              className={`px-2 py-1 rounded ${
+              className={`flex items-center px-3 py-1.5 text-sm ${
                 chartType === "bar"
                   ? "bg-primary text-white"
-                  : "bg-gray-100"
-              }`}
+                  : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+              } transition-colors`}
             >
+              <BarChart className="h-4 w-4 mr-1.5" />
               Barras
             </button>
             <button
               onClick={() => setChartType("pie")}
-              className={`px-2 py-1 rounded ${
+              className={`flex items-center px-3 py-1.5 text-sm ${
                 chartType === "pie"
                   ? "bg-primary text-white"
-                  : "bg-gray-100"
-              }`}
+                  : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+              } transition-colors`}
             >
+              <PieChart className="h-4 w-4 mr-1.5" />
               Pizza
             </button>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Entradas</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+          <div className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/30 p-4 rounded-xl">
+            <p className="text-sm text-green-700 dark:text-green-400 mb-1">Entradas</p>
             <div className="flex items-center">
-              <ArrowUpCircle className="h-4 w-4 mr-2 text-green-500" />
-              <span className="text-xl font-bold text-green-600">
-                {new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL'
-                }).format(monthlyTotals.income)}
+              <ArrowUpCircle className="h-5 w-5 mr-2 text-green-500" />
+              <span className="text-xl font-bold text-green-600 dark:text-green-400">
+                {formatCurrency(monthlyTotals.income)}
               </span>
             </div>
           </div>
           
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Saídas</p>
+          <div className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/30 p-4 rounded-xl">
+            <p className="text-sm text-red-700 dark:text-red-400 mb-1">Saídas</p>
             <div className="flex items-center">
-              <ArrowDownCircle className="h-4 w-4 mr-2 text-red-500" />
-              <span className="text-xl font-bold text-red-600">
-                {new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL'
-                }).format(monthlyTotals.expenses)}
+              <ArrowDownCircle className="h-5 w-5 mr-2 text-red-500" />
+              <span className="text-xl font-bold text-red-600 dark:text-red-400">
+                {formatCurrency(monthlyTotals.expenses)}
               </span>
             </div>
           </div>
           
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Saldo</p>
+          <div className={`bg-gradient-to-r ${
+            balance >= 0 
+              ? "from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/30" 
+              : "from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/30"
+          } p-4 rounded-xl`}>
+            <p className={`text-sm ${
+              balance >= 0 
+                ? "text-purple-700 dark:text-purple-400" 
+                : "text-red-700 dark:text-red-400"
+            } mb-1`}>Saldo</p>
             <div className="flex items-center">
               {balance >= 0 ? (
-                <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
+                <TrendingUp className="h-5 w-5 mr-2 text-purple-500" />
               ) : (
-                <TrendingDown className="h-4 w-4 mr-2 text-red-500" />
+                <TrendingDown className="h-5 w-5 mr-2 text-red-500" />
               )}
               <span 
                 className={`text-xl font-bold ${
-                  balance >= 0 ? "text-green-600" : "text-red-600"
+                  balance >= 0 
+                    ? "text-purple-600 dark:text-purple-400" 
+                    : "text-red-600 dark:text-red-400"
                 }`}
               >
-                {new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL'
-                }).format(balance)}
+                {formatCurrency(balance)}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="h-[200px] mt-4">
+        <div className="h-[240px] mt-4">
           {chartType === "bar" ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthsData}>
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="income" name="Entradas" fill="#9b87f5" />
-                <Bar dataKey="expenses" name="Saídas" fill="#ea384c" />
-              </BarChart>
+              <RechartsBarChart
+                data={monthsData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                barGap={4}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.graph.gridLines} />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fill: CHART_COLORS.graph.axisText, fontSize: 12 }}
+                />
+                <YAxis 
+                  tick={{ fill: CHART_COLORS.graph.axisText, fontSize: 12 }}
+                  tickFormatter={(value) => 
+                    new Intl.NumberFormat('pt-BR', { 
+                      notation: 'compact',
+                      compactDisplay: 'short'
+                    }).format(value)
+                  }
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend content={<CustomLegend />} />
+                <Bar 
+                  dataKey="income" 
+                  name="Entradas" 
+                  fill={CHART_COLORS.income} 
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={40}
+                />
+                <Bar 
+                  dataKey="expenses" 
+                  name="Saídas" 
+                  fill={CHART_COLORS.expenses} 
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={40}
+                />
+              </RechartsBarChart>
             </ResponsiveContainer>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <RechartsPieChart>
                 <Pie
                   data={pieData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
+                  outerRadius={90}
+                  innerRadius={60}
+                  paddingAngle={2}
                   dataKey="value"
-                  label={({ name, percent }) => 
-                    `${name} ${(percent * 100).toFixed(0)}%`
-                  }
                 >
-                  {pieData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {pieData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.fill}
+                      stroke="rgba(255,255,255,0.5)"
+                      strokeWidth={1}
+                    />
                   ))}
+                  <LabelList 
+                    dataKey="name" 
+                    position="outside"
+                    offset={20}
+                    fill="#6B7280"
+                    formatter={(value: string) => `${value} (${((pieData.find(item => item.name === value)?.value || 0) / (monthlyTotals.income + monthlyTotals.expenses) * 100).toFixed(1)}%)`}
+                  />
                 </Pie>
-                <Tooltip />
-              </PieChart>
+                <Tooltip content={<CustomPieTooltip />} />
+                <Legend 
+                  payload={[
+                    { value: 'Entradas', color: CHART_COLORS.income, type: 'square' },
+                    { value: 'Saídas', color: CHART_COLORS.expenses, type: 'square' },
+                  ]}
+                  layout="horizontal"
+                  verticalAlign="bottom"
+                  align="center"
+                  content={<CustomLegend />}
+                />
+              </RechartsPieChart>
             </ResponsiveContainer>
           )}
         </div>

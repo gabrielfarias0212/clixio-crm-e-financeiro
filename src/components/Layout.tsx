@@ -17,7 +17,7 @@ export default function Layout({ children, className }: LayoutProps) {
       </main>
       <footer className="py-4 border-t text-center text-sm text-gray-500">
         <div className="max-w-screen-2xl mx-auto px-4">
-          © {new Date().getFullYear()} Wedding CRM
+          © {new Date().getFullYear()} GCLIXIO
         </div>
       </footer>
     </div>

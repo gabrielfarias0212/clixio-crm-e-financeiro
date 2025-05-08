@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { BarChart, CalendarDays, Menu, Users, X, DollarSign } from "lucide-react";
@@ -5,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { UserMenu } from "./UserMenu";
+
 export function Navbar() {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
@@ -23,12 +25,15 @@ export function Navbar() {
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
   }, []);
+
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
+
   const handleToggle = () => {
     setOpen(!open);
   };
+
   const closeMenu = () => {
     setOpen(false);
   };
@@ -51,11 +56,16 @@ export function Navbar() {
     path: "/cashflow",
     icon: <DollarSign className="h-5 w-5" />
   }];
+
   return <header className="sticky top-0 z-30 bg-white shadow-sm">
       <div className="container mx-auto px-4 flex h-16 items-center justify-between">
         <div className="flex items-center">
           <Link to="/" className="flex items-center">
-            <h1 className="text-xl font-bold">Photo-CRM</h1>
+            <img 
+              src="/lovable-uploads/6b189f38-b0b9-4a2e-8ff2-6635102e14a9.png" 
+              alt="GCLIXIO Logo" 
+              className="h-10 mr-2"
+            />
           </Link>
         </div>
 

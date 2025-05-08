@@ -291,101 +291,117 @@ export function BusinessMetrics() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-4">Indicadores de Desempenho do Negócio ({currentYear})</h2>
+      <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-200">
+        Indicadores de Desempenho do Negócio ({currentYear})
+      </h2>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Contratos Ativos */}
         <Card 
-          className="shadow-md border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+          className="relative overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer border-0 ring-1 ring-slate-200 dark:ring-slate-800"
           onClick={() => handleCardClick('contracts')}
         >
-          <div className="p-6">
+          <div className="relative z-10 p-5">
             <div className="flex flex-col h-full">
-              <div className="flex items-center text-muted-foreground mb-3">
-                <div className="rounded-full bg-blue-100 dark:bg-blue-900 p-2.5 mr-3">
+              <div className="flex items-center mb-4">
+                <div className="rounded-full bg-blue-100 dark:bg-blue-900/40 p-3">
                   <FileCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
-                <h3 className="text-sm font-medium">Contratos Ativos no Ano</h3>
+                <h3 className="text-sm font-medium ml-3 text-slate-600 dark:text-slate-300">
+                  Contratos Ativos no Ano
+                </h3>
               </div>
-              <div className="mt-2">
-                <p className="text-3xl sm:text-4xl font-bold">{metrics.activeContracts}</p>
+              <div>
+                <p className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-white truncate">
+                  {metrics.activeContracts}
+                </p>
               </div>
             </div>
           </div>
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent dark:from-blue-950/20 dark:to-transparent opacity-50"></div>
         </Card>
 
         {/* Card 2: Média Faturamento */}
         <Card 
-          className="shadow-md border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+          className="relative overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer border-0 ring-1 ring-slate-200 dark:ring-slate-800"
           onClick={() => handleCardClick('revenue')}
         >
-          <div className="p-6">
+          <div className="relative z-10 p-5">
             <div className="flex flex-col h-full">
-              <div className="flex items-center text-muted-foreground mb-3">
-                <div className="rounded-full bg-green-100 dark:bg-green-900 p-2.5 mr-3">
+              <div className="flex items-center mb-4">
+                <div className="rounded-full bg-green-100 dark:bg-green-900/40 p-3">
                   <BarChart3 className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
-                <h3 className="text-sm font-medium">Média de Faturamento Mensal</h3>
+                <h3 className="text-sm font-medium ml-3 text-slate-600 dark:text-slate-300">
+                  Média de Faturamento Mensal
+                </h3>
               </div>
-              <div className="mt-2">
-                <p className="text-3xl sm:text-4xl font-bold text-green-600 dark:text-green-400 truncate">
+              <div>
+                <p className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400 truncate">
                   {formatCurrency(metrics.averageMonthlyRevenue)}
                 </p>
               </div>
             </div>
           </div>
+          <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent dark:from-green-950/20 dark:to-transparent opacity-50"></div>
         </Card>
 
         {/* Card 3: Taxa de Conversão */}
         <Card 
-          className="shadow-md border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+          className="relative overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer border-0 ring-1 ring-slate-200 dark:ring-slate-800"
           onClick={() => handleCardClick('conversion')}
         >
-          <div className="p-6">
+          <div className="relative z-10 p-5">
             <div className="flex flex-col h-full">
-              <div className="flex items-center text-muted-foreground mb-3">
-                <div className="rounded-full bg-orange-100 dark:bg-orange-900 p-2.5 mr-3">
+              <div className="flex items-center mb-4">
+                <div className="rounded-full bg-orange-100 dark:bg-orange-900/40 p-3">
                   <TrendingUp className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                 </div>
-                <h3 className="text-sm font-medium">Taxa de Conversão</h3>
+                <h3 className="text-sm font-medium ml-3 text-slate-600 dark:text-slate-300">
+                  Taxa de Conversão
+                </h3>
               </div>
-              <div className="mt-2">
-                <p className="text-3xl sm:text-4xl font-bold text-orange-600 dark:text-orange-400">
+              <div>
+                <p className="text-3xl md:text-4xl font-bold text-orange-600 dark:text-orange-400 truncate">
                   {metrics.conversionRate.toFixed(1)}%
                 </p>
               </div>
             </div>
           </div>
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-transparent dark:from-orange-950/20 dark:to-transparent opacity-50"></div>
         </Card>
 
         {/* Card 4: Lucro Líquido */}
         <Card 
-          className="shadow-md border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+          className="relative overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer border-0 ring-1 ring-slate-200 dark:ring-slate-800"
           onClick={() => handleCardClick('profit')}
         >
-          <div className="p-6">
+          <div className="relative z-10 p-5">
             <div className="flex flex-col h-full">
-              <div className="flex items-center text-muted-foreground mb-3">
-                <div className="rounded-full bg-purple-100 dark:bg-purple-900 p-2.5 mr-3">
+              <div className="flex items-center mb-4">
+                <div className="rounded-full bg-purple-100 dark:bg-purple-900/40 p-3">
                   <DollarSign className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
-                <h3 className="text-sm font-medium">Lucro Líquido</h3>
+                <h3 className="text-sm font-medium ml-3 text-slate-600 dark:text-slate-300">
+                  Lucro Líquido
+                </h3>
               </div>
-              <div className="mt-2">
-                <p className={`text-3xl sm:text-4xl font-bold truncate ${metrics.netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              <div>
+                <p className={`text-3xl md:text-4xl font-bold truncate ${metrics.netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                   {formatCurrency(metrics.netProfit)}
                 </p>
               </div>
             </div>
           </div>
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-transparent dark:from-purple-950/20 dark:to-transparent opacity-50"></div>
         </Card>
       </div>
 
-      {/* Modal for detailed information */}
+      {/* Modal para exibição de informações detalhadas */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{dialogTitle}</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">{dialogTitle}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
             {dialogContent}

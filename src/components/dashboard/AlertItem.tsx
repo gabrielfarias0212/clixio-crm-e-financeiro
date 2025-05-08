@@ -2,7 +2,7 @@
 import React from "react";
 import { AlertItem as AlertItemType } from "@/utils/types";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Bell, DollarSign } from "lucide-react";
+import { Bell, Calendar, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface AlertItemProps {
@@ -19,6 +19,8 @@ export function AlertItem({ alert }: AlertItemProps) {
       case "payment":
       case "due_payment":
         return <DollarSign className="h-5 w-5 text-green-500" />;
+      case "event":
+        return <Calendar className="h-5 w-5 text-blue-500" />;
       default:
         return <Bell className="h-5 w-5" />;
     }
@@ -31,14 +33,28 @@ export function AlertItem({ alert }: AlertItemProps) {
       return "cursor-pointer border-l-4 border-l-blue-500";
     }
     
+    if (alert.type === "event") {
+      if (alert.urgency === "high") return "cursor-pointer border-l-4 border-l-red-500";
+      if (alert.urgency === "medium") return "cursor-pointer border-l-4 border-l-blue-400";
+      return "cursor-pointer border-l-4 border-l-blue-500";
+    }
+    
     if (alert.type === "task") return "cursor-pointer border-l-4 border-l-amber-500";
     return "cursor-pointer border-l-4 border-l-green-500";
+  };
+
+  const handleAlertClick = () => {
+    if (alert.type === "event") {
+      navigate('/calendar');
+    } else {
+      navigate(`/clients/${alert.client.id}`);
+    }
   };
 
   return (
     <Alert 
       className={getAlertClassName(alert)}
-      onClick={() => navigate(`/clients/${alert.client.id}`)}
+      onClick={handleAlertClick}
     >
       <div className="flex items-start">
         <div className="mr-2">

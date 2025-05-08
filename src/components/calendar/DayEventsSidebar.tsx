@@ -1,13 +1,12 @@
 
-import { Card, CardContent } from "@/components/ui/card";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/StatusBadge";
-import { Client } from "@/utils/types";
-import { CalendarEvent } from "@/utils/types";
-import { CalendarDays, CalendarIcon } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { AlertTriangle, Calendar as CalendarIcon, Edit, PlusCircle, Trash2, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useNavigate } from "react-router-dom";
+import { Client, CalendarEvent } from "@/utils/types";
+import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 
 interface DayEventsSidebarProps {
   date: Date | undefined;
@@ -16,109 +15,176 @@ interface DayEventsSidebarProps {
     events: CalendarEvent[];
   };
   setAddEventOpen: (open: boolean) => void;
+  openEditEvent?: (event: CalendarEvent) => void;
 }
 
-export function DayEventsSidebar({ date, selectedDayItems, setAddEventOpen }: DayEventsSidebarProps) {
-  const navigate = useNavigate();
+export function DayEventsSidebar({ 
+  date, 
+  selectedDayItems,
+  setAddEventOpen,
+  openEditEvent
+}: DayEventsSidebarProps) {
+  const { deleteEvent, updateEvent } = useCalendarEvents();
+  const formattedDate = date ? format(date, "EEEE, d 'de' MMMM", { locale: ptBR }) : "";
   
-  // Formatar horário de início e término
-  const formatTimeRange = (startTime: string, endTime: string) => {
-    return `${startTime} - ${endTime}`;
-  };
-
-  // Obter horário do cliente se disponível
-  const getClientTimeRange = (client: Client) => {
-    if (client.weddingStartTime && client.weddingEndTime) {
-      return formatTimeRange(client.weddingStartTime, client.weddingEndTime);
+  const handleEditEvent = (event: CalendarEvent) => {
+    if (openEditEvent) {
+      openEditEvent(event);
+    } else {
+      // Fallback if openEditEvent is not provided
+      setAddEventOpen(true);
     }
-    return "";
+  };
+  
+  const handleDeleteEvent = (eventId: string) => {
+    if (confirm("Tem certeza que deseja excluir este evento?")) {
+      deleteEvent(eventId);
+    }
+  };
+  
+  const getEventColorClass = (color: string) => {
+    switch(color) {
+      case 'blue': return 'bg-blue-500';
+      case 'green': return 'bg-green-500';
+      case 'red': return 'bg-red-500';
+      case 'yellow': return 'bg-amber-500';
+      case 'purple': return 'bg-purple-500';
+      case 'gray': return 'bg-gray-500';
+      default: return 'bg-blue-500';
+    }
+  };
+  
+  const getEventTypeIcon = (type: string) => {
+    switch(type) {
+      case 'meeting': return <User size={16} className="mr-1" />;
+      case 'photoshoot': return <CalendarIcon size={16} className="mr-1" />;
+      default: return <CalendarIcon size={16} className="mr-1" />;
+    }
   };
 
   return (
-    <Card className="border-none shadow-sm bg-white h-full">
-      <CardContent className="p-4">
-        <h2 className="text-lg font-medium mb-4 flex items-center">
-          <CalendarIcon className="mr-2 h-5 w-5 text-orange-500" />
-          {date && format(date, "dd 'de' MMMM", { locale: ptBR })}
-        </h2>
-        
-        {selectedDayItems.clients.length > 0 || selectedDayItems.events.length > 0 ? (
-          <div className="space-y-4">
-            {selectedDayItems.clients.map(client => (
-              <div 
-                key={client.id}
-                className="p-3 rounded-lg border border-gray-100 hover:border-gray-200 cursor-pointer transition-all hover:shadow-sm"
-                onClick={() => navigate(`/clients/${client.id}`)}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium">{client.name}</h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {client.eventCategory || "Evento"}
-                      {getClientTimeRange(client) && (
-                        <span className="block text-xs text-gray-600">
-                          {getClientTimeRange(client)}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <StatusBadge status={client.status} />
-                </div>
-                
-                <div className="mt-2 text-sm">
-                  <span className="font-medium">Valor: </span>
-                  {new Intl.NumberFormat('pt-BR', { 
-                    style: 'currency', 
-                    currency: 'BRL' 
-                  }).format(client.contractValue)}
-                </div>
-              </div>
-            ))}
-            
-            {selectedDayItems.events.map(event => (
-              <div 
-                key={event.id}
-                className="p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-all hover:shadow-sm"
-              >
-                <div>
-                  <h3 className="font-medium">{event.title}</h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {formatTimeRange(event.startTime, event.endTime)} - {event.description}
-                  </p>
-                </div>
-                
-                <div className="mt-2">
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    event.color === 'purple' ? 'bg-purple-100 text-purple-800' :
-                    event.color === 'blue' ? 'bg-blue-100 text-blue-800' :
-                    event.color === 'green' ? 'bg-green-100 text-green-800' :
-                    event.color === 'red' ? 'bg-red-100 text-red-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {event.type === 'client' ? 'Cliente' :
-                     event.type === 'meeting' ? 'Reunião' :
-                     event.type === 'photoshoot' ? 'Ensaio' :
-                     event.type === 'delivery' ? 'Entrega' :
-                     event.type === 'editing' ? 'Edição' : 'Evento'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            <CalendarDays className="mx-auto h-10 w-10 mb-2 text-gray-300" />
-            <p>Nenhum evento agendado para este dia.</p>
+    <Card className="border-none shadow-sm">
+      <div className="p-4 border-b">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-medium">
+            {formattedDate}
+          </h3>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={() => setAddEventOpen(true)}
+            className="flex gap-1 items-center"
+          >
+            <PlusCircle className="h-4 w-4" />
+            <span>Adicionar</span>
+          </Button>
+        </div>
+      </div>
+      
+      <div className="p-4">
+        {(selectedDayItems.clients.length === 0 && selectedDayItems.events.length === 0) ? (
+          <div className="text-center text-muted-foreground py-6">
+            <p>Nenhum evento para esta data</p>
             <Button 
               variant="link" 
-              className="mt-2 text-orange-500"
               onClick={() => setAddEventOpen(true)}
+              className="mt-2"
             >
-              + Adicionar evento
+              Adicionar evento
             </Button>
           </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Client Events */}
+            {selectedDayItems.clients.length > 0 && (
+              <>
+                <h4 className="font-medium text-sm text-muted-foreground">Eventos de Clientes</h4>
+                <div className="space-y-3">
+                  {selectedDayItems.clients.map((client) => (
+                    <div 
+                      key={client.id} 
+                      className="p-3 border rounded-md bg-orange-50 border-orange-100"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h5 className="font-medium">{client.name}</h5>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {client.eventCategory}
+                            {client.weddingStartTime && ` • ${client.weddingStartTime}`}
+                          </p>
+                        </div>
+                        <div className="text-xs font-medium rounded-full bg-orange-100 text-orange-800 px-2 py-0.5">
+                          {client.status}
+                        </div>
+                      </div>
+                      
+                      {client.eventLocation && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {client.eventLocation}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            
+            {/* Calendar Events */}
+            {selectedDayItems.events.length > 0 && (
+              <>
+                <h4 className="font-medium text-sm text-muted-foreground">Eventos do Calendário</h4>
+                <div className="space-y-3">
+                  {selectedDayItems.events.map((event) => (
+                    <div 
+                      key={event.id} 
+                      className="p-3 border rounded-md bg-white"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center">
+                            <div className={`h-3 w-3 rounded-full mr-2 ${getEventColorClass(event.color)}`}></div>
+                            <h5 className="font-medium">{event.title}</h5>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1 flex items-center">
+                            {getEventTypeIcon(event.type)}
+                            {event.startTime} - {event.endTime}
+                          </p>
+                        </div>
+                        <div className="flex space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => handleEditEvent(event)}
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                            <span className="sr-only">Edit</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            onClick={() => handleDeleteEvent(event.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {event.description && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {event.description}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         )}
-      </CardContent>
+      </div>
     </Card>
   );
 }

@@ -3,9 +3,8 @@ import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Bell, DollarSign } from "lucide-react";
+import { Bell, Calendar, DollarSign } from "lucide-react";
 import { useState } from "react";
-import { AlertItem } from "@/utils/types";
 import { DashboardCardModal } from "./DashboardCardModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAlerts } from "@/hooks/useAlerts";
@@ -15,16 +14,16 @@ export function AlertsReminders() {
   const { clients } = useClients();
   const navigate = useNavigate();
   const [showAllModal, setShowAllModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<"tasks" | "payments">("tasks");
+  const [activeTab, setActiveTab] = useState<"tasks" | "payments" | "events">("tasks");
   
   const alerts = useAlerts(clients);
   
-  const handleShowAll = (type: "tasks" | "payments") => {
+  const handleShowAll = (type: "tasks" | "payments" | "events") => {
     setActiveTab(type);
     setShowAllModal(true);
   };
   
-  const totalAlerts = alerts.tasks.length + alerts.payments.length;
+  const totalAlerts = alerts.tasks.length + alerts.payments.length + alerts.events.length;
 
   return (
     <>
@@ -57,7 +56,7 @@ export function AlertsReminders() {
             <p className="text-muted-foreground text-center py-4">Nenhum alerta pendente</p>
           ) : (
             <Tabs defaultValue="tasks" className="w-full">
-              <TabsList className="grid grid-cols-2 mb-4">
+              <TabsList className="grid grid-cols-3 mb-4">
                 <TabsTrigger value="tasks">
                   Ações e Tarefas
                   {alerts.tasks.length > 0 && (
@@ -71,6 +70,14 @@ export function AlertsReminders() {
                   {alerts.payments.length > 0 && (
                     <span className="ml-2 rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs">
                       {alerts.payments.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="events">
+                  Eventos
+                  {alerts.events.length > 0 && (
+                    <span className="ml-2 rounded-full bg-blue-100 text-blue-700 px-2 py-0.5 text-xs">
+                      {alerts.events.length}
                     </span>
                   )}
                 </TabsTrigger>
@@ -89,6 +96,13 @@ export function AlertsReminders() {
                   emptyMessage="Nenhum pagamento pendente"
                 />
               </TabsContent>
+              
+              <TabsContent value="events">
+                <AlertsTabContent 
+                  alerts={alerts.events}
+                  emptyMessage="Nenhum evento próximo"
+                />
+              </TabsContent>
             </Tabs>
           )}
         </CardContent>
@@ -103,12 +117,24 @@ export function AlertsReminders() {
       
       {/* Modal to display all alerts in a detailed table view */}
       <DashboardCardModal
-        title={activeTab === "tasks" ? "Todas as Ações e Tarefas" : "Todos os Pagamentos Pendentes"}
+        title={
+          activeTab === "tasks" ? "Todas as Ações e Tarefas" : 
+          activeTab === "payments" ? "Todos os Pagamentos Pendentes" :
+          "Todos os Eventos Próximos"
+        }
         open={showAllModal}
         onClose={() => setShowAllModal(false)}
-        clients={activeTab === "tasks" ? alerts.tasks.map(a => a.client) : alerts.payments.map(a => a.client)}
+        clients={
+          activeTab === "tasks" ? alerts.tasks.map(a => a.client) : 
+          activeTab === "payments" ? alerts.payments.map(a => a.client) :
+          alerts.events.map(a => a.client)
+        }
         type="pending"
-        customData={activeTab === "tasks" ? alerts.tasks : alerts.payments}
+        customData={
+          activeTab === "tasks" ? alerts.tasks : 
+          activeTab === "payments" ? alerts.payments : 
+          alerts.events
+        }
       />
     </>
   );

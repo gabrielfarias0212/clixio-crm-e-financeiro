@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import { useNavigate } from "react-router-dom";
 import { useClients } from "@/contexts/ClientsContext";
@@ -9,10 +9,12 @@ import { CalendarHeader } from "@/components/calendar/CalendarHeader";
 import { CalendarGrid } from "@/components/calendar/CalendarGrid";
 import { DayEventsSidebar } from "@/components/calendar/DayEventsSidebar";
 import { useCalendarPage } from "@/hooks/useCalendarPage";
+import { CalendarEvent } from "@/utils/types";
 
 export default function CalendarPage() {
   const navigate = useNavigate();
   const { clients, loading } = useClients();
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   
   const {
     date,
@@ -29,6 +31,18 @@ export default function CalendarPage() {
   useEffect(() => {
     document.title = "Calendário | Wedding CRM";
   }, []);
+  
+  const handleOpenEditEvent = (event: CalendarEvent) => {
+    setEditingEvent(event);
+    setAddEventOpen(true);
+  };
+  
+  const handleCloseDialog = (open: boolean) => {
+    setAddEventOpen(open);
+    if (!open) {
+      setEditingEvent(null);
+    }
+  };
 
   return (
     <Layout>
@@ -61,6 +75,7 @@ export default function CalendarPage() {
               date={date}
               selectedDayItems={selectedDayItems}
               setAddEventOpen={setAddEventOpen}
+              openEditEvent={handleOpenEditEvent}
             />
           </div>
         </div>
@@ -72,8 +87,9 @@ export default function CalendarPage() {
         
         <AddEventDialog 
           open={addEventOpen} 
-          onOpenChange={setAddEventOpen} 
+          onOpenChange={handleCloseDialog} 
           clients={clients}
+          initialData={editingEvent || undefined}
         />
       </div>
     </Layout>

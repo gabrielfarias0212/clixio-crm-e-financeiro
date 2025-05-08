@@ -1,10 +1,13 @@
 
 import { useMemo } from "react";
-import { AlertItem, Client } from "@/utils/types";
+import { AlertItem, Client, CalendarEvent } from "@/utils/types";
 import { stringToDate } from "@/utils/dateUtils";
-import { differenceInDays } from "date-fns";
+import { differenceInDays, isBefore, isAfter, startOfDay, addDays } from "date-fns";
+import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 
 export function useAlerts(clients: Client[]) {
+  const { events } = useCalendarEvents();
+  
   const alerts = useMemo(() => {
     const now = new Date();
     
@@ -90,6 +93,33 @@ export function useAlerts(clients: Client[]) {
       });
     });
     
+    // Calendar event alerts (upcoming events within 7 days)
+    const calendarEventAlerts: AlertItem[] = [];
+    const today = startOfDay(new Date());
+    const nextWeek = addDays(today, 7);
+    
+    events.forEach(event => {
+      const eventDate = stringToDate(event.date);
+      if (eventDate) {
+        if (isAfter(eventDate, today) && isBefore(eventDate, nextWeek)) {
+          const daysUntilEvent = differenceInDays(eventDate, today);
+          
+          // Find related client if exists
+          const relatedClient = event.clientId ? 
+            clients.find(c => c.id === event.clientId) : undefined;
+            
+          calendarEventAlerts.push({
+            type: "event",
+            title: `Evento próximo: ${event.title}`,
+            description: `${event.date} às ${event.startTime}${relatedClient ? ` - Cliente: ${relatedClient.name}` : ''}`,
+            client: relatedClient || clients[0], // Use first client as fallback for non-client events
+            date: eventDate,
+            urgency: daysUntilEvent <= 1 ? "high" : daysUntilEvent <= 3 ? "medium" : "low"
+          });
+        }
+      }
+    });
+    
     // Combine and sort all due payment alerts by urgency (high -> medium -> low)
     const sortedDuePaymentAlerts = [...duePaymentAlerts].sort((a, b) => {
       const urgencyOrder = { high: 0, medium: 1, low: 2 };
@@ -99,9 +129,10 @@ export function useAlerts(clients: Client[]) {
 
     return { 
       tasks: pendingTasks, 
-      payments: [...paymentAlerts, ...sortedDuePaymentAlerts] as AlertItem[]
+      payments: [...paymentAlerts, ...sortedDuePaymentAlerts] as AlertItem[],
+      events: calendarEventAlerts as AlertItem[]
     };
-  }, [clients]);
+  }, [clients, events]);
 
   return alerts;
 }

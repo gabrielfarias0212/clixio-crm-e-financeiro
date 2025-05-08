@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTransactions } from './TransactionsContext';
 import { Transaction } from '@/utils/types';
-import { createCache, processBatch } from '@/utils/dataUtils';
+import { processBatch } from '@/utils/dataUtils';
 import { 
   FinancialSummary, 
   MonthlyData, 
@@ -11,7 +11,7 @@ import {
   getMonthSummary as getMonthSummaryData
 } from '@/utils/finance/financialSummary';
 import { TransactionDataContext, TransactionDataContextType } from './TransactionDataContext';
-import { useTransactionData } from '@/hooks/useTransactionDataContext';
+import { createCache } from '@/utils/finance/cacheUtils';
 
 // Cache for expensive calculations
 const summaryCache = createCache<string, FinancialSummary>(24); // Cache 24 month/year combinations
@@ -39,7 +39,6 @@ export function TransactionDataProvider({ children }: { children: React.ReactNod
       const currentMonth = now.getMonth();
       
       // Process transactions in batches to avoid blocking the UI
-      // We'll use our utility function to do the batch processing
       await processBatch(
         transactions,
         () => {}, // Just a placeholder as the actual processing is done in calculateSummary
@@ -146,4 +145,4 @@ export function TransactionDataProvider({ children }: { children: React.ReactNod
 }
 
 // Re-export the hook for convenience
-export { useTransactionData };
+export { useTransactionData } from '@/hooks/useTransactionDataContext';

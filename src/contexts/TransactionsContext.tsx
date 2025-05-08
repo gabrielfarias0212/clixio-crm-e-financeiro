@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Transaction } from '@/utils/types';
 import { fetchTransactions, createTransaction, deleteTransaction as removeTransactionFromDB } from '@/utils/supabaseUtils';
 import { toast } from 'sonner';
@@ -19,21 +19,25 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
 
-  const refreshTransactions = async () => {
+  const refreshTransactions = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await fetchTransactions();
       setTransactions(data);
+      setLastRefreshTime(Date.now());
+      return data;
     } catch (err) {
       console.error('Error fetching transactions:', err);
       setError('Falha ao carregar as transações. Por favor, tente novamente.');
       toast.error('Falha ao carregar as transações');
+      return [];
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const addTransaction = async (transactionData: Omit<Transaction, 'id' | 'createdAt'>) => {
     try {
@@ -41,6 +45,12 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
       if (newTransaction) {
         setTransactions(prev => [newTransaction, ...prev]);
         toast.success('Transação registrada com sucesso!');
+        
+        // Set a small timeout to ensure UI updates before refreshing data
+        setTimeout(() => {
+          refreshTransactions();
+        }, 300);
+        
         return newTransaction;
       }
       return null;
@@ -56,6 +66,11 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
       await removeTransactionFromDB(transactionId);
       setTransactions(prev => prev.filter(t => t.id !== transactionId));
       toast.success('Transação excluída com sucesso!');
+      
+      // Set a small timeout to ensure UI updates before refreshing data
+      setTimeout(() => {
+        refreshTransactions();
+      }, 300);
     } catch (err) {
       console.error('Error deleting transaction:', err);
       toast.error('Falha ao excluir transação');

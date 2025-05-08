@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
@@ -21,7 +22,8 @@ export default function CashFlow() {
     
     // Ensure we have the latest data when the page loads
     refreshTransactions();
-  }, [refreshTransactions]);
+    refreshClients();
+  }, [refreshTransactions, refreshClients]);
 
   // Use useMemo to filter transactions for better performance
   const filteredTransactions = useMemo(() => {

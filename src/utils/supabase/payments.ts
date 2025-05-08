@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Payment, PaymentStatus } from '../types';
 import { parseDate, formatDateForSupabase } from './base';
-import { createTransaction } from './transactions';
+import { createTransaction, deleteTransaction } from './transactions';
 
 export const parsePayment = (payment: any): Payment => {
   return {
@@ -57,13 +57,19 @@ export const createPayment = async (payment: {
       return null;
     }
 
-    if (data) {
+    // Only create a transaction if the payment is not pending
+    if (data && (payment.payment_status !== 'pendente')) {
+      // Create a corresponding transaction for this payment
+      const transactionDescription = payment.notes 
+        ? `Pagamento de cliente: ${payment.notes}`
+        : `Pagamento de cliente`;
+        
       await createTransaction({
         amount: payment.amount,
         date: payment.date,
         type: 'entrada',
         category: 'pagamento de cliente',
-        description: `Pagamento de cliente ${payment.clientId}`,
+        description: transactionDescription,
         clientId: payment.clientId,
         paymentId: data.id
       });

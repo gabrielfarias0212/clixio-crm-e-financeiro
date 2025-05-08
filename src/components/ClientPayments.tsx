@@ -8,6 +8,7 @@ import { PlusIcon } from "lucide-react";
 import { DialogContent, Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { createPayment, deletePayment } from "@/utils/supabaseUtils";
 import { toast } from "sonner";
+import { useTransactions } from "@/contexts/TransactionsContext";
 
 export interface ClientPaymentsProps {
   client: Client;
@@ -17,6 +18,7 @@ export interface ClientPaymentsProps {
 export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
   const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { refreshTransactions } = useTransactions();
   
   const handlePaymentAdded = async (updatedClient: Client) => {
     try {
@@ -39,9 +41,12 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
       if (onUpdate) {
         onUpdate(updatedClient);
       }
+
+      // Refresh transactions to update the financial summary chart
+      refreshTransactions();
       
       setIsAddPaymentOpen(false);
-      toast.success("Pagamento registrado com sucesso!");
+      toast.success("Pagamento registrado com sucesso! O fluxo de caixa e resumo financeiro foram atualizados.");
     } catch (error) {
       console.error("Error adding payment:", error);
       toast.error("Erro ao registrar o pagamento. Tente novamente.");
@@ -67,8 +72,11 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
       if (onUpdate) {
         onUpdate(updatedClient);
       }
+
+      // Refresh transactions to update the financial summary chart
+      refreshTransactions();
       
-      toast.success("Pagamento excluído com sucesso!");
+      toast.success("Pagamento excluído com sucesso! O fluxo de caixa e resumo financeiro foram atualizados.");
     } catch (error) {
       console.error("Error deleting payment:", error);
       toast.error("Erro ao excluir o pagamento. Tente novamente.");

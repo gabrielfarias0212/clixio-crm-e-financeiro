@@ -1,9 +1,8 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Transaction } from "@/utils/types";
 
 export function useFinancialData() {
   const { transactions, refreshTransactions } = useTransactions();
@@ -13,9 +12,10 @@ export function useFinancialData() {
     expenses: 0,
     balance: 0
   });
+  const [pieData, setPieData] = useState<any[]>([]);
 
   // Calculate all financial data
-  const calculateFinancialData = () => {
+  const calculateFinancialData = useCallback(() => {
     // Get current month's transactions
     const now = new Date();
     const currentMonthStart = startOfMonth(now);
@@ -40,6 +40,13 @@ export function useFinancialData() {
     
     const balance = totals.income - totals.expenses;
     setMonthlyTotals({ ...totals, balance });
+
+    // Prepare pie chart data
+    const newPieData = [
+      { name: "Entradas", value: totals.income, fill: "#8B5CF6" },
+      { name: "Saídas", value: totals.expenses, fill: "#F43F5E" },
+    ];
+    setPieData(newPieData);
 
     // Prepare last 6 months data for chart
     const monthsData = Array.from({ length: 6 }).map((_, i) => {
@@ -69,28 +76,25 @@ export function useFinancialData() {
     }).reverse();
     
     setChartData(monthsData);
-  };
+  }, [transactions]);
 
   // Effect to calculate data when transactions change
   useEffect(() => {
-    calculateFinancialData();
-  }, [transactions]);
+    if (transactions.length > 0) {
+      calculateFinancialData();
+    }
+  }, [transactions, calculateFinancialData]);
 
   // Effect to refresh financial data when component mounts
   useEffect(() => {
     refreshTransactions();
   }, [refreshTransactions]);
 
-  // Prepare pie chart data
-  const pieData = [
-    { name: "Entradas", value: monthlyTotals.income, fill: "#8B5CF6" },
-    { name: "Saídas", value: monthlyTotals.expenses, fill: "#F43F5E" },
-  ];
-
   return { 
     chartData,
     monthlyTotals,
     pieData,
-    refreshTransactions
+    refreshTransactions,
+    calculateFinancialData
   };
 }

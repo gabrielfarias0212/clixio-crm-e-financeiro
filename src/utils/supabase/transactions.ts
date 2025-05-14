@@ -18,17 +18,22 @@ export const parseTransaction = (transaction: any): Transaction => {
 };
 
 export const fetchTransactions = async (): Promise<Transaction[]> => {
-  const { data, error } = await supabase
-    .from('wedding_transactions')
-    .select('*')
-    .order('date', { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from('wedding_transactions')
+      .select('*')
+      .order('date', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching transactions:', error);
+    if (error) {
+      console.error('Error fetching transactions:', error);
+      return [];
+    }
+
+    return data?.map(parseTransaction) || [];
+  } catch (err) {
+    console.error('Exception fetching transactions:', err);
     return [];
   }
-
-  return data?.map(parseTransaction) || [];
 };
 
 export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'createdAt'>): Promise<Transaction | null> => {
@@ -73,14 +78,21 @@ export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'c
   }
 };
 
-export const deleteTransaction = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from('wedding_transactions')
-    .delete()
-    .eq('id', id);
+export const deleteTransaction = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('wedding_transactions')
+      .delete()
+      .eq('id', id);
 
-  if (error) {
-    console.error('Error deleting transaction:', error);
-    throw error;
+    if (error) {
+      console.error('Error deleting transaction:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Exception deleting transaction:', error);
+    return false;
   }
 };

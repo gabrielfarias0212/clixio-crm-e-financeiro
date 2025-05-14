@@ -64,7 +64,9 @@ function App() {
               } />
               <Route path="/clients/:id" element={
                 <ClientsProvider>
-                  <ClientDetail />
+                  <TransactionsProvider>
+                    <ClientDetail />
+                  </TransactionsProvider>
                 </ClientsProvider>
               } />
               <Route path="/clients/:id/edit" element={

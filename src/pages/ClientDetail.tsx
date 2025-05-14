@@ -14,11 +14,13 @@ import { DeleteClientDialog } from "@/components/client-detail/DeleteClientDialo
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientDetails } from "@/components/client-detail/ClientDetails";
 import { DeliveryWorkflow } from "@/components/client-detail/DeliveryWorkflow";
+import { useTransactions } from "@/contexts/TransactionsContext";
 
 export default function ClientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { clients, removeClient } = useClients();
+  const { refreshTransactions } = useTransactions();  // Make sure we're using the context
   
   const [client, setClient] = useState<Client | undefined>(
     () => clients.find(c => c.id === id)
@@ -40,7 +42,10 @@ export default function ClientDetail() {
     if (client) {
       document.title = `${client.name} | Wedding CRM`;
     }
-  }, [client]);
+    
+    // Ensure we have the latest transaction data when the component mounts
+    refreshTransactions();
+  }, [client, refreshTransactions]);
 
   const handleDeleteClient = async () => {
     if (!id) return;

@@ -1,4 +1,3 @@
-
 export type ClientStatus = 
   | "orçamento enviado" 
   | "follow-up" 
@@ -136,4 +135,68 @@ export interface AlertItem {
   date: Date;
   payment?: Payment;
   urgency?: "high" | "medium" | "low";
+}
+
+export interface ContractFormSubmission {
+  id: string;
+  clientId: string;
+  createdAt: string;
+  updatedAt: string;
+  
+  // Contratante data
+  brideName: string;
+  groomName: string;
+  brideId: string;
+  brideCpf: string;
+  contactPhone: string;
+  contactEmail: string;
+  completeAddress: string;
+  
+  // Event data
+  eventDate: string;
+  eventTime: string;
+  eventLocation: string;
+  eventAddress: string;
+  contractedPackage: string;
+  ceremonialTeam?: string;
+  hasExclusivity: boolean;
+  
+  // Financial data
+  totalValue: number;
+  paymentMethod: string;
+  installmentsInfo?: string;
+  finalPaymentDate?: string;
+  
+  // Additional information
+  observations?: string;
+  allowsPortfolioUsage: boolean;
+  acceptsTerms: boolean;
+  
+  // Form access
+  accessToken: string;
+  formStatus: 'pending' | 'completed' | 'approved';
+}
+
+export interface ContractFormInput {
+  brideName: string;
+  groomName: string;
+  brideId: string;
+  brideCpf: string;
+  contactPhone: string;
+  contactEmail: string;
+  completeAddress: string;
+  eventDate: string;
+  eventTime: string;
+  eventLocation: string;
+  eventAddress: string;
+  contractedPackage: string;
+  ceremonialTeam?: string;
+  hasExclusivity: boolean;
+  totalValue: number;
+  paymentMethod: string;
+  installmentsInfo?: string;
+  finalPaymentDate?: string;
+  observations?: string;
+  allowsPortfolioUsage: boolean;
+  acceptsTerms: boolean;
 }

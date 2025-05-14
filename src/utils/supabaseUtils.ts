@@ -40,3 +40,12 @@ export {
   fetchFinancialCategories, 
   createFinancialCategory 
 } from './supabase/categories';
+
+export {
+  createContractFormForClient,
+  getContractFormByToken,
+  getContractFormByClientId,
+  submitContractForm,
+  updateFormStatus,
+  exportFormToExcel
+} from './supabase/contract-form';

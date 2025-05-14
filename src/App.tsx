@@ -1,55 +1,102 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ClientsProvider } from "@/contexts/ClientsContext";
-import { TransactionsProvider } from "@/contexts/TransactionsContext";
-import { TransactionDataProvider } from "@/contexts/TransactionDataProvider";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import { AuthGuard } from "@/components/AuthGuard";
-import Index from "@/pages/Index";
-import Auth from "@/pages/Auth";
-import ClientList from "@/pages/ClientList";
-import ClientDetail from "@/pages/ClientDetail";
-import EditClient from "@/pages/EditClient";
-import AddClient from "@/pages/AddClient";
-import CashFlow from "@/pages/CashFlow";
-import Calendar from "@/pages/Calendar";
-import ImportClients from "@/pages/ImportClients";
-import NotFound from "@/pages/NotFound";
+import { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import './App.css'
 
-export default function App() {
+// Pages
+import Auth from '@/pages/Auth'
+import Index from '@/pages/Index'
+import ClientList from '@/pages/ClientList'
+import ClientDetail from '@/pages/ClientDetail'
+import AddClient from '@/pages/AddClient'
+import EditClient from '@/pages/EditClient'
+import CashFlow from '@/pages/CashFlow'
+import Calendar from '@/pages/Calendar'
+import ImportClients from '@/pages/ImportClients'
+import NotFound from '@/pages/NotFound'
+import ContractForm from '@/pages/ContractForm'
+
+// Components
+import ThemeProvider from '@/components/ThemeProvider'
+import { Toaster } from '@/components/ui/sonner'
+import { AuthGuard } from '@/components/AuthGuard'
+
+// Contexts
+import { ClientsProvider } from '@/contexts/ClientsContext'
+import { AuthProvider } from '@/contexts/AuthContext'
+import { TransactionsProvider } from '@/contexts/TransactionsContext'
+
+function App() {
+  const [loadDeps, setLoadDeps] = useState(false)
+  
+  // Delay a bit to let Supabase initialize properly in development
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoadDeps(true)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (!loadDeps) return null
+
   return (
-    <ThemeProvider defaultTheme="system" storageKey="ui-theme">
-      <Router>
-        <AuthProvider>
-          <ClientsProvider>
-            <TransactionsProvider>
-              <TransactionDataProvider>
-                <Routes>
-                  <Route path="/auth" element={<Auth />} />
-                  
-                  <Route element={<AuthGuard />}>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/clients" element={<ClientList />} />
-                    <Route path="/clients/:id" element={<ClientDetail />} />
-                    <Route path="/clients/:id/edit" element={<EditClient />} />
-                    <Route path="/add-client" element={<AddClient />} />
-                    <Route path="/import" element={<ImportClients />} />
-                    <Route path="/cash-flow" element={<CashFlow />} />
-                    <Route path="/calendar" element={<Calendar />} />
-                  </Route>
-                  
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-                <Toaster />
-                <Sonner />
-              </TransactionDataProvider>
-            </TransactionsProvider>
-          </ClientsProvider>
-        </AuthProvider>
-      </Router>
+    <ThemeProvider defaultTheme="light" storageKey="clixio-theme">
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public pages */}
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/contract-form/:token" element={<ContractForm />} />
+            
+            {/* Protected routes */}
+            <Route element={<AuthGuard />}>
+              <Route path="/" element={
+                <ClientsProvider>
+                  <TransactionsProvider>
+                    <Index />
+                  </TransactionsProvider>
+                </ClientsProvider>
+              } />
+              <Route path="/clients" element={
+                <ClientsProvider>
+                  <ClientList />
+                </ClientsProvider>
+              } />
+              <Route path="/clients/:id" element={
+                <ClientsProvider>
+                  <ClientDetail />
+                </ClientsProvider>
+              } />
+              <Route path="/clients/:id/edit" element={
+                <ClientsProvider>
+                  <EditClient />
+                </ClientsProvider>
+              } />
+              <Route path="/add-client" element={
+                <ClientsProvider>
+                  <AddClient />
+                </ClientsProvider>
+              } />
+              <Route path="/cashflow" element={
+                <TransactionsProvider>
+                  <CashFlow />
+                </TransactionsProvider>
+              } />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/import-clients" element={
+                <ClientsProvider>
+                  <ImportClients />
+                </ClientsProvider>
+              } />
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+        <Toaster position="top-right" richColors expand={false} />
+      </AuthProvider>
     </ThemeProvider>
-  );
+  )
 }
+
+export default App

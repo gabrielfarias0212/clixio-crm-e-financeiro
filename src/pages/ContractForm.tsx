@@ -133,6 +133,7 @@ export default function ContractForm() {
 
     try {
       setIsSubmitting(true);
+      // Fix: Make sure all required fields are passed to submitContractForm
       const success = await submitContractForm(token, values);
       
       if (success) {

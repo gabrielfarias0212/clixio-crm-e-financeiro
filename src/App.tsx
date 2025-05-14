@@ -17,7 +17,7 @@ import NotFound from '@/pages/NotFound'
 import ContractForm from '@/pages/ContractForm'
 
 // Components
-import ThemeProvider from '@/components/ThemeProvider'
+import { ThemeProvider } from '@/components/ThemeProvider'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthGuard } from '@/components/AuthGuard'
 

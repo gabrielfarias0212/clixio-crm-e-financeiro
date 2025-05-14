@@ -178,6 +178,7 @@ export interface ContractFormSubmission {
 }
 
 export interface ContractFormInput {
+  // All required fields match the ContractFormValues from the schema
   brideName: string;
   groomName: string;
   brideId: string;
@@ -190,13 +191,14 @@ export interface ContractFormInput {
   eventLocation: string;
   eventAddress: string;
   contractedPackage: string;
-  ceremonialTeam?: string;
   hasExclusivity: boolean;
   totalValue: number;
   paymentMethod: string;
+  acceptsTerms: boolean;
+  // Optional fields
+  ceremonialTeam?: string;
   installmentsInfo?: string;
   finalPaymentDate?: string;
   observations?: string;
   allowsPortfolioUsage: boolean;
-  acceptsTerms: boolean;
 }

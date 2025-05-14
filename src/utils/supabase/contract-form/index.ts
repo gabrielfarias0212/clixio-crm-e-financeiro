@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 // Create a contract form for a client and get the access token
 export const createContractFormForClient = async (clientId: string): Promise<string | null> => {
   try {
+    console.log('Creating contract form for client:', clientId);
+    
     const { data, error } = await supabase
       .rpc('create_contract_form_for_client', {
         client_id_param: clientId

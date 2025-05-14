@@ -27,12 +27,15 @@ export function ClientContractForm({ client }: ClientContractFormProps) {
   const [contractForm, setContractForm] = useState<ContractFormSubmission | null>(null);
   const [formLink, setFormLink] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchContractForm = async () => {
     if (!client.id) return;
     
     try {
       setIsLoading(true);
+      setError(null);
+      
       const form = await getContractFormByClientId(client.id);
       setContractForm(form);
       
@@ -42,6 +45,7 @@ export function ClientContractForm({ client }: ClientContractFormProps) {
       }
     } catch (error) {
       console.error("Error fetching contract form:", error);
+      setError("Erro ao buscar formulário de contrato");
     } finally {
       setIsLoading(false);
     }
@@ -56,6 +60,8 @@ export function ClientContractForm({ client }: ClientContractFormProps) {
     
     try {
       setIsGeneratingLink(true);
+      setError(null);
+      
       const token = await createContractFormForClient(client.id);
       
       if (token) {
@@ -63,9 +69,12 @@ export function ClientContractForm({ client }: ClientContractFormProps) {
         setFormLink(`${baseUrl}/contract-form/${token}`);
         toast.success("Link do formulário gerado com sucesso!");
         fetchContractForm();
+      } else {
+        setError("Não foi possível gerar o link do formulário");
       }
     } catch (error) {
       console.error("Error creating form link:", error);
+      setError("Erro ao gerar link do formulário");
       toast.error("Erro ao gerar link do formulário");
     } finally {
       setIsGeneratingLink(false);
@@ -167,6 +176,13 @@ export function ClientContractForm({ client }: ClientContractFormProps) {
           <p className="text-sm text-gray-500">
             Ainda não há um formulário de contrato para este cliente. Gere um link para que o cliente possa preencher os dados.
           </p>
+          
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
           <Button
             onClick={handleCreateFormLink}
             disabled={isGeneratingLink}

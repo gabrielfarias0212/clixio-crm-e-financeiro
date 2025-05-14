@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ContractFormSubmission } from "@/utils/types";
+import { ContractFormSubmission, ContractFormInput } from "@/utils/types";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
@@ -133,8 +133,35 @@ export default function ContractForm() {
 
     try {
       setIsSubmitting(true);
-      // Fix: Make sure all required fields are passed to submitContractForm
-      const success = await submitContractForm(token, values);
+      
+      // Create a properly typed input object from the form values
+      // This ensures all required fields are present
+      const formInput: ContractFormInput = {
+        brideName: values.brideName,
+        groomName: values.groomName,
+        brideId: values.brideId,
+        brideCpf: values.brideCpf,
+        contactPhone: values.contactPhone,
+        contactEmail: values.contactEmail,
+        completeAddress: values.completeAddress,
+        eventDate: values.eventDate,
+        eventTime: values.eventTime,
+        eventLocation: values.eventLocation,
+        eventAddress: values.eventAddress,
+        contractedPackage: values.contractedPackage,
+        hasExclusivity: values.hasExclusivity,
+        totalValue: values.totalValue,
+        paymentMethod: values.paymentMethod,
+        acceptsTerms: values.acceptsTerms,
+        // Optional fields
+        ceremonialTeam: values.ceremonialTeam,
+        installmentsInfo: values.installmentsInfo,
+        finalPaymentDate: values.finalPaymentDate,
+        observations: values.observations,
+        allowsPortfolioUsage: values.allowsPortfolioUsage
+      };
+      
+      const success = await submitContractForm(token, formInput);
       
       if (success) {
         setSubmitted(true);

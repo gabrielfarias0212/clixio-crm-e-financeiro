@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { format, parse, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
@@ -13,12 +13,12 @@ export function useCalendarPage(clients: Client[]) {
   const [addEventOpen, setAddEventOpen] = useState(false);
   const { events } = useCalendarEvents();
   
-  // Filter clients with wedding dates
+  // Cache de clientes com datas de casamento para melhorar performance
   const clientsWithWeddingDates = useMemo(() => 
     clients.filter(client => client.weddingDate !== null) as (Client & { weddingDate: string })[],
   [clients]);
 
-  // Get current month and year for header display
+  // Get current month and year for header display - otimizado com memoization
   const currentMonthYear = useMemo(() => {
     if (!date) return "";
     
@@ -31,8 +31,10 @@ export function useCalendarPage(clients: Client[]) {
     }
   }, [date]);
 
-  // Group clients by date
+  // Group clients by date - otimizado com memoization
   const clientsByDate = useMemo(() => {
+    if (clientsWithWeddingDates.length === 0) return {};
+    
     const result: Record<string, Client[]> = {};
     
     clientsWithWeddingDates.forEach(client => {
@@ -53,9 +55,14 @@ export function useCalendarPage(clients: Client[]) {
     return result;
   }, [clientsWithWeddingDates]);
 
-  // Get all event dates (client events + calendar events)
+  // Get all event dates (client events + calendar events) - otimizado com memoization
   const eventDates = useMemo(() => {
+    if (events.length === 0 && Object.keys(clientsByDate).length === 0) {
+      return [];
+    }
+    
     const dates: Date[] = [];
+    const dateMap = new Map<string, Date>();
     
     // Add client wedding dates
     Object.keys(clientsByDate).forEach(dateStr => {
@@ -67,7 +74,11 @@ export function useCalendarPage(clients: Client[]) {
           
           // Make sure it's valid before adding
           if (!isNaN(eventDate.getTime())) {
-            dates.push(eventDate);
+            const key = dateStr;
+            if (!dateMap.has(key)) {
+              dateMap.set(key, eventDate);
+              dates.push(eventDate);
+            }
           }
         }
       } catch (error) {
@@ -79,20 +90,20 @@ export function useCalendarPage(clients: Client[]) {
     events.forEach(event => {
       // Convert string date to Date object
       const eventDate = stringToDate(event.date);
-      if (eventDate && !isNaN(eventDate.getTime()) && 
-          !dates.some(d => 
-            d.getFullYear() === eventDate.getFullYear() && 
-            d.getMonth() === eventDate.getMonth() &&
-            d.getDate() === eventDate.getDate())) {
-        dates.push(eventDate);
+      if (eventDate && !isNaN(eventDate.getTime())) {
+        const key = normalizeDate(eventDate);
+        if (!dateMap.has(key)) {
+          dateMap.set(key, eventDate);
+          dates.push(eventDate);
+        }
       }
     });
     
     return dates;
   }, [clientsByDate, events]);
-
-  // Get selected day's clients and events
-  const selectedDayItems = useMemo(() => {
+  
+  // Função otimizada para obter eventos do dia selecionado
+  const getSelectedDayItems = useCallback(() => {
     if (!date) return { clients: [], events: [] };
     
     try {
@@ -114,6 +125,9 @@ export function useCalendarPage(clients: Client[]) {
       return { clients: [], events: [] };
     }
   }, [date, clientsByDate, events]);
+
+  // Get selected day's clients and events - usando a função otimizada
+  const selectedDayItems = useMemo(() => getSelectedDayItems(), [getSelectedDayItems]);
 
   return {
     date,

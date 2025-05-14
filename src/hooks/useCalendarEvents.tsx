@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useState, createContext, useContext, ReactNode } from "react";
 import { CalendarEvent } from "@/utils/types";
 import { toast } from "@/hooks/use-toast";
@@ -8,6 +9,7 @@ import {
   deleteCalendarEvent 
 } from "@/utils/supabase/calendar-events";
 import { migrateLocalEventsToDatabase } from "@/utils/migrateLocalEvents";
+import { hasLocalStorageEvents } from "@/utils/dates";
 
 interface CalendarEventsContextProps {
   events: CalendarEvent[];
@@ -33,13 +35,39 @@ const CalendarEventsContext = createContext<CalendarEventsContextProps>({
 
 export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [initialized, setInitialized] = useState<boolean>(false);
+  
+  // Carregar eventos do cache primeiro, se disponível
+  useEffect(() => {
+    const loadCachedEvents = () => {
+      const cachedEvents = sessionStorage.getItem('cachedCalendarEvents');
+      if (cachedEvents) {
+        try {
+          setEvents(JSON.parse(cachedEvents));
+          // Ainda precisamos sincronizar com o banco, mas não precisamos mostrar loading
+          setInitialized(true);
+          return true;
+        } catch (error) {
+          console.error("Erro ao carregar eventos do cache", error);
+        }
+      }
+      return false;
+    };
+
+    if (!loadCachedEvents()) {
+      setLoading(true);
+    }
+  }, []);
   
   // Migrate local events to database when component mounts
   useEffect(() => {
     const doMigration = async () => {
       try {
-        await migrateLocalEventsToDatabase();
+        // Só migra se houver eventos locais
+        if (hasLocalStorageEvents()) {
+          await migrateLocalEventsToDatabase();
+        }
       } catch (error) {
         console.error("Error migrating local events to database", error);
       }
@@ -50,21 +78,27 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   
   // Load events from Supabase on component mount
   const loadEvents = useCallback(async () => {
-    setLoading(true);
+    if (!initialized) {
+      setLoading(true);
+    }
     
     try {
       // Set a timeout to ensure loading state doesn't stay indefinitely
       const timeoutId = setTimeout(() => {
         setLoading(false);
-      }, 5000); // 5 seconds timeout as a fallback
+      }, 3000); // Reduzido para 3 segundos
       
       const fetchedEvents = await fetchCalendarEvents();
       
       // Clear timeout if fetch completes successfully
       clearTimeout(timeoutId);
       
+      // Salvar no cache para carregamentos futuros
+      sessionStorage.setItem('cachedCalendarEvents', JSON.stringify(fetchedEvents));
+      
       setEvents(fetchedEvents);
       setLoading(false);
+      setInitialized(true);
     } catch (error) {
       console.error("Failed to fetch calendar events from Supabase", error);
       toast({
@@ -73,8 +107,9 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
         variant: "destructive"
       });
       setLoading(false); // Ensure loading is set to false even on error
+      setInitialized(true);
     }
-  }, []);
+  }, [initialized]);
   
   useEffect(() => {
     loadEvents();
@@ -88,6 +123,9 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
       if (createdEvent) {
         // Update local state
         setEvents(prev => [...prev, createdEvent]);
+        
+        // Atualizar cache
+        sessionStorage.setItem('cachedCalendarEvents', JSON.stringify([...events, createdEvent]));
         return;
       }
       
@@ -100,7 +138,7 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
         variant: "destructive"
       });
     }
-  }, []);
+  }, [events]);
   
   const updateEvent = useCallback(async (updatedEvent: CalendarEvent) => {
     try {
@@ -109,11 +147,14 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
       
       if (result) {
         // Update local state
-        setEvents(prev => 
-          prev.map(event => 
-            event.id === updatedEvent.id ? updatedEvent : event
-          )
+        const updatedEvents = events.map(event => 
+          event.id === updatedEvent.id ? updatedEvent : event
         );
+        
+        setEvents(updatedEvents);
+        
+        // Atualizar cache
+        sessionStorage.setItem('cachedCalendarEvents', JSON.stringify(updatedEvents));
         return;
       }
       
@@ -126,7 +167,7 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
         variant: "destructive"
       });
     }
-  }, []);
+  }, [events]);
   
   const deleteEvent = useCallback(async (eventId: string) => {
     try {
@@ -135,7 +176,11 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
       
       if (success) {
         // Update local state
-        setEvents(prev => prev.filter(event => event.id !== eventId));
+        const updatedEvents = events.filter(event => event.id !== eventId);
+        setEvents(updatedEvents);
+        
+        // Atualizar cache
+        sessionStorage.setItem('cachedCalendarEvents', JSON.stringify(updatedEvents));
         return;
       }
       
@@ -148,7 +193,7 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
         variant: "destructive"
       });
     }
-  }, []);
+  }, [events]);
   
   const getEventById = useCallback(
     (eventId: string) => events.find(event => event.id === eventId),

@@ -12,6 +12,7 @@ import { useCalendarPage } from "@/hooks/useCalendarPage";
 import { CalendarEvent } from "@/utils/types";
 import { Loader2 } from "lucide-react";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CalendarPage() {
   const navigate = useNavigate();
@@ -35,17 +36,14 @@ export default function CalendarPage() {
   // Set a timeout to prevent showing loading indefinitely
   useEffect(() => {
     document.title = "Calendário | Wedding CRM";
-    // Refresh events when page loads to ensure we have the latest data
-    refreshEvents();
     
-    // Add a timeout of 8 seconds to force hide the loading state
-    // This ensures users won't see a loading indicator forever if something goes wrong
+    // Add a timeout of 3 seconds to force hide the loading state
     const timer = setTimeout(() => {
       setLoadingTimeout(true);
-    }, 8000);
+    }, 3000);
     
     return () => clearTimeout(timer);
-  }, [refreshEvents]);
+  }, []);
   
   const handleOpenEditEvent = (event: CalendarEvent) => {
     setEditingEvent(event);
@@ -74,15 +72,15 @@ export default function CalendarPage() {
           setAddEventOpen={setAddEventOpen}
         />
         
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
-            <span className="ml-2 text-lg text-gray-600">Carregando calendário...</span>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Calendar Grid */}
-            <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Calendar Grid */}
+          <div className="lg:col-span-2">
+            {loading ? (
+              <div className="bg-white rounded-lg shadow-sm p-4">
+                <Skeleton className="h-10 w-3/4 mb-4" />
+                <Skeleton className="h-64 w-full" />
+              </div>
+            ) : (
               <CalendarGrid 
                 date={date}
                 setDate={setDate}
@@ -93,26 +91,44 @@ export default function CalendarPage() {
                 clients={clients}
                 onClientClick={(clientId) => navigate(`/clients/${clientId}`)}
               />
-            </div>
-            
-            {/* Events Sidebar */}
-            <div className="lg:col-span-1">
+            )}
+          </div>
+          
+          {/* Events Sidebar */}
+          <div className="lg:col-span-1">
+            {loading ? (
+              <div className="bg-white rounded-lg shadow-sm p-4">
+                <Skeleton className="h-8 w-1/2 mb-4" />
+                <Skeleton className="h-12 w-full mb-2" />
+                <Skeleton className="h-12 w-full mb-2" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : (
               <DayEventsSidebar 
                 date={date}
                 selectedDayItems={selectedDayItems}
                 setAddEventOpen={setAddEventOpen}
                 openEditEvent={handleOpenEditEvent}
               />
-            </div>
+            )}
           </div>
-        )}
+        </div>
         
-        {/* Upcoming Events Section - Only show if we have data */}
-        {!loading && (
-          <div className="mt-6">
-            <UpcomingEvents clients={clients} loading={loading} />
-          </div>
-        )}
+        {/* Upcoming Events Section - Show skeleton while loading */}
+        <div className="mt-6">
+          {loading ? (
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <Skeleton className="h-8 w-1/3 mb-4" />
+              <div className="space-y-2">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+            </div>
+          ) : (
+            <UpcomingEvents clients={clients} loading={false} />
+          )}
+        </div>
         
         <AddEventDialog 
           open={addEventOpen} 

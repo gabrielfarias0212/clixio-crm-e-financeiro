@@ -1,6 +1,7 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { addMonths, subMonths, format, startOfMonth, 
-  addWeeks, subWeeks, addDays, isSameDay } from 'date-fns';
+  addWeeks, subWeeks, addDays, subDays, isSameDay } from 'date-fns';
 import { useCalendarEvents } from './useCalendarEvents';
 import { CalendarEvent, CalendarViewType } from '@/utils/types';
 import { useClients } from '@/contexts/ClientsContext';
@@ -11,7 +12,7 @@ export function useCalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   
   const { clients } = useClients();
-  const { events, loading } = useCalendarEvents(clients);
+  const { events, loading, addEvent, updateEvent, deleteEvent, refreshEvents } = useCalendarEvents(clients);
   
   // Reset selectedDate when view changes
   useEffect(() => {
@@ -90,6 +91,10 @@ export function useCalendarPage() {
     goToNext,
     goToToday,
     handleDateSelect,
-    selectedEvents
+    selectedEvents,
+    addEvent,
+    updateEvent,
+    deleteEvent,
+    refreshEvents
   };
 }

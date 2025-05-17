@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,7 +25,7 @@ export function DayEventsSidebar({
   setAddEventOpen,
   openEditEvent
 }: DayEventsSidebarProps) {
-  const { deleteEvent, refreshEvents } = useCalendarEvents();
+  const { events, deleteEvent, refreshEvents } = useCalendarEvents();
   const formattedDate = date ? format(date, "EEEE, d 'de' MMMM", { locale: ptBR }) : "";
   
   const handleEditEvent = (event: CalendarEvent) => {
@@ -40,6 +41,7 @@ export function DayEventsSidebar({
     if (confirm("Tem certeza que deseja excluir este evento?")) {
       try {
         await deleteEvent(eventId);
+        await refreshEvents();
         toast({
           title: "Evento excluído",
           description: "O evento foi excluído com sucesso."

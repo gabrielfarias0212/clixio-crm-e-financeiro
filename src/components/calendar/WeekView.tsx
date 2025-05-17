@@ -23,7 +23,7 @@ interface WeekViewProps {
 }
 
 export function WeekView({ date, clients, onClientClick }: WeekViewProps) {
-  const { events } = useCalendarEvents();
+  const { events } = useCalendarEvents(clients);
   const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8am to 8pm
   
   // Calculate start and end of the week

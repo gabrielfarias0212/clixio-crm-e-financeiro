@@ -97,6 +97,8 @@ export interface Client {
   payments: Payment[];
   createdAt: string;
   updatedAt: string;
+  // Add meetingDate for calendar integration
+  meetingDate?: string | null;
 }
 
 export type EventType = 
@@ -105,7 +107,10 @@ export type EventType =
   | 'meeting' 
   | 'photoshoot' 
   | 'delivery' 
-  | 'editing';
+  | 'editing'
+  | 'wedding';  // Added 'wedding' to fix the error
+
+export type CalendarViewType = 'day' | 'week' | 'month';
 
 export type EventColor = 
   | 'blue' 

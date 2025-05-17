@@ -31,6 +31,7 @@ export default function ContractForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ContractFormSubmission | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const form = useForm<ContractFormValues>({
     resolver: zodResolver(contractFormSchema),
@@ -133,6 +134,7 @@ export default function ContractForm() {
 
     try {
       setIsSubmitting(true);
+      setSubmissionError(null);
       
       // Create a properly typed input object from the form values
       // This ensures all required fields are present
@@ -161,13 +163,20 @@ export default function ContractForm() {
         allowsPortfolioUsage: values.allowsPortfolioUsage
       };
       
+      console.log("Submitting form data:", formInput);
+      
       const success = await submitContractForm(token, formInput);
       
       if (success) {
         setSubmitted(true);
+        toast.success("Formulário enviado com sucesso!");
+      } else {
+        setSubmissionError("Houve um erro ao enviar o formulário. Por favor, tente novamente.");
+        toast.error("Falha ao enviar formulário. Tente novamente.");
       }
     } catch (error) {
       console.error("Error submitting form:", error);
+      setSubmissionError("Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
       toast.error("Erro ao enviar formulário");
     } finally {
       setIsSubmitting(false);
@@ -216,6 +225,12 @@ export default function ContractForm() {
         </div>
 
         <div className="p-6">
+          {submissionError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-300 text-red-700 rounded-md">
+              {submissionError}
+            </div>
+          )}
+          
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               {/* Dados do Contratante */}
@@ -683,7 +698,12 @@ export default function ContractForm() {
                   size="lg"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Enviando..." : "Enviar Formulário"}
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Enviando...
+                    </>
+                  ) : "Enviar Formulário"}
                 </Button>
                 <p className="text-sm text-gray-500 mt-2">
                   * Campos obrigatórios

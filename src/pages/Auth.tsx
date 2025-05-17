@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,15 +15,11 @@ export default function Auth() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const {
-    signIn,
-    signUp,
-    user
-  } = useAuth();
+  const { signIn, signUp, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  // If user is already logged in, redirect to dashboard
-  if (user) {
+  // Only redirect after auth is fully initialized and we have a user
+  if (!authLoading && user) {
     return <Navigate to="/" replace />;
   }
   
@@ -33,20 +29,17 @@ export default function Auth() {
     setLoading(true);
     try {
       if (mode === "login") {
-        const {
-          success,
-          error
-        } = await signIn(email, password);
+        const { success, error } = await signIn(email, password);
         if (success) {
-          navigate("/");
+          // Wait a moment before navigating
+          setTimeout(() => {
+            navigate("/");
+          }, 300);
         } else {
           setError(error || "Falha ao fazer login. Verifique suas credenciais.");
         }
       } else {
-        const {
-          success,
-          error
-        } = await signUp(email, password, name);
+        const { success, error } = await signUp(email, password, name);
         if (success) {
           setMode("login");
           setError("Registro bem-sucedido. Por favor, faça login agora.");
@@ -60,6 +53,15 @@ export default function Auth() {
       setLoading(false);
     }
   };
+  
+  // Show loading state while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

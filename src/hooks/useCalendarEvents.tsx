@@ -4,6 +4,38 @@ import { format, parseISO } from 'date-fns';
 import { Client, CalendarEvent } from '@/utils/types';
 import { supabase } from '@/integrations/supabase/client';
 
+// Helper function to convert database event to frontend format
+const mapDatabaseEventToCalendarEvent = (dbEvent: any): CalendarEvent => {
+  return {
+    id: dbEvent.id,
+    title: dbEvent.title,
+    description: dbEvent.description || '',
+    date: dbEvent.date,
+    startTime: dbEvent.start_time, // Map to our frontend property
+    endTime: dbEvent.end_time,     // Map to our frontend property
+    start_time: dbEvent.start_time, // Keep original for database compatibility
+    end_time: dbEvent.end_time,     // Keep original for database compatibility
+    type: dbEvent.type as any,      // Cast to our EventType
+    color: dbEvent.color,
+    clientId: dbEvent.client_id,    // Map to our frontend property
+    client_id: dbEvent.client_id    // Keep original for database compatibility
+  };
+};
+
+// Helper function to convert frontend event to database format
+const mapCalendarEventToDatabase = (event: Omit<CalendarEvent, 'id'>): any => {
+  return {
+    title: event.title,
+    description: event.description,
+    date: event.date,
+    start_time: event.startTime || event.start_time,
+    end_time: event.endTime || event.end_time,
+    type: event.type,
+    color: event.color,
+    client_id: event.clientId || event.client_id
+  };
+};
+
 export function useCalendarEvents(clients: Client[] = []) {
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -21,7 +53,9 @@ export function useCalendarEvents(clients: Client[] = []) {
         }
         
         if (data) {
-          setEvents(data as CalendarEvent[]);
+          // Map database events to our frontend format
+          const mappedEvents = data.map(mapDatabaseEventToCalendarEvent);
+          setEvents(mappedEvents);
         }
       } catch (error) {
         console.error('Error fetching calendar events:', error);
@@ -48,11 +82,14 @@ export function useCalendarEvents(clients: Client[] = []) {
             id: `wedding-${client.id}`,
             title: `Casamento: ${client.name}`,
             date: client.weddingDate,
-            type: 'client',
+            type: 'wedding',
             clientId: client.id,
+            client_id: client.id,
             description: `Casamento de ${client.name}`,
             startTime: client.weddingStartTime || '10:00',
             endTime: client.weddingEndTime || '18:00',
+            start_time: client.weddingStartTime || '10:00',
+            end_time: client.weddingEndTime || '18:00',
             color: 'purple'
           });
         } catch (error) {
@@ -69,9 +106,12 @@ export function useCalendarEvents(clients: Client[] = []) {
             date: client.meetingDate,
             type: 'meeting',
             clientId: client.id,
+            client_id: client.id,
             description: `Reunião com ${client.name}`,
             startTime: '09:00',
             endTime: '10:00',
+            start_time: '09:00',
+            end_time: '10:00',
             color: 'blue'
           });
         } catch (error) {
@@ -91,16 +131,21 @@ export function useCalendarEvents(clients: Client[] = []) {
   // CRUD operations for events
   const addEvent = async (eventData: Omit<CalendarEvent, 'id'>) => {
     try {
+      // Convert to database format before inserting
+      const dbEventData = mapCalendarEventToDatabase(eventData);
+      
       const { data, error } = await supabase
         .from('calendar_events')
-        .insert(eventData)
+        .insert(dbEventData)
         .select()
         .single();
         
       if (error) throw error;
       
-      setEvents(prev => [...prev, data as CalendarEvent]);
-      return data;
+      // Convert back to frontend format for state update
+      const newEvent = mapDatabaseEventToCalendarEvent(data);
+      setEvents(prev => [...prev, newEvent]);
+      return newEvent;
     } catch (error) {
       console.error('Error adding calendar event:', error);
       throw error;
@@ -109,17 +154,22 @@ export function useCalendarEvents(clients: Client[] = []) {
   
   const updateEvent = async (eventData: CalendarEvent) => {
     try {
+      // Convert to database format before updating
+      const dbEventData = mapCalendarEventToDatabase(eventData);
+      
       const { data, error } = await supabase
         .from('calendar_events')
-        .update(eventData)
+        .update(dbEventData)
         .eq('id', eventData.id)
         .select()
         .single();
         
       if (error) throw error;
       
-      setEvents(prev => prev.map(e => e.id === eventData.id ? data as CalendarEvent : e));
-      return data;
+      // Convert back to frontend format for state update
+      const updatedEvent = mapDatabaseEventToCalendarEvent(data);
+      setEvents(prev => prev.map(e => e.id === eventData.id ? updatedEvent : e));
+      return updatedEvent;
     } catch (error) {
       console.error('Error updating calendar event:', error);
       throw error;
@@ -153,7 +203,9 @@ export function useCalendarEvents(clients: Client[] = []) {
       if (error) throw error;
       
       if (data) {
-        setEvents(data as CalendarEvent[]);
+        // Map database events to our frontend format
+        const mappedEvents = data.map(mapDatabaseEventToCalendarEvent);
+        setEvents(mappedEvents);
       }
     } catch (error) {
       console.error('Error refreshing calendar events:', error);

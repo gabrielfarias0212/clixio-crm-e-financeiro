@@ -97,7 +97,6 @@ export interface Client {
   payments: Payment[];
   createdAt: string;
   updatedAt: string;
-  // Add meetingDate for calendar integration
   meetingDate?: string | null;
 }
 
@@ -108,7 +107,7 @@ export type EventType =
   | 'photoshoot' 
   | 'delivery' 
   | 'editing'
-  | 'wedding';  // Added 'wedding' to fix the error
+  | 'wedding';
 
 export type CalendarViewType = 'day' | 'week' | 'month';
 
@@ -120,21 +119,25 @@ export type EventColor =
   | 'purple' 
   | 'gray';
 
+// Update CalendarEvent interface to match the database schema
 export interface CalendarEvent {
   id: string;
   title: string;
   description: string;
   date: string;
-  startTime: string;
-  endTime: string;
+  startTime?: string; // Renamed from start_time
+  endTime?: string;   // Renamed from end_time
+  start_time?: string; // For database compatibility
+  end_time?: string;   // For database compatibility
   type: EventType;
   color: EventColor;
-  clientId?: string;
+  clientId?: string;   // For our frontend code
+  client_id?: string;  // For database compatibility
+  created_at?: string; // For database compatibility
 }
 
-// Update the AlertItem type in the same file to include the 'due_payment' type
 export interface AlertItem {
-  type: "task" | "payment" | "due_payment" | "event";  // Includes all required types
+  type: "task" | "payment" | "due_payment" | "event";
   title: string;
   description: string;
   client: Client;

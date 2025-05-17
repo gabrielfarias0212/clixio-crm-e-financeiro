@@ -23,8 +23,9 @@ export function MonthView({ date, events, onDateClick, selectedDate, loading }: 
   const startDay = firstDayOfMonth.getDay(); // 0 = Sunday, 1 = Monday, etc.
   const endDay = 6 - lastDayOfMonth.getDay();
   
+  // Fix the reverse error by creating an array of days properly
   const prevMonthDays = Array.from({ length: startDay }, (_, i) => 
-    addDays(firstDayOfMonth, -(i + 1)).reverse
+    addDays(firstDayOfMonth, -(startDay - i))
   );
   
   const nextMonthDays = Array.from({ length: endDay }, (_, i) => 

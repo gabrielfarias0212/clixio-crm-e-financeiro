@@ -4,7 +4,6 @@ import { ClientInfo } from "@/components/client-detail/ClientInfo";
 import { FinancialInfo } from "@/components/client-detail/FinancialInfo";
 import { ClientNotes } from "@/components/client-detail/ClientNotes";
 import { ClientPayments } from "@/components/ClientPayments";
-import { ClientContractForm } from "@/components/client-detail/ClientContractForm";
 
 interface ClientDetailsProps {
   client: Client;
@@ -14,9 +13,6 @@ interface ClientDetailsProps {
 export function ClientDetails({ client, onUpdate }: ClientDetailsProps) {
   return (
     <div className="space-y-8">
-      {/* Formulário de Contrato */}
-      <ClientContractForm client={client} />
-      
       {/* Informações gerais */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <ClientInfo client={client} />

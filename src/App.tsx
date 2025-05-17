@@ -24,6 +24,7 @@ export default function App() {
     <ThemeProvider defaultTheme="system" storageKey="ui-theme">
       <Router>
         <AuthProvider>
+          {/* Ensure ClientsProvider wraps all routes that need access to clients data */}
           <ClientsProvider>
             <TransactionsProvider>
               <TransactionDataProvider>

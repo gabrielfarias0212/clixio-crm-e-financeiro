@@ -220,6 +220,104 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_form_submissions: {
+        Row: {
+          accepts_terms: boolean
+          access_token: string
+          allows_portfolio_usage: boolean | null
+          bride_cpf: string
+          bride_id: string
+          bride_name: string
+          ceremonial_team: string | null
+          client_id: string | null
+          complete_address: string
+          contact_email: string
+          contact_phone: string
+          contracted_package: string
+          created_at: string | null
+          event_address: string
+          event_date: string
+          event_location: string
+          event_time: string
+          final_payment_date: string | null
+          form_status: string | null
+          groom_name: string
+          has_exclusivity: boolean | null
+          id: string
+          installments_info: string | null
+          observations: string | null
+          payment_method: string
+          total_value: number
+          updated_at: string | null
+        }
+        Insert: {
+          accepts_terms: boolean
+          access_token: string
+          allows_portfolio_usage?: boolean | null
+          bride_cpf: string
+          bride_id: string
+          bride_name: string
+          ceremonial_team?: string | null
+          client_id?: string | null
+          complete_address: string
+          contact_email: string
+          contact_phone: string
+          contracted_package: string
+          created_at?: string | null
+          event_address: string
+          event_date: string
+          event_location: string
+          event_time: string
+          final_payment_date?: string | null
+          form_status?: string | null
+          groom_name: string
+          has_exclusivity?: boolean | null
+          id?: string
+          installments_info?: string | null
+          observations?: string | null
+          payment_method: string
+          total_value: number
+          updated_at?: string | null
+        }
+        Update: {
+          accepts_terms?: boolean
+          access_token?: string
+          allows_portfolio_usage?: boolean | null
+          bride_cpf?: string
+          bride_id?: string
+          bride_name?: string
+          ceremonial_team?: string | null
+          client_id?: string | null
+          complete_address?: string
+          contact_email?: string
+          contact_phone?: string
+          contracted_package?: string
+          created_at?: string | null
+          event_address?: string
+          event_date?: string
+          event_location?: string
+          event_time?: string
+          final_payment_date?: string | null
+          form_status?: string | null
+          groom_name?: string
+          has_exclusivity?: boolean | null
+          id?: string
+          installments_info?: string | null
+          observations?: string | null
+          payment_method?: string
+          total_value?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_form_submissions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           amount: number | null
@@ -946,7 +1044,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_contract_form_for_client: {
+        Args: { client_id_param: string }
+        Returns: string
+      }
+      generate_unique_token: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

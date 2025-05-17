@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Navigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,16 +15,21 @@ export default function Auth() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const location = useLocation();
   const {
     signIn,
     signUp,
-    user
+    user,
+    loading: authLoading
   } = useAuth();
   const navigate = useNavigate();
-
-  // If user is already logged in, redirect to dashboard
-  if (user) {
-    return <Navigate to="/" replace />;
+  
+  // Only redirect if auth is not still loading and we have a user
+  // This prevents redirection loops during auth state initialization
+  if (!authLoading && user) {
+    // Get the redirect path from location state or default to '/'
+    const from = location.state?.from?.pathname || "/";
+    return <Navigate to={from} replace />;
   }
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,7 +43,7 @@ export default function Auth() {
           error
         } = await signIn(email, password);
         if (success) {
-          navigate("/");
+          // Navigation will happen automatically via the redirect above
         } else {
           setError(error || "Falha ao fazer login. Verifique suas credenciais.");
         }
@@ -92,7 +97,7 @@ export default function Auth() {
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" disabled={loading} className="w-full rounded-none bg-green-700 hover:bg-green-600 text-white">
+            <Button type="submit" disabled={loading || authLoading} className="w-full rounded-none bg-green-700 hover:bg-green-600 text-white">
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

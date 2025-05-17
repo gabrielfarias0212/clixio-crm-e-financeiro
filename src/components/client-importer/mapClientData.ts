@@ -54,6 +54,12 @@ export function mapClientData(row: any): Partial<Client> {
     'date', 'Date', 'event date', 'Event Date', 'wedding date', 'Wedding Date'
   ]);
 
+  // Get meeting date
+  const rawMeetingDate = getProperty([
+    'data reunião', 'Data Reunião', 'data da reunião', 'Data da Reunião',
+    'meeting date', 'Meeting Date', 'reunião', 'Reunião'
+  ]);
+
   // Get contract value
   const rawContractValue = getProperty([
     'valor', 'Valor', 'valor do contrato', 'Valor do Contrato', 'valor contrato', 'Valor Contrato',
@@ -64,6 +70,12 @@ export function mapClientData(row: any): Partial<Client> {
   const rawDownPayment = getProperty([
     'entrada', 'Entrada', 'valor de entrada', 'Valor de Entrada', 'valor entrada', 'Valor Entrada',
     'down payment', 'Down Payment', 'sinal', 'Sinal'
+  ]);
+
+  // Get event location
+  const eventLocation = getProperty([
+    'local', 'Local', 'local do evento', 'Local do Evento', 'venue', 'Venue',
+    'location', 'Location', 'endereço', 'Endereço', 'address', 'Address'
   ]);
 
   // Get status
@@ -83,6 +95,12 @@ export function mapClientData(row: any): Partial<Client> {
     'category', 'Category', 'event type', 'Event Type'
   ]);
 
+  // Get contract link
+  const contractLink = getProperty([
+    'link contrato', 'Link Contrato', 'contrato', 'Contrato', 'contract', 'Contract',
+    'contract link', 'Contract Link'
+  ]);
+
   // Get notes
   const notes = getProperty([
     'notas', 'Notas', 'observações', 'Observações', 'obs', 'Obs',
@@ -97,6 +115,13 @@ export function mapClientData(row: any): Partial<Client> {
   if (rawWeddingDate) {
     const date = normalizeDate(rawWeddingDate);
     weddingDate = date ? dateToString(date) : null;
+  }
+
+  // Parse meeting date as string
+  let meetingDate: string | null = null;
+  if (rawMeetingDate) {
+    const date = normalizeDate(rawMeetingDate);
+    meetingDate = date ? dateToString(date) : null;
   }
 
   // Parse contract value
@@ -141,6 +166,9 @@ export function mapClientData(row: any): Partial<Client> {
     status,
     nextAction,
     eventCategory,
+    eventLocation: eventLocation || '',
+    contractLink: contractLink || '',
+    meetingDate,
     notes: notes || ''
   };
 }

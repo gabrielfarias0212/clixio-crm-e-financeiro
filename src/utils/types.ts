@@ -1,4 +1,3 @@
-
 export type ClientStatus = 
   | "orçamento enviado" 
   | "follow-up" 
@@ -28,7 +27,7 @@ export type TransactionCategory =
 
 export type EventCategory = 
   | "Casamento"
-  | "Aniversario"
+  | "Aniversario" 
   | "Civil"
   | "Ensaio Estudio"
   | "Ensaio externo"
@@ -125,15 +124,15 @@ export interface CalendarEvent {
   title: string;
   description: string;
   date: string;
-  startTime?: string; // Renamed from start_time
-  endTime?: string;   // Renamed from end_time
-  start_time?: string; // For database compatibility
-  end_time?: string;   // For database compatibility
+  startTime?: string; 
+  endTime?: string;  
+  start_time?: string; // Para compatibilidade com o banco de dados
+  end_time?: string;   // Para compatibilidade com o banco de dados
   type: EventType;
   color: EventColor;
-  clientId?: string;   // For our frontend code
-  client_id?: string;  // For database compatibility
-  created_at?: string; // For database compatibility
+  clientId?: string;   // Para nosso código frontend
+  client_id?: string;  // Para compatibilidade com o banco de dados
+  created_at?: string; // Para compatibilidade com o banco de dados
 }
 
 export interface AlertItem {

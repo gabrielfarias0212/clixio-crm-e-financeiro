@@ -84,7 +84,11 @@ function App() {
                   <CashFlow />
                 </TransactionsProvider>
               } />
-              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/calendar" element={
+                <ClientsProvider>
+                  <Calendar />
+                </ClientsProvider>
+              } />
               <Route path="/import-clients" element={
                 <ClientsProvider>
                   <ImportClients />

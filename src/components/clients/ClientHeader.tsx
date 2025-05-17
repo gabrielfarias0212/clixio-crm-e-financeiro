@@ -20,6 +20,11 @@ export function ClientHeader({
 }: ClientHeaderProps) {
   const navigate = useNavigate();
 
+  const handleImportClick = () => {
+    console.log("Import button clicked, navigating to /clients/import");
+    navigate("/clients/import");
+  };
+
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
       <div>
@@ -41,6 +46,7 @@ export function ClientHeader({
             onClick={onClearData}
             disabled={clearingData}
             className="flex items-center gap-1 text-red-500 hover:text-red-700 hover:bg-red-50"
+            type="button"
           >
             <Trash2 className="h-4 w-4" />
             {clearingData ? "Limpando..." : "Limpar Dados"}
@@ -48,14 +54,16 @@ export function ClientHeader({
         )}
         <Button 
           variant="outline"
-          onClick={() => navigate("/clients/import")}
+          onClick={handleImportClick}
           className="flex items-center gap-1"
+          type="button"
         >
           <Upload className="h-4 w-4" />
           Importar Clientes
         </Button>
         <Button 
           onClick={() => navigate("/clients/add")}
+          type="button"
         >
           Adicionar Cliente
         </Button>

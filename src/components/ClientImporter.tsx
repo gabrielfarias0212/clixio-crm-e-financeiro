@@ -34,6 +34,7 @@ export function ClientImporter({ data, fileName, onReset }: ClientImporterProps)
   } = useClientImporter(data);
 
   const finishImport = () => {
+    console.log("Finishing import, navigating to /clients");
     navigate("/clients");
   };
 

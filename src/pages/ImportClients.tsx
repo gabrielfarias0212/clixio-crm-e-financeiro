@@ -56,6 +56,7 @@ export default function ImportClients() {
       }
       
       setParsedData(jsonData as any[]);
+      console.log("Parsed Excel data:", jsonData);
     } catch (err) {
       console.error('Error parsing Excel file:', err);
       setError('Erro ao analisar o arquivo. Verifique se o formato é válido.');
@@ -128,6 +129,7 @@ export default function ImportClients() {
                 variant="outline" 
                 onClick={downloadExampleFile}
                 className="flex items-center gap-2"
+                type="button"
               >
                 <ArrowDownToLine className="h-4 w-4" />
                 Baixar Modelo de Importação
@@ -155,6 +157,7 @@ export default function ImportClients() {
                   variant="outline"
                   onClick={() => document.getElementById('file-input')?.click()}
                   className="mx-auto"
+                  type="button"
                 >
                   <Upload className="h-4 w-4 mr-2" />
                   Selecionar Arquivo

@@ -12,7 +12,7 @@ export function useCalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   
   const { clients } = useClients();
-  const { events, loading, addEvent, updateEvent, deleteEvent, refreshEvents } = useCalendarEvents(clients);
+  const { events, loading, error, addEvent, updateEvent, deleteEvent, refreshEvents } = useCalendarEvents(clients);
   
   // Reset selectedDate when view changes
   useEffect(() => {
@@ -75,8 +75,19 @@ export function useCalendarPage() {
     if (!selectedDate) return [];
     
     return events.filter(event => {
-      const eventDate = new Date(event.date);
-      return isSameDay(eventDate, selectedDate);
+      try {
+        // Safely handle the event date
+        if (!event.date) return false;
+        
+        const eventDate = typeof event.date === 'string' 
+          ? new Date(event.date) 
+          : event.date;
+          
+        return isSameDay(eventDate, selectedDate);
+      } catch (error) {
+        console.error("Error filtering event:", error);
+        return false;
+      }
     });
   }, [selectedDate, events]);
   
@@ -87,6 +98,7 @@ export function useCalendarPage() {
     selectedDate,
     events,
     loading,
+    error,
     goToPrevious,
     goToNext,
     goToToday,

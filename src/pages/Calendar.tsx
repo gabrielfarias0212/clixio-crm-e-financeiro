@@ -20,6 +20,7 @@ export default function Calendar() {
     selectedDate,
     events,
     loading,
+    error,
     setView,
     goToToday,
     goToPrevious,
@@ -40,10 +41,15 @@ export default function Calendar() {
   
   // Refresh events when the page loads
   useEffect(() => {
-    refreshEvents().catch(error => {
-      console.error("Error refreshing events:", error);
-      toast.error("Erro ao carregar eventos");
-    });
+    // Add a timeout to prevent blocking the UI rendering
+    const loadEvents = setTimeout(() => {
+      refreshEvents().catch(error => {
+        console.error("Error refreshing events:", error);
+        toast.error("Erro ao carregar eventos");
+      });
+    }, 100);
+    
+    return () => clearTimeout(loadEvents);
   }, [refreshEvents]);
   
   const openEditEvent = (event: any) => {
@@ -105,23 +111,29 @@ export default function Calendar() {
         
         <div className="mt-6 flex">
           <div className="flex-1 border rounded-lg bg-card shadow-sm overflow-hidden">
-            {view === 'month' && (
+            {loading ? (
+              <div className="flex justify-center items-center h-96">
+                <p>Carregando calendário...</p>
+              </div>
+            ) : error ? (
+              <div className="flex justify-center items-center h-96">
+                <p className="text-red-500">Erro ao carregar dados. Tente novamente.</p>
+              </div>
+            ) : view === 'month' ? (
               <MonthView 
                 date={currentDate}
                 events={events}
                 onDateClick={handleDateSelect}
                 selectedDate={selectedDate}
-                loading={loading}
+                loading={false}
               />
-            )}
-            {view === 'week' && (
+            ) : view === 'week' ? (
               <WeekView 
                 date={currentDate}
                 clients={clients}
                 onClientClick={(clientId) => console.log("Client clicked:", clientId)}
               />
-            )}
-            {view === 'day' && (
+            ) : (
               <DayView 
                 date={selectedDate || currentDate}
                 clients={clients}

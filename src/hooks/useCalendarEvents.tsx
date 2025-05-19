@@ -1,6 +1,5 @@
 
 import { useState, useEffect, useMemo } from 'react';
-import { format, parseISO } from 'date-fns';
 import { Client, CalendarEvent } from '@/utils/types';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -39,31 +38,42 @@ const mapCalendarEventToDatabase = (event: Omit<CalendarEvent, 'id'>): any => {
 export function useCalendarEvents(clients: Client[] = []) {
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [error, setError] = useState<Error | null>(null);
   
   // Fetch events from database
-  useEffect(() => {
-    async function fetchEvents() {
-      try {
-        const { data, error } = await supabase
-          .from('calendar_events')
-          .select('*');
-          
-        if (error) {
-          throw error;
-        }
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .select('*');
         
-        if (data) {
-          // Map database events to our frontend format
-          const mappedEvents = data.map(mapDatabaseEventToCalendarEvent);
-          setEvents(mappedEvents);
-        }
-      } catch (error) {
-        console.error('Error fetching calendar events:', error);
-      } finally {
-        setLoading(false);
+      if (error) {
+        throw error;
       }
+      
+      if (data) {
+        // Map database events to our frontend format
+        const mappedEvents = data.map(mapDatabaseEventToCalendarEvent);
+        setEvents(mappedEvents);
+      } else {
+        // If no data, set empty array to prevent loading state from hanging
+        setEvents([]);
+      }
+    } catch (error) {
+      console.error('Error fetching calendar events:', error);
+      setError(error as Error);
+      // Set empty events array to prevent the loading state from hanging
+      setEvents([]);
+    } finally {
+      setLoading(false);
     }
-    
+  };
+  
+  // Initial fetch
+  useEffect(() => {
     fetchEvents();
   }, []);
   
@@ -194,29 +204,13 @@ export function useCalendarEvents(clients: Client[] = []) {
   };
   
   const refreshEvents = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('calendar_events')
-        .select('*');
-        
-      if (error) throw error;
-      
-      if (data) {
-        // Map database events to our frontend format
-        const mappedEvents = data.map(mapDatabaseEventToCalendarEvent);
-        setEvents(mappedEvents);
-      }
-    } catch (error) {
-      console.error('Error refreshing calendar events:', error);
-    } finally {
-      setLoading(false);
-    }
+    return fetchEvents();
   };
   
   return { 
     events: allEvents, 
     loading,
+    error,
     addEvent,
     updateEvent,
     deleteEvent,

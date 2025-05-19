@@ -37,14 +37,14 @@ export function PaymentHistory({
       // Fixed: Check if date is a string before attempting conversion
       if (typeof a.date === 'string') {
         dateA = stringToDate(a.date);
-      } else if (a.date && typeof a.date.getTime === 'function') {
-        dateA = a.date as unknown as Date;
+      } else if (a.date && typeof a.date === 'object' && 'getTime' in a.date) {
+        dateA = a.date as Date;
       }
       
       if (typeof b.date === 'string') {
         dateB = stringToDate(b.date);
-      } else if (b.date && typeof b.date.getTime === 'function') {
-        dateB = b.date as unknown as Date;
+      } else if (b.date && typeof b.date === 'object' && 'getTime' in b.date) {
+        dateB = b.date as Date;
       }
       
       // If both dates are valid, compare them

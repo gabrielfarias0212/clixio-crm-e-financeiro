@@ -8,6 +8,7 @@ import {
   normalizeDate,
   normalizePhoneNumber
 } from "./utils/normalizers";
+import { parseBrazilianDate } from "@/utils/dates/parsers";
 import { dateToString } from "@/utils/dateUtils";
 
 /**
@@ -110,18 +111,16 @@ export function mapClientData(row: any): Partial<Client> {
   // Parse values
   const phone = normalizePhoneNumber(rawPhone);
   
-  // Parse wedding date as string
+  // Parse wedding date as string in Brazilian format
   let weddingDate: string | null = null;
   if (rawWeddingDate) {
-    const date = normalizeDate(rawWeddingDate);
-    weddingDate = date ? dateToString(date) : null;
+    weddingDate = parseBrazilianDate(rawWeddingDate);
   }
 
-  // Parse meeting date as string
+  // Parse meeting date as string in Brazilian format
   let meetingDate: string | null = null;
   if (rawMeetingDate) {
-    const date = normalizeDate(rawMeetingDate);
-    meetingDate = date ? dateToString(date) : null;
+    meetingDate = parseBrazilianDate(rawMeetingDate);
   }
 
   // Parse contract value

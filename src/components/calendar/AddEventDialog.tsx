@@ -20,13 +20,15 @@ interface AddEventDialogProps {
   onOpenChange: (open: boolean) => void;
   clients: Client[];
   initialData?: Partial<CalendarEvent>;
+  onSave?: (eventData: CalendarEvent) => Promise<void>; // Add this prop
 }
 
 export function AddEventDialog({ 
   open, 
   onOpenChange, 
   clients,
-  initialData 
+  initialData,
+  onSave 
 }: AddEventDialogProps) {
   const { events, addEvent, updateEvent } = useCalendarEvents(clients);
   const isEditing = !!initialData?.id;
@@ -82,23 +84,29 @@ export function AddEventDialog({
         return;
       }
 
-      if (isEditing && data.id) {
-        await updateEvent(data);
-        toast({
-          title: "Evento atualizado",
-          description: "O evento foi atualizado com sucesso."
-        });
+      if (onSave) {
+        // Use the provided onSave function if it exists
+        await onSave(data);
       } else {
-        // Generate id for new events since we're not using database auto-generation
-        const newEvent = {
-          ...data,
-          id: uuidv4()
-        };
-        await addEvent(newEvent);
-        toast({
-          title: "Evento adicionado",
-          description: "O evento foi adicionado com sucesso ao calendário."
-        });
+        // Default behavior
+        if (isEditing && data.id) {
+          await updateEvent(data);
+          toast({
+            title: "Evento atualizado",
+            description: "O evento foi atualizado com sucesso."
+          });
+        } else {
+          // Generate id for new events since we're not using database auto-generation
+          const newEvent = {
+            ...data,
+            id: uuidv4()
+          };
+          await addEvent(newEvent);
+          toast({
+            title: "Evento adicionado",
+            description: "O evento foi adicionado com sucesso ao calendário."
+          });
+        }
       }
       onOpenChange(false);
       reset();

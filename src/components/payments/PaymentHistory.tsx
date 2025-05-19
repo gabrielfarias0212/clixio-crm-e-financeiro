@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Payment } from "@/utils/types";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { PaymentRow } from "./PaymentRow";
 import { DeletePaymentDialog } from "./DeletePaymentDialog";
 import { EditPaymentDialog } from "./edit/EditPaymentDialog";
@@ -35,16 +34,17 @@ export function PaymentHistory({
       let dateA: Date | null = null;
       let dateB: Date | null = null;
       
+      // Fixed: Check if date is a string before attempting conversion
       if (typeof a.date === 'string') {
         dateA = stringToDate(a.date);
-      } else if (a.date instanceof Date) {
-        dateA = a.date;
+      } else if (a.date && typeof a.date.getTime === 'function') {
+        dateA = a.date as unknown as Date;
       }
       
       if (typeof b.date === 'string') {
         dateB = stringToDate(b.date);
-      } else if (b.date instanceof Date) {
-        dateB = b.date;
+      } else if (b.date && typeof b.date.getTime === 'function') {
+        dateB = b.date as unknown as Date;
       }
       
       // If both dates are valid, compare them

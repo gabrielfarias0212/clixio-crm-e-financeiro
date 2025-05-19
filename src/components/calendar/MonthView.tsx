@@ -4,6 +4,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, addDays, isSameMon
 import { ptBR } from "date-fns/locale";
 import { CalendarEvent } from "@/utils/types";
 import { cn } from "@/lib/utils";
+import { stringToDate } from "@/utils/dates";
 
 interface MonthViewProps {
   date: Date;
@@ -38,8 +39,9 @@ export function MonthView({ date, events, onDateClick, selectedDate, loading }: 
   // Function to get events for a specific day
   const getEventsForDay = (day: Date) => {
     return events.filter(event => {
-      const eventDate = new Date(event.date);
-      return isSameDay(eventDate, day);
+      // Convert string date to Date object for comparison
+      const eventDate = stringToDate(event.date);
+      return eventDate && isSameDay(eventDate, day);
     });
   };
   
@@ -65,7 +67,7 @@ export function MonthView({ date, events, onDateClick, selectedDate, loading }: 
       
       {/* Calendar days */}
       <div className="grid grid-cols-7 gap-px bg-gray-200">
-        {daysInMonth.map((day, index) => {
+        {allDays.map((day, index) => {
           const eventsForDay = getEventsForDay(day);
           const isSelected = selectedDate && isSameDay(day, selectedDate);
           const isCurrentMonth = isSameMonth(day, date);

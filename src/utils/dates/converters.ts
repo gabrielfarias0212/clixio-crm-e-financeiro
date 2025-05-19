@@ -7,7 +7,7 @@ export const normalizeDate = (date: string | Date | null): string => {
   
   // If it's already a string in our standard format, convert it to database format
   if (typeof date === "string") {
-    // Check if it's already in DD/MM/YYYY format
+    // Check if it's in DD/MM/YYYY format (Brazilian format)
     if (date.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
       const [day, month, year] = date.split('/').map(Number);
       return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -33,7 +33,7 @@ export const stringToDate = (dateStr: string | null): Date | null => {
   if (!dateStr) return null;
   
   try {
-    // Check if it's in DD/MM/YYYY format
+    // Check if it's in DD/MM/YYYY format (Brazilian format)
     if (dateStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
       const [day, month, year] = dateStr.split('/').map(Number);
       const date = new Date(year, month - 1, day, 12, 0, 0);

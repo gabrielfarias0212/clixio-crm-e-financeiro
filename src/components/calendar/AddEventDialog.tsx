@@ -13,7 +13,7 @@ import { Client } from "@/utils/types";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { toast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
-import { dateToString } from "@/utils/dates";
+import { dateToString, formatDate } from "@/utils/dates";
 
 interface AddEventDialogProps {
   open: boolean;
@@ -36,7 +36,7 @@ export function AddEventDialog({
       id: '',
       title: '',
       description: '',
-      date: dateToString(new Date()),
+      date: formatDate(new Date()),
       startTime: '10:00',
       endTime: '11:00',
       type: 'custom',
@@ -60,7 +60,7 @@ export function AddEventDialog({
         id: '',
         title: '',
         description: '',
-        date: dateToString(new Date()),
+        date: formatDate(new Date()),
         startTime: '10:00',
         endTime: '11:00',
         type: 'custom',

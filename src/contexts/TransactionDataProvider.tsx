@@ -144,5 +144,5 @@ export function TransactionDataProvider({ children }: { children: React.ReactNod
   );
 }
 
-// Re-export the hook for convenience
+// Export the hook for convenience
 export { useTransactionData } from '@/hooks/useTransactionDataContext';

@@ -6,11 +6,12 @@ import { WeekView } from "@/components/calendar/WeekView";
 import { DayView } from "@/components/calendar/DayView";
 import { DayEventsSidebar } from "@/components/calendar/DayEventsSidebar";
 import { useCalendarPage } from "@/hooks/useCalendarPage";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AddEventDialog } from "@/components/calendar/AddEventDialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useClients } from "@/contexts/ClientsContext";
+import { toast } from "sonner";
 
 export default function Calendar() {
   const {
@@ -37,9 +38,35 @@ export default function Calendar() {
   
   const currentMonthYear = format(currentDate, "MMMM yyyy", { locale: ptBR });
   
+  // Refresh events when the page loads
+  useEffect(() => {
+    refreshEvents().catch(error => {
+      console.error("Error refreshing events:", error);
+      toast.error("Erro ao carregar eventos");
+    });
+  }, [refreshEvents]);
+  
   const openEditEvent = (event: any) => {
     setEditEventData(event);
     setAddEventOpen(true);
+  };
+  
+  const handleEventSave = async (eventData: any) => {
+    try {
+      if (eventData.id) {
+        await updateEvent(eventData);
+        toast.success("Evento atualizado com sucesso");
+      } else {
+        await addEvent(eventData);
+        toast.success("Evento adicionado com sucesso");
+      }
+      setAddEventOpen(false);
+      setEditEventData(null);
+      refreshEvents();
+    } catch (error) {
+      console.error("Error saving event:", error);
+      toast.error("Erro ao salvar evento");
+    }
   };
 
   return (
@@ -107,9 +134,14 @@ export default function Calendar() {
             <DayEventsSidebar 
               date={selectedDate}
               selectedDayItems={{
-                clients: clients.filter(client => 
-                  client.weddingDate === format(selectedDate, 'yyyy-MM-dd')
-                ),
+                clients: clients.filter(client => {
+                  if (!client.weddingDate) return false;
+                  // Format date properly for comparison
+                  const clientDate = client.weddingDate.includes('/')
+                    ? client.weddingDate.split('/').reverse().join('-') // Convert DD/MM/YYYY to YYYY-MM-DD
+                    : client.weddingDate;
+                  return clientDate === format(selectedDate, 'yyyy-MM-dd');
+                }),
                 events: selectedEvents
               }}
               setAddEventOpen={setAddEventOpen}
@@ -123,6 +155,7 @@ export default function Calendar() {
           onOpenChange={setAddEventOpen}
           clients={clients}
           initialData={editEventData}
+          onSave={handleEventSave}
         />
       </div>
     </Layout>

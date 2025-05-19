@@ -7,6 +7,7 @@ import { AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { PaymentRow } from "./PaymentRow";
 import { DeletePaymentDialog } from "./DeletePaymentDialog";
 import { EditPaymentDialog } from "./edit/EditPaymentDialog";
+import { stringToDate } from "@/utils/dateUtils";
 
 interface PaymentHistoryProps {
   payments: Payment[];
@@ -27,14 +28,36 @@ export function PaymentHistory({
   const [paymentToEdit, setPaymentToEdit] = useState<Payment | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Sort payments by date (newest first) - using string comparison instead of Date.getTime()
+  // Sort payments by date (newest first) - using safe comparison
   const sortedPayments = [...payments].sort((a, b) => {
-    // Convert to Date objects for comparison
-    const dateA = typeof a.date === 'string' ? new Date(a.date) : a.date;
-    const dateB = typeof b.date === 'string' ? new Date(b.date) : b.date;
-    
-    // Compare the dates
-    return dateB.getTime() - dateA.getTime();
+    // Convert to Date objects for comparison safely
+    try {
+      let dateA: Date | null = null;
+      let dateB: Date | null = null;
+      
+      if (typeof a.date === 'string') {
+        dateA = stringToDate(a.date);
+      } else if (a.date instanceof Date) {
+        dateA = a.date;
+      }
+      
+      if (typeof b.date === 'string') {
+        dateB = stringToDate(b.date);
+      } else if (b.date instanceof Date) {
+        dateB = b.date;
+      }
+      
+      // If both dates are valid, compare them
+      if (dateA && dateB) {
+        return dateB.getTime() - dateA.getTime();
+      }
+      
+      // Fallback for invalid dates
+      return 0;
+    } catch (error) {
+      console.error("Error sorting payments:", error);
+      return 0;
+    }
   });
   
   const handleDelete = () => {

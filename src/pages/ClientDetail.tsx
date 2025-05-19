@@ -36,6 +36,16 @@ export default function ClientDetail() {
     }
   }, [client, id, clients, navigate]);
 
+  // Update client when clients array changes
+  useEffect(() => {
+    if (id && clients.length > 0) {
+      const updatedClient = clients.find(c => c.id === id);
+      if (updatedClient && JSON.stringify(updatedClient) !== JSON.stringify(client)) {
+        setClient(updatedClient);
+      }
+    }
+  }, [clients, id, client]);
+
   useEffect(() => {
     if (client) {
       document.title = `${client.name} | Wedding CRM`;

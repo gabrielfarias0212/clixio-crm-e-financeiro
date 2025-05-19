@@ -1,9 +1,10 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Transaction } from "@/utils/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowDownCircle, ArrowUpCircle, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { stringToDate } from '@/utils/dateUtils';
 
 interface TransactionSummaryProps {
   transactions: Transaction[];
@@ -20,20 +21,31 @@ export function TransactionSummary({ transactions, className }: TransactionSumma
     thisMonthBalance: 0
   });
 
-  useEffect(() => {
+  // Memoized calculation to improve performance
+  const calculatedSummary = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    const total = transactions.reduce(
+    return transactions.reduce(
       (acc, transaction) => {
-        const amount = transaction.amount;
+        const amount = Number(transaction.amount) || 0;
         
         // Check if transaction is from the current month
-        const transactionDate = new Date(transaction.date);
-        const isCurrentMonth = 
-          transactionDate.getMonth() === currentMonth && 
-          transactionDate.getFullYear() === currentYear;
+        let isCurrentMonth = false;
+        
+        try {
+          if (transaction.date) {
+            const transactionDate = stringToDate(transaction.date);
+            if (transactionDate) {
+              isCurrentMonth = 
+                transactionDate.getMonth() === currentMonth && 
+                transactionDate.getFullYear() === currentYear;
+            }
+          }
+        } catch (err) {
+          console.error("Error parsing date:", transaction.date, err);
+        }
         
         if (transaction.type === "entrada") {
           acc.totalIncome += amount;
@@ -56,13 +68,16 @@ export function TransactionSummary({ transactions, className }: TransactionSumma
         thisMonthExpenses: 0 
       }
     );
-
-    setSummary({
-      ...total,
-      balance: total.totalIncome - total.totalExpenses,
-      thisMonthBalance: total.thisMonthIncome - total.thisMonthExpenses
-    });
   }, [transactions]);
+  
+  // Update summary when calculated values change
+  useEffect(() => {
+    setSummary({
+      ...calculatedSummary,
+      balance: calculatedSummary.totalIncome - calculatedSummary.totalExpenses,
+      thisMonthBalance: calculatedSummary.thisMonthIncome - calculatedSummary.thisMonthExpenses
+    });
+  }, [calculatedSummary]);
 
   // Format currency
   const formatCurrency = (value: number) => {

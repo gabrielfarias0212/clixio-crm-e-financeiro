@@ -10,19 +10,30 @@ import { PlusCircle } from "lucide-react";
 import { TransactionSummary } from "@/components/TransactionSummary";
 import { Transaction, TransactionType } from "@/utils/types";
 import { toast } from "sonner";
+import { useTransactionData } from "@/hooks/useTransactionDataContext";
 
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const { clients, refreshClients } = useClients();
   const { transactions, addTransaction, deleteTransaction, refreshTransactions } = useTransactions();
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
+  const { refresh: refreshTransactionData } = useTransactionData();
 
   useEffect(() => {
     document.title = "Fluxo de Caixa | Wedding CRM";
     
     // Ensure we have the latest data when the page loads
-    refreshTransactions();
-    refreshClients();
+    const loadData = async () => {
+      try {
+        await refreshTransactions();
+        await refreshClients();
+      } catch (error) {
+        console.error("Error refreshing data:", error);
+        toast.error("Erro ao carregar dados");
+      }
+    };
+    
+    loadData();
   }, [refreshTransactions, refreshClients]);
 
   // Use useMemo to filter transactions for better performance
@@ -34,33 +45,51 @@ export default function CashFlow() {
   }, [transactions, typeFilter]);
 
   const handleAddTransaction = async (newTransaction: Omit<Transaction, "id" | "createdAt">) => {
-    const result = await addTransaction(newTransaction);
-    
-    if (result) {
-      setShowAddTransaction(false);
+    try {
+      const result = await addTransaction(newTransaction);
       
-      // If this transaction is linked to a client and is an income, refresh clients data
-      // to update the client's payment history
-      if (result.clientId && result.type === "entrada") {
-        toast.success("Transação registrada e adicionada ao histórico do cliente!");
-        refreshClients();
-      } else {
-        toast.success("Transação registrada com sucesso!");
+      if (result) {
+        setShowAddTransaction(false);
+        
+        // If this transaction is linked to a client and is an income, refresh clients data
+        // to update the client's payment history
+        if (result.clientId && result.type === "entrada") {
+          toast.success("Transação registrada e adicionada ao histórico do cliente!");
+          await refreshClients();
+        } else {
+          toast.success("Transação registrada com sucesso!");
+        }
+        
+        // Refresh transactions to update all views that depend on transaction data
+        await refreshTransactions();
+        
+        // Also refresh transaction data context
+        await refreshTransactionData();
       }
-      
-      // Refresh transactions to update all views that depend on transaction data
-      refreshTransactions();
+    } catch (error) {
+      console.error("Error adding transaction:", error);
+      toast.error("Erro ao registrar transação");
     }
   };
 
   const handleDeleteTransaction = async (transactionId: string) => {
-    await deleteTransaction(transactionId);
-    
-    // Refresh client data to update payment history
-    refreshClients();
-    
-    // Also refresh transactions to update all views
-    refreshTransactions();
+    try {
+      await deleteTransaction(transactionId);
+      
+      toast.success("Transação removida com sucesso");
+      
+      // Refresh client data to update payment history
+      await refreshClients();
+      
+      // Also refresh transactions to update all views
+      await refreshTransactions();
+      
+      // Also refresh transaction data context
+      await refreshTransactionData();
+    } catch (error) {
+      console.error("Error deleting transaction:", error);
+      toast.error("Erro ao remover transação");
+    }
   };
 
   return (

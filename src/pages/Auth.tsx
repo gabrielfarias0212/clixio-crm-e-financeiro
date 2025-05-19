@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Navigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,9 +24,8 @@ export default function Auth() {
   } = useAuth();
   const navigate = useNavigate();
   
-  // Only redirect if auth is not still loading and we have a user
-  // This prevents redirection loops during auth state initialization
-  if (!authLoading && user) {
+  // Only redirect if we have a user AND auth is not still loading
+  if (user && !authLoading) {
     // Get the redirect path from location state or default to '/'
     const from = location.state?.from?.pathname || "/";
     return <Navigate to={from} replace />;

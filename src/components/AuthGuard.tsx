@@ -18,6 +18,7 @@ export function AuthGuard() {
   // If not authenticated, redirect to login
   if (!user) {
     // Redirect to login but save the current location they tried to access
+    // Use the "replace" prop to avoid building a history that would loop
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 

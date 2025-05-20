@@ -3,7 +3,6 @@ import { Control } from "react-hook-form";
 import { ClientFormValues } from "../types";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { DatePicker } from "@/components/ui/date-picker";
-import { EventCategoryField } from "./EventCategoryField";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -16,8 +15,6 @@ export function EventFields({ control, watchHasPreWedding }: EventFieldsProps) {
   return (
     <div className="space-y-4">
       <h3 className="font-medium text-lg">Informações do Evento</h3>
-      
-      <EventCategoryField control={control} />
       
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <FormField

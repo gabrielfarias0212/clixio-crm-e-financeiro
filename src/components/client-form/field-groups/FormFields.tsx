@@ -10,15 +10,16 @@ import { EventCategoryField } from "./EventCategoryField";
 interface FormFieldsProps {
   control: Control<ClientFormValues>;
   watchStatus: string;
+  watchHasPreWedding?: boolean;
 }
 
-export function FormFields({ control, watchStatus }: FormFieldsProps) {
+export function FormFields({ control, watchStatus, watchHasPreWedding = true }: FormFieldsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <ContactFields control={control} />
       <div className="space-y-6">
         <EventCategoryField control={control} />
-        <EventFields control={control} />
+        <EventFields control={control} watchHasPreWedding={watchHasPreWedding} />
       </div>
       <PaymentFields control={control} watchStatus={watchStatus} />
       <StatusFields control={control} />

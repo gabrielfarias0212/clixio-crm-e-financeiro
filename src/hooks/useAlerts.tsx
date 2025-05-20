@@ -5,7 +5,7 @@ import { stringToDate } from "@/utils/dateUtils";
 import { differenceInDays, isBefore, isAfter, startOfDay, addDays } from "date-fns";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 
-export function useAlerts(clients: Client[]) {
+export function useAlerts(clients: Client[] = []) {
   const { events } = useCalendarEvents();
   
   const alerts = useMemo(() => {
@@ -145,14 +145,17 @@ export function useAlerts(clients: Client[]) {
           const relatedClient = event.clientId ? 
             clients.find(c => c.id === event.clientId) : undefined;
             
-          calendarEventAlerts.push({
-            type: "event",
-            title: `Evento próximo: ${event.title}`,
-            description: `${event.date} às ${event.startTime}${relatedClient ? ` - Cliente: ${relatedClient.name}` : ''}`,
-            client: relatedClient || clients[0], // Use first client as fallback for non-client events
-            date: eventDate,
-            urgency: daysUntilEvent <= 1 ? "high" : daysUntilEvent <= 3 ? "medium" : "low"
-          });
+          // Only add event alerts that have a related client
+          if (relatedClient) {
+            calendarEventAlerts.push({
+              type: "event",
+              title: `Evento próximo: ${event.title}`,
+              description: `${event.date} às ${event.startTime} - Cliente: ${relatedClient.name}`,
+              client: relatedClient,
+              date: eventDate,
+              urgency: daysUntilEvent <= 1 ? "high" : daysUntilEvent <= 3 ? "medium" : "low"
+            });
+          }
         }
       }
     });

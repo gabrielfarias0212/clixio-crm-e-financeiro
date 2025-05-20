@@ -9,10 +9,10 @@ import { Client } from "@/utils/types";
 import { Bell, Calendar, DollarSign, Camera } from "lucide-react";
 
 interface AlertsRemindersProps {
-  clients: Client[];
+  clients?: Client[];
 }
 
-export function AlertsReminders({ clients }: AlertsRemindersProps) {
+export function AlertsReminders({ clients = [] }: AlertsRemindersProps) {
   const [activeTab, setActiveTab] = useState("all");
   const alerts = useAlerts(clients);
 

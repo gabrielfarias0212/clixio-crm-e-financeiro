@@ -1,4 +1,5 @@
 
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
@@ -67,7 +68,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
   const watchHasPreWedding = form.watch("hasPreWedding");
 
   // If hasPreWedding is false, clear the pre-wedding date fields
-  React.useEffect(() => {
+  useEffect(() => {
     if (!watchHasPreWedding) {
       form.setValue("preWeddingDate", null);
       form.setValue("preWeddingStartTime", "");

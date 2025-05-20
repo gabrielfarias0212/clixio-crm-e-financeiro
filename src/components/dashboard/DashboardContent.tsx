@@ -21,7 +21,7 @@ export function DashboardContent() {
       </div>
 
       <div className="grid grid-cols-1 gap-8">
-        <AlertsReminders />
+        <AlertsReminders clients={clients} />
       </div>
 
       <div className="grid grid-cols-1 gap-8">

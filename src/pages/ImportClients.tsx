@@ -6,14 +6,16 @@ import { ClientImporter } from "@/components/ClientImporter";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowDownToLine, ChevronLeft, FileSpreadsheet, Upload } from "lucide-react";
-import { generateExampleData } from "@/components/client-importer/utils/exampleData";
+import { generateExampleData, testDownloadFunction } from "@/components/client-importer/utils/exampleData";
 import * as XLSX from 'xlsx';
+import { toast } from "sonner";
 
 export default function ImportClients() {
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   useEffect(() => {
     document.title = "Importar Clientes | Wedding CRM";
@@ -75,30 +77,89 @@ export default function ImportClients() {
   };
 
   const downloadExampleFile = () => {
-    const exampleData = generateExampleData();
+    setIsDownloading(true);
     
-    const worksheet = XLSX.utils.json_to_sheet(exampleData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Clientes');
+    try {
+      // Teste da função de download
+      const testResult = testDownloadFunction();
+      if (!testResult.success) {
+        throw new Error("Falha no teste de download");
+      }
+      
+      const exampleData = generateExampleData();
+      
+      const worksheet = XLSX.utils.json_to_sheet(exampleData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Clientes');
+      
+      // Ajustar largura das colunas
+      const cols = [
+        { wch: 20 }, // Nome do Cliente
+        { wch: 20 }, // Nome do Casal
+        { wch: 25 }, // Email
+        { wch: 15 }, // Telefone
+        { wch: 15 }, // Data do Evento
+        { wch: 15 }, // Valor do Contrato
+        { wch: 15 }, // Valor da Entrada
+        { wch: 15 }, // Status
+        { wch: 15 }, // Próxima Ação
+        { wch: 20 }, // Categoria do Evento
+        { wch: 30 }, // Notas
+      ];
+      
+      worksheet['!cols'] = cols;
+      
+      XLSX.writeFile(workbook, 'modelo_importacao_clientes.xlsx');
+      toast.success("Modelo de importação baixado com sucesso!");
+    } catch (err) {
+      console.error('Erro ao gerar modelo de importação:', err);
+      toast.error("Erro ao baixar o modelo de importação. Tente novamente.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Função alternativa de download usando Blob
+  const downloadExampleFileAlt = () => {
+    setIsDownloading(true);
     
-    // Ajustar largura das colunas
-    const cols = [
-      { wch: 20 }, // Nome do Cliente
-      { wch: 20 }, // Nome do Casal
-      { wch: 25 }, // Email
-      { wch: 15 }, // Telefone
-      { wch: 15 }, // Data do Evento
-      { wch: 15 }, // Valor do Contrato
-      { wch: 15 }, // Valor da Entrada
-      { wch: 15 }, // Status
-      { wch: 15 }, // Próxima Ação
-      { wch: 20 }, // Categoria do Evento
-      { wch: 30 }, // Notas
-    ];
-    
-    worksheet['!cols'] = cols;
-    
-    XLSX.writeFile(workbook, 'modelo_importacao_clientes.xlsx');
+    try {
+      const exampleData = generateExampleData();
+      
+      const worksheet = XLSX.utils.json_to_sheet(exampleData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Clientes');
+      
+      // Ajustar largura das colunas
+      worksheet['!cols'] = [
+        { wch: 20 }, { wch: 20 }, { wch: 25 }, { wch: 15 }, 
+        { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, 
+        { wch: 15 }, { wch: 20 }, { wch: 30 }
+      ];
+      
+      // Gerar um blob em vez de usar o writeFile diretamente
+      const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbout], { type: 'application/octet-stream' });
+      
+      // Criar URL do blob e usar um elemento <a> para download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      document.body.appendChild(a);
+      a.href = url;
+      a.download = 'modelo_importacao_clientes.xlsx';
+      a.click();
+      
+      // Limpar após o download
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success("Modelo de importação baixado com sucesso!");
+    } catch (err) {
+      console.error('Erro ao gerar modelo de importação (método alternativo):', err);
+      toast.error("Erro ao baixar o modelo de importação. Tente novamente.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -124,14 +185,29 @@ export default function ImportClients() {
                 Para facilitar, baixe nosso modelo de importação e preencha com seus dados.
               </p>
               
-              <Button 
-                variant="outline" 
-                onClick={downloadExampleFile}
-                className="flex items-center gap-2"
-              >
-                <ArrowDownToLine className="h-4 w-4" />
-                Baixar Modelo de Importação
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={downloadExampleFile}
+                  className="flex items-center gap-2"
+                  disabled={isDownloading}
+                >
+                  <ArrowDownToLine className="h-4 w-4" />
+                  {isDownloading ? "Baixando..." : "Baixar Modelo de Importação"}
+                </Button>
+                
+                {/* Botão alternativo para download */}
+                {isDownloading && (
+                  <Button 
+                    variant="outline" 
+                    onClick={downloadExampleFileAlt}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowDownToLine className="h-4 w-4" />
+                    Método Alternativo
+                  </Button>
+                )}
+              </div>
             </div>
             
             <div className="border-t pt-6">

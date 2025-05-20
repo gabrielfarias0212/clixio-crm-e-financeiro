@@ -30,3 +30,15 @@ export const generateExampleData = () => {
     }
   ];
 };
+
+// Função para verificar se o download está funcionando
+export const testDownloadFunction = () => {
+  try {
+    const data = generateExampleData();
+    return { success: true, data };
+  } catch (error) {
+    console.error("Erro ao gerar dados de exemplo:", error);
+    return { success: false, error };
+  }
+};
+

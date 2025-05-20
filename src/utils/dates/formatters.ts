@@ -1,7 +1,8 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { formatInTimeZone } from "date-fns-tz";
 import { DATE_FORMAT, TIMEZONE } from "./constants";
+import { parseISO } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 // Format date to locale string (DD/MM/YYYY)
 export const formatDate = (date: string | Date | null, formatStr: string = DATE_FORMAT): string => {
@@ -84,6 +85,3 @@ export const getTimeFromDate = (date: string | Date | null): string => {
   // If it's a Date object
   return format(date, "HH:mm", { locale: ptBR });
 };
-
-// Missing import
-import { parseISO } from "date-fns";

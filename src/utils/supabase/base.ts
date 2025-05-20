@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { formatDate } from '@/utils/dateUtils';
+import { formatDate } from '@/utils/dates';
 
 // Helper functions for date formatting/parsing
 export const parseDate = (dateString: string | null): string | null => {

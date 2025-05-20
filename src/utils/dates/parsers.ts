@@ -42,6 +42,21 @@ export const parseBrazilianDate = (dateString: string | Date | null | number): s
       }
     }
     
+    // Check for YYYY-MM-DD format
+    const isoDateRegex = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+    const isoMatch = dateString.match(isoDateRegex);
+    
+    if (isoMatch) {
+      const year = parseInt(isoMatch[1], 10);
+      const month = parseInt(isoMatch[2], 10);
+      const day = parseInt(isoMatch[3], 10);
+      
+      // Validate ranges
+      if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900 && year <= 2100) {
+        return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+      }
+    }
+    
     // Try standard JavaScript date parsing as fallback
     try {
       const parsedDate = parseISO(dateString);

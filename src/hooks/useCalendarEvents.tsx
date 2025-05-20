@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect, useState, createContext, useContext, ReactNode } from "react";
 import { CalendarEvent } from "@/utils/types";
-import { formatDate, stringToDate, dateToString, normalizeDate } from "@/utils/dateUtils";
+import { formatDate, stringToDate, dateToString, normalizeDate } from "@/utils/dates";
 
 interface CalendarEventsContextProps {
   events: CalendarEvent[];
@@ -88,6 +88,12 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   
   const addEvent = useCallback((event: CalendarEvent) => {
     // Ensure the date is in the correct string format (DD/MM/YYYY)
+    if (typeof event.date === 'object' && event.date instanceof Date) {
+      event = {
+        ...event,
+        date: dateToString(event.date)
+      };
+    }
     setEvents(prev => [...prev, event]);
   }, []);
   

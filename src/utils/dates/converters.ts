@@ -13,6 +13,11 @@ export const normalizeDate = (date: string | Date | null): string => {
       return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     }
     
+    // If it's already in YYYY-MM-DD format, return as is
+    if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return date;
+    }
+    
     // Otherwise try to parse it as an ISO date
     try {
       const d = parseISO(date);

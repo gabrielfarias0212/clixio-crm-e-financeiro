@@ -1,219 +1,145 @@
 
-import { useState, useEffect, useMemo } from 'react';
-import { Client, CalendarEvent } from '@/utils/types';
-import { supabase } from '@/integrations/supabase/client';
+import { useCallback, useEffect, useState, createContext, useContext, ReactNode } from "react";
+import { CalendarEvent } from "@/utils/types";
+import { formatDate, stringToDate, dateToString, normalizeDate } from "@/utils/dateUtils";
 
-// Helper function to convert database event to frontend format
-const mapDatabaseEventToCalendarEvent = (dbEvent: any): CalendarEvent => {
-  return {
-    id: dbEvent.id,
-    title: dbEvent.title,
-    description: dbEvent.description || '',
-    date: dbEvent.date,
-    startTime: dbEvent.start_time, // Map to our frontend property
-    endTime: dbEvent.end_time,     // Map to our frontend property
-    start_time: dbEvent.start_time, // Keep original for database compatibility
-    end_time: dbEvent.end_time,     // Keep original for database compatibility
-    type: dbEvent.type as any,      // Cast to our EventType
-    color: dbEvent.color,
-    clientId: dbEvent.client_id,    // Map to our frontend property
-    client_id: dbEvent.client_id    // Keep original for database compatibility
-  };
-};
+interface CalendarEventsContextProps {
+  events: CalendarEvent[];
+  addEvent: (event: CalendarEvent) => void;
+  updateEvent: (event: CalendarEvent) => void;
+  deleteEvent: (eventId: string) => void;
+  getEventById: (eventId: string) => CalendarEvent | undefined;
+  getEventsByDate: (date: string) => CalendarEvent[];
+}
 
-// Helper function to convert frontend event to database format
-const mapCalendarEventToDatabase = (event: Omit<CalendarEvent, 'id'>): any => {
-  return {
-    title: event.title,
-    description: event.description,
-    date: event.date,
-    start_time: event.startTime || event.start_time,
-    end_time: event.endTime || event.end_time,
-    type: event.type,
-    color: event.color,
-    client_id: event.clientId || event.client_id
-  };
-};
+const CalendarEventsContext = createContext<CalendarEventsContextProps>({
+  events: [],
+  addEvent: () => {},
+  updateEvent: () => {},
+  deleteEvent: () => {},
+  getEventById: () => undefined,
+  getEventsByDate: () => []
+});
 
-export function useCalendarEvents(clients: Client[] = []) {
-  const [loading, setLoading] = useState(true);
+export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [error, setError] = useState<Error | null>(null);
   
-  // Fetch events from database
-  const fetchEvents = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const { data, error } = await supabase
-        .from('calendar_events')
-        .select('*');
-        
-      if (error) {
-        throw error;
-      }
-      
-      if (data) {
-        // Map database events to our frontend format
-        const mappedEvents = data.map(mapDatabaseEventToCalendarEvent);
-        setEvents(mappedEvents);
-      } else {
-        // If no data, set empty array to prevent loading state from hanging
-        setEvents([]);
-      }
-    } catch (error) {
-      console.error('Error fetching calendar events:', error);
-      setError(error as Error);
-      // Set empty events array to prevent the loading state from hanging
-      setEvents([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Initial fetch
+  // Load events from localStorage on component mount
   useEffect(() => {
-    fetchEvents();
+    const storedEvents = localStorage.getItem("calendarEvents");
+    if (storedEvents) {
+      try {
+        const parsedEvents = JSON.parse(storedEvents);
+        // Fix legacy events that have Date objects stored as strings
+        const formattedEvents = parsedEvents.map((event: any) => {
+          // If the date is an object (from older versions), convert to our string format
+          if (typeof event.date === 'object') {
+            const dateObj = new Date(event.date);
+            return {
+              ...event,
+              date: dateToString(dateObj),
+              startTime: event.startTime || event.time || "09:00",
+              endTime: event.endTime || (event.time ? 
+                incrementTimeByOneHour(event.time) : "10:00")
+            };
+          }
+          
+          // Handle legacy events with ISO date strings
+          if (typeof event.date === 'string' && event.date.includes('T')) {
+            const dateObj = new Date(event.date);
+            return {
+              ...event,
+              date: dateToString(dateObj),
+              startTime: event.startTime || event.time || "09:00",
+              endTime: event.endTime || (event.time ? 
+                incrementTimeByOneHour(event.time) : "10:00")
+            };
+          }
+          
+          // If date is already properly formatted as DD/MM/YYYY, just ensure time fields
+          return {
+            ...event,
+            startTime: event.startTime || event.time || "09:00",
+            endTime: event.endTime || (event.time ? 
+              incrementTimeByOneHour(event.time) : "10:00")
+          };
+        });
+        
+        setEvents(formattedEvents);
+      } catch (error) {
+        console.error("Failed to parse calendar events from localStorage", error);
+      }
+    }
   }, []);
   
-  // Convert clients to calendar events format
-  const clientEvents = useMemo(() => {
-    if (!clients || !clients.length) return [];
-    
-    const eventsList: CalendarEvent[] = [];
-    
-    clients.forEach(client => {
-      // Only add clients with wedding dates
-      if (client.weddingDate) {
-        try {
-          // Create event from wedding date
-          eventsList.push({
-            id: `wedding-${client.id}`,
-            title: `Casamento: ${client.name}`,
-            date: client.weddingDate,
-            type: 'wedding',
-            clientId: client.id,
-            client_id: client.id,
-            description: `Casamento de ${client.name}`,
-            startTime: client.weddingStartTime || '10:00',
-            endTime: client.weddingEndTime || '18:00',
-            start_time: client.weddingStartTime || '10:00',
-            end_time: client.weddingEndTime || '18:00',
-            color: 'purple'
-          });
-        } catch (error) {
-          console.error(`Error parsing wedding date for client ${client.id}:`, error);
-        }
-      }
-      
-      // Add meeting dates if available
-      if (client.meetingDate) {
-        try {
-          eventsList.push({
-            id: `meeting-${client.id}`,
-            title: `Reunião: ${client.name}`,
-            date: client.meetingDate,
-            type: 'meeting',
-            clientId: client.id,
-            client_id: client.id,
-            description: `Reunião com ${client.name}`,
-            startTime: '09:00',
-            endTime: '10:00',
-            start_time: '09:00',
-            end_time: '10:00',
-            color: 'blue'
-          });
-        } catch (error) {
-          console.error(`Error parsing meeting date for client ${client.id}:`, error);
-        }
-      }
-    });
-    
-    return eventsList;
-  }, [clients]);
+  // Helper to increment time by one hour for legacy events
+  const incrementTimeByOneHour = (time: string): string => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const newHours = (hours + 1) % 24;
+    return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
   
-  // Combine database events and client events
-  const allEvents = useMemo(() => {
-    return [...events, ...clientEvents];
-  }, [events, clientEvents]);
-  
-  // CRUD operations for events
-  const addEvent = async (eventData: Omit<CalendarEvent, 'id'>) => {
-    try {
-      // Convert to database format before inserting
-      const dbEventData = mapCalendarEventToDatabase(eventData);
-      
-      const { data, error } = await supabase
-        .from('calendar_events')
-        .insert(dbEventData)
-        .select()
-        .single();
-        
-      if (error) throw error;
-      
-      // Convert back to frontend format for state update
-      const newEvent = mapDatabaseEventToCalendarEvent(data);
-      setEvents(prev => [...prev, newEvent]);
-      return newEvent;
-    } catch (error) {
-      console.error('Error adding calendar event:', error);
-      throw error;
+  // Save events to localStorage whenever they change
+  useEffect(() => {
+    if (events.length > 0) {
+      localStorage.setItem("calendarEvents", JSON.stringify(events));
     }
-  };
+  }, [events]);
   
-  const updateEvent = async (eventData: CalendarEvent) => {
-    try {
-      // Convert to database format before updating
-      const dbEventData = mapCalendarEventToDatabase(eventData);
-      
-      const { data, error } = await supabase
-        .from('calendar_events')
-        .update(dbEventData)
-        .eq('id', eventData.id)
-        .select()
-        .single();
-        
-      if (error) throw error;
-      
-      // Convert back to frontend format for state update
-      const updatedEvent = mapDatabaseEventToCalendarEvent(data);
-      setEvents(prev => prev.map(e => e.id === eventData.id ? updatedEvent : e));
-      return updatedEvent;
-    } catch (error) {
-      console.error('Error updating calendar event:', error);
-      throw error;
-    }
-  };
+  const addEvent = useCallback((event: CalendarEvent) => {
+    // Ensure the date is in the correct string format (DD/MM/YYYY)
+    setEvents(prev => [...prev, event]);
+  }, []);
   
-  const deleteEvent = async (eventId: string) => {
-    try {
-      const { error } = await supabase
-        .from('calendar_events')
-        .delete()
-        .eq('id', eventId);
-        
-      if (error) throw error;
-      
-      setEvents(prev => prev.filter(e => e.id !== eventId));
-      return true;
-    } catch (error) {
-      console.error('Error deleting calendar event:', error);
-      throw error;
-    }
-  };
+  const updateEvent = useCallback((updatedEvent: CalendarEvent) => {
+    setEvents(prev => 
+      prev.map(event => 
+        event.id === updatedEvent.id ? updatedEvent : event
+      )
+    );
+  }, []);
   
-  const refreshEvents = async () => {
-    return fetchEvents();
-  };
+  const deleteEvent = useCallback((eventId: string) => {
+    setEvents(prev => prev.filter(event => event.id !== eventId));
+  }, []);
   
-  return { 
-    events: allEvents, 
-    loading,
-    error,
+  const getEventById = useCallback(
+    (eventId: string) => events.find(event => event.id === eventId),
+    [events]
+  );
+  
+  const getEventsByDate = useCallback(
+    (date: string) => {
+      // Normalize the date to YYYY-MM-DD format for comparison
+      const dateKey = normalizeDate(date);
+      return events.filter(event => {
+        const eventDateKey = normalizeDate(event.date);
+        return eventDateKey === dateKey;
+      });
+    },
+    [events]
+  );
+  
+  const value = {
+    events,
     addEvent,
     updateEvent,
     deleteEvent,
-    refreshEvents
+    getEventById,
+    getEventsByDate
   };
+  
+  return (
+    <CalendarEventsContext.Provider value={value}>
+      {children}
+    </CalendarEventsContext.Provider>
+  );
+}
+
+export function useCalendarEvents() {
+  const context = useContext(CalendarEventsContext);
+  if (context === undefined) {
+    throw new Error("useCalendarEvents must be used within a CalendarEventsProvider");
+  }
+  return context;
 }

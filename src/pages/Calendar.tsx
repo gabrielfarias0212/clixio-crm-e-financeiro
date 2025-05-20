@@ -1,83 +1,52 @@
 
+import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
+import { useNavigate } from "react-router-dom";
+import { useClients } from "@/contexts/ClientsContext";
+import { UpcomingEvents } from "@/components/UpcomingEvents";
+import { AddEventDialog } from "@/components/calendar/AddEventDialog";
 import { CalendarHeader } from "@/components/calendar/CalendarHeader";
-import { MonthView } from "@/components/calendar/MonthView";
-import { WeekView } from "@/components/calendar/WeekView";
-import { DayView } from "@/components/calendar/DayView";
+import { CalendarGrid } from "@/components/calendar/CalendarGrid";
 import { DayEventsSidebar } from "@/components/calendar/DayEventsSidebar";
 import { useCalendarPage } from "@/hooks/useCalendarPage";
-import { useState, useEffect } from "react";
-import { AddEventDialog } from "@/components/calendar/AddEventDialog";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { useClients } from "@/contexts/ClientsContext";
-import { toast } from "sonner";
+import { CalendarEvent } from "@/utils/types";
 
-export default function Calendar() {
+export default function CalendarPage() {
+  const navigate = useNavigate();
+  const { clients, loading } = useClients();
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  
   const {
+    date,
+    setDate,
     view,
-    currentDate,
-    selectedDate,
-    events,
-    loading,
-    error,
     setView,
-    goToToday,
-    goToPrevious,
-    goToNext,
-    handleDateSelect,
-    selectedEvents,
-    addEvent,
-    updateEvent,
-    deleteEvent,
-    refreshEvents
-  } = useCalendarPage();
+    addEventOpen,
+    setAddEventOpen,
+    currentMonthYear,
+    eventDates,
+    selectedDayItems
+  } = useCalendarPage(clients);
 
-  const [addEventOpen, setAddEventOpen] = useState(false);
-  const [editEventData, setEditEventData] = useState<any>(null);
-  const { clients } = useClients();
-  
-  const currentMonthYear = format(currentDate, "MMMM yyyy", { locale: ptBR });
-  
-  // Refresh events when the page loads
   useEffect(() => {
-    // Add a timeout to prevent blocking the UI rendering
-    const loadEvents = setTimeout(() => {
-      refreshEvents().catch(error => {
-        console.error("Error refreshing events:", error);
-        toast.error("Erro ao carregar eventos");
-      });
-    }, 100);
-    
-    return () => clearTimeout(loadEvents);
-  }, [refreshEvents]);
+    document.title = "Calendário | Wedding CRM";
+  }, []);
   
-  const openEditEvent = (event: any) => {
-    setEditEventData(event);
+  const handleOpenEditEvent = (event: CalendarEvent) => {
+    setEditingEvent(event);
     setAddEventOpen(true);
   };
   
-  const handleEventSave = async (eventData: any) => {
-    try {
-      if (eventData.id) {
-        await updateEvent(eventData);
-        toast.success("Evento atualizado com sucesso");
-      } else {
-        await addEvent(eventData);
-        toast.success("Evento adicionado com sucesso");
-      }
-      setAddEventOpen(false);
-      setEditEventData(null);
-      refreshEvents();
-    } catch (error) {
-      console.error("Error saving event:", error);
-      toast.error("Erro ao salvar evento");
+  const handleCloseDialog = (open: boolean) => {
+    setAddEventOpen(open);
+    if (!open) {
+      setEditingEvent(null);
     }
   };
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-screen-xl mx-auto px-4 py-8 animate-fade-in">
         <CalendarHeader 
           currentMonthYear={currentMonthYear}
           view={view}
@@ -85,89 +54,42 @@ export default function Calendar() {
           setAddEventOpen={setAddEventOpen}
         />
         
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex space-x-2">
-            <button 
-              onClick={goToPrevious}
-              className="p-2 rounded-md hover:bg-gray-100"
-            >
-              &lt; Anterior
-            </button>
-            <button
-              onClick={goToToday}
-              className="p-2 rounded-md hover:bg-gray-100"
-            >
-              Hoje
-            </button>
-            <button
-              onClick={goToNext}
-              className="p-2 rounded-md hover:bg-gray-100"
-            >
-              Próximo &gt;
-            </button>
-          </div>
-          <h2 className="text-xl font-semibold capitalize">{currentMonthYear}</h2>
-        </div>
-        
-        <div className="mt-6 flex">
-          <div className="flex-1 border rounded-lg bg-card shadow-sm overflow-hidden">
-            {loading ? (
-              <div className="flex justify-center items-center h-96">
-                <p>Carregando calendário...</p>
-              </div>
-            ) : error ? (
-              <div className="flex justify-center items-center h-96">
-                <p className="text-red-500">Erro ao carregar dados. Tente novamente.</p>
-              </div>
-            ) : view === 'month' ? (
-              <MonthView 
-                date={currentDate}
-                events={events}
-                onDateClick={handleDateSelect}
-                selectedDate={selectedDate}
-                loading={false}
-              />
-            ) : view === 'week' ? (
-              <WeekView 
-                date={currentDate}
-                clients={clients}
-                onClientClick={(clientId) => console.log("Client clicked:", clientId)}
-              />
-            ) : (
-              <DayView 
-                date={selectedDate || currentDate}
-                clients={clients}
-                onClientClick={(clientId) => console.log("Client clicked:", clientId)}
-              />
-            )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Calendar Grid */}
+          <div className="lg:col-span-2">
+            <CalendarGrid 
+              date={date}
+              setDate={setDate}
+              view={view}
+              setView={setView}
+              currentMonthYear={currentMonthYear}
+              eventDates={eventDates}
+              clients={clients}
+              onClientClick={(clientId) => navigate(`/clients/${clientId}`)}
+            />
           </div>
           
-          {selectedDate && (
+          {/* Events Sidebar */}
+          <div className="lg:col-span-1">
             <DayEventsSidebar 
-              date={selectedDate}
-              selectedDayItems={{
-                clients: clients.filter(client => {
-                  if (!client.weddingDate) return false;
-                  // Format date properly for comparison
-                  const clientDate = client.weddingDate.includes('/')
-                    ? client.weddingDate.split('/').reverse().join('-') // Convert DD/MM/YYYY to YYYY-MM-DD
-                    : client.weddingDate;
-                  return clientDate === format(selectedDate, 'yyyy-MM-dd');
-                }),
-                events: selectedEvents
-              }}
+              date={date}
+              selectedDayItems={selectedDayItems}
               setAddEventOpen={setAddEventOpen}
-              openEditEvent={openEditEvent}
+              openEditEvent={handleOpenEditEvent}
             />
-          )}
+          </div>
+        </div>
+        
+        {/* Upcoming Events Section */}
+        <div className="mt-6">
+          <UpcomingEvents clients={clients} loading={loading} />
         </div>
         
         <AddEventDialog 
-          open={addEventOpen}
-          onOpenChange={setAddEventOpen}
+          open={addEventOpen} 
+          onOpenChange={handleCloseDialog} 
           clients={clients}
-          initialData={editEventData}
-          onSave={handleEventSave}
+          initialData={editingEvent || undefined}
         />
       </div>
     </Layout>

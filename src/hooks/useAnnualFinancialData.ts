@@ -1,11 +1,10 @@
 
 import { useCallback, useState, useEffect, useMemo } from "react";
 import { useTransactions } from "@/contexts/TransactionsContext";
-import { format, startOfYear, endOfYear, eachMonthOfInterval, isWithinInterval } from "date-fns";
+import { format, startOfYear, endOfYear, eachMonthOfInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatCurrency } from "@/components/dashboard/financial/ChartConstants";
 import { stringToDate } from "@/utils/dateUtils";
-import { Transaction } from "@/utils/types";
 
 export type AnnualChartDataPoint = {
   month: string;
@@ -26,42 +25,13 @@ export function useAnnualFinancialData() {
     balance: 0
   });
   
-  // Memoize date-related values to avoid unnecessary recalculations
-  const dateValues = useMemo(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    return {
-      currentYear: year,
-      yearStart: startOfYear(now),
-      yearEnd: endOfYear(now),
-      allMonthsInYear: eachMonthOfInterval({
-        start: startOfYear(now),
-        end: endOfYear(now)
-      })
-    };
-  }, []);
-  
-  // Filter year transactions with memoization
-  const yearTransactions = useMemo(() => {
-    if (!transactions.length) return [];
-    
-    return transactions.filter(t => {
-      try {
-        if (!t.date) return false;
-        const date = stringToDate(t.date);
-        return date && isWithinInterval(date, {
-          start: dateValues.yearStart,
-          end: dateValues.yearEnd
-        });
-      } catch (err) {
-        return false;
-      }
-    });
-  }, [transactions, dateValues.yearStart, dateValues.yearEnd]);
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
+  const yearStart = useMemo(() => startOfYear(new Date()), []);
+  const yearEnd = useMemo(() => endOfYear(new Date()), []);
   
   // Calculate all financial data for the year
   const calculateAnnualData = useCallback(() => {
-    if (yearTransactions.length === 0) {
+    if (transactions.length === 0) {
       setChartData([]);
       setYearTotals({ income: 0, expenses: 0, balance: 0 });
       setLoading(false);
@@ -70,8 +40,30 @@ export function useAnnualFinancialData() {
     }
     
     try {
-      // Calculate data for each month using memoized values
-      const annualData = dateValues.allMonthsInYear.map(month => {
+      console.log("Calculating annual financial data with", transactions.length, "transactions");
+      
+      // Get all months in the current year
+      const allMonthsInYear = eachMonthOfInterval({
+        start: yearStart,
+        end: yearEnd
+      });
+      
+      // Filter transactions for current year only
+      const yearTransactions = transactions.filter(t => {
+        try {
+          if (!t.date) return false;
+          const date = stringToDate(t.date);
+          return date && date >= yearStart && date <= yearEnd;
+        } catch (err) {
+          console.error("Error processing transaction date:", err);
+          return false;
+        }
+      });
+      
+      console.log(`Found ${yearTransactions.length} transactions for ${currentYear}`);
+
+      // Calculate data for each month
+      const annualData = allMonthsInYear.map(month => {
         const monthStart = new Date(month);
         const monthEnd = new Date(month);
         monthEnd.setMonth(monthEnd.getMonth() + 1);
@@ -82,11 +74,9 @@ export function useAnnualFinancialData() {
           try {
             if (!t.date) return false;
             const date = stringToDate(t.date);
-            return date && isWithinInterval(date, {
-              start: monthStart, 
-              end: monthEnd
-            });
+            return date && date >= monthStart && date <= monthEnd;
           } catch (err) {
+            console.error("Error filtering month transactions:", err);
             return false;
           }
         });
@@ -124,23 +114,20 @@ export function useAnnualFinancialData() {
         balance: totalBalance
       });
       
+      console.log("Annual financial data calculated successfully");
     } catch (err) {
       console.error("Error in annual financial calculations:", err);
     } finally {
       setLoading(false);
       setHasCalculated(true);
     }
-  }, [yearTransactions, dateValues.allMonthsInYear]);
+  }, [transactions, yearStart, yearEnd, currentYear]);
 
   // Effect to calculate data when transactions change
   useEffect(() => {
     if (!transactionsLoading) {
       setLoading(true);
-      // Small delay to allow UI to update with loading state
-      const timer = setTimeout(() => {
-        calculateAnnualData();
-      }, 10);
-      return () => clearTimeout(timer);
+      calculateAnnualData();
     }
   }, [calculateAnnualData, transactionsLoading]);
 
@@ -152,7 +139,7 @@ export function useAnnualFinancialData() {
   return {
     chartData,
     yearTotals,
-    currentYear: dateValues.currentYear,
+    currentYear,
     loading: loading || transactionsLoading,
     hasCalculated,
     formatTooltipValue

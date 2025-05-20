@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatInTimeZone } from "date-fns-tz";
 import { DATE_FORMAT, TIMEZONE } from "./constants";
 
 // Format date to locale string (DD/MM/YYYY)
@@ -84,37 +85,5 @@ export const getTimeFromDate = (date: string | Date | null): string => {
   return format(date, "HH:mm", { locale: ptBR });
 };
 
-// Import from date-fns
+// Missing import
 import { parseISO } from "date-fns";
-
-// Função de formatação adaptada para o formato brasileiro
-export const formatInTimeZone = (
-  date: Date | number | string,
-  timeZone: string,
-  formatStr: string
-): string => {
-  // Como a versão 3 do date-fns-tz tem mudanças, vamos implementar uma versão simplificada
-  // que apenas formata a data no formato brasileiro
-  if (!date) return "";
-  
-  let dateObj: Date;
-  
-  if (typeof date === "string") {
-    if (date.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-      const [day, month, year] = date.split('/').map(Number);
-      dateObj = new Date(year, month - 1, day);
-    } else {
-      try {
-        dateObj = parseISO(date);
-      } catch (e) {
-        return "";
-      }
-    }
-  } else if (typeof date === "number") {
-    dateObj = new Date(date);
-  } else {
-    dateObj = date;
-  }
-  
-  return format(dateObj, formatStr, { locale: ptBR });
-};

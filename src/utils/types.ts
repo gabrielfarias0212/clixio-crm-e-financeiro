@@ -1,3 +1,4 @@
+
 export type ClientStatus = 
   | "orçamento enviado" 
   | "follow-up" 
@@ -27,7 +28,7 @@ export type TransactionCategory =
 
 export type EventCategory = 
   | "Casamento"
-  | "Aniversario" 
+  | "Aniversario"
   | "Civil"
   | "Ensaio Estudio"
   | "Ensaio externo"
@@ -96,7 +97,6 @@ export interface Client {
   payments: Payment[];
   createdAt: string;
   updatedAt: string;
-  meetingDate?: string | null;
 }
 
 export type EventType = 
@@ -105,10 +105,7 @@ export type EventType =
   | 'meeting' 
   | 'photoshoot' 
   | 'delivery' 
-  | 'editing'
-  | 'wedding';
-
-export type CalendarViewType = 'day' | 'week' | 'month';
+  | 'editing';
 
 export type EventColor = 
   | 'blue' 
@@ -118,25 +115,21 @@ export type EventColor =
   | 'purple' 
   | 'gray';
 
-// Update CalendarEvent interface to match the database schema
 export interface CalendarEvent {
   id: string;
   title: string;
   description: string;
   date: string;
-  startTime?: string; 
-  endTime?: string;  
-  start_time?: string; // Para compatibilidade com o banco de dados
-  end_time?: string;   // Para compatibilidade com o banco de dados
+  startTime: string;
+  endTime: string;
   type: EventType;
   color: EventColor;
-  clientId?: string;   // Para nosso código frontend
-  client_id?: string;  // Para compatibilidade com o banco de dados
-  created_at?: string; // Para compatibilidade com o banco de dados
+  clientId?: string;
 }
 
+// Update the AlertItem type in the same file to include the 'due_payment' type
 export interface AlertItem {
-  type: "task" | "payment" | "due_payment" | "event";
+  type: "task" | "payment" | "due_payment" | "event";  // Includes all required types
   title: string;
   description: string;
   client: Client;

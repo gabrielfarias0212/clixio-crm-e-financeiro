@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,24 +12,22 @@ import { Client } from "@/utils/types";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { toast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
-import { dateToString, formatDate } from "@/utils/dates";
+import { dateToString } from "@/utils/dates";
 
 interface AddEventDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clients: Client[];
   initialData?: Partial<CalendarEvent>;
-  onSave?: (eventData: CalendarEvent) => Promise<void>; // Add this prop
 }
 
 export function AddEventDialog({ 
   open, 
   onOpenChange, 
   clients,
-  initialData,
-  onSave 
+  initialData 
 }: AddEventDialogProps) {
-  const { events, addEvent, updateEvent } = useCalendarEvents(clients);
+  const { addEvent, updateEvent } = useCalendarEvents();
   const isEditing = !!initialData?.id;
   
   const { control, handleSubmit, reset, setValue, watch } = useForm<CalendarEvent>({
@@ -38,7 +35,7 @@ export function AddEventDialog({
       id: '',
       title: '',
       description: '',
-      date: formatDate(new Date()),
+      date: dateToString(new Date()),
       startTime: '10:00',
       endTime: '11:00',
       type: 'custom',
@@ -62,7 +59,7 @@ export function AddEventDialog({
         id: '',
         title: '',
         description: '',
-        date: formatDate(new Date()),
+        date: dateToString(new Date()),
         startTime: '10:00',
         endTime: '11:00',
         type: 'custom',
@@ -72,7 +69,7 @@ export function AddEventDialog({
     }
   }, [initialData, setValue, reset, open]);
 
-  const onSubmit = async (data: CalendarEvent) => {
+  const onSubmit = (data: CalendarEvent) => {
     try {
       // Validar que o horário de término é depois do início
       if (data.startTime >= data.endTime) {
@@ -84,29 +81,21 @@ export function AddEventDialog({
         return;
       }
 
-      if (onSave) {
-        // Use the provided onSave function if it exists
-        await onSave(data);
+      if (isEditing) {
+        updateEvent({...data});
+        toast({
+          title: "Evento atualizado",
+          description: "O evento foi atualizado com sucesso."
+        });
       } else {
-        // Default behavior
-        if (isEditing && data.id) {
-          await updateEvent(data);
-          toast({
-            title: "Evento atualizado",
-            description: "O evento foi atualizado com sucesso."
-          });
-        } else {
-          // Generate id for new events since we're not using database auto-generation
-          const newEvent = {
-            ...data,
-            id: uuidv4()
-          };
-          await addEvent(newEvent);
-          toast({
-            title: "Evento adicionado",
-            description: "O evento foi adicionado com sucesso ao calendário."
-          });
-        }
+        addEvent({
+          ...data,
+          id: uuidv4()
+        });
+        toast({
+          title: "Evento adicionado",
+          description: "O evento foi adicionado com sucesso ao calendário."
+        });
       }
       onOpenChange(false);
       reset();

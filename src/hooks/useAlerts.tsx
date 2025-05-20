@@ -1,12 +1,12 @@
 
 import { useMemo } from "react";
 import { AlertItem, Client, CalendarEvent } from "@/utils/types";
-import { stringToDate } from "@/utils/dates";
+import { stringToDate } from "@/utils/dateUtils";
 import { differenceInDays, isBefore, isAfter, startOfDay, addDays } from "date-fns";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 
-export function useAlerts(clients: Client[] = []) {
-  const { events } = useCalendarEvents(clients);
+export function useAlerts(clients: Client[]) {
+  const { events } = useCalendarEvents();
   
   const alerts = useMemo(() => {
     const now = new Date();
@@ -108,16 +108,14 @@ export function useAlerts(clients: Client[] = []) {
           const relatedClient = event.clientId ? 
             clients.find(c => c.id === event.clientId) : undefined;
             
-          if (relatedClient) {
-            calendarEventAlerts.push({
-              type: "event",
-              title: `Evento próximo: ${event.title}`,
-              description: `${event.date} às ${event.startTime}${relatedClient ? ` - Cliente: ${relatedClient.name}` : ''}`,
-              client: relatedClient,
-              date: eventDate,
-              urgency: daysUntilEvent <= 1 ? "high" : daysUntilEvent <= 3 ? "medium" : "low"
-            });
-          }
+          calendarEventAlerts.push({
+            type: "event",
+            title: `Evento próximo: ${event.title}`,
+            description: `${event.date} às ${event.startTime}${relatedClient ? ` - Cliente: ${relatedClient.name}` : ''}`,
+            client: relatedClient || clients[0], // Use first client as fallback for non-client events
+            date: eventDate,
+            urgency: daysUntilEvent <= 1 ? "high" : daysUntilEvent <= 3 ? "medium" : "low"
+          });
         }
       }
     });

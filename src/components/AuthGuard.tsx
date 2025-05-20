@@ -1,12 +1,11 @@
 
-import { Navigate, useLocation, Outlet } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
-export function AuthGuard() {
+export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  // Show loading state while we're checking authentication
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -15,13 +14,10 @@ export function AuthGuard() {
     );
   }
   
-  // If not authenticated, redirect to login
   if (!user) {
     // Redirect to login but save the current location they tried to access
-    // Use the "replace" prop to avoid building a history that would loop
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // User is authenticated, render the protected content
-  return <Outlet />;
+  return <>{children}</>;
 }

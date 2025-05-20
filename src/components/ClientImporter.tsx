@@ -7,7 +7,6 @@ import { ImportTable } from "./client-importer/ImportTable";
 import { DuplicateDialog } from "./client-importer/DuplicateDialog";
 import { useClientImporter } from "./client-importer/useClientImporter";
 import { ImportOption } from "./client-importer/types";
-import { Loader2 } from "lucide-react";
 
 interface ClientImporterProps {
   data: any[];
@@ -18,7 +17,7 @@ interface ClientImporterProps {
 export function ClientImporter({ data, fileName, onReset }: ClientImporterProps) {
   const navigate = useNavigate();
   
-  // Extrair as colunas dos dados
+  // Extract the columns from the data
   const columns = Object.keys(data[0] || {});
   
   const { 
@@ -34,7 +33,6 @@ export function ClientImporter({ data, fileName, onReset }: ClientImporterProps)
   } = useClientImporter(data);
 
   const finishImport = () => {
-    console.log("Finishing import, navigating to /clients");
     navigate("/clients");
   };
 
@@ -53,7 +51,6 @@ export function ClientImporter({ data, fileName, onReset }: ClientImporterProps)
             variant="outline" 
             onClick={onReset}
             disabled={importing}
-            type="button"
           >
             Cancelar
           </Button>
@@ -61,17 +58,8 @@ export function ClientImporter({ data, fileName, onReset }: ClientImporterProps)
           <Button 
             onClick={handleStartImport}
             disabled={importing || data.length === 0}
-            type="button"
-            className="relative"
           >
-            {importing ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Importando...
-              </>
-            ) : (
-              "Confirmar Importação"
-            )}
+            {importing ? "Importando..." : "Confirmar Importação"}
           </Button>
         </div>
       </div>
@@ -92,7 +80,7 @@ export function ClientImporter({ data, fileName, onReset }: ClientImporterProps)
       
       {summary && (
         <div className="mt-6 flex justify-end">
-          <Button onClick={finishImport} type="button">
+          <Button onClick={finishImport}>
             Voltar para Lista de Clientes
           </Button>
         </div>

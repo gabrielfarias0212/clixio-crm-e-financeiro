@@ -7,7 +7,6 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Client, CalendarEvent } from "@/utils/types";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
-import { toast } from "@/hooks/use-toast";
 
 interface DayEventsSidebarProps {
   date: Date | undefined;
@@ -25,7 +24,7 @@ export function DayEventsSidebar({
   setAddEventOpen,
   openEditEvent
 }: DayEventsSidebarProps) {
-  const { events, deleteEvent, refreshEvents } = useCalendarEvents();
+  const { deleteEvent, updateEvent } = useCalendarEvents();
   const formattedDate = date ? format(date, "EEEE, d 'de' MMMM", { locale: ptBR }) : "";
   
   const handleEditEvent = (event: CalendarEvent) => {
@@ -37,23 +36,9 @@ export function DayEventsSidebar({
     }
   };
   
-  const handleDeleteEvent = async (eventId: string) => {
+  const handleDeleteEvent = (eventId: string) => {
     if (confirm("Tem certeza que deseja excluir este evento?")) {
-      try {
-        await deleteEvent(eventId);
-        await refreshEvents();
-        toast({
-          title: "Evento excluído",
-          description: "O evento foi excluído com sucesso."
-        });
-      } catch (error) {
-        console.error("Error deleting event:", error);
-        toast({
-          title: "Erro ao excluir evento",
-          description: "Ocorreu um erro ao excluir o evento.",
-          variant: "destructive"
-        });
-      }
+      deleteEvent(eventId);
     }
   };
   

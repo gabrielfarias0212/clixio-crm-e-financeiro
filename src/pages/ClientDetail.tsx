@@ -36,16 +36,6 @@ export default function ClientDetail() {
     }
   }, [client, id, clients, navigate]);
 
-  // Update client when clients array changes
-  useEffect(() => {
-    if (id && clients.length > 0) {
-      const updatedClient = clients.find(c => c.id === id);
-      if (updatedClient && JSON.stringify(updatedClient) !== JSON.stringify(client)) {
-        setClient(updatedClient);
-      }
-    }
-  }, [clients, id, client]);
-
   useEffect(() => {
     if (client) {
       document.title = `${client.name} | Wedding CRM`;
@@ -59,10 +49,6 @@ export default function ClientDetail() {
       // Direcionar para lista de clientes após excluir
       navigate("/clients");
     }
-  };
-
-  const handleClientUpdate = (updatedClient: Client) => {
-    setClient(updatedClient);
   };
 
   if (!client) {
@@ -127,7 +113,7 @@ export default function ClientDetail() {
           </TabsList>
           
           <TabsContent value="details">
-            <ClientDetails client={client} onUpdate={handleClientUpdate} />
+            <ClientDetails client={client} />
           </TabsContent>
           
           {hasDeliveryWorkflow && (

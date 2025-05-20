@@ -15,7 +15,7 @@ interface DayViewProps {
 }
 
 export function DayView({ date, clients, onClientClick }: DayViewProps) {
-  const { events } = useCalendarEvents(clients);
+  const { events } = useCalendarEvents();
   const hours = Array.from({ length: 16 }, (_, i) => i + 6); // 6am to 10pm
   
   const dayStart = startOfDay(date);

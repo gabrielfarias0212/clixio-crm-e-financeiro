@@ -38,7 +38,7 @@ type CombinedEventItem = ClientEventItem | CalendarEventItem;
 
 export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
   const navigate = useNavigate();
-  const { events } = useCalendarEvents(clients);
+  const { events } = useCalendarEvents();
 
   const upcomingEvents = useMemo(() => {
     const today = startOfDay(new Date());

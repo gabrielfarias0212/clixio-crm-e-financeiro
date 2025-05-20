@@ -1,112 +1,130 @@
 
-import { useState, useEffect, useMemo } from 'react';
-import { addMonths, subMonths, format, startOfMonth, 
-  addWeeks, subWeeks, addDays, subDays, isSameDay } from 'date-fns';
-import { useCalendarEvents } from './useCalendarEvents';
-import { CalendarEvent, CalendarViewType } from '@/utils/types';
-import { useClients } from '@/contexts/ClientsContext';
+import { useState, useMemo } from "react";
+import { format, parse, addDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useCalendarEvents } from "@/hooks/useCalendarEvents";
+import { normalizeDate, TIMEZONE, stringToDate, dateToString } from "@/utils/dates";
+import { Client } from "@/utils/types";
+import { formatInTimeZone } from "date-fns-tz";
 
-export function useCalendarPage() {
-  const [view, setView] = useState<CalendarViewType>('month');
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+export function useCalendarPage(clients: Client[]) {
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [view, setView] = useState<"day" | "week" | "month">("month");
+  const [addEventOpen, setAddEventOpen] = useState(false);
+  const { events } = useCalendarEvents();
   
-  const { clients } = useClients();
-  const { events, loading, error, addEvent, updateEvent, deleteEvent, refreshEvents } = useCalendarEvents(clients);
-  
-  // Reset selectedDate when view changes
-  useEffect(() => {
-    setSelectedDate(null);
-  }, [view]);
-  
-  // Navigation functions
-  const goToPrevious = () => {
-    setCurrentDate(prevDate => {
-      switch(view) {
-        case 'month': 
-          return subMonths(prevDate, 1);
-        case 'week': 
-          return subWeeks(prevDate, 1);
-        case 'day': 
-          return subDays(prevDate, 1);
-        default: 
-          return prevDate;
-      }
-    });
-  };
-  
-  const goToNext = () => {
-    setCurrentDate(prevDate => {
-      switch(view) {
-        case 'month': 
-          return addMonths(prevDate, 1);
-        case 'week': 
-          return addWeeks(prevDate, 1);
-        case 'day': 
-          return addDays(prevDate, 1);
-        default: 
-          return prevDate;
-      }
-    });
-  };
-  
-  const goToToday = () => {
-    setCurrentDate(new Date());
-    // If we're in day view, also select today
-    if (view === 'day') {
-      setSelectedDate(new Date());
-    }
-  };
-  
-  const handleDateSelect = (date: Date | null) => {
-    setSelectedDate(date);
-    if (date && view === 'month') {
-      // When selecting a date in month view, we want to keep the month view
-      // but update the currentDate to include the selected month
-      setCurrentDate(startOfMonth(date));
-    } else if (date) {
-      // In other views, when selecting a date, update currentDate to that date
-      setCurrentDate(date);
-    }
-  };
-  
-  // Filter events for the selected date
-  const selectedEvents = useMemo(() => {
-    if (!selectedDate) return [];
+  // Filter clients with wedding dates
+  const clientsWithWeddingDates = useMemo(() => 
+    clients.filter(client => client.weddingDate !== null) as (Client & { weddingDate: string })[],
+  [clients]);
+
+  // Get current month and year for header display
+  const currentMonthYear = useMemo(() => {
+    if (!date) return "";
     
-    return events.filter(event => {
+    try {
+      // Format the current date for display
+      return formatInTimeZone(date, TIMEZONE, "MMMM 'de' yyyy", { locale: ptBR });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return format(date, "MMMM 'de' yyyy", { locale: ptBR });
+    }
+  }, [date]);
+
+  // Group clients by date
+  const clientsByDate = useMemo(() => {
+    const result: Record<string, Client[]> = {};
+    
+    clientsWithWeddingDates.forEach(client => {
+      if (!client.weddingDate) return;
+      
+      // Convert to YYYY-MM-DD for consistent key format
+      const dateObj = stringToDate(client.weddingDate);
+      if (!dateObj) return;
+      
+      const dateKey = normalizeDate(dateObj);
+      
+      if (!result[dateKey]) {
+        result[dateKey] = [];
+      }
+      result[dateKey].push(client);
+    });
+    
+    return result;
+  }, [clientsWithWeddingDates]);
+
+  // Get all event dates (client events + calendar events)
+  const eventDates = useMemo(() => {
+    const dates: Date[] = [];
+    
+    // Add client wedding dates
+    Object.keys(clientsByDate).forEach(dateStr => {
       try {
-        // Safely handle the event date
-        if (!event.date) return false;
-        
-        const eventDate = typeof event.date === 'string' 
-          ? new Date(event.date) 
-          : event.date;
+        // Convert YYYY-MM-DD to Date object
+        if (dateStr && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          const [year, month, day] = dateStr.split('-').map(Number);
+          const eventDate = new Date(year, month - 1, day);
           
-        return isSameDay(eventDate, selectedDate);
+          // Make sure it's valid before adding
+          if (!isNaN(eventDate.getTime())) {
+            dates.push(eventDate);
+          }
+        }
       } catch (error) {
-        console.error("Error filtering event:", error);
-        return false;
+        console.error("Error parsing date:", dateStr, error);
       }
     });
-  }, [selectedDate, events]);
-  
+    
+    // Add calendar events
+    events.forEach(event => {
+      // Convert string date to Date object
+      const eventDate = stringToDate(event.date);
+      if (eventDate && !isNaN(eventDate.getTime()) && 
+          !dates.some(d => 
+            d.getFullYear() === eventDate.getFullYear() && 
+            d.getMonth() === eventDate.getMonth() &&
+            d.getDate() === eventDate.getDate())) {
+        dates.push(eventDate);
+      }
+    });
+    
+    return dates;
+  }, [clientsByDate, events]);
+
+  // Get selected day's clients and events
+  const selectedDayItems = useMemo(() => {
+    if (!date) return { clients: [], events: [] };
+    
+    try {
+      // Convert the selected Date object to a normalized date string
+      const dateKey = normalizeDate(date);
+      
+      // Get clients for this date
+      const dayClients = clientsByDate[dateKey] || [];
+      
+      // Get events for this date
+      const dayEvents = events.filter(event => {
+        const eventDate = stringToDate(event.date);
+        return eventDate && normalizeDate(eventDate) === dateKey;
+      });
+      
+      return { clients: dayClients, events: dayEvents };
+    } catch (error) {
+      console.error("Error getting selected day items:", error);
+      return { clients: [], events: [] };
+    }
+  }, [date, clientsByDate, events]);
+
   return {
+    date,
+    setDate,
     view,
     setView,
-    currentDate,
-    selectedDate,
-    events,
-    loading,
-    error,
-    goToPrevious,
-    goToNext,
-    goToToday,
-    handleDateSelect,
-    selectedEvents,
-    addEvent,
-    updateEvent,
-    deleteEvent,
-    refreshEvents
+    addEventOpen,
+    setAddEventOpen,
+    currentMonthYear,
+    eventDates,
+    selectedDayItems,
+    clientsByDate
   };
 }

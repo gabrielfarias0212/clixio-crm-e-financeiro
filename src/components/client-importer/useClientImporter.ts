@@ -15,15 +15,15 @@ export function useClientImporter(data: any[]) {
 
   const checkForDuplicates = async () => {
     try {
-      // Obter clientes existentes
+      // Get existing clients
       const existingClients = await fetchClients();
       
-      // Mapear os dados de entrada para a estrutura de cliente
+      // Map incoming data to client structure
       const mappedClients = data
         .filter(row => Object.keys(row).length > 0)
         .map(row => mapClientData(row));
       
-      // Contar quantos têm e-mails duplicados
+      // Count how many have duplicate emails
       let duplicates = 0;
       
       for (const newClient of mappedClients) {
@@ -40,26 +40,26 @@ export function useClientImporter(data: any[]) {
       
       return duplicates;
     } catch (error) {
-      console.error("Erro ao verificar duplicatas:", error);
+      console.error("Error checking for duplicates:", error);
       return 0;
     }
   };
 
   const handleStartImport = async () => {
     try {
-      // Verificar duplicatas
+      // Check for duplicates
       const duplicates = await checkForDuplicates();
       setDuplicateCount(duplicates);
       
       if (duplicates > 0) {
-        // Mostrar o diálogo de confirmação
+        // Show the confirmation dialog
         setShowConfirmDialog(true);
       } else {
-        // Sem duplicatas, prosseguir com a importação
+        // No duplicates, proceed with import
         await startImport();
       }
     } catch (error) {
-      console.error("Erro durante a preparação da importação:", error);
+      console.error("Error during import preparation:", error);
       toast.error("Erro ao preparar a importação");
     }
   };
@@ -69,49 +69,39 @@ export function useClientImporter(data: any[]) {
     setShowConfirmDialog(false);
     
     try {
-      // Obter clientes existentes
+      // Get existing clients
       const existingClients = await fetchClients();
       
-      // Inicializar contadores para o resumo
+      // Initialize counters for summary
       let total = 0;
       let added = 0;
       let updated = 0;
       let skipped = 0;
       let errors = 0;
       
-      // Mapear os dados de entrada para a estrutura de cliente e filtrar linhas vazias
+      // Map incoming data to client structure and filter out empty rows
       const mappedClients = data
         .filter(row => Object.keys(row).length > 0 && Object.values(row).some(v => v !== null && v !== ""))
         .map(row => mapClientData(row));
       
       total = mappedClients.length;
       
-      if (total === 0) {
-        toast.error("Nenhum dado válido para importar");
-        setImporting(false);
-        return;
-      }
-      
-      console.log(`Iniciando importação de ${total} clientes`);
-      
-      // Processar cada cliente
+      // Process each client
       for (const clientData of mappedClients) {
         try {
-          // Verificar se este cliente já existe (pelo e-mail)
+          // Check if this client already exists (by email)
           const existingClient = clientData.email 
             ? existingClients.find(c => c.email === clientData.email)
             : null;
           
           if (existingClient) {
-            // Manipulação com base na opção de importação selecionada
+            // Handling based on the selected import option
             if (importOption === "skip") {
-              // Pular este cliente
-              console.log(`Pulando cliente: ${clientData.name} (${clientData.email})`);
+              // Skip this client
               skipped++;
               continue;
             } else if (importOption === "update") {
-              // Atualizar o cliente existente
-              console.log(`Atualizando cliente: ${clientData.name} (${clientData.email})`);
+              // Update the existing client
               const result = await updateClient(existingClient.id, clientData);
               if (result) {
                 updated++;
@@ -120,11 +110,10 @@ export function useClientImporter(data: any[]) {
               }
               continue;
             }
-            // Para "replace", apenas adicionaremos novos clientes e ignoraremos duplicatas
+            // For "replace", we'll just add new clients and ignore duplicates
           }
           
-          // Adicionar como novo cliente
-          console.log(`Adicionando novo cliente: ${clientData.name} (${clientData.email || 'sem email'})`);
+          // Add as a new client
           const result = await createClient(clientData as Omit<Client, "id" | "createdAt" | "updatedAt" | "payments">);
           if (result) {
             added++;
@@ -133,32 +122,25 @@ export function useClientImporter(data: any[]) {
           }
           
         } catch (error) {
-          console.error("Erro ao importar cliente:", error);
+          console.error("Error importing client:", error);
           errors++;
         }
       }
       
-      // Atualizar o resumo
-      const importSummary = {
+      // Update the summary
+      setSummary({
         total,
         added,
         updated,
         skipped,
         errors
-      };
+      });
       
-      setSummary(importSummary);
-      console.log("Resumo da importação:", importSummary);
-      
-      // Mostrar toast com resultados
-      if (errors > 0) {
-        toast.warning(`Importação concluída com problemas: ${added} adicionados, ${updated} atualizados, ${errors} erros`);
-      } else {
-        toast.success(`Importação concluída: ${added} adicionados, ${updated} atualizados`);
-      }
+      // Show toast with results
+      toast.success(`Importação concluída: ${added} adicionados, ${updated} atualizados`);
       
     } catch (error) {
-      console.error("Erro durante a importação:", error);
+      console.error("Error during import:", error);
       toast.error("Erro durante a importação");
     } finally {
       setImporting(false);

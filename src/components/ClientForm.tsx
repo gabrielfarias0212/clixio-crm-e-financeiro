@@ -33,6 +33,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           preWeddingStartTime: client.preWeddingStartTime || "",
           preWeddingEndTime: client.preWeddingEndTime || "",
           contractLink: client.contractLink || "",
+          hasPreWedding: client.hasPreWedding !== false, // Default to true if undefined
           notes: client.notes,
         }
       : {
@@ -53,6 +54,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           preWeddingStartTime: "",
           preWeddingEndTime: "",
           contractLink: "",
+          hasPreWedding: true, // Default to true for new clients
           notes: "",
         },
   });
@@ -62,11 +64,25 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
   };
 
   const watchStatus = form.watch("status");
+  const watchHasPreWedding = form.watch("hasPreWedding");
+
+  // If hasPreWedding is false, clear the pre-wedding date fields
+  React.useEffect(() => {
+    if (!watchHasPreWedding) {
+      form.setValue("preWeddingDate", null);
+      form.setValue("preWeddingStartTime", "");
+      form.setValue("preWeddingEndTime", "");
+    }
+  }, [watchHasPreWedding, form]);
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 animate-fade-in">
-        <FormFields control={form.control} watchStatus={watchStatus} />
+        <FormFields 
+          control={form.control} 
+          watchStatus={watchStatus} 
+          watchHasPreWedding={watchHasPreWedding}
+        />
         <NotesField control={form.control} />
         <FormActions 
           isSubmitting={isSubmitting} 

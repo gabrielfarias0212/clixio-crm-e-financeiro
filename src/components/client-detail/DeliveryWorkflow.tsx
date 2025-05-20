@@ -63,11 +63,18 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
   };
 
   // Calculate progress
-  const totalSteps = 9; // Total number of checkboxes
+  const needsPreWedding = client.hasPreWedding !== false;
+  const totalSteps = needsPreWedding ? 9 : 6; // Reduce total steps if no pre-wedding is needed
+  
+  // Count completed steps, excluding pre-wedding steps if not needed
   const completedSteps = [
-    client.preWeddingScheduled,
-    client.preWeddingCompleted,
-    client.preWeddingDelivered,
+    // Only count pre-wedding steps if needed
+    ...(needsPreWedding ? [
+      client.preWeddingScheduled,
+      client.preWeddingCompleted,
+      client.preWeddingDelivered,
+    ] : []),
+    // Always count these steps
     client.weddingPhotographed,
     client.inEditing,
     client.linkSent,
@@ -119,26 +126,30 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
         <h3 className="text-md font-medium mb-4">Fluxo de Entrega</h3>
         
         <div className="space-y-1">
-          <CheckboxItem
-            label="Pré-wedding agendado?"
-            checked={client.preWeddingScheduled}
-            onChange={(checked) => updateWorkflowStatus('preWeddingScheduled', checked)}
-            field="pre_wedding_scheduled"
-          />
-          
-          <CheckboxItem
-            label="Pré-wedding feito?"
-            checked={client.preWeddingCompleted}
-            onChange={(checked) => updateWorkflowStatus('preWeddingCompleted', checked)}
-            field="pre_wedding_completed"
-          />
-          
-          <CheckboxItem
-            label="Pré-wedding entregue?"
-            checked={client.preWeddingDelivered}
-            onChange={(checked) => updateWorkflowStatus('preWeddingDelivered', checked)}
-            field="pre_wedding_delivered"
-          />
+          {needsPreWedding && (
+            <>
+              <CheckboxItem
+                label="Pré-wedding agendado?"
+                checked={client.preWeddingScheduled}
+                onChange={(checked) => updateWorkflowStatus('preWeddingScheduled', checked)}
+                field="pre_wedding_scheduled"
+              />
+              
+              <CheckboxItem
+                label="Pré-wedding feito?"
+                checked={client.preWeddingCompleted}
+                onChange={(checked) => updateWorkflowStatus('preWeddingCompleted', checked)}
+                field="pre_wedding_completed"
+              />
+              
+              <CheckboxItem
+                label="Pré-wedding entregue?"
+                checked={client.preWeddingDelivered}
+                onChange={(checked) => updateWorkflowStatus('preWeddingDelivered', checked)}
+                field="pre_wedding_delivered"
+              />
+            </>
+          )}
           
           <CheckboxItem
             label="Evento fotografado?"

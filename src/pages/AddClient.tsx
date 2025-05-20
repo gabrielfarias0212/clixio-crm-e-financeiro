@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -46,6 +47,7 @@ export default function AddClient() {
         preWeddingStartTime: data.preWeddingStartTime,
         preWeddingEndTime: data.preWeddingEndTime,
         contractLink: data.contractLink,
+        hasPreWedding: data.hasPreWedding,
         notes: data.notes || "",
       });
       

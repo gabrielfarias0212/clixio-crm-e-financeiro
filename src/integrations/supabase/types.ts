@@ -861,6 +861,7 @@ export type Database = {
           email: string | null
           event_category: string | null
           event_location: string | null
+          has_pre_wedding: boolean | null
           id: string
           in_editing: boolean | null
           link_sent: boolean | null
@@ -893,6 +894,7 @@ export type Database = {
           email?: string | null
           event_category?: string | null
           event_location?: string | null
+          has_pre_wedding?: boolean | null
           id?: string
           in_editing?: boolean | null
           link_sent?: boolean | null
@@ -925,6 +927,7 @@ export type Database = {
           email?: string | null
           event_category?: string | null
           event_location?: string | null
+          has_pre_wedding?: boolean | null
           id?: string
           in_editing?: boolean | null
           link_sent?: boolean | null

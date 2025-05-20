@@ -1,50 +1,59 @@
-
-import { z } from "zod";
+import * as z from "zod";
 import { Client } from "@/utils/types";
 
 export const formSchema = z.object({
-  name: z.string().min(1, { message: "O nome é obrigatório" }),
+  name: z.string().min(2, {
+    message: "Nome deve ter pelo menos 2 caracteres.",
+  }),
   coupleName: z.string().optional(),
-  email: z.string().email({ message: "Email inválido" }),
-  phone: z.string().min(1, { message: "O telefone é obrigatório" }),
+  email: z.string().email({
+    message: "Email inválido.",
+  }),
+  phone: z.string().min(10, {
+    message: "Telefone deve ter pelo menos 10 caracteres.",
+  }),
   weddingDate: z.string().nullable(),
   weddingStartTime: z.string().optional(),
   weddingEndTime: z.string().optional(),
-  contractValue: z.coerce.number().min(0, { message: "O valor deve ser positivo" }),
-  downPayment: z.coerce.number().min(0, { message: "O valor deve ser positivo" }),
-  status: z.enum(["orçamento enviado", "follow-up", "fechado", "em andamento", "pago"]),
-  nextAction: z.enum(["responder", "enviar proposta", "editar", "entregar", "nenhuma", "agendar reunião"]),
-  eventCategory: z.enum(["Casamento", "Aniversario", "Civil", "Ensaio Estudio", "Ensaio externo", "Evento Corporativo", "15 anos"]),
+  contractValue: z.number(),
+  downPayment: z.number(),
+  status: z.string(),
+  nextAction: z.string(),
+  eventCategory: z.string(),
   eventLocation: z.string().optional(),
   preWeddingDate: z.string().nullable(),
   preWeddingStartTime: z.string().optional(),
   preWeddingEndTime: z.string().optional(),
   contractLink: z.string().optional(),
+  hasPreWedding: z.boolean().optional(),
   notes: z.string().optional(),
-})
-.refine(data => data.downPayment <= data.contractValue, {
-  message: "O valor da entrada não pode ser maior que o valor do contrato",
-  path: ["downPayment"],
-})
-.refine(
-  data => !data.weddingStartTime || !data.weddingEndTime || data.weddingStartTime <= data.weddingEndTime,
-  {
-    message: "O horário de término deve ser após o horário de início",
-    path: ["weddingEndTime"],
-  }
-)
-.refine(
-  data => !data.preWeddingStartTime || !data.preWeddingEndTime || data.preWeddingStartTime <= data.preWeddingEndTime,
-  {
-    message: "O horário de término do pré-wedding deve ser após o horário de início",
-    path: ["preWeddingEndTime"],
-  }
-);
-
-export type ClientFormValues = z.infer<typeof formSchema>;
+});
 
 export interface ClientFormProps {
-  client?: Client;
-  onSubmit: (data: ClientFormValues) => void;
-  isSubmitting?: boolean;
+    client?: Client;
+    onSubmit: (values: ClientFormValues) => void;
+    isSubmitting?: boolean;
+}
+
+// Update the ClientFormValues interface to include hasPreWedding
+export interface ClientFormValues {
+  name: string;
+  coupleName: string;
+  email: string;
+  phone: string;
+  weddingDate: string | null;
+  weddingStartTime: string;
+  weddingEndTime: string;
+  contractValue: number;
+  downPayment: number;
+  status: string;
+  nextAction: string;
+  eventCategory: string;
+  eventLocation: string;
+  preWeddingDate: string | null;
+  preWeddingStartTime: string;
+  preWeddingEndTime: string;
+  contractLink: string;
+  hasPreWedding: boolean;
+  notes: string;
 }

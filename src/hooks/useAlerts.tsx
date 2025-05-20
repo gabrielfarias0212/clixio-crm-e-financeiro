@@ -93,6 +93,43 @@ export function useAlerts(clients: Client[]) {
       });
     });
     
+    // Pre-wedding alerts for clients with unscheduled pre-weddings
+    const preWeddingAlerts: AlertItem[] = clients
+      .filter(client => {
+        // Only show pre-wedding alerts for clients where:
+        // 1. The client needs pre-wedding (hasPreWedding is true)
+        // 2. The pre-wedding has not been scheduled (preWeddingDate is null or preWeddingScheduled is false)
+        // 3. The client status is confirmed or in progress (not a quote or follow-up)
+        return client.hasPreWedding !== false && 
+               (!client.preWeddingDate || client.preWeddingScheduled === false) && 
+               (client.status === "fechado" || client.status === "em andamento");
+      })
+      .map(client => {
+        const weddingDate = client.weddingDate ? stringToDate(client.weddingDate) : null;
+        let urgency: "high" | "medium" | "low" = "medium";
+        
+        // Calculate urgency based on wedding date proximity
+        if (weddingDate) {
+          const daysUntilWedding = differenceInDays(weddingDate, now);
+          if (daysUntilWedding <= 30) {
+            urgency = "high";
+          } else if (daysUntilWedding <= 60) {
+            urgency = "medium";
+          } else {
+            urgency = "low";
+          }
+        }
+        
+        return {
+          type: "pre_wedding" as const,
+          title: "Pré-wedding não agendado",
+          description: `Cliente: ${client.name} - Agendar pré-wedding/ensaio`,
+          client,
+          date: now,
+          urgency
+        };
+      });
+    
     // Calendar event alerts (upcoming events within 7 days)
     const calendarEventAlerts: AlertItem[] = [];
     const today = startOfDay(new Date());
@@ -120,8 +157,8 @@ export function useAlerts(clients: Client[]) {
       }
     });
     
-    // Combine and sort all due payment alerts by urgency (high -> medium -> low)
-    const sortedDuePaymentAlerts = [...duePaymentAlerts].sort((a, b) => {
+    // Combine and sort all alerts by urgency and type
+    const allPaymentAlerts = [...paymentAlerts, ...duePaymentAlerts].sort((a, b) => {
       const urgencyOrder = { high: 0, medium: 1, low: 2 };
       return (urgencyOrder[a.urgency || 'medium'] - urgencyOrder[b.urgency || 'medium']) || 
              differenceInDays(a.date, b.date);
@@ -129,8 +166,9 @@ export function useAlerts(clients: Client[]) {
 
     return { 
       tasks: pendingTasks, 
-      payments: [...paymentAlerts, ...sortedDuePaymentAlerts] as AlertItem[],
-      events: calendarEventAlerts as AlertItem[]
+      payments: allPaymentAlerts as AlertItem[],
+      events: calendarEventAlerts as AlertItem[],
+      preWedding: preWeddingAlerts as AlertItem[]
     };
   }, [clients, events]);
 

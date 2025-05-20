@@ -31,6 +31,7 @@ export const updateClient = async (id: string, updates: ClientUpdateData): Promi
     pre_wedding_start_time: updates.preWeddingStartTime,
     pre_wedding_end_time: updates.preWeddingEndTime,
     contract_link: updates.contractLink,
+    has_pre_wedding: updates.hasPreWedding,
     // Delivery workflow fields
     pre_wedding_scheduled: updates.preWeddingScheduled,
     pre_wedding_completed: updates.preWeddingCompleted,

@@ -62,6 +62,7 @@ export default function EditClient() {
         preWeddingStartTime: data.preWeddingStartTime,
         preWeddingEndTime: data.preWeddingEndTime,
         contractLink: data.contractLink,
+        hasPreWedding: data.hasPreWedding,
         notes: data.notes || "",
       });
       

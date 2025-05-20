@@ -2,7 +2,7 @@
 import React from "react";
 import { AlertItem as AlertItemType } from "@/utils/types";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Bell, Calendar, DollarSign } from "lucide-react";
+import { Bell, Calendar, DollarSign, Camera } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface AlertItemProps {
@@ -21,6 +21,8 @@ export function AlertItem({ alert }: AlertItemProps) {
         return <DollarSign className="h-5 w-5 text-green-500" />;
       case "event":
         return <Calendar className="h-5 w-5 text-blue-500" />;
+      case "pre_wedding":
+        return <Camera className="h-5 w-5 text-purple-500" />;
       default:
         return <Bell className="h-5 w-5" />;
     }
@@ -37,6 +39,12 @@ export function AlertItem({ alert }: AlertItemProps) {
       if (alert.urgency === "high") return "cursor-pointer border-l-4 border-l-red-500";
       if (alert.urgency === "medium") return "cursor-pointer border-l-4 border-l-blue-400";
       return "cursor-pointer border-l-4 border-l-blue-500";
+    }
+    
+    if (alert.type === "pre_wedding") {
+      if (alert.urgency === "high") return "cursor-pointer border-l-4 border-l-red-500";
+      if (alert.urgency === "medium") return "cursor-pointer border-l-4 border-l-purple-400";
+      return "cursor-pointer border-l-4 border-l-purple-500";
     }
     
     if (alert.type === "task") return "cursor-pointer border-l-4 border-l-amber-500";

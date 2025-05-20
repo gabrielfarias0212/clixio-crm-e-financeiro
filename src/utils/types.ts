@@ -85,6 +85,7 @@ export interface Client {
   preWeddingStartTime?: string;
   preWeddingEndTime?: string;
   contractLink?: string;
+  hasPreWedding?: boolean;
   preWeddingScheduled?: boolean;
   preWeddingCompleted?: boolean;
   preWeddingDelivered?: boolean;
@@ -127,9 +128,9 @@ export interface CalendarEvent {
   clientId?: string;
 }
 
-// Update the AlertItem type in the same file to include the 'due_payment' type
+// Update the AlertItem type to include the 'pre_wedding' type
 export interface AlertItem {
-  type: "task" | "payment" | "due_payment" | "event";  // Includes all required types
+  type: "task" | "payment" | "due_payment" | "event" | "pre_wedding";  // Added pre_wedding type
   title: string;
   description: string;
   client: Client;

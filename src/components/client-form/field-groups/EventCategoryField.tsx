@@ -1,6 +1,7 @@
 
 import { Control } from "react-hook-form";
 import { ClientFormValues } from "../types";
+import { EventCategory } from "@/utils/types";
 import {
   FormField,
   FormItem,

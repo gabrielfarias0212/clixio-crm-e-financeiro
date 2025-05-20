@@ -5,7 +5,7 @@ import Layout from "@/components/Layout";
 import { ClientForm, ClientFormValues } from "@/components/ClientForm";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
-import { Client } from "@/utils/types";
+import { Client, ClientStatus, NextAction, EventCategory } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
 
 export default function EditClient() {
@@ -54,9 +54,9 @@ export default function EditClient() {
         weddingEndTime: data.weddingEndTime,
         contractValue: data.contractValue,
         downPayment: data.downPayment,
-        status: data.status,
-        nextAction: data.nextAction,
-        eventCategory: data.eventCategory,
+        status: data.status as ClientStatus,
+        nextAction: data.nextAction as NextAction,
+        eventCategory: data.eventCategory as EventCategory,
         eventLocation: data.eventLocation,
         preWeddingDate: data.preWeddingDate,
         preWeddingStartTime: data.preWeddingStartTime,

@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useClients } from "@/contexts/ClientsContext";
-import { createValidDate } from "@/utils/dateUtils";
+import { ClientStatus, NextAction, EventCategory } from "@/utils/types";
 
 export default function AddClient() {
   const navigate = useNavigate();
@@ -39,9 +39,9 @@ export default function AddClient() {
         weddingEndTime: data.weddingEndTime,
         contractValue: data.contractValue,
         downPayment: data.downPayment,
-        status: data.status,
-        nextAction: data.nextAction,
-        eventCategory: data.eventCategory,
+        status: data.status as ClientStatus,
+        nextAction: data.nextAction as NextAction,
+        eventCategory: data.eventCategory as EventCategory,
         eventLocation: data.eventLocation,
         preWeddingDate: preWeddingDate,
         preWeddingStartTime: data.preWeddingStartTime,

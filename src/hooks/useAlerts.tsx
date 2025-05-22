@@ -1,7 +1,7 @@
 
 import { useMemo } from "react";
 import { AlertItem, Client, CalendarEvent } from "@/utils/types";
-import { stringToDate } from "@/utils/dateUtils";
+import { stringToDate } from "@/utils/dates";
 import { differenceInDays, isBefore, isAfter, startOfDay, addDays } from "date-fns";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 
@@ -94,36 +94,55 @@ export function useAlerts(clients: Client[] = []) {
     });
     
     // Pre-wedding alerts for clients with unscheduled pre-weddings
+    // - Show only when wedding date is <= 120 days away or no date set
+    // - Don't show if pre-wedding is scheduled or not needed
     const preWeddingAlerts: AlertItem[] = clients
       .filter(client => {
-        // Only show pre-wedding alerts for clients where:
-        // 1. The client needs pre-wedding (hasPreWedding is true)
-        // 2. The pre-wedding has not been scheduled (preWeddingDate is null or preWeddingScheduled is false)
-        // 3. The client status is confirmed or in progress (not a quote or follow-up)
-        return client.hasPreWedding !== false && 
-               (!client.preWeddingDate || client.preWeddingScheduled === false) && 
-               (client.status === "fechado" || client.status === "em andamento");
+        // Verify if we need to show a pre-wedding alert for this client
+        
+        // Requirement: Client needs a pre-wedding
+        const needsPreWedding = client.hasPreWedding !== false;
+        
+        // Scheduling: Pre-wedding not scheduled yet
+        const notScheduled = !client.preWeddingDate || client.preWeddingScheduled === false;
+        
+        // Status: Client has confirmed status
+        const hasConfirmedStatus = client.status === "fechado" || client.status === "em andamento";
+        
+        // Timeframe: Wedding within 120 days OR no date defined
+        const weddingDate = client.weddingDate ? stringToDate(client.weddingDate) : null;
+        const daysUntilWedding = weddingDate ? differenceInDays(weddingDate, now) : null;
+        const isWithinTimeframe = daysUntilWedding === null || daysUntilWedding <= 120;
+        
+        return needsPreWedding && notScheduled && hasConfirmedStatus && isWithinTimeframe;
       })
       .map(client => {
         const weddingDate = client.weddingDate ? stringToDate(client.weddingDate) : null;
         let urgency: "high" | "medium" | "low" = "medium";
+        let daysUntilWedding = null;
         
         // Calculate urgency based on wedding date proximity
         if (weddingDate) {
-          const daysUntilWedding = differenceInDays(weddingDate, now);
+          daysUntilWedding = differenceInDays(weddingDate, now);
+          
           if (daysUntilWedding <= 30) {
-            urgency = "high";
+            urgency = "high";  // 30 days or less: high urgency
           } else if (daysUntilWedding <= 60) {
-            urgency = "medium";
+            urgency = "medium"; // 31-60 days: medium urgency
           } else {
-            urgency = "low";
+            urgency = "low";    // 61-120 days: low urgency
           }
         }
+        
+        // Create description with wedding date information
+        const descriptionWithDays = daysUntilWedding 
+          ? `Cliente: ${client.name} - Agendar pré-wedding/ensaio (Casamento em ${daysUntilWedding} dias)`
+          : `Cliente: ${client.name} - Agendar pré-wedding/ensaio`;
         
         return {
           type: "pre_wedding" as const,
           title: "Pré-wedding não agendado",
-          description: `Cliente: ${client.name} - Agendar pré-wedding/ensaio`,
+          description: descriptionWithDays,
           client,
           date: now,
           urgency

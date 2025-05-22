@@ -88,13 +88,11 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   
   const addEvent = useCallback((event: CalendarEvent) => {
     // Ensure the date is in the correct string format (DD/MM/YYYY)
-    if (typeof event.date === 'object' && event.date instanceof Date) {
-      event = {
-        ...event,
-        date: dateToString(event.date)
-      };
+    const updatedEvent = { ...event };
+    if (typeof updatedEvent.date === 'object' && updatedEvent.date instanceof Date) {
+      updatedEvent.date = dateToString(updatedEvent.date);
     }
-    setEvents(prev => [...prev, event]);
+    setEvents(prev => [...prev, updatedEvent]);
   }, []);
   
   const updateEvent = useCallback((updatedEvent: CalendarEvent) => {

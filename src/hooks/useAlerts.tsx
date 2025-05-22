@@ -4,6 +4,7 @@ import { AlertItem, Client, CalendarEvent } from "@/utils/types";
 import { stringToDate } from "@/utils/dates";
 import { differenceInDays, isBefore, isAfter, startOfDay, addDays } from "date-fns";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
+import { isFullyPaid } from "@/utils/clientUtils";
 
 export function useAlerts(clients: Client[] = []) {
   const { events } = useCalendarEvents();
@@ -23,23 +24,47 @@ export function useAlerts(clients: Client[] = []) {
         urgency: "medium" as const
       }));
     
-    // Payment alerts (contracts without full payment)
+    // Payment alerts for upcoming weddings (less than 30 days)
+    // Only show if payment is not complete and wedding date is within 30 days
     const paymentAlerts: AlertItem[] = clients
       .filter(client => {
+        // Check if client has a wedding date
+        if (!client.weddingDate) return false;
+        
+        // Check if client status is active
         if (client.status !== "fechado" && client.status !== "em andamento") return false;
-        const totalPaid = client.payments.reduce((sum, payment) => sum + payment.amount, 0);
-        return totalPaid < client.contractValue; // Still has pending payments
+        
+        // Check if fully paid already
+        if (isFullyPaid(client)) return false;
+        
+        // Calculate days until wedding
+        const weddingDate = stringToDate(client.weddingDate);
+        if (!weddingDate) return false;
+        
+        const daysUntilWedding = differenceInDays(weddingDate, now);
+        
+        // Only alert if wedding is within 30 days
+        return daysUntilWedding <= 30;
       })
       .map(client => {
         const totalPaid = client.payments.reduce((sum, payment) => sum + payment.amount, 0);
         const pendingAmount = client.contractValue - totalPaid;
+        const weddingDate = stringToDate(client.weddingDate || "");
+        const daysUntilWedding = weddingDate ? differenceInDays(weddingDate, now) : null;
+        
+        // Create description with days information
+        let description = `Cliente: ${client.name}`;
+        if (daysUntilWedding !== null) {
+          description += ` - Casamento em ${daysUntilWedding} ${daysUntilWedding === 1 ? 'dia' : 'dias'}`;
+        }
+        
         return {
           type: "payment" as const,
           title: `Pagamento pendente: R$ ${pendingAmount.toFixed(2)}`,
-          description: `Cliente: ${client.name}`,
+          description,
           client,
-          date: now, // Current date as these are already pending
-          urgency: "medium" as const
+          date: now,
+          urgency: daysUntilWedding && daysUntilWedding <= 7 ? "high" : "medium"
         };
       });
 

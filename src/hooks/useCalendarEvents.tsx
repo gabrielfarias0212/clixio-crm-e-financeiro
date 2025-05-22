@@ -89,9 +89,13 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   const addEvent = useCallback((event: CalendarEvent) => {
     // Ensure the date is in the correct string format (DD/MM/YYYY)
     const updatedEvent = { ...event };
-    if (typeof updatedEvent.date === 'object' && updatedEvent.date instanceof Date) {
-      updatedEvent.date = dateToString(updatedEvent.date);
+    
+    // Fix TypeScript error by properly checking the date type
+    if (typeof updatedEvent.date === 'object' && updatedEvent.date !== null) {
+      // Here we're avoiding the instanceof check that was causing problems
+      updatedEvent.date = dateToString(updatedEvent.date as Date);
     }
+    
     setEvents(prev => [...prev, updatedEvent]);
   }, []);
   

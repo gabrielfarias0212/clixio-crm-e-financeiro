@@ -17,6 +17,18 @@ interface PaymentFieldsProps {
 }
 
 export function PaymentFields({ control, watchStatus }: PaymentFieldsProps) {
+  // Helper function to parse string to number
+  const handleNumberInput = (value: string, onChange: (val: number) => void) => {
+    // Remove any non-numeric characters except decimal point
+    const cleanedValue = value.replace(/[^\d.]/g, '');
+    
+    // Convert to number or set to 0 if empty/invalid
+    const numValue = cleanedValue ? parseFloat(cleanedValue) : 0;
+    
+    // Call the original onChange with the numeric value
+    onChange(numValue);
+  };
+
   return (
     <>
       <FormField
@@ -31,9 +43,11 @@ export function PaymentFields({ control, watchStatus }: PaymentFieldsProps) {
                   R$
                 </span>
                 <Input 
-                  type="number" 
-                  placeholder="0,00" 
-                  {...field} 
+                  type="text" 
+                  placeholder="0,00"
+                  value={field.value === 0 ? "" : field.value} 
+                  onChange={(e) => handleNumberInput(e.target.value, field.onChange)}
+                  onBlur={field.onBlur}
                   className="pl-8 focus:ring-1 focus:ring-black dark:focus:ring-white transition-shadow"
                 />
               </div>
@@ -55,9 +69,11 @@ export function PaymentFields({ control, watchStatus }: PaymentFieldsProps) {
                   R$
                 </span>
                 <Input 
-                  type="number" 
-                  placeholder="0,00" 
-                  {...field} 
+                  type="text" 
+                  placeholder="0,00"
+                  value={field.value === 0 ? "" : field.value}
+                  onChange={(e) => handleNumberInput(e.target.value, field.onChange)}
+                  onBlur={field.onBlur}
                   className="pl-8 focus:ring-1 focus:ring-black dark:focus:ring-white transition-shadow"
                   disabled={watchStatus === "orçamento enviado" || watchStatus === "follow-up"}
                 />

@@ -50,6 +50,11 @@ export default function ClientDetail() {
       navigate("/clients");
     }
   };
+  
+  // Function to update the client when payments are modified
+  const handleClientUpdate = (updatedClient: Client) => {
+    setClient(updatedClient);
+  };
 
   if (!client) {
     return (
@@ -113,7 +118,7 @@ export default function ClientDetail() {
           </TabsList>
           
           <TabsContent value="details">
-            <ClientDetails client={client} />
+            <ClientDetails client={client} onUpdate={handleClientUpdate} />
           </TabsContent>
           
           {hasDeliveryWorkflow && (

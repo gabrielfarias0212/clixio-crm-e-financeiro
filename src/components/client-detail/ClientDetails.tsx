@@ -7,9 +7,10 @@ import { ClientPayments } from "@/components/ClientPayments";
 
 interface ClientDetailsProps {
   client: Client;
+  onUpdate?: (updatedClient: Client) => void;
 }
 
-export function ClientDetails({ client }: ClientDetailsProps) {
+export function ClientDetails({ client, onUpdate }: ClientDetailsProps) {
   return (
     <div className="space-y-8">
       {/* Informações gerais */}
@@ -19,7 +20,7 @@ export function ClientDetails({ client }: ClientDetailsProps) {
       </div>
       
       {/* Histórico de Pagamentos */}
-      <ClientPayments client={client} />
+      <ClientPayments client={client} onUpdate={onUpdate} />
       
       {/* Notas */}
       <ClientNotes notes={client.notes} />

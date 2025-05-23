@@ -1,4 +1,3 @@
-
 export type ClientStatus = 
   | "orçamento enviado" 
   | "follow-up" 
@@ -128,13 +127,14 @@ export interface CalendarEvent {
   clientId?: string;
 }
 
-// Update the AlertItem type to include the 'pre_wedding' type
+// Update the AlertItem type to include the 'pre_wedding' type and 'isOverdue' property
 export interface AlertItem {
-  type: "task" | "payment" | "due_payment" | "event" | "pre_wedding";  // Added pre_wedding type
+  type: "task" | "payment" | "due_payment" | "event" | "pre_wedding";
   title: string;
   description: string;
   client: Client;
   date: Date;
   payment?: Payment;
   urgency?: "high" | "medium" | "low";
+  isOverdue?: boolean;  // Added isOverdue flag for payment alerts
 }

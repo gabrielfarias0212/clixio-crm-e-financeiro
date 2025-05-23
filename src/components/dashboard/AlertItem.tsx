@@ -2,7 +2,7 @@
 import React from "react";
 import { AlertItem as AlertItemType } from "@/utils/types";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Bell, Calendar, DollarSign, Camera } from "lucide-react";
+import { Bell, Calendar, DollarSign, Camera, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface AlertItemProps {
@@ -12,13 +12,15 @@ interface AlertItemProps {
 export function AlertItem({ alert }: AlertItemProps) {
   const navigate = useNavigate();
 
-  const getAlertIcon = (type: string) => {
+  const getAlertIcon = (type: string, isOverdue?: boolean) => {
     switch (type) {
       case "task":
         return <Bell className="h-5 w-5 text-amber-500" />;
       case "payment":
       case "due_payment":
-        return <DollarSign className="h-5 w-5 text-green-500" />;
+        return isOverdue ? 
+          <AlertTriangle className="h-5 w-5 text-red-500" /> : 
+          <DollarSign className="h-5 w-5 text-green-500" />;
       case "event":
         return <Calendar className="h-5 w-5 text-blue-500" />;
       case "pre_wedding":
@@ -29,6 +31,13 @@ export function AlertItem({ alert }: AlertItemProps) {
   };
 
   const getAlertClassName = (alert: AlertItemType) => {
+    // Check if payment is overdue (event already passed)
+    const isOverdue = alert.isOverdue === true;
+    
+    if (isOverdue) {
+      return "cursor-pointer border-l-4 border-l-red-500 bg-red-50";
+    }
+    
     if (alert.type === "due_payment") {
       if (alert.urgency === "high") return "cursor-pointer border-l-4 border-l-red-500";
       if (alert.urgency === "medium") return "cursor-pointer border-l-4 border-l-amber-500";
@@ -48,6 +57,10 @@ export function AlertItem({ alert }: AlertItemProps) {
     }
     
     if (alert.type === "task") return "cursor-pointer border-l-4 border-l-amber-500";
+    
+    // Default for payment alerts based on urgency
+    if (alert.urgency === "high") return "cursor-pointer border-l-4 border-l-red-500";
+    if (alert.urgency === "medium") return "cursor-pointer border-l-4 border-l-amber-500";
     return "cursor-pointer border-l-4 border-l-green-500";
   };
 
@@ -66,7 +79,7 @@ export function AlertItem({ alert }: AlertItemProps) {
     >
       <div className="flex items-start">
         <div className="mr-2">
-          {getAlertIcon(alert.type)}
+          {getAlertIcon(alert.type, alert.isOverdue)}
         </div>
         <div className="flex-1">
           <AlertTitle>{alert.title}</AlertTitle>

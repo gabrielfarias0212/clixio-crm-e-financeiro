@@ -1,4 +1,3 @@
-
 import { useMemo } from "react";
 import { AlertItem, Client, CalendarEvent } from "@/utils/types";
 import { stringToDate } from "@/utils/dates";
@@ -43,7 +42,7 @@ export function useAlerts(clients: Client[] = []) {
         
         const daysUntilWedding = differenceInDays(weddingDate, now);
         
-        // Only alert if wedding is within 30 days
+        // Only alert if wedding is within 30 days or already happened (for overdue payments)
         return daysUntilWedding <= 30;
       })
       .map(client => {
@@ -54,17 +53,40 @@ export function useAlerts(clients: Client[] = []) {
         
         // Create description with days information
         let description = `Cliente: ${client.name}`;
+        
+        // Check if event already happened
+        const eventPassed = daysUntilWedding !== null && daysUntilWedding < 0;
+        
         if (daysUntilWedding !== null) {
-          description += ` - Casamento em ${daysUntilWedding} ${daysUntilWedding === 1 ? 'dia' : 'dias'}`;
+          if (eventPassed) {
+            // Event already happened, show how many days ago
+            const daysAgo = Math.abs(daysUntilWedding);
+            description += ` - Casamento foi há ${daysAgo} ${daysAgo === 1 ? 'dia' : 'dias'}`;
+          } else {
+            // Event is in the future
+            description += ` - Casamento em ${daysUntilWedding} ${daysUntilWedding === 1 ? 'dia' : 'dias'}`;
+          }
+        }
+        
+        // Set title and urgency based on whether event has passed
+        let title = `Pagamento pendente: R$ ${pendingAmount.toFixed(2)}`;
+        let urgency: "high" | "medium" | "low" = "medium";
+        
+        if (eventPassed) {
+          title = `Pagamento ATRASADO: R$ ${pendingAmount.toFixed(2)}`;
+          urgency = "high";
+        } else if (daysUntilWedding && daysUntilWedding <= 7) {
+          urgency = "high";
         }
         
         return {
           type: "payment" as const,
-          title: `Pagamento pendente: R$ ${pendingAmount.toFixed(2)}`,
+          title,
           description,
           client,
           date: now,
-          urgency: daysUntilWedding && daysUntilWedding <= 7 ? "high" : "medium"
+          urgency,
+          isOverdue: eventPassed // Add a flag for overdue payments
         };
       });
 

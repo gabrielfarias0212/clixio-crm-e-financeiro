@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -66,8 +65,7 @@ export default function ClientDetail() {
     );
   }
 
-  const isPaid = client.status === "pago";
-  const isFinished = isPaid;
+  const isDelivered = client.status === "entregue";
   const hasDeliveryWorkflow = client.eventCategory === "Casamento" || client.eventCategory === "Aniversario";
   
   return (
@@ -84,7 +82,7 @@ export default function ClientDetail() {
             </Link>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">{client.name}</h1>
-              {isFinished && <DeliveredWorkIndicator isDelivered={true} />}
+              {isDelivered && <DeliveredWorkIndicator isDelivered={true} />}
             </div>
           </div>
           

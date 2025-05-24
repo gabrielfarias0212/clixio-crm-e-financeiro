@@ -34,6 +34,11 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       bg: "bg-teal-50",
       text: "text-teal-600",
       border: "border-teal-200"
+    },
+    "entregue": {
+      bg: "bg-emerald-50",
+      text: "text-emerald-600",
+      border: "border-emerald-200"
     }
   };
 

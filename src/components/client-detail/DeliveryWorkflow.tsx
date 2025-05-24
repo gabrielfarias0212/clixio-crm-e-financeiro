@@ -2,11 +2,14 @@
 import { useState } from "react";
 import { Client } from "@/utils/types";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast"; 
 import { useClients } from "@/contexts/ClientsContext";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
+import { isWorkDelivered, isFullyPaid } from "@/utils/clientUtils";
+import { CheckCircle, Package } from "lucide-react";
 
 interface DeliveryWorkflowProps {
   client: Client;
@@ -38,10 +41,17 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
       
       if (result) {
         // Atualiza o estado local imediatamente
-        setClient({
+        const updatedClient = {
           ...client,
           [field]: value
-        });
+        };
+        setClient(updatedClient);
+        
+        // Check if work is now delivered and update status automatically
+        if (isWorkDelivered(updatedClient) && isFullyPaid(updatedClient) && updatedClient.status !== "entregue") {
+          await updateClient(client.id, { status: "entregue" });
+          setClient(prev => ({ ...prev, status: "entregue" }));
+        }
         
         toast({
           title: "Status atualizado",
@@ -56,6 +66,40 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
         variant: "destructive",
         title: "Erro",
         description: "Não foi possível atualizar o status. Tente novamente.",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const markAsDelivered = async () => {
+    if (isUpdating) return;
+    
+    setIsUpdating(true);
+    
+    try {
+      const updates = { 
+        isDelivered: true,
+        status: "entregue" as const
+      };
+      const result = await updateClient(client.id, updates);
+      
+      if (result) {
+        setClient(prev => ({ ...prev, ...updates }));
+        
+        toast({
+          title: "Trabalho marcado como entregue",
+          description: "O cliente foi marcado como trabalho entregue e concluído.",
+        });
+      } else {
+        throw new Error("Falha ao marcar como entregue");
+      }
+    } catch (error) {
+      console.error("Error marking as delivered:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível marcar como entregue. Tente novamente.",
       });
     } finally {
       setIsUpdating(false);
@@ -84,6 +128,9 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
   ].filter(Boolean).length;
   
   const progressPercentage = Math.round((completedSteps / totalSteps) * 100);
+  const workFullyDelivered = isWorkDelivered(client);
+  const fullyPaid = isFullyPaid(client);
+  const canMarkAsDelivered = workFullyDelivered && fullyPaid && client.status !== "entregue";
 
   const CheckboxItem = ({ 
     label, 
@@ -193,6 +240,38 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
             field="album_approved_delivered"
           />
         </div>
+
+        {/* Final delivery section */}
+        {workFullyDelivered && (
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span className="text-sm font-medium text-green-700">
+                  Todas as etapas principais foram concluídas
+                </span>
+              </div>
+              
+              {canMarkAsDelivered && (
+                <Button 
+                  onClick={markAsDelivered}
+                  disabled={isUpdating}
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Package className="h-4 w-4 mr-1" />
+                  Marcar como Entregue
+                </Button>
+              )}
+            </div>
+            
+            {client.status === "entregue" && (
+              <div className="mt-2 text-sm text-green-600">
+                ✅ Trabalho marcado como entregue e concluído
+              </div>
+            )}
+          </div>
+        )}
       </Card>
     </div>
   );

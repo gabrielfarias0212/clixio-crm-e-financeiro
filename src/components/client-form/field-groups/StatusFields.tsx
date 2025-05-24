@@ -41,6 +41,7 @@ export function StatusFields({ control }: StatusFieldsProps) {
                 <SelectItem value="fechado">Fechado</SelectItem>
                 <SelectItem value="em andamento">Em andamento</SelectItem>
                 <SelectItem value="pago">Pago</SelectItem>
+                <SelectItem value="entregue">Entregue</SelectItem>
               </SelectContent>
             </Select>
             <FormMessage />

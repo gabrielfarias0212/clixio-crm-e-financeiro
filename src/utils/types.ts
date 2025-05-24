@@ -3,7 +3,8 @@ export type ClientStatus =
   | "follow-up" 
   | "fechado" 
   | "em andamento" 
-  | "pago";
+  | "pago"
+  | "entregue";
 
 export type NextAction = 
   | "responder" 
@@ -94,6 +95,7 @@ export interface Client {
   boxDelivered?: boolean;
   albumDesigned?: boolean;
   albumApprovedDelivered?: boolean;
+  isDelivered?: boolean; // New field to explicitly mark delivery
   payments: Payment[];
   createdAt: string;
   updatedAt: string;

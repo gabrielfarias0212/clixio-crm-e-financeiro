@@ -13,12 +13,12 @@ export function DeliveredWorkIndicator({ isDelivered, className }: DeliveredWork
   return (
     <div 
       className={cn(
-        "absolute -top-2 -right-2 bg-green-100 rounded-full p-1 border border-green-200",
+        "absolute -top-2 -right-2 bg-emerald-100 rounded-full p-1 border border-emerald-200",
         className
       )}
       title="Trabalho Entregue"
     >
-      <CheckCircle className="text-green-600 h-4 w-4" />
+      <CheckCircle className="text-emerald-600 h-4 w-4" />
     </div>
   );
 }

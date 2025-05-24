@@ -1,3 +1,4 @@
+
 import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Clock, CheckSquare, ClipboardCheck } from "lucide-react";
@@ -6,10 +7,9 @@ import { useMemo, useState } from "react";
 import { DashboardCardModal } from "./DashboardCardModal";
 import { Client } from "@/utils/types";
 import { stringToDate } from "@/utils/dates";
+
 export function ProductionIndicators() {
-  const {
-    clients
-  } = useClients();
+  const { clients } = useClients();
   const now = new Date();
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
@@ -17,6 +17,7 @@ export function ProductionIndicators() {
   const [modalTitle, setModalTitle] = useState("");
   const [modalType, setModalType] = useState<"leads" | "contracts" | "delivered" | "pending">("delivered");
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
+
   const stats = useMemo(() => {
     // Count events scheduled this month
     const eventsThisMonth = clients.filter(client => {
@@ -35,20 +36,23 @@ export function ProductionIndicators() {
       // Events scheduled but not delivered
       editing: 0,
       // In editing process
-      delivered: 0 // Delivered
+      delivered: 0 // Only count clients with status "entregue"
     };
+    
     clients.forEach(client => {
       // Only count as scheduled if not delivered and in progress
       if (client.status === "em andamento") statusCounts.scheduled++;
       if (client.nextAction === "editar") statusCounts.editing++;
-      if (client.status === "pago") statusCounts.delivered++;
+      // Only count as delivered if status is specifically "entregue"
+      if (client.status === "entregue") statusCounts.delivered++;
     });
 
     // Calculate average delivery time (for delivered events)
     let totalDeliveryDays = 0;
     let deliveredCount = 0;
     clients.forEach(client => {
-      if (client.status === "pago" && client.weddingDate) {
+      // Only calculate delivery time for clients with status "entregue"
+      if (client.status === "entregue" && client.weddingDate) {
         const weddingDate = stringToDate(client.weddingDate);
         if (weddingDate) {
           const deliveryTime = Math.abs(now.getTime() - weddingDate.getTime());
@@ -63,6 +67,7 @@ export function ProductionIndicators() {
       }
     });
     const averageDeliveryDays = deliveredCount > 0 ? Math.round(totalDeliveryDays / deliveredCount) : 0;
+    
     return {
       eventsThisMonth,
       statusCounts,
@@ -75,6 +80,7 @@ export function ProductionIndicators() {
     let title = "";
     let clientsToShow: Client[] = [];
     let modalType: "leads" | "contracts" | "delivered" | "pending" = "delivered";
+    
     switch (type) {
       case "events-month":
         title = "Eventos Agendados no Mês";
@@ -88,16 +94,20 @@ export function ProductionIndicators() {
         break;
       case "delivered":
         title = "Eventos Entregues";
-        clientsToShow = clients.filter(client => client.status === "pago");
+        // Only show clients with status "entregue"
+        clientsToShow = clients.filter(client => client.status === "entregue");
         modalType = "delivered";
         break;
     }
+    
     setModalTitle(title);
     setModalType(modalType);
     setFilteredClients(clientsToShow);
     setModalOpen(true);
   };
-  return <>
+
+  return (
+    <>
       <Card className="py-0 my-[46px]">
         <CardHeader>
           <CardTitle className="text-lg">Indicadores de Produção</CardTitle>
@@ -147,6 +157,13 @@ export function ProductionIndicators() {
         </CardContent>
       </Card>
 
-      <DashboardCardModal title={modalTitle} open={modalOpen} onClose={() => setModalOpen(false)} clients={filteredClients} type={modalType} />
-    </>;
+      <DashboardCardModal 
+        title={modalTitle} 
+        open={modalOpen} 
+        onClose={() => setModalOpen(false)} 
+        clients={filteredClients} 
+        type={modalType} 
+      />
+    </>
+  );
 }

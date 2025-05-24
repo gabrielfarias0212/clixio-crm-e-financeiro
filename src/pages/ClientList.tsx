@@ -92,8 +92,8 @@ export default function ClientList() {
     }
   };
 
-  // Count delivered works
-  const deliveredWorksCount = clients.filter(client => client.status === "pago").length;
+  // Count delivered works - only count clients with status "entregue"
+  const deliveredWorksCount = clients.filter(client => client.status === "entregue").length;
   
   // Check if filters are active
   const hasActiveFilters = searchQuery !== "" || statusFilter !== "all";

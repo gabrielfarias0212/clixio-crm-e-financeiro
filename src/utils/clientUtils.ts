@@ -1,3 +1,4 @@
+
 import { Client, ClientStatus } from "./types";
 import { format } from "date-fns";
 
@@ -63,6 +64,7 @@ export const getUpdatedStatus = (client: Client, newPaymentAmount: number = 0): 
 };
 
 // Helper function to check if client should show delivery indicator
+// Only show for clients with status "entregue"
 export const shouldShowDeliveredIndicator = (client: Client): boolean => {
-  return client.status === "entregue" || isWorkDelivered(client);
+  return client.status === "entregue";
 };

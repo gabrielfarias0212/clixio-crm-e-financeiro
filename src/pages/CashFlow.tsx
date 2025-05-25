@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
@@ -7,7 +7,7 @@ import { TransactionList } from "@/components/TransactionList";
 import { AddTransactionForm } from "@/components/AddTransactionForm";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { CashFlowDashboard } from "@/components/cashflow/CashFlowDashboard";
+import { TransactionSummary } from "@/components/TransactionSummary";
 import { Transaction, TransactionType } from "@/utils/types";
 import { toast } from "sonner";
 
@@ -25,9 +25,13 @@ export default function CashFlow() {
     refreshClients();
   }, [refreshTransactions, refreshClients]);
 
-  const filteredTransactions = transactions.filter(t => 
-    typeFilter === "all" ? true : t.type === typeFilter
-  );
+  // Use useMemo to filter transactions for better performance
+  const filteredTransactions = useMemo(() => {
+    if (typeFilter === "all") {
+      return transactions;
+    }
+    return transactions.filter(t => t.type === typeFilter);
+  }, [transactions, typeFilter]);
 
   const handleAddTransaction = async (newTransaction: Omit<Transaction, "id" | "createdAt">) => {
     const result = await addTransaction(newTransaction);
@@ -61,9 +65,9 @@ export default function CashFlow() {
 
   return (
     <Layout>
-      <div className="max-w-screen-2xl mx-auto px-4 py-8 animate-fade-in">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-          <h1 className="text-3xl font-bold">Fluxo de Caixa</h1>
+      <div className="max-w-screen-lg mx-auto px-4 py-8 animate-fade-in">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+          <h1 className="text-2xl font-bold">Fluxo de Caixa</h1>
           <Button 
             onClick={() => setShowAddTransaction(true)}
             disabled={showAddTransaction}
@@ -74,13 +78,10 @@ export default function CashFlow() {
           </Button>
         </div>
 
-        {/* Dashboard de Fluxo de Caixa */}
-        <div className="mb-8">
-          <CashFlowDashboard />
-        </div>
+        <TransactionSummary transactions={transactions} className="mb-6" />
 
         {showAddTransaction && (
-          <div className="mb-6 p-6 border rounded-lg bg-gray-50">
+          <div className="mb-6 p-4 border rounded-lg bg-gray-50">
             <h2 className="text-lg font-medium mb-4">Registrar Nova Transação</h2>
             <AddTransactionForm 
               clients={clients}
@@ -90,43 +91,37 @@ export default function CashFlow() {
           </div>
         )}
 
-        {/* Filtros e Lista de Transações */}
-        <div className="bg-white rounded-lg border p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Histórico de Transações</h2>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={typeFilter === "all" ? "default" : "outline"}
-                onClick={() => setTypeFilter("all")}
-                size="sm"
-              >
-                Todas
-              </Button>
-              <Button
-                variant={typeFilter === "entrada" ? "default" : "outline"}
-                onClick={() => setTypeFilter("entrada")}
-                size="sm"
-                className="text-green-700 bg-green-100 hover:bg-green-200 border-green-200"
-              >
-                Entradas
-              </Button>
-              <Button
-                variant={typeFilter === "saída" ? "default" : "outline"}
-                onClick={() => setTypeFilter("saída")}
-                size="sm"
-                className="text-red-700 bg-red-100 hover:bg-red-200 border-red-200"
-              >
-                Saídas
-              </Button>
-            </div>
-          </div>
-
-          <TransactionList 
-            transactions={filteredTransactions} 
-            clients={clients} 
-            onDeleteTransaction={handleDeleteTransaction}
-          />
+        <div className="mb-4 flex flex-wrap gap-2">
+          <Button
+            variant={typeFilter === "all" ? "default" : "outline"}
+            onClick={() => setTypeFilter("all")}
+            size="sm"
+          >
+            Todas
+          </Button>
+          <Button
+            variant={typeFilter === "entrada" ? "default" : "outline"}
+            onClick={() => setTypeFilter("entrada")}
+            size="sm"
+            className="text-green-700 bg-green-100 hover:bg-green-200 border-green-200"
+          >
+            Entradas
+          </Button>
+          <Button
+            variant={typeFilter === "saída" ? "default" : "outline"}
+            onClick={() => setTypeFilter("saída")}
+            size="sm"
+            className="text-red-700 bg-red-100 hover:bg-red-200 border-red-200"
+          >
+            Saídas
+          </Button>
         </div>
+
+        <TransactionList 
+          transactions={filteredTransactions} 
+          clients={clients} 
+          onDeleteTransaction={handleDeleteTransaction}
+        />
       </div>
     </Layout>
   );

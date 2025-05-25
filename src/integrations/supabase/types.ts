@@ -437,42 +437,6 @@ export type Database = {
           },
         ]
       }
-      financial_alerts: {
-        Row: {
-          alert_type: string
-          created_at: string
-          description: string
-          id: string
-          is_active: boolean
-          severity: string
-          title: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          alert_type: string
-          created_at?: string
-          description: string
-          id?: string
-          is_active?: boolean
-          severity?: string
-          title: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          alert_type?: string
-          created_at?: string
-          description?: string
-          id?: string
-          is_active?: boolean
-          severity?: string
-          title?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       financial_categories: {
         Row: {
           created_at: string
@@ -504,33 +468,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      financial_settings: {
-        Row: {
-          created_at: string
-          id: string
-          monthly_goal: number
-          prolabore_percentage: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          monthly_goal?: number
-          prolabore_percentage?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          monthly_goal?: number
-          prolabore_percentage?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       financial_transactions: {
         Row: {

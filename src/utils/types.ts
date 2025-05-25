@@ -7,7 +7,11 @@ export type ClientStatus =
   | "pré-wedding"
   | "casamento"
   | "entregue"
-  | "cancelado";
+  | "cancelado"
+  | "follow-up"
+  | "fechado"
+  | "em andamento"
+  | "pago";
 
 export type NextAction =
   | "enviar proposta"
@@ -15,14 +19,37 @@ export type NextAction =
   | "agendar reunião"
   | "confirmar data"
   | "acompanhar"
-  | "nenhuma";
+  | "nenhuma"
+  | "responder"
+  | "editar"
+  | "entregar";
 
 export type EventCategory =
   | "Casamento"
   | "Debutante"
   | "Aniversário"
   | "Corporativo"
-  | "Outro";
+  | "Outro"
+  | "Aniversario"
+  | "Civil"
+  | "Ensaio Estudio"
+  | "Ensaio externo"
+  | "Evento Corporativo"
+  | "15 anos";
+
+export type TransactionType = "income" | "expense";
+
+export type TransactionCategory = string;
+
+export interface AlertItem {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  severity: "low" | "medium" | "high";
+  isActive: boolean;
+  createdAt: string;
+}
 
 export interface Client {
   id: string;
@@ -70,6 +97,9 @@ export interface Payment {
   notes?: string;
   paymentStatus?: string;
   scheduledDate?: string | null;
+  // Legacy field names for compatibility
+  payment_status?: string;
+  due_date?: string | null;
 }
 
 export interface Transaction {
@@ -79,7 +109,8 @@ export interface Transaction {
   description: string;
   category: string;
   amount: number;
-  type: "income" | "expense";
+  type: TransactionType;
+  clientId?: string;
 }
 
 export interface FinancialCategory {
@@ -97,6 +128,6 @@ export interface CalendarEvent {
   date: string; // DD/MM/YYYY format
   startTime: string; // HH:MM format
   endTime: string; // HH:MM format
-  type: 'wedding' | 'pre-wedding' | 'meeting' | 'other';
+  type: 'wedding' | 'pre-wedding' | 'meeting' | 'other' | 'custom';
   color: string;
 }

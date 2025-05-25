@@ -158,7 +158,7 @@ export function normalizeEventCategory(category: string | null): EventCategory {
   }
   
   if (normalizedCategory.includes("aniversa") || normalizedCategory.includes("birthday")) {
-    return "Aniversario";
+    return "Aniversário";
   }
   
   if (normalizedCategory.includes("civil") || normalizedCategory.includes("cartório")) {

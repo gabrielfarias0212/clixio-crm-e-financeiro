@@ -26,15 +26,26 @@ export function EventFields({ control, watchHasPreWedding, client }: EventFields
 
   // Sync pre-wedding event with calendar when data changes
   useEffect(() => {
-    if (client && hasPreWedding) {
+    // Only sync if we have a client (editing mode)
+    if (!client) return;
+    
+    console.log('EventFields useEffect triggered:', {
+      clientId: client.id,
+      hasPreWedding,
+      preWeddingDate,
+      preWeddingStartTime,
+      preWeddingEndTime
+    });
+
+    if (hasPreWedding && preWeddingDate) {
       syncPreWeddingEvent(
         client,
         preWeddingDate,
         preWeddingStartTime,
         preWeddingEndTime
       );
-    } else if (client && !hasPreWedding) {
-      // Remove event if pre-wedding is disabled
+    } else if (!hasPreWedding || !preWeddingDate) {
+      // Remove event if pre-wedding is disabled or no date is set
       syncPreWeddingEvent(client, null);
     }
   }, [client, hasPreWedding, preWeddingDate, preWeddingStartTime, preWeddingEndTime, syncPreWeddingEvent]);
@@ -185,8 +196,8 @@ export function EventFields({ control, watchHasPreWedding, client }: EventFields
             
             {preWeddingDate && (
               <div className="text-sm text-green-600 bg-green-50 p-3 rounded-lg border border-green-200">
-                <p className="font-medium">✅ Evento criado no calendário</p>
-                <p>O pré-wedding foi automaticamente adicionado ao seu calendário para o dia {preWeddingDate}.</p>
+                <p className="font-medium">✅ Evento será criado no calendário</p>
+                <p>O pré-wedding será automaticamente adicionado ao seu calendário para o dia {preWeddingDate} quando você salvar as alterações.</p>
               </div>
             )}
           </>

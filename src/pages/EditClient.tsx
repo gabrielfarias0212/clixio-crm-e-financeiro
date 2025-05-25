@@ -7,11 +7,13 @@ import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Client, ClientStatus, NextAction, EventCategory } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
+import { useClientCalendarIntegration } from "@/hooks/useClientCalendarIntegration";
 
 export default function EditClient() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { clients, updateClient } = useClients();
+  const { syncPreWeddingEvent } = useClientCalendarIntegration();
   const [client, setClient] = useState<Client | undefined>(
     () => clients.find(c => c.id === id)
   );
@@ -67,6 +69,20 @@ export default function EditClient() {
       });
       
       if (updatedClient) {
+        // Sync calendar event after successful update
+        console.log("Client updated successfully, syncing calendar event");
+        if (data.hasPreWedding && data.preWeddingDate) {
+          syncPreWeddingEvent(
+            updatedClient,
+            data.preWeddingDate,
+            data.preWeddingStartTime,
+            data.preWeddingEndTime
+          );
+        } else {
+          // Remove event if pre-wedding is disabled
+          syncPreWeddingEvent(updatedClient, null);
+        }
+        
         toast.success("Cliente atualizado com sucesso!");
         navigate(`/clients/${id}`);
       } else {

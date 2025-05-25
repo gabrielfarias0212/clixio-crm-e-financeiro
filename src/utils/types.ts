@@ -1,3 +1,4 @@
+
 export type ClientStatus =
   | "orçamento enviado"
   | "proposta enviada"
@@ -67,6 +68,8 @@ export interface Payment {
   amount: number;
   paymentMethod: string;
   notes?: string;
+  paymentStatus?: string;
+  scheduledDate?: string | null;
 }
 
 export interface Transaction {

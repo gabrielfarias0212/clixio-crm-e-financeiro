@@ -27,14 +27,17 @@ import { cn } from "@/lib/utils";
 import { v4 as uuidv4 } from 'uuid';
 import { Client, Payment } from "@/utils/types";
 import { dateToString, stringToDate } from "@/utils/dateUtils";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { addDays } from "date-fns";
 
 const paymentFormSchema = z.object({
   amount: z.coerce.number().positive({ message: "O valor deve ser maior que zero" }),
-  date: z.string(),
-  due_date: z.string().optional(),
-  add_due_date: z.boolean().default(false),
+  payment_type: z.enum(["immediate", "scheduled"], {
+    required_error: "Selecione o tipo de pagamento",
+  }),
+  payment_date: z.string(),
+  scheduled_date: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -50,23 +53,23 @@ export function AddPaymentForm({ client, onSuccess, onCancel }: AddPaymentFormPr
   const totalPaid = client.payments.reduce((sum, payment) => sum + payment.amount, 0);
   const maxAmount = client.contractValue - totalPaid;
   
-  // Default due date is 7 days before the wedding date (if available)
-  const defaultDueDate = client.weddingDate 
+  // Data padrão para agendamento - 7 dias antes do evento (se disponível) ou próxima semana
+  const defaultScheduledDate = client.weddingDate 
     ? dateToString(addDays(stringToDate(client.weddingDate) || new Date(), -7))
-    : dateToString(new Date());
+    : dateToString(addDays(new Date(), 7));
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
       amount: maxAmount > 0 ? maxAmount : 0,
-      date: dateToString(new Date()),
-      due_date: defaultDueDate,
-      add_due_date: false,
+      payment_type: "immediate",
+      payment_date: dateToString(new Date()),
+      scheduled_date: defaultScheduledDate,
       notes: "",
     },
   });
 
-  const addDueDate = form.watch("add_due_date");
+  const paymentType = form.watch("payment_type");
 
   const handleSubmit = (data: PaymentFormValues) => {
     if (data.amount > maxAmount) {
@@ -83,10 +86,10 @@ export function AddPaymentForm({ client, onSuccess, onCancel }: AddPaymentFormPr
     const newPayment: Payment = {
       id: uuidv4(),
       amount: data.amount,
-      date: data.date,
+      date: data.payment_type === "immediate" ? data.payment_date : data.scheduled_date || data.payment_date,
       notes: data.notes,
-      payment_status: data.add_due_date ? "pendente" : "pago",
-      due_date: data.add_due_date ? data.due_date : undefined,
+      payment_status: data.payment_type === "immediate" ? "pago" : "pendente",
+      due_date: data.payment_type === "scheduled" ? data.scheduled_date : undefined,
     };
 
     // Create a new client object with the new payment added
@@ -127,74 +130,38 @@ export function AddPaymentForm({ client, onSuccess, onCancel }: AddPaymentFormPr
 
         <FormField
           control={form.control}
-          name="date"
+          name="payment_type"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Data do Pagamento</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        field.value
-                      ) : (
-                        <span>Selecione uma data</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={stringToDate(field.value) || undefined}
-                    onSelect={(date) => field.onChange(date ? dateToString(date) : "")}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+            <FormItem className="space-y-3">
+              <FormLabel>Tipo de Pagamento</FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex flex-col space-y-2"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="immediate" id="immediate" />
+                    <Label htmlFor="immediate">Pagamento à vista (realizado hoje)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="scheduled" id="scheduled" />
+                    <Label htmlFor="scheduled">Agendamento de pagamento (data futura)</Label>
+                  </div>
+                </RadioGroup>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="add_due_date"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Adicionar data de vencimento
-                </FormLabel>
-                <FormDescription>
-                  Marque esta opção se este é um pagamento com data de vencimento futura
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        {addDueDate && (
+        {paymentType === "immediate" && (
           <FormField
             control={form.control}
-            name="due_date"
+            name="payment_date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Data de Vencimento</FormLabel>
+                <FormLabel>Data do Pagamento</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -225,7 +192,52 @@ export function AddPaymentForm({ client, onSuccess, onCancel }: AddPaymentFormPr
                   </PopoverContent>
                 </Popover>
                 <FormDescription>
-                  Por padrão, 7 dias antes do evento. Você pode alterar conforme necessário.
+                  Data em que o pagamento foi efetivamente realizado
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {paymentType === "scheduled" && (
+          <FormField
+            control={form.control}
+            name="scheduled_date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Data Agendada para Pagamento</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          field.value
+                        ) : (
+                          <span>Selecione uma data</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={stringToDate(field.value) || undefined}
+                      onSelect={(date) => field.onChange(date ? dateToString(date) : "")}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormDescription>
+                  Por padrão, 7 dias antes do evento. Este pagamento ficará pendente até ser marcado como pago.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -246,6 +258,12 @@ export function AddPaymentForm({ client, onSuccess, onCancel }: AddPaymentFormPr
                   {...field}
                 />
               </FormControl>
+              <FormDescription>
+                {paymentType === "scheduled" 
+                  ? "Ex: Segunda parcela do contrato, Pagamento final antes do evento, etc."
+                  : "Ex: Entrada do contrato, Pagamento via PIX, etc."
+                }
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -258,7 +276,7 @@ export function AddPaymentForm({ client, onSuccess, onCancel }: AddPaymentFormPr
             </Button>
           )}
           <Button type="submit">
-            Registrar Pagamento
+            {paymentType === "immediate" ? "Registrar Pagamento" : "Agendar Pagamento"}
           </Button>
         </div>
       </form>

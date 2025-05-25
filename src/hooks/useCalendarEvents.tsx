@@ -65,6 +65,7 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
           };
         });
         
+        console.log('Loaded events from localStorage:', formattedEvents);
         setEvents(formattedEvents);
       } catch (error) {
         console.error("Failed to parse calendar events from localStorage", error);
@@ -81,12 +82,12 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   
   // Save events to localStorage whenever they change
   useEffect(() => {
-    if (events.length > 0) {
-      localStorage.setItem("calendarEvents", JSON.stringify(events));
-    }
+    console.log('Saving events to localStorage:', events);
+    localStorage.setItem("calendarEvents", JSON.stringify(events));
   }, [events]);
   
   const addEvent = useCallback((event: CalendarEvent) => {
+    console.log('Adding event:', event);
     // Ensure the date is in the correct string format (DD/MM/YYYY)
     const updatedEvent = { ...event };
     
@@ -96,19 +97,31 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
       updatedEvent.date = dateToString(updatedEvent.date as Date);
     }
     
-    setEvents(prev => [...prev, updatedEvent]);
+    setEvents(prev => {
+      const newEvents = [...prev, updatedEvent];
+      console.log('Events after adding:', newEvents);
+      return newEvents;
+    });
   }, []);
   
   const updateEvent = useCallback((updatedEvent: CalendarEvent) => {
-    setEvents(prev => 
-      prev.map(event => 
+    console.log('Updating event:', updatedEvent);
+    setEvents(prev => {
+      const newEvents = prev.map(event => 
         event.id === updatedEvent.id ? updatedEvent : event
-      )
-    );
+      );
+      console.log('Events after updating:', newEvents);
+      return newEvents;
+    });
   }, []);
   
   const deleteEvent = useCallback((eventId: string) => {
-    setEvents(prev => prev.filter(event => event.id !== eventId));
+    console.log('Deleting event:', eventId);
+    setEvents(prev => {
+      const newEvents = prev.filter(event => event.id !== eventId);
+      console.log('Events after deleting:', newEvents);
+      return newEvents;
+    });
   }, []);
   
   const getEventById = useCallback(

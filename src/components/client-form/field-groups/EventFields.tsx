@@ -16,18 +16,20 @@ interface EventFieldsProps {
 }
 
 export function EventFields({ control, watchHasPreWedding, client }: EventFieldsProps) {
-  const { syncPreWeddingEvent } = useClientCalendarIntegration();
+  const { syncPreWeddingEventImmediate } = useClientCalendarIntegration();
   
   // Watch for changes in pre-wedding fields
   const preWeddingDate = useWatch({ control, name: "preWeddingDate" });
   const preWeddingStartTime = useWatch({ control, name: "preWeddingStartTime" });
   const preWeddingEndTime = useWatch({ control, name: "preWeddingEndTime" });
   const hasPreWedding = useWatch({ control, name: "hasPreWedding" });
+  const clientName = useWatch({ control, name: "name" });
+  const coupleName = useWatch({ control, name: "coupleName" });
 
   // Sync pre-wedding event with calendar when data changes
   useEffect(() => {
-    // Only sync if we have a client (editing mode)
-    if (!client) return;
+    // Only sync if we have a client ID and name
+    if (!client?.id || !clientName) return;
     
     console.log('EventFields useEffect triggered:', {
       clientId: client.id,
@@ -38,17 +40,24 @@ export function EventFields({ control, watchHasPreWedding, client }: EventFields
     });
 
     if (hasPreWedding && preWeddingDate) {
-      syncPreWeddingEvent(
-        client,
+      syncPreWeddingEventImmediate(
+        client.id,
+        clientName,
+        coupleName,
         preWeddingDate,
         preWeddingStartTime,
         preWeddingEndTime
       );
-    } else if (!hasPreWedding || !preWeddingDate) {
+    } else {
       // Remove event if pre-wedding is disabled or no date is set
-      syncPreWeddingEvent(client, null);
+      syncPreWeddingEventImmediate(
+        client.id,
+        clientName,
+        coupleName,
+        null
+      );
     }
-  }, [client, hasPreWedding, preWeddingDate, preWeddingStartTime, preWeddingEndTime, syncPreWeddingEvent]);
+  }, [client?.id, clientName, coupleName, hasPreWedding, preWeddingDate, preWeddingStartTime, preWeddingEndTime, syncPreWeddingEventImmediate]);
 
   return (
     <div className="space-y-4">
@@ -196,8 +205,8 @@ export function EventFields({ control, watchHasPreWedding, client }: EventFields
             
             {preWeddingDate && (
               <div className="text-sm text-green-600 bg-green-50 p-3 rounded-lg border border-green-200">
-                <p className="font-medium">✅ Evento será criado no calendário</p>
-                <p>O pré-wedding será automaticamente adicionado ao seu calendário para o dia {preWeddingDate} quando você salvar as alterações.</p>
+                <p className="font-medium">✅ Evento sincronizado com calendário</p>
+                <p>O pré-wedding para o dia {preWeddingDate} está sendo sincronizado automaticamente com seu calendário.</p>
               </div>
             )}
           </>

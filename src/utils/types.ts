@@ -1,91 +1,52 @@
-export type ClientStatus = 
-  | "orçamento enviado" 
-  | "follow-up" 
-  | "fechado" 
-  | "em andamento" 
-  | "pago"
-  | "entregue";
+export type ClientStatus =
+  | "orçamento enviado"
+  | "proposta enviada"
+  | "aguardando resposta"
+  | "contrato assinado"
+  | "pré-wedding"
+  | "casamento"
+  | "entregue"
+  | "cancelado";
 
-export type NextAction = 
-  | "responder" 
-  | "enviar proposta" 
-  | "editar" 
-  | "entregar" 
-  | "nenhuma"
-  | "agendar reunião";
+export type NextAction =
+  | "enviar proposta"
+  | "enviar contrato"
+  | "agendar reunião"
+  | "confirmar data"
+  | "acompanhar"
+  | "nenhuma";
 
-export type TransactionType = "entrada" | "saída";
-
-export type TransactionCategory = 
-  | "pagamento de cliente" 
-  | "despesa operacional"
-  | "material"
-  | "serviço terceirizado"
-  | "imposto"
-  | "outras receitas"
-  | "outras despesas"
-  | string;
-
-export type EventCategory = 
+export type EventCategory =
   | "Casamento"
-  | "Aniversario"
-  | "Civil"
-  | "Ensaio Estudio"
-  | "Ensaio externo"
-  | "Evento Corporativo"
-  | "15 anos";
-
-export type PaymentStatus = "pendente" | "pago" | "atrasado";
-
-export interface Payment {
-  id: string;
-  amount: number;
-  date: string;
-  notes?: string;
-  due_date?: string;
-  payment_status?: PaymentStatus;
-}
-
-export interface Transaction {
-  id: string;
-  amount: number;
-  date: string;
-  type: TransactionType;
-  category: TransactionCategory;
-  description: string;
-  clientId?: string;
-  paymentId?: string;
-  createdAt: string;
-}
-
-export interface FinancialCategory {
-  id: string;
-  name: string;
-  type: TransactionType;
-  createdAt: string;
-}
+  | "Debutante"
+  | "Aniversário"
+  | "Corporativo"
+  | "Outro";
 
 export interface Client {
   id: string;
+  createdAt?: string;
+  updatedAt?: string;
   name: string;
   coupleName?: string;
-  weddingDate: string | null;
+  email: string;
+  phone: string;
+  weddingDate?: string | null;
   weddingStartTime?: string;
   weddingEndTime?: string;
   contractValue: number;
+  downPayment: number;
   status: ClientStatus;
   nextAction: NextAction;
-  email: string;
-  phone: string;
-  notes: string;
-  downPayment: number;
+  notes?: string;
   eventCategory: EventCategory;
   eventLocation?: string;
-  preWeddingDate: string | null;
+  preWeddingDate?: string | null;
   preWeddingStartTime?: string;
   preWeddingEndTime?: string;
   contractLink?: string;
   hasPreWedding?: boolean;
+  // Delivery workflow fields
   preWeddingScheduled?: boolean;
   preWeddingCompleted?: boolean;
   preWeddingDelivered?: boolean;
@@ -95,48 +56,44 @@ export interface Client {
   boxDelivered?: boolean;
   albumDesigned?: boolean;
   albumApprovedDelivered?: boolean;
-  isDelivered?: boolean; // New field to explicitly mark delivery
-  payments: Payment[];
-  createdAt: string;
-  updatedAt: string;
+  payments?: Payment[];
 }
 
-export type EventType = 
-  | 'custom' 
-  | 'client' 
-  | 'meeting' 
-  | 'photoshoot' 
-  | 'delivery' 
-  | 'editing';
+export interface Payment {
+  id: string;
+  createdAt: string;
+  clientId: string;
+  date: string;
+  amount: number;
+  paymentMethod: string;
+  notes?: string;
+}
 
-export type EventColor = 
-  | 'blue' 
-  | 'green' 
-  | 'red' 
-  | 'yellow' 
-  | 'purple' 
-  | 'gray';
+export interface Transaction {
+  id: string;
+  createdAt: string;
+  date: string;
+  description: string;
+  category: string;
+  amount: number;
+  type: "income" | "expense";
+}
+
+export interface FinancialCategory {
+  id: string;
+  createdAt: string;
+  name: string;
+  type: "income" | "expense";
+}
 
 export interface CalendarEvent {
   id: string;
+  clientId?: string; // Add optional clientId field
   title: string;
-  description: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  type: EventType;
-  color: EventColor;
-  clientId?: string;
-}
-
-// Update the AlertItem type to include the 'pre_wedding' type and 'isOverdue' property
-export interface AlertItem {
-  type: "task" | "payment" | "due_payment" | "event" | "pre_wedding";
-  title: string;
-  description: string;
-  client: Client;
-  date: Date;
-  payment?: Payment;
-  urgency?: "high" | "medium" | "low";
-  isOverdue?: boolean;  // Added isOverdue flag for payment alerts
+  description?: string;
+  date: string; // DD/MM/YYYY format
+  startTime: string; // HH:MM format
+  endTime: string; // HH:MM format
+  type: 'wedding' | 'pre-wedding' | 'meeting' | 'other';
+  color: string;
 }

@@ -21,7 +21,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           coupleName: client.coupleName || "",
           email: client.email,
           phone: client.phone,
-          weddingDate: client.weddingDate,
+          weddingDate: client.weddingDate, // Now a string
           weddingStartTime: client.weddingStartTime || "",
           weddingEndTime: client.weddingEndTime || "",
           contractValue: client.contractValue,
@@ -30,11 +30,11 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           nextAction: client.nextAction,
           eventCategory: client.eventCategory,
           eventLocation: client.eventLocation || "",
-          preWeddingDate: client.preWeddingDate,
+          preWeddingDate: client.preWeddingDate, // Now a string
           preWeddingStartTime: client.preWeddingStartTime || "",
           preWeddingEndTime: client.preWeddingEndTime || "",
           contractLink: client.contractLink || "",
-          hasPreWedding: client.hasPreWedding !== false,
+          hasPreWedding: client.hasPreWedding !== false, // Default to true if undefined
           notes: client.notes,
         }
       : {
@@ -55,7 +55,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           preWeddingStartTime: "",
           preWeddingEndTime: "",
           contractLink: "",
-          hasPreWedding: true,
+          hasPreWedding: true, // Default to true for new clients
           notes: "",
         },
   });
@@ -83,7 +83,6 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           control={form.control} 
           watchStatus={watchStatus} 
           watchHasPreWedding={watchHasPreWedding}
-          client={client}
         />
         <NotesField control={form.control} />
         <FormActions 

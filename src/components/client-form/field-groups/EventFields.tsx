@@ -1,64 +1,17 @@
 
-import { Control, useWatch } from "react-hook-form";
+import { Control } from "react-hook-form";
 import { ClientFormValues } from "../types";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useEffect } from "react";
-import { useClientCalendarIntegration } from "@/hooks/useClientCalendarIntegration";
-import { Client } from "@/utils/types";
 
 interface EventFieldsProps {
   control: Control<ClientFormValues>;
   watchHasPreWedding: boolean;
-  client?: Client;
 }
 
-export function EventFields({ control, watchHasPreWedding, client }: EventFieldsProps) {
-  const { syncPreWeddingEventImmediate } = useClientCalendarIntegration();
-  
-  // Watch for changes in pre-wedding fields
-  const preWeddingDate = useWatch({ control, name: "preWeddingDate" });
-  const preWeddingStartTime = useWatch({ control, name: "preWeddingStartTime" });
-  const preWeddingEndTime = useWatch({ control, name: "preWeddingEndTime" });
-  const hasPreWedding = useWatch({ control, name: "hasPreWedding" });
-  const clientName = useWatch({ control, name: "name" });
-  const coupleName = useWatch({ control, name: "coupleName" });
-
-  // Sync pre-wedding event with calendar when data changes
-  useEffect(() => {
-    // Only sync if we have a client ID and name
-    if (!client?.id || !clientName) return;
-    
-    console.log('EventFields useEffect triggered:', {
-      clientId: client.id,
-      hasPreWedding,
-      preWeddingDate,
-      preWeddingStartTime,
-      preWeddingEndTime
-    });
-
-    if (hasPreWedding && preWeddingDate) {
-      syncPreWeddingEventImmediate(
-        client.id,
-        clientName,
-        coupleName,
-        preWeddingDate,
-        preWeddingStartTime,
-        preWeddingEndTime
-      );
-    } else {
-      // Remove event if pre-wedding is disabled or no date is set
-      syncPreWeddingEventImmediate(
-        client.id,
-        clientName,
-        coupleName,
-        null
-      );
-    }
-  }, [client?.id, clientName, coupleName, hasPreWedding, preWeddingDate, preWeddingStartTime, preWeddingEndTime, syncPreWeddingEventImmediate]);
-
+export function EventFields({ control, watchHasPreWedding }: EventFieldsProps) {
   return (
     <div className="space-y-4">
       <h3 className="font-medium text-lg">Informações do Evento</h3>
@@ -149,67 +102,53 @@ export function EventFields({ control, watchHasPreWedding, client }: EventFields
         </div>
         
         {watchHasPreWedding && (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <FormField
-                control={control}
-                name="preWeddingDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      Data do Pré-Wedding
-                      <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                        📅 Sincroniza com calendário
-                      </span>
-                    </FormLabel>
-                    <FormControl>
-                      <DatePicker
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Selecione uma data"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={control}
-                name="preWeddingStartTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Horário Início</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} placeholder="Hora início" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={control}
-                name="preWeddingEndTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Horário Término</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} placeholder="Hora término" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <FormField
+              control={control}
+              name="preWeddingDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Data do Pré-Wedding</FormLabel>
+                  <FormControl>
+                    <DatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Selecione uma data"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
-            {preWeddingDate && (
-              <div className="text-sm text-green-600 bg-green-50 p-3 rounded-lg border border-green-200">
-                <p className="font-medium">✅ Evento sincronizado com calendário</p>
-                <p>O pré-wedding para o dia {preWeddingDate} está sendo sincronizado automaticamente com seu calendário.</p>
-              </div>
-            )}
-          </>
+            <FormField
+              control={control}
+              name="preWeddingStartTime"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Horário Início</FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} placeholder="Hora início" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={control}
+              name="preWeddingEndTime"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Horário Término</FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} placeholder="Hora término" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         )}
       </div>
       

@@ -1,17 +1,35 @@
 
-import { Control } from "react-hook-form";
+import { Control, useWatch } from "react-hook-form";
 import { ClientFormValues } from "../types";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { usePreWeddingCalendarSync } from "@/hooks/usePreWeddingCalendarSync";
 
 interface EventFieldsProps {
   control: Control<ClientFormValues>;
   watchHasPreWedding: boolean;
+  clientId?: string;
 }
 
-export function EventFields({ control, watchHasPreWedding }: EventFieldsProps) {
+export function EventFields({ control, watchHasPreWedding, clientId }: EventFieldsProps) {
+  // Watch form values for calendar sync
+  const clientName = useWatch({ control, name: "name" }) || "";
+  const preWeddingDate = useWatch({ control, name: "preWeddingDate" });
+  const preWeddingStartTime = useWatch({ control, name: "preWeddingStartTime" });
+  const preWeddingEndTime = useWatch({ control, name: "preWeddingEndTime" });
+
+  // Sync pre-wedding data with calendar
+  usePreWeddingCalendarSync({
+    clientId,
+    clientName,
+    preWeddingDate,
+    preWeddingStartTime,
+    preWeddingEndTime,
+    hasPreWedding: watchHasPreWedding
+  });
+
   return (
     <div className="space-y-4">
       <h3 className="font-medium text-lg">Informações do Evento</h3>

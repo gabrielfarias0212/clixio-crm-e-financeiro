@@ -83,6 +83,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           control={form.control} 
           watchStatus={watchStatus} 
           watchHasPreWedding={watchHasPreWedding}
+          clientId={client?.id}
         />
         <NotesField control={form.control} />
         <FormActions 

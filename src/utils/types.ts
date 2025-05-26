@@ -1,3 +1,4 @@
+
 export type ClientStatus = 
   | "orçamento enviado" 
   | "follow-up" 
@@ -107,7 +108,8 @@ export type EventType =
   | 'meeting' 
   | 'photoshoot' 
   | 'delivery' 
-  | 'editing';
+  | 'editing'
+  | 'pre-wedding';
 
 export type EventColor = 
   | 'blue' 

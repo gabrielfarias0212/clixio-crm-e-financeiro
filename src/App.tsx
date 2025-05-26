@@ -80,7 +80,9 @@ function App() {
                     <AuthGuard>
                       <ClientsProvider>
                         <TransactionsProvider>
-                          <AddClient />
+                          <CalendarEventsProvider>
+                            <AddClient />
+                          </CalendarEventsProvider>
                         </TransactionsProvider>
                       </ClientsProvider>
                     </AuthGuard>
@@ -104,7 +106,9 @@ function App() {
                     <AuthGuard>
                       <ClientsProvider>
                         <TransactionsProvider>
-                          <EditClient />
+                          <CalendarEventsProvider>
+                            <EditClient />
+                          </CalendarEventsProvider>
                         </TransactionsProvider>
                       </ClientsProvider>
                     </AuthGuard>

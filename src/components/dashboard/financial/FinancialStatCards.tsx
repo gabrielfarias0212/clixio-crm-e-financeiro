@@ -1,18 +1,11 @@
 
 import { ArrowUpCircle, ArrowDownCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { formatCurrency } from "./ChartConstants";
+import { useAdvancedFinancialData } from "@/hooks/useAdvancedFinancialData";
 
-interface FinancialStatCardsProps {
-  monthlyTotals: {
-    income: number;
-    expenses: number;
-    balance: number;
-  };
-}
+export function FinancialStatCards() {
+  const { metrics } = useAdvancedFinancialData();
 
-export function FinancialStatCards({
-  monthlyTotals
-}: FinancialStatCardsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
       {/* Entradas do Mês */}
@@ -21,7 +14,7 @@ export function FinancialStatCards({
         <div>
           <p className="text-sm font-medium text-green-800">Entradas do Mês</p>
           <p className="text-lg font-bold text-green-900">
-            {formatCurrency(monthlyTotals.income)}
+            {formatCurrency(metrics.currentMonthIncome)}
           </p>
         </div>
       </div>
@@ -32,32 +25,32 @@ export function FinancialStatCards({
         <div>
           <p className="text-sm font-medium text-red-800">Saídas do Mês</p>
           <p className="text-lg font-bold text-red-900">
-            {formatCurrency(monthlyTotals.expenses)}
+            {formatCurrency(metrics.currentMonthExpenses)}
           </p>
         </div>
       </div>
 
       {/* Saldo do Mês */}
       <div className={`flex items-center p-4 rounded-lg border ${
-        monthlyTotals.balance >= 0 
+        metrics.currentMonthBalance >= 0 
           ? 'bg-blue-50 border-blue-200' 
           : 'bg-orange-50 border-orange-200'
       }`}>
-        {monthlyTotals.balance >= 0 ? (
+        {metrics.currentMonthBalance >= 0 ? (
           <TrendingUp className="h-8 w-8 text-blue-600 mr-3" />
         ) : (
           <TrendingDown className="h-8 w-8 text-orange-600 mr-3" />
         )}
         <div>
           <p className={`text-sm font-medium ${
-            monthlyTotals.balance >= 0 ? 'text-blue-800' : 'text-orange-800'
+            metrics.currentMonthBalance >= 0 ? 'text-blue-800' : 'text-orange-800'
           }`}>
             Saldo do Mês
           </p>
           <p className={`text-lg font-bold ${
-            monthlyTotals.balance >= 0 ? 'text-blue-900' : 'text-orange-900'
+            metrics.currentMonthBalance >= 0 ? 'text-blue-900' : 'text-orange-900'
           }`}>
-            {formatCurrency(monthlyTotals.balance)}
+            {formatCurrency(metrics.currentMonthBalance)}
           </p>
         </div>
       </div>

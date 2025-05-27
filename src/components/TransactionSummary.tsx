@@ -1,12 +1,15 @@
+
 import { useEffect, useState } from "react";
 import { Transaction } from "@/utils/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowDownCircle, ArrowUpCircle, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
+
 interface TransactionSummaryProps {
   transactions: Transaction[];
   className?: string;
 }
+
 export function TransactionSummary({
   transactions,
   className
@@ -19,27 +22,64 @@ export function TransactionSummary({
     thisMonthExpenses: 0,
     thisMonthBalance: 0
   });
-  useEffect(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    const total = transactions.reduce((acc, transaction) => {
-      const amount = transaction.amount;
 
-      // Check if transaction is from the current month
-      const transactionDate = new Date(transaction.date);
-      const isCurrentMonth = transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+  useEffect(() => {
+    console.log("=== TransactionSummary: Calculando resumo ===");
+    console.log("Total de transações recebidas:", transactions.length);
+    
+    const now = new Date();
+    const currentMonth = now.getMonth(); // 0-11
+    const currentYear = now.getFullYear();
+    
+    console.log(`Mês/Ano atual: ${currentMonth + 1}/${currentYear}`);
+
+    const totals = transactions.reduce((acc, transaction) => {
+      const amount = Number(transaction.amount);
+      
+      if (isNaN(amount)) {
+        console.log("Valor inválido:", transaction.amount, "para transação:", transaction.id);
+        return acc;
+      }
+
+      // Parse transaction date
+      let transactionDate: Date;
+      try {
+        if (transaction.date.includes('/')) {
+          // DD/MM/YYYY format
+          const [day, month, year] = transaction.date.split('/').map(Number);
+          transactionDate = new Date(year, month - 1, day);
+        } else {
+          // ISO format
+          transactionDate = new Date(transaction.date);
+        }
+        
+        if (isNaN(transactionDate.getTime())) {
+          console.log("Data inválida:", transaction.date);
+          return acc;
+        }
+      } catch (err) {
+        console.log("Erro ao processar data:", transaction.date, err);
+        return acc;
+      }
+
+      const transactionMonth = transactionDate.getMonth();
+      const transactionYear = transactionDate.getFullYear();
+      const isCurrentMonth = transactionMonth === currentMonth && transactionYear === currentYear;
+
       if (transaction.type === "entrada") {
         acc.totalIncome += amount;
         if (isCurrentMonth) {
           acc.thisMonthIncome += amount;
+          console.log(`Entrada do mês: R$ ${amount} (Total mês: R$ ${acc.thisMonthIncome})`);
         }
-      } else {
+      } else if (transaction.type === "saída") {
         acc.totalExpenses += amount;
         if (isCurrentMonth) {
           acc.thisMonthExpenses += amount;
+          console.log(`Saída do mês: R$ ${amount} (Total mês: R$ ${acc.thisMonthExpenses})`);
         }
       }
+      
       return acc;
     }, {
       totalIncome: 0,
@@ -47,11 +87,21 @@ export function TransactionSummary({
       thisMonthIncome: 0,
       thisMonthExpenses: 0
     });
-    setSummary({
-      ...total,
-      balance: total.totalIncome - total.totalExpenses,
-      thisMonthBalance: total.thisMonthIncome - total.thisMonthExpenses
-    });
+
+    const newSummary = {
+      ...totals,
+      balance: totals.totalIncome - totals.totalExpenses,
+      thisMonthBalance: totals.thisMonthIncome - totals.thisMonthExpenses
+    };
+    
+    console.log("=== Resumo Final ===");
+    console.log("Total entradas:", totals.totalIncome);
+    console.log("Total saídas:", totals.totalExpenses);
+    console.log("Entradas do mês:", totals.thisMonthIncome);
+    console.log("Saídas do mês:", totals.thisMonthExpenses);
+    console.log("Saldo do mês:", newSummary.thisMonthBalance);
+    
+    setSummary(newSummary);
   }, [transactions]);
 
   // Format currency
@@ -61,7 +111,9 @@ export function TransactionSummary({
       currency: 'BRL'
     }).format(value);
   };
-  return <Card className={cn("", className)}>
+
+  return (
+    <Card className={cn("", className)}>
       <CardContent className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Balance */}
@@ -131,5 +183,6 @@ export function TransactionSummary({
           </div>
         </div>
       </CardContent>
-    </Card>;
+    </Card>
+  );
 }

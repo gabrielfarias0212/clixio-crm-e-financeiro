@@ -1,8 +1,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useTransactions } from "@/contexts/TransactionsContext";
-import { format, startOfMonth, endOfMonth } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 export function useFinancialData() {
   const { transactions, loading: transactionsLoading } = useTransactions();
@@ -16,52 +14,108 @@ export function useFinancialData() {
   
   // Calculate all financial data
   const calculateFinancialData = useCallback(() => {
+    console.log("=== Iniciando cálculo financeiro ===");
+    console.log("Total de transações:", transactions.length);
+    
     if (transactions.length === 0) {
+      console.log("Nenhuma transação encontrada");
       setMonthlyTotals({ income: 0, expenses: 0, balance: 0 });
       setLoading(false);
       setHasCalculated(true);
       return;
     }
     
-    console.log("Calculating financial data with", transactions.length, "transactions");
-    
     try {
-      // Get current month's transactions
+      // Get current month and year
       const now = new Date();
-      const currentMonthStart = startOfMonth(now);
-      const currentMonthEnd = endOfMonth(now);
-
-      const currentMonthTransactions = transactions.filter(
-        (t) => {
-          try {
-            if (!t.date) return false;
-            const date = new Date(t.date);
-            return date >= currentMonthStart && date <= currentMonthEnd;
-          } catch (err) {
-            console.error("Error processing transaction date:", err);
+      const currentMonth = now.getMonth(); // 0-11
+      const currentYear = now.getFullYear();
+      
+      console.log(`Mês atual: ${currentMonth + 1}/${currentYear}`);
+      
+      // Filter transactions for current month
+      const currentMonthTransactions = transactions.filter((transaction) => {
+        try {
+          if (!transaction.date) {
+            console.log("Transação sem data:", transaction.id);
             return false;
           }
+          
+          // Parse date - expecting DD/MM/YYYY format or ISO format
+          let transactionDate: Date;
+          
+          if (transaction.date.includes('/')) {
+            // DD/MM/YYYY format
+            const [day, month, year] = transaction.date.split('/').map(Number);
+            transactionDate = new Date(year, month - 1, day); // month is 0-indexed
+          } else {
+            // ISO format or other
+            transactionDate = new Date(transaction.date);
+          }
+          
+          if (isNaN(transactionDate.getTime())) {
+            console.log("Data inválida:", transaction.date, "para transação:", transaction.id);
+            return false;
+          }
+          
+          const transactionMonth = transactionDate.getMonth();
+          const transactionYear = transactionDate.getFullYear();
+          
+          const isCurrentMonth = transactionMonth === currentMonth && transactionYear === currentYear;
+          
+          console.log(`Transação ${transaction.id}: ${transaction.date} -> ${transactionDate.toLocaleDateString()} - É do mês atual: ${isCurrentMonth}`);
+          
+          return isCurrentMonth;
+        } catch (err) {
+          console.error("Erro ao processar data da transação:", transaction.date, err);
+          return false;
         }
-      );
+      });
 
-      console.log("Current month transactions:", currentMonthTransactions.length);
+      console.log(`Transações do mês atual: ${currentMonthTransactions.length}`);
+      
+      // Log each transaction for debugging
+      currentMonthTransactions.forEach(t => {
+        console.log(`- ${t.type}: R$ ${t.amount} - ${t.description} (${t.date})`);
+      });
 
       // Calculate monthly totals
-      const totals = {
-        income: currentMonthTransactions
-          .filter((t) => t.type === "entrada")
-          .reduce((sum, t) => sum + Number(t.amount), 0),
-        expenses: currentMonthTransactions
-          .filter((t) => t.type === "saída")
-          .reduce((sum, t) => sum + Number(t.amount), 0),
-      };
+      let totalIncome = 0;
+      let totalExpenses = 0;
       
-      const balance = totals.income - totals.expenses;
-      setMonthlyTotals({ ...totals, balance });
-      console.log("Monthly totals calculated:", totals);
+      currentMonthTransactions.forEach((transaction) => {
+        const amount = Number(transaction.amount);
+        
+        if (isNaN(amount)) {
+          console.log("Valor inválido para transação:", transaction.id, transaction.amount);
+          return;
+        }
+        
+        if (transaction.type === "entrada") {
+          totalIncome += amount;
+          console.log(`Entrada adicionada: R$ ${amount} (Total: R$ ${totalIncome})`);
+        } else if (transaction.type === "saída") {
+          totalExpenses += amount;
+          console.log(`Saída adicionada: R$ ${amount} (Total: R$ ${totalExpenses})`);
+        }
+      });
+      
+      const balance = totalIncome - totalExpenses;
+      
+      console.log("=== Resultado Final ===");
+      console.log(`Entradas: R$ ${totalIncome}`);
+      console.log(`Saídas: R$ ${totalExpenses}`);
+      console.log(`Saldo: R$ ${balance}`);
+      
+      setMonthlyTotals({
+        income: totalIncome,
+        expenses: totalExpenses,
+        balance: balance
+      });
       
     } catch (err) {
-      console.error("Error in financial calculations:", err);
+      console.error("Erro no cálculo financeiro:", err);
+      setMonthlyTotals({ income: 0, expenses: 0, balance: 0 });
     } finally {
       setLoading(false);
       setHasCalculated(true);
@@ -70,15 +124,9 @@ export function useFinancialData() {
 
   // Effect to calculate data when transactions change
   useEffect(() => {
-    if (!transactionsLoading && transactions.length > 0) {
-      // Only recalculate if we have transactions and they're not loading
+    if (!transactionsLoading) {
       setLoading(true);
       calculateFinancialData();
-    } else if (!transactionsLoading && transactions.length === 0) {
-      // If we have no transactions but they're loaded, set empty data
-      setLoading(false);
-      setHasCalculated(true);
-      setMonthlyTotals({ income: 0, expenses: 0, balance: 0 });
     }
   }, [transactions, calculateFinancialData, transactionsLoading]);
 

@@ -6,10 +6,12 @@ import { useTransactions } from "@/contexts/TransactionsContext";
 import { TransactionList } from "@/components/TransactionList";
 import { AddTransactionForm } from "@/components/AddTransactionForm";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, TrendingUp } from "lucide-react";
 import { TransactionSummary } from "@/components/TransactionSummary";
+import { FutureProjections } from "@/components/FutureProjections";
 import { Transaction, TransactionType } from "@/utils/types";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
@@ -80,48 +82,65 @@ export default function CashFlow() {
 
         <TransactionSummary transactions={transactions} className="mb-6" />
 
-        {showAddTransaction && (
-          <div className="mb-6 p-4 border rounded-lg bg-gray-50">
-            <h2 className="text-lg font-medium mb-4">Registrar Nova Transação</h2>
-            <AddTransactionForm 
-              clients={clients}
-              onAddTransaction={handleAddTransaction}
-              onCancel={() => setShowAddTransaction(false)}
+        {/* Tabs para separar Transações e Projeções */}
+        <Tabs defaultValue="transactions" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="transactions">Transações</TabsTrigger>
+            <TabsTrigger value="projections" className="gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Projeções
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="transactions" className="space-y-6">
+            {showAddTransaction && (
+              <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+                <h2 className="text-lg font-medium mb-4">Registrar Nova Transação</h2>
+                <AddTransactionForm 
+                  clients={clients}
+                  onAddTransaction={handleAddTransaction}
+                  onCancel={() => setShowAddTransaction(false)}
+                />
+              </div>
+            )}
+
+            <div className="mb-4 flex flex-wrap gap-2">
+              <Button
+                variant={typeFilter === "all" ? "default" : "outline"}
+                onClick={() => setTypeFilter("all")}
+                size="sm"
+              >
+                Todas
+              </Button>
+              <Button
+                variant={typeFilter === "entrada" ? "default" : "outline"}
+                onClick={() => setTypeFilter("entrada")}
+                size="sm"
+                className="text-green-700 bg-green-100 hover:bg-green-200 border-green-200"
+              >
+                Entradas
+              </Button>
+              <Button
+                variant={typeFilter === "saída" ? "default" : "outline"}
+                onClick={() => setTypeFilter("saída")}
+                size="sm"
+                className="text-red-700 bg-red-100 hover:bg-red-200 border-red-200"
+              >
+                Saídas
+              </Button>
+            </div>
+
+            <TransactionList 
+              transactions={filteredTransactions} 
+              clients={clients} 
+              onDeleteTransaction={handleDeleteTransaction}
             />
-          </div>
-        )}
+          </TabsContent>
 
-        <div className="mb-4 flex flex-wrap gap-2">
-          <Button
-            variant={typeFilter === "all" ? "default" : "outline"}
-            onClick={() => setTypeFilter("all")}
-            size="sm"
-          >
-            Todas
-          </Button>
-          <Button
-            variant={typeFilter === "entrada" ? "default" : "outline"}
-            onClick={() => setTypeFilter("entrada")}
-            size="sm"
-            className="text-green-700 bg-green-100 hover:bg-green-200 border-green-200"
-          >
-            Entradas
-          </Button>
-          <Button
-            variant={typeFilter === "saída" ? "default" : "outline"}
-            onClick={() => setTypeFilter("saída")}
-            size="sm"
-            className="text-red-700 bg-red-100 hover:bg-red-200 border-red-200"
-          >
-            Saídas
-          </Button>
-        </div>
-
-        <TransactionList 
-          transactions={filteredTransactions} 
-          clients={clients} 
-          onDeleteTransaction={handleDeleteTransaction}
-        />
+          <TabsContent value="projections">
+            <FutureProjections />
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );

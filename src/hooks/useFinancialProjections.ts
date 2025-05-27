@@ -64,60 +64,87 @@ export function useFinancialProjections() {
 
         console.log(`Cliente ${client.name}: Contrato R$ ${client.contractValue}, Pago R$ ${totalPaid}, Pendente R$ ${pendingAmount}`);
 
-        // Processar pagamentos agendados
+        // Processar pagamentos agendados - CORRIGIDO
         client.payments.forEach(payment => {
           if (payment.payment_status === 'pendente' && payment.due_date) {
-            const dueDate = new Date(payment.due_date);
-            const monthIndex = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30));
-            
-            if (monthIndex >= 0 && monthIndex < 6) {
-              nextSixMonths[monthIndex].guaranteed += Number(payment.amount);
-              console.log(`Pagamento garantido: R$ ${payment.amount} em ${payment.due_date}`);
-            }
+            // Parse da data corretamente
+            const dueDateParts = payment.due_date.split('/');
+            if (dueDateParts.length === 3) {
+              // Formato DD/MM/YYYY
+              const dueDate = new Date(
+                parseInt(dueDateParts[2]), // ano
+                parseInt(dueDateParts[1]) - 1, // mês (0-based)
+                parseInt(dueDateParts[0]) // dia
+              );
+              
+              console.log(`Processando pagamento: R$ ${payment.amount} vencimento ${payment.due_date} -> ${dueDate.toISOString()}`);
+              
+              // Encontrar o mês correto para este pagamento
+              for (let i = 0; i < 6; i++) {
+                const monthStart = new Date(today.getFullYear(), today.getMonth() + i, 1);
+                const monthEnd = new Date(today.getFullYear(), today.getMonth() + i + 1, 0);
+                
+                if (dueDate >= monthStart && dueDate <= monthEnd) {
+                  nextSixMonths[i].guaranteed += Number(payment.amount);
+                  console.log(`Pagamento garantido adicionado ao mês ${i} (${nextSixMonths[i].month}): R$ ${payment.amount}`);
+                  break;
+                }
+              }
 
-            // Criar alertas para pagamentos próximos
-            const daysUntilDue = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-            
-            if (daysUntilDue <= 30) {
-              let status: PaymentAlert['status'] = 'upcoming';
-              if (daysUntilDue < 0) status = 'overdue';
-              else if (daysUntilDue <= 7) status = 'due_soon';
+              // Criar alertas para pagamentos próximos
+              const daysUntilDue = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+              
+              if (daysUntilDue <= 30) {
+                let status: PaymentAlert['status'] = 'upcoming';
+                if (daysUntilDue < 0) status = 'overdue';
+                else if (daysUntilDue <= 7) status = 'due_soon';
 
-              alerts.push({
-                id: payment.id,
-                clientName: client.name,
-                amount: Number(payment.amount),
-                dueDate: payment.due_date,
-                daysUntilDue,
-                status,
-                description: payment.notes || 'Pagamento agendado'
-              });
+                alerts.push({
+                  id: payment.id,
+                  clientName: client.name,
+                  amount: Number(payment.amount),
+                  dueDate: payment.due_date,
+                  daysUntilDue,
+                  status,
+                  description: payment.notes || 'Pagamento agendado'
+                });
+              }
             }
           }
         });
 
-        // Projetar pagamentos baseados na data do evento
+        // Projetar pagamentos baseados na data do evento - MELHORADO
         if (client.weddingDate && pendingAmount > 0) {
           const eventDate = new Date(client.weddingDate);
-          const monthsUntilEvent = Math.floor((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30));
+          console.log(`Cliente ${client.name}: Data do evento ${client.weddingDate} -> ${eventDate.toISOString()}`);
           
-          if (monthsUntilEvent >= 0 && monthsUntilEvent < 6) {
-            // Se o evento é próximo, considerar como receita provável
-            if (client.status === 'fechado' || client.status === 'em andamento') {
-              nextSixMonths[monthsUntilEvent].probable += pendingAmount;
-              console.log(`Receita provável: R$ ${pendingAmount} para evento em ${client.weddingDate}`);
-            } else if (client.status === 'orçamento enviado' || client.status === 'follow-up') {
-              nextSixMonths[monthsUntilEvent].potential += pendingAmount * 0.3; // 30% de chance
-              console.log(`Receita potencial: R$ ${pendingAmount * 0.3} para orçamento ${client.name}`);
+          // Encontrar o mês do evento
+          for (let i = 0; i < 6; i++) {
+            const monthStart = new Date(today.getFullYear(), today.getMonth() + i, 1);
+            const monthEnd = new Date(today.getFullYear(), today.getMonth() + i + 1, 0);
+            
+            if (eventDate >= monthStart && eventDate <= monthEnd) {
+              if (client.status === 'fechado' || client.status === 'em andamento') {
+                // Para contratos fechados, considerar como receita provável no mês do evento
+                nextSixMonths[i].probable += pendingAmount;
+                console.log(`Receita provável adicionada ao mês ${i} (${nextSixMonths[i].month}): R$ ${pendingAmount} para evento de ${client.name}`);
+              } else if (client.status === 'orçamento enviado' || client.status === 'follow-up') {
+                // Para orçamentos, considerar como potencial com 30% de probabilidade
+                nextSixMonths[i].potential += pendingAmount * 0.3;
+                console.log(`Receita potencial adicionada ao mês ${i} (${nextSixMonths[i].month}): R$ ${pendingAmount * 0.3} para orçamento ${client.name}`);
+              }
+              break;
             }
           }
         }
 
-        // Para clientes sem data de evento, distribuir em parcelas mensais
+        // Para clientes sem data de evento definida mas com valor pendente
         if (!client.weddingDate && pendingAmount > 0 && (client.status === 'fechado' || client.status === 'em andamento')) {
-          const monthlyInstallment = pendingAmount / 3; // Distribuir em 3 meses
+          // Distribuir o valor pendente nos próximos 3 meses
+          const monthlyInstallment = pendingAmount / 3;
           for (let i = 0; i < 3 && i < 6; i++) {
             nextSixMonths[i].probable += monthlyInstallment;
+            console.log(`Receita distribuída para mês ${i} (${nextSixMonths[i].month}): R$ ${monthlyInstallment} do cliente ${client.name}`);
           }
         }
       });
@@ -127,9 +154,13 @@ export function useFinancialProjections() {
         month.total = month.guaranteed + month.probable + month.potential;
       });
 
-      console.log("=== Projeções Calculadas ===");
-      nextSixMonths.forEach(month => {
-        console.log(`${month.month}/${month.year}: Garantido R$ ${month.guaranteed}, Provável R$ ${month.probable}, Potencial R$ ${month.potential}, Total R$ ${month.total}`);
+      console.log("=== Projeções Finais ===");
+      nextSixMonths.forEach((month, index) => {
+        console.log(`Mês ${index} - ${month.month}/${month.year}:`);
+        console.log(`  Garantido: R$ ${month.guaranteed.toFixed(2)}`);
+        console.log(`  Provável: R$ ${month.probable.toFixed(2)}`);
+        console.log(`  Potencial: R$ ${month.potential.toFixed(2)}`);
+        console.log(`  Total: R$ ${month.total.toFixed(2)}`);
       });
 
       setProjections(nextSixMonths);

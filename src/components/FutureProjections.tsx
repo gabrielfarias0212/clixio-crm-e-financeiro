@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFinancialProjections } from "@/hooks/useFinancialProjections";
-import { CalendarDays, TrendingUp, AlertTriangle, RefreshCw, Clock, DollarSign } from "lucide-react";
+import { CalendarDays, TrendingUp, AlertTriangle, RefreshCw, Clock, DollarSign, Info } from "lucide-react";
 import { useState } from "react";
 
 export function FutureProjections() {
@@ -66,6 +66,29 @@ export function FutureProjections() {
           Atualizar
         </Button>
       </div>
+
+      {/* Legenda explicativa */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="pt-4">
+          <div className="flex items-start gap-2">
+            <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+            <div className="text-sm text-blue-800">
+              <p className="font-medium mb-2">Como funcionam as projeções:</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <span className="font-medium text-green-700">Garantido:</span> Pagamentos agendados com data de vencimento específica
+                </div>
+                <div>
+                  <span className="font-medium text-blue-700">Provável:</span> Valores pendentes de contratos fechados, projetados para o mês do evento
+                </div>
+                <div>
+                  <span className="font-medium text-purple-700">Potencial:</span> 30% dos valores de orçamentos em negociação
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -135,6 +158,7 @@ export function FutureProjections() {
                     <div>
                       <h4 className="font-medium">{alert.clientName}</h4>
                       <p className="text-sm opacity-75">{alert.description}</p>
+                      <p className="text-xs opacity-60">Vencimento: {alert.dueDate}</p>
                     </div>
                     <div className="text-right">
                       <div className="font-bold">{formatCurrency(alert.amount)}</div>
@@ -163,59 +187,67 @@ export function FutureProjections() {
       {/* Projeções Mensais */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Projeções por Mês</CardTitle>
+          <CardTitle className="text-lg">Projeções Detalhadas por Mês</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {projections.map((projection, index) => (
-              <div key={index} className="border rounded-lg p-4">
+              <div key={index} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-medium capitalize">
+                  <h3 className="font-medium capitalize text-lg">
                     {projection.month} {projection.year}
                   </h3>
-                  <div className="font-bold text-lg">
-                    {formatCurrency(projection.total)}
+                  <div className="text-right">
+                    <div className="font-bold text-xl">
+                      {formatCurrency(projection.total)}
+                    </div>
+                    <div className="text-sm text-gray-500">Total previsto</div>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div className="text-center">
-                    <div className="text-green-600 font-medium">
+                <div className="grid grid-cols-3 gap-4 text-sm mb-3">
+                  <div className="text-center p-3 bg-green-50 rounded-lg">
+                    <div className="text-green-600 font-bold text-lg">
                       {formatCurrency(projection.guaranteed)}
                     </div>
-                    <div className="text-gray-500">Garantido</div>
+                    <div className="text-gray-600 text-xs">Garantido</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-blue-600 font-medium">
+                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                    <div className="text-blue-600 font-bold text-lg">
                       {formatCurrency(projection.probable)}
                     </div>
-                    <div className="text-gray-500">Provável</div>
+                    <div className="text-gray-600 text-xs">Provável</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-purple-600 font-medium">
+                  <div className="text-center p-3 bg-purple-50 rounded-lg">
+                    <div className="text-purple-600 font-bold text-lg">
                       {formatCurrency(projection.potential)}
                     </div>
-                    <div className="text-gray-500">Potencial</div>
+                    <div className="text-gray-600 text-xs">Potencial</div>
                   </div>
                 </div>
 
-                {/* Barra de progresso visual */}
-                <div className="mt-3 bg-gray-200 rounded-full h-2 overflow-hidden">
-                  <div className="h-full flex">
-                    <div 
-                      className="bg-green-500" 
-                      style={{ width: `${(projection.guaranteed / projection.total) * 100}%` }}
-                    />
-                    <div 
-                      className="bg-blue-500" 
-                      style={{ width: `${(projection.probable / projection.total) * 100}%` }}
-                    />
-                    <div 
-                      className="bg-purple-500" 
-                      style={{ width: `${(projection.potential / projection.total) * 100}%` }}
-                    />
+                {/* Barra de progresso visual melhorada */}
+                {projection.total > 0 && (
+                  <div className="mt-3 bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div className="h-full flex">
+                      <div 
+                        className="bg-green-500 transition-all duration-300" 
+                        style={{ width: `${(projection.guaranteed / projection.total) * 100}%` }}
+                        title={`Garantido: ${formatCurrency(projection.guaranteed)}`}
+                      />
+                      <div 
+                        className="bg-blue-500 transition-all duration-300" 
+                        style={{ width: `${(projection.probable / projection.total) * 100}%` }}
+                        title={`Provável: ${formatCurrency(projection.probable)}`}
+                      />
+                      <div 
+                        className="bg-purple-500 transition-all duration-300" 
+                        style={{ width: `${(projection.potential / projection.total) * 100}%` }}
+                        title={`Potencial: ${formatCurrency(projection.potential)}`}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ))}
           </div>

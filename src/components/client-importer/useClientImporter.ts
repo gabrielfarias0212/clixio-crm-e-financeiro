@@ -1,10 +1,13 @@
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { mapClientData } from "./mapClientData";
 import { createClient, fetchClients, updateClient } from "@/utils/supabaseUtils";
 import { Client } from "@/utils/types";
 import { toast } from "sonner";
 import { ImportOption, ImportSummary } from "./types";
+
+// Tamanho do lote para processamento
+const BATCH_SIZE = 10;
 
 export function useClientImporter(data: any[]) {
   const [importing, setImporting] = useState(false);
@@ -12,140 +15,173 @@ export function useClientImporter(data: any[]) {
   const [duplicateCount, setDuplicateCount] = useState(0);
   const [importOption, setImportOption] = useState<ImportOption>("skip");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-  const checkForDuplicates = async () => {
+  // Memoizar dados mapeados para evitar recálculos
+  const mappedClients = useMemo(() => {
+    return data
+      .filter(row => Object.keys(row).length > 0 && Object.values(row).some(v => v !== null && v !== ""))
+      .map(row => mapClientData(row));
+  }, [data]);
+
+  // Função otimizada para verificação de duplicatas
+  const checkForDuplicates = useCallback(async () => {
     try {
-      // Get existing clients
+      console.log("Verificando duplicatas...");
+      
+      // Buscar clientes existentes uma única vez
       const existingClients = await fetchClients();
       
-      // Map incoming data to client structure
-      const mappedClients = data
-        .filter(row => Object.keys(row).length > 0)
-        .map(row => mapClientData(row));
+      // Criar mapa de emails para lookup O(1)
+      const existingEmails = new Set(
+        existingClients
+          .map(client => client.email)
+          .filter(email => email) // Filtrar emails vazios
+      );
       
-      // Count how many have duplicate emails
-      let duplicates = 0;
+      // Contar duplicatas usando Set lookup
+      const duplicates = mappedClients.filter(client => 
+        client.email && existingEmails.has(client.email)
+      ).length;
       
-      for (const newClient of mappedClients) {
-        if (!newClient.email) continue;
-        
-        const duplicate = existingClients.find(
-          client => client.email === newClient.email
-        );
-        
-        if (duplicate) {
-          duplicates++;
-        }
-      }
-      
+      console.log(`${duplicates} duplicatas encontradas`);
       return duplicates;
     } catch (error) {
-      console.error("Error checking for duplicates:", error);
+      console.error("Erro ao verificar duplicatas:", error);
       return 0;
     }
-  };
+  }, [mappedClients]);
 
-  const handleStartImport = async () => {
+  const handleStartImport = useCallback(async () => {
     try {
-      // Check for duplicates
+      console.log("Iniciando preparação da importação...");
+      
       const duplicates = await checkForDuplicates();
       setDuplicateCount(duplicates);
       
       if (duplicates > 0) {
-        // Show the confirmation dialog
         setShowConfirmDialog(true);
       } else {
-        // No duplicates, proceed with import
         await startImport();
       }
     } catch (error) {
-      console.error("Error during import preparation:", error);
+      console.error("Erro ao preparar importação:", error);
       toast.error("Erro ao preparar a importação");
     }
-  };
+  }, [checkForDuplicates]);
 
-  const startImport = async () => {
+  // Função para processar em lotes
+  const processBatch = useCallback(async (
+    batch: any[], 
+    existingClientsMap: Map<string, Client>,
+    batchNumber: number,
+    totalBatches: number
+  ) => {
+    console.log(`Processando lote ${batchNumber}/${totalBatches} (${batch.length} itens)`);
+    
+    const promises = batch.map(async (clientData) => {
+      try {
+        const existingClient = clientData.email 
+          ? existingClientsMap.get(clientData.email)
+          : null;
+        
+        if (existingClient) {
+          if (importOption === "skip") {
+            return { type: 'skipped' };
+          } else if (importOption === "update") {
+            const result = await updateClient(existingClient.id, clientData);
+            return result ? { type: 'updated' } : { type: 'error' };
+          }
+        }
+        
+        // Adicionar como novo cliente
+        const result = await createClient(clientData as Omit<Client, "id" | "createdAt" | "updatedAt" | "payments">);
+        return result ? { type: 'added' } : { type: 'error' };
+        
+      } catch (error) {
+        console.error("Erro ao processar cliente:", error);
+        return { type: 'error' };
+      }
+    });
+
+    // Processar o lote em paralelo
+    const results = await Promise.all(promises);
+    
+    // Atualizar progresso
+    const progressPercent = Math.round(((batchNumber) / totalBatches) * 100);
+    setProgress(progressPercent);
+    
+    return results;
+  }, [importOption]);
+
+  const startImport = useCallback(async () => {
     setImporting(true);
     setShowConfirmDialog(false);
+    setProgress(0);
     
     try {
-      // Get existing clients
+      console.log(`Iniciando importação de ${mappedClients.length} clientes...`);
+      
+      // Buscar clientes existentes uma única vez e criar mapa para lookup
       const existingClients = await fetchClients();
+      const existingClientsMap = new Map(
+        existingClients
+          .filter(client => client.email)
+          .map(client => [client.email, client])
+      );
       
-      // Initialize counters for summary
-      let total = 0;
-      let added = 0;
-      let updated = 0;
-      let skipped = 0;
-      let errors = 0;
+      // Dividir em lotes para processamento
+      const batches = [];
+      for (let i = 0; i < mappedClients.length; i += BATCH_SIZE) {
+        batches.push(mappedClients.slice(i, i + BATCH_SIZE));
+      }
       
-      // Map incoming data to client structure and filter out empty rows
-      const mappedClients = data
-        .filter(row => Object.keys(row).length > 0 && Object.values(row).some(v => v !== null && v !== ""))
-        .map(row => mapClientData(row));
+      console.log(`Processando em ${batches.length} lotes de ${BATCH_SIZE} itens`);
       
-      total = mappedClients.length;
+      // Inicializar contadores
+      let added = 0, updated = 0, skipped = 0, errors = 0;
       
-      // Process each client
-      for (const clientData of mappedClients) {
-        try {
-          // Check if this client already exists (by email)
-          const existingClient = clientData.email 
-            ? existingClients.find(c => c.email === clientData.email)
-            : null;
-          
-          if (existingClient) {
-            // Handling based on the selected import option
-            if (importOption === "skip") {
-              // Skip this client
-              skipped++;
-              continue;
-            } else if (importOption === "update") {
-              // Update the existing client
-              const result = await updateClient(existingClient.id, clientData);
-              if (result) {
-                updated++;
-              } else {
-                errors++;
-              }
-              continue;
-            }
-            // For "replace", we'll just add new clients and ignore duplicates
+      // Processar lotes sequencialmente para não sobrecarregar o banco
+      for (let i = 0; i < batches.length; i++) {
+        const results = await processBatch(batches[i], existingClientsMap, i + 1, batches.length);
+        
+        // Contar resultados
+        results.forEach(result => {
+          switch (result.type) {
+            case 'added': added++; break;
+            case 'updated': updated++; break;
+            case 'skipped': skipped++; break;
+            case 'error': errors++; break;
           }
-          
-          // Add as a new client
-          const result = await createClient(clientData as Omit<Client, "id" | "createdAt" | "updatedAt" | "payments">);
-          if (result) {
-            added++;
-          } else {
-            errors++;
-          }
-          
-        } catch (error) {
-          console.error("Error importing client:", error);
-          errors++;
+        });
+        
+        // Pequena pausa entre lotes para não sobrecarregar
+        if (i < batches.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
       
-      // Update the summary
+      // Atualizar resultado final
       setSummary({
-        total,
+        total: mappedClients.length,
         added,
         updated,
         skipped,
         errors
       });
       
-      // Show toast with results
+      setProgress(100);
+      
+      console.log(`Importação concluída: ${added} adicionados, ${updated} atualizados, ${skipped} ignorados, ${errors} erros`);
       toast.success(`Importação concluída: ${added} adicionados, ${updated} atualizados`);
       
     } catch (error) {
-      console.error("Error during import:", error);
+      console.error("Erro durante importação:", error);
       toast.error("Erro durante a importação");
     } finally {
       setImporting(false);
     }
-  };
+  }, [mappedClients, processBatch]);
   
   return {
     importing,
@@ -153,6 +189,7 @@ export function useClientImporter(data: any[]) {
     duplicateCount,
     importOption,
     showConfirmDialog,
+    progress,
     setImportOption,
     setShowConfirmDialog,
     handleStartImport,

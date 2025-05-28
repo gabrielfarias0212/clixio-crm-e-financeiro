@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { Client, Payment } from "@/utils/types";
@@ -7,9 +7,9 @@ import { Client, Payment } from "@/utils/types";
 interface MonthlyProjection {
   month: string;
   year: number;
-  guaranteed: number; // Pagamentos agendados com data
-  probable: number;   // Valores de contratos fechados
-  potential: number;  // Orçamentos em negociação
+  guaranteed: number;
+  probable: number;
+  potential: number;
   total: number;
 }
 
@@ -23,6 +23,16 @@ interface PaymentAlert {
   description: string;
 }
 
+interface ProjectionCache {
+  data: MonthlyProjection[];
+  alerts: PaymentAlert[];
+  timestamp: number;
+}
+
+// Cache com TTL de 5 minutos
+const CACHE_TTL = 5 * 60 * 1000;
+let projectionCache: ProjectionCache | null = null;
+
 export function useFinancialProjections() {
   const { clients } = useClients();
   const { transactions } = useTransactions();
@@ -30,68 +40,95 @@ export function useFinancialProjections() {
   const [paymentAlerts, setPaymentAlerts] = useState<PaymentAlert[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Memoizar dados de entrada para evitar recálculos desnecessários
+  const clientsData = useMemo(() => clients, [clients]);
+  const transactionsData = useMemo(() => transactions, [transactions]);
+
+  // Função otimizada para verificar cache
+  const getCachedData = useCallback(() => {
+    if (projectionCache && Date.now() - projectionCache.timestamp < CACHE_TTL) {
+      return projectionCache;
+    }
+    return null;
+  }, []);
+
+  // Função otimizada de cálculo de projeções
   const calculateProjections = useCallback(() => {
-    console.log("=== Calculando Projeções Financeiras ===");
+    console.log("=== Iniciando cálculo otimizado de projeções ===");
+    
+    // Verificar cache primeiro
+    const cached = getCachedData();
+    if (cached) {
+      console.log("Usando dados do cache");
+      setProjections(cached.data);
+      setPaymentAlerts(cached.alerts);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const today = new Date();
-      const nextSixMonths: MonthlyProjection[] = [];
       
-      // Gerar próximos 6 meses
-      for (let i = 0; i < 6; i++) {
+      // Pre-calcular os próximos 6 meses uma vez
+      const nextSixMonths: MonthlyProjection[] = Array.from({ length: 6 }, (_, i) => {
         const targetDate = new Date(today.getFullYear(), today.getMonth() + i, 1);
-        const monthName = targetDate.toLocaleDateString('pt-BR', { month: 'long' });
-        const year = targetDate.getFullYear();
-        
-        nextSixMonths.push({
-          month: monthName,
-          year,
+        return {
+          month: targetDate.toLocaleDateString('pt-BR', { month: 'long' }),
+          year: targetDate.getFullYear(),
           guaranteed: 0,
           probable: 0,
           potential: 0,
           total: 0
-        });
-      }
+        };
+      });
 
       const alerts: PaymentAlert[] = [];
 
-      clients.forEach(client => {
-        // Calcular valor já pago pelo cliente
-        const clientTransactions = transactions.filter(t => t.clientId === client.id && t.type === 'entrada');
-        const totalPaid = clientTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
+      // Otimizar o processamento de clientes usando Map para lookup de transações
+      const transactionsByClient = new Map<string, typeof transactionsData>();
+      transactionsData.forEach(t => {
+        if (t.clientId) {
+          if (!transactionsByClient.has(t.clientId)) {
+            transactionsByClient.set(t.clientId, []);
+          }
+          transactionsByClient.get(t.clientId)!.push(t);
+        }
+      });
+
+      clientsData.forEach(client => {
+        // Calcular valor pago usando Map otimizado
+        const clientTransactions = transactionsByClient.get(client.id) || [];
+        const totalPaid = clientTransactions
+          .filter(t => t.type === 'entrada')
+          .reduce((sum, t) => sum + Number(t.amount), 0);
+        
         const pendingAmount = Number(client.contractValue) - totalPaid;
 
-        console.log(`Cliente ${client.name}: Contrato R$ ${client.contractValue}, Pago R$ ${totalPaid}, Pendente R$ ${pendingAmount}`);
-
-        // Processar pagamentos agendados - CORRIGIDO
+        // Processar pagamentos agendados otimizado
         client.payments.forEach(payment => {
           if (payment.payment_status === 'pendente' && payment.due_date) {
-            // Parse da data corretamente
             const dueDateParts = payment.due_date.split('/');
             if (dueDateParts.length === 3) {
-              // Formato DD/MM/YYYY
               const dueDate = new Date(
-                parseInt(dueDateParts[2]), // ano
-                parseInt(dueDateParts[1]) - 1, // mês (0-based)
-                parseInt(dueDateParts[0]) // dia
+                parseInt(dueDateParts[2]),
+                parseInt(dueDateParts[1]) - 1,
+                parseInt(dueDateParts[0])
               );
               
-              console.log(`Processando pagamento: R$ ${payment.amount} vencimento ${payment.due_date} -> ${dueDate.toISOString()}`);
-              
-              // Encontrar o mês correto para este pagamento
-              for (let i = 0; i < 6; i++) {
-                const monthStart = new Date(today.getFullYear(), today.getMonth() + i, 1);
-                const monthEnd = new Date(today.getFullYear(), today.getMonth() + i + 1, 0);
-                
-                if (dueDate >= monthStart && dueDate <= monthEnd) {
-                  nextSixMonths[i].guaranteed += Number(payment.amount);
-                  console.log(`Pagamento garantido adicionado ao mês ${i} (${nextSixMonths[i].month}): R$ ${payment.amount}`);
-                  break;
-                }
+              // Otimizar busca do mês correto
+              const monthIndex = nextSixMonths.findIndex(month => {
+                const monthStart = new Date(today.getFullYear(), today.getMonth() + nextSixMonths.indexOf(month), 1);
+                const monthEnd = new Date(today.getFullYear(), today.getMonth() + nextSixMonths.indexOf(month) + 1, 0);
+                return dueDate >= monthStart && dueDate <= monthEnd;
+              });
+
+              if (monthIndex !== -1) {
+                nextSixMonths[monthIndex].guaranteed += Number(payment.amount);
               }
 
-              // Criar alertas para pagamentos próximos
+              // Criar alertas otimizado
               const daysUntilDue = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
               
               if (daysUntilDue <= 30) {
@@ -113,58 +150,51 @@ export function useFinancialProjections() {
           }
         });
 
-        // Projetar pagamentos baseados na data do evento - MELHORADO
+        // Projetar pagamentos baseados na data do evento otimizado
         if (client.weddingDate && pendingAmount > 0) {
           const eventDate = new Date(client.weddingDate);
-          console.log(`Cliente ${client.name}: Data do evento ${client.weddingDate} -> ${eventDate.toISOString()}`);
           
-          // Encontrar o mês do evento
-          for (let i = 0; i < 6; i++) {
-            const monthStart = new Date(today.getFullYear(), today.getMonth() + i, 1);
-            const monthEnd = new Date(today.getFullYear(), today.getMonth() + i + 1, 0);
-            
-            if (eventDate >= monthStart && eventDate <= monthEnd) {
-              if (client.status === 'fechado' || client.status === 'em andamento') {
-                // Para contratos fechados, considerar como receita provável no mês do evento
-                nextSixMonths[i].probable += pendingAmount;
-                console.log(`Receita provável adicionada ao mês ${i} (${nextSixMonths[i].month}): R$ ${pendingAmount} para evento de ${client.name}`);
-              } else if (client.status === 'orçamento enviado' || client.status === 'follow-up') {
-                // Para orçamentos, considerar como potencial com 30% de probabilidade
-                nextSixMonths[i].potential += pendingAmount * 0.3;
-                console.log(`Receita potencial adicionada ao mês ${i} (${nextSixMonths[i].month}): R$ ${pendingAmount * 0.3} para orçamento ${client.name}`);
-              }
-              break;
+          const monthIndex = nextSixMonths.findIndex(month => {
+            const monthStart = new Date(today.getFullYear(), today.getMonth() + nextSixMonths.indexOf(month), 1);
+            const monthEnd = new Date(today.getFullYear(), today.getMonth() + nextSixMonths.indexOf(month) + 1, 0);
+            return eventDate >= monthStart && eventDate <= monthEnd;
+          });
+
+          if (monthIndex !== -1) {
+            if (client.status === 'fechado' || client.status === 'em andamento') {
+              nextSixMonths[monthIndex].probable += pendingAmount;
+            } else if (client.status === 'orçamento enviado' || client.status === 'follow-up') {
+              nextSixMonths[monthIndex].potential += pendingAmount * 0.3;
             }
           }
         }
 
-        // Para clientes sem data de evento definida mas com valor pendente
+        // Distribuir valores pendentes otimizado
         if (!client.weddingDate && pendingAmount > 0 && (client.status === 'fechado' || client.status === 'em andamento')) {
-          // Distribuir o valor pendente nos próximos 3 meses
           const monthlyInstallment = pendingAmount / 3;
-          for (let i = 0; i < 3 && i < 6; i++) {
+          for (let i = 0; i < Math.min(3, 6); i++) {
             nextSixMonths[i].probable += monthlyInstallment;
-            console.log(`Receita distribuída para mês ${i} (${nextSixMonths[i].month}): R$ ${monthlyInstallment} do cliente ${client.name}`);
           }
         }
       });
 
-      // Calcular totais
+      // Calcular totais uma vez
       nextSixMonths.forEach(month => {
         month.total = month.guaranteed + month.probable + month.potential;
       });
 
-      console.log("=== Projeções Finais ===");
-      nextSixMonths.forEach((month, index) => {
-        console.log(`Mês ${index} - ${month.month}/${month.year}:`);
-        console.log(`  Garantido: R$ ${month.guaranteed.toFixed(2)}`);
-        console.log(`  Provável: R$ ${month.probable.toFixed(2)}`);
-        console.log(`  Potencial: R$ ${month.potential.toFixed(2)}`);
-        console.log(`  Total: R$ ${month.total.toFixed(2)}`);
-      });
+      // Ordenar alertas uma vez
+      const sortedAlerts = alerts.sort((a, b) => a.daysUntilDue - b.daysUntilDue);
+
+      // Cache dos resultados
+      projectionCache = {
+        data: nextSixMonths,
+        alerts: sortedAlerts,
+        timestamp: Date.now()
+      };
 
       setProjections(nextSixMonths);
-      setPaymentAlerts(alerts.sort((a, b) => a.daysUntilDue - b.daysUntilDue));
+      setPaymentAlerts(sortedAlerts);
 
     } catch (error) {
       console.error("Erro ao calcular projeções:", error);
@@ -173,26 +203,37 @@ export function useFinancialProjections() {
     } finally {
       setLoading(false);
     }
-  }, [clients, transactions]);
+  }, [clientsData, transactionsData, getCachedData]);
 
   useEffect(() => {
     calculateProjections();
   }, [calculateProjections]);
 
-  const totalGuaranteed = projections.reduce((sum, p) => sum + p.guaranteed, 0);
-  const totalProbable = projections.reduce((sum, p) => sum + p.probable, 0);
-  const totalPotential = projections.reduce((sum, p) => sum + p.potential, 0);
+  // Memoizar summary para evitar recálculos
+  const summary = useMemo(() => {
+    const totalGuaranteed = projections.reduce((sum, p) => sum + p.guaranteed, 0);
+    const totalProbable = projections.reduce((sum, p) => sum + p.probable, 0);
+    const totalPotential = projections.reduce((sum, p) => sum + p.potential, 0);
+
+    return {
+      totalGuaranteed,
+      totalProbable,
+      totalPotential,
+      totalProjected: totalGuaranteed + totalProbable + totalPotential
+    };
+  }, [projections]);
+
+  // Função de refresh que limpa o cache
+  const refreshProjections = useCallback(() => {
+    projectionCache = null;
+    calculateProjections();
+  }, [calculateProjections]);
 
   return {
     projections,
     paymentAlerts,
     loading,
-    summary: {
-      totalGuaranteed,
-      totalProbable,
-      totalPotential,
-      totalProjected: totalGuaranteed + totalProbable + totalPotential
-    },
-    refreshProjections: calculateProjections
+    summary,
+    refreshProjections
   };
 }

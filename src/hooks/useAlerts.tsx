@@ -1,3 +1,4 @@
+
 import { useMemo } from "react";
 import { AlertItem, Client, CalendarEvent } from "@/utils/types";
 import { stringToDate } from "@/utils/dates";
@@ -11,15 +12,27 @@ export function useAlerts(clients: Client[] = []) {
   const alerts = useMemo(() => {
     const now = new Date();
     
-    // Pending tasks (based on nextAction not being "nenhuma")
-    const pendingTasks: AlertItem[] = clients
-      .filter(client => client.nextAction !== "nenhuma")
+    // Edit tasks (clients with nextAction "editar")
+    const editTasks: AlertItem[] = clients
+      .filter(client => client.nextAction === "editar")
       .map(client => ({
         type: "task" as const,
         title: `Ação pendente: ${client.nextAction}`,
         description: `Cliente: ${client.name}`,
         client,
-        date: now, // Current date as these are already pending
+        date: now,
+        urgency: "medium" as const
+      }));
+    
+    // Deliver tasks (clients with nextAction "entregar")
+    const deliverTasks: AlertItem[] = clients
+      .filter(client => client.nextAction === "entregar")
+      .map(client => ({
+        type: "task" as const,
+        title: `Ação pendente: ${client.nextAction}`,
+        description: `Cliente: ${client.name}`,
+        client,
+        date: now,
         urgency: "medium" as const
       }));
     
@@ -196,37 +209,7 @@ export function useAlerts(clients: Client[] = []) {
         };
       });
     
-    // Calendar event alerts (upcoming events within 7 days)
-    const calendarEventAlerts: AlertItem[] = [];
-    const today = startOfDay(new Date());
-    const nextWeek = addDays(today, 7);
-    
-    events.forEach(event => {
-      const eventDate = stringToDate(event.date);
-      if (eventDate) {
-        if (isAfter(eventDate, today) && isBefore(eventDate, nextWeek)) {
-          const daysUntilEvent = differenceInDays(eventDate, today);
-          
-          // Find related client if exists
-          const relatedClient = event.clientId ? 
-            clients.find(c => c.id === event.clientId) : undefined;
-            
-          // Only add event alerts that have a related client
-          if (relatedClient) {
-            calendarEventAlerts.push({
-              type: "event",
-              title: `Evento próximo: ${event.title}`,
-              description: `${event.date} às ${event.startTime} - Cliente: ${relatedClient.name}`,
-              client: relatedClient,
-              date: eventDate,
-              urgency: daysUntilEvent <= 1 ? "high" : daysUntilEvent <= 3 ? "medium" : "low"
-            });
-          }
-        }
-      }
-    });
-    
-    // Combine and sort all alerts by urgency and type
+    // Combine and sort all payment alerts by urgency and type
     const allPaymentAlerts = [...paymentAlerts, ...duePaymentAlerts].sort((a, b) => {
       const urgencyOrder = { high: 0, medium: 1, low: 2 };
       return (urgencyOrder[a.urgency || 'medium'] - urgencyOrder[b.urgency || 'medium']) || 
@@ -234,9 +217,9 @@ export function useAlerts(clients: Client[] = []) {
     });
 
     return { 
-      tasks: pendingTasks, 
+      editTasks, 
+      deliverTasks,
       payments: allPaymentAlerts as AlertItem[],
-      events: calendarEventAlerts as AlertItem[],
       preWedding: preWeddingAlerts as AlertItem[]
     };
   }, [clients, events]);

@@ -4,32 +4,32 @@ import { AlertItem } from "@/components/dashboard/AlertItem";
 import { AlertItem as AlertItemType } from "@/utils/types";
 
 interface AlertsTabContentProps {
-  tasks: AlertItemType[];
+  editTasks: AlertItemType[];
+  deliverTasks: AlertItemType[];
   payments: AlertItemType[];
-  events: AlertItemType[];
   preWedding: AlertItemType[];
   activeTab: string;
 }
 
 export function AlertsTabContent({
-  tasks,
+  editTasks,
+  deliverTasks,
   payments,
-  events,
   preWedding,
   activeTab,
 }: AlertsTabContentProps) {
   const getActiveAlerts = () => {
     switch (activeTab) {
-      case "tasks":
-        return tasks;
+      case "edit":
+        return editTasks;
+      case "deliver":
+        return deliverTasks;
       case "payments":
         return payments;
-      case "events":
-        return events;
       case "preWedding":
         return preWedding;
       default:
-        const allAlerts = [...tasks, ...payments, ...events, ...preWedding];
+        const allAlerts = [...editTasks, ...deliverTasks, ...payments, ...preWedding];
         return allAlerts.sort((a, b) => {
           const urgencyOrder = { high: 0, medium: 1, low: 2 };
           return (

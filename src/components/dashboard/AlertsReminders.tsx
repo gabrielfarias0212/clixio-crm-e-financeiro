@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertsTabContent } from "./AlertsTabContent";
 import { useAlerts } from "@/hooks/useAlerts";
 import { Client } from "@/utils/types";
-import { Bell, Calendar, DollarSign, Camera } from "lucide-react";
+import { Bell, DollarSign, Camera, Edit, Package } from "lucide-react";
 
 interface AlertsRemindersProps {
   clients?: Client[];
@@ -32,18 +32,30 @@ export function AlertsReminders({ clients = [] }: AlertsRemindersProps) {
                 className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center"
                 variant="destructive"
               >
-                {alerts.tasks.length + alerts.payments.length + alerts.events.length + alerts.preWedding.length}
+                {alerts.editTasks.length + alerts.deliverTasks.length + alerts.payments.length + alerts.preWedding.length}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger value="tasks" className="relative">
-              <Bell className="h-4 w-4 mr-1" />
-              Tarefas
-              {alerts.tasks.length > 0 && (
+            <TabsTrigger value="edit" className="relative">
+              <Edit className="h-4 w-4 mr-1" />
+              Editar
+              {alerts.editTasks.length > 0 && (
                 <Badge
                   className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center"
                   variant="destructive"
                 >
-                  {alerts.tasks.length}
+                  {alerts.editTasks.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="deliver" className="relative">
+              <Package className="h-4 w-4 mr-1" />
+              Entregar
+              {alerts.deliverTasks.length > 0 && (
+                <Badge
+                  className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center"
+                  variant="destructive"
+                >
+                  {alerts.deliverTasks.length}
                 </Badge>
               )}
             </TabsTrigger>
@@ -56,18 +68,6 @@ export function AlertsReminders({ clients = [] }: AlertsRemindersProps) {
                   variant="destructive"
                 >
                   {alerts.payments.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="events" className="relative">
-              <Calendar className="h-4 w-4 mr-1" />
-              Eventos
-              {alerts.events.length > 0 && (
-                <Badge
-                  className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center"
-                  variant="destructive"
-                >
-                  {alerts.events.length}
                 </Badge>
               )}
             </TabsTrigger>
@@ -85,9 +85,9 @@ export function AlertsReminders({ clients = [] }: AlertsRemindersProps) {
             </TabsTrigger>
           </TabsList>
           <AlertsTabContent
-            tasks={alerts.tasks}
+            editTasks={alerts.editTasks}
+            deliverTasks={alerts.deliverTasks}
             payments={alerts.payments}
-            events={alerts.events}
             preWedding={alerts.preWedding}
             activeTab={activeTab}
           />

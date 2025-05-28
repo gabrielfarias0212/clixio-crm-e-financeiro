@@ -20,6 +20,15 @@ export function EventFields({ control, watchHasPreWedding, clientId }: EventFiel
   const preWeddingStartTime = useWatch({ control, name: "preWeddingStartTime" });
   const preWeddingEndTime = useWatch({ control, name: "preWeddingEndTime" });
 
+  console.log("[EventFields] Dados para sincronização:", {
+    clientId,
+    clientName,
+    preWeddingDate,
+    preWeddingStartTime,
+    preWeddingEndTime,
+    hasPreWedding: watchHasPreWedding
+  });
+
   // Sync pre-wedding data with calendar
   usePreWeddingCalendarSync({
     clientId,

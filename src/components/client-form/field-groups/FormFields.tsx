@@ -11,15 +11,25 @@ interface FormFieldsProps {
   control: Control<ClientFormValues>;
   watchStatus: string;
   watchHasPreWedding?: boolean;
+  clientId?: string;
 }
 
-export function FormFields({ control, watchStatus, watchHasPreWedding = true }: FormFieldsProps) {
+export function FormFields({ 
+  control, 
+  watchStatus, 
+  watchHasPreWedding = true, 
+  clientId 
+}: FormFieldsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <ContactFields control={control} />
       <div className="space-y-6">
         <EventCategoryField control={control} />
-        <EventFields control={control} watchHasPreWedding={watchHasPreWedding} />
+        <EventFields 
+          control={control} 
+          watchHasPreWedding={watchHasPreWedding} 
+          clientId={clientId}
+        />
       </div>
       <PaymentFields control={control} watchStatus={watchStatus} />
       <StatusFields control={control} />

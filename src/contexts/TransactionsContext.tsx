@@ -97,23 +97,33 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
 
   const deleteTransaction = useCallback(async (transactionId: string) => {
     try {
-      // Update otimístico - remover imediatamente da lista local
-      const originalTransactions = transactions;
-      setTransactions(prev => prev.filter(t => t.id !== transactionId));
-      
-      await removeTransactionFromDB(transactionId);
-      toast.success('Transação excluída com sucesso!');
-      
-      // Invalidar cache de outros hooks
-      lastRefreshTime.current = 0;
+      // Capturar estado atual antes do update otimístico
+      setTransactions(prev => {
+        const originalTransactions = prev;
+        const updatedTransactions = prev.filter(t => t.id !== transactionId);
+        
+        // Executar a exclusão no backend
+        removeTransactionFromDB(transactionId)
+          .then(() => {
+            toast.success('Transação excluída com sucesso!');
+            // Invalidar cache de outros hooks
+            lastRefreshTime.current = 0;
+          })
+          .catch((err) => {
+            console.error('Erro ao excluir transação:', err);
+            // Reverter update otimístico em caso de erro
+            setTransactions(originalTransactions);
+            toast.error('Falha ao excluir transação');
+          });
+        
+        return updatedTransactions;
+      });
       
     } catch (err) {
       console.error('Erro ao excluir transação:', err);
-      // Reverter update otimístico em caso de erro
-      setTransactions(originalTransactions);
       toast.error('Falha ao excluir transação');
     }
-  }, [transactions]);
+  }, []);
 
   // Carregar transações apenas uma vez na inicialização
   useEffect(() => {

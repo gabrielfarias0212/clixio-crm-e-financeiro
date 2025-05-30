@@ -103,52 +103,76 @@ export function useAlerts(clients: Client[] = []) {
         };
       });
 
-    // Due payment alerts (payments with due dates)
+    // Due payment alerts (payments with due dates) - EXPANDED to include ALL pending and overdue payments
     const duePaymentAlerts: AlertItem[] = [];
     clients.forEach(client => {
       client.payments.forEach(payment => {
-        if (payment.due_date && payment.payment_status === "pendente") {
-          const dueDate = stringToDate(payment.due_date);
-          if (dueDate) {
-            const daysUntilDue = differenceInDays(dueDate, now);
+        // Include ALL pending and overdue payments
+        if (payment.payment_status === "pendente" || payment.payment_status === "atrasado") {
+          let urgency: "high" | "medium" | "low" = "medium";
+          let title = "";
+          let description = "";
+          
+          if (payment.payment_status === "atrasado") {
+            // Payment is marked as overdue
+            title = `Pagamento ATRASADO: R$ ${payment.amount.toFixed(2)}`;
+            description = `Cliente: ${client.name} - Status: Atrasado`;
+            urgency = "high";
             
-            // If due date is in the past or today
-            if (daysUntilDue <= 0) {
-              duePaymentAlerts.push({
-                type: "due_payment",
-                title: `Pagamento ATRASADO: R$ ${payment.amount.toFixed(2)}`,
-                description: `Cliente: ${client.name} - Venceu em ${payment.due_date}`,
-                client,
-                date: dueDate,
-                payment,
-                urgency: "high"
-              });
-            } 
-            // If due date is within the next 7 days
-            else if (daysUntilDue <= 7) {
-              duePaymentAlerts.push({
-                type: "due_payment",
-                title: `Pagamento a vencer: R$ ${payment.amount.toFixed(2)}`,
-                description: `Cliente: ${client.name} - Vence em ${daysUntilDue} ${daysUntilDue === 1 ? 'dia' : 'dias'} (${payment.due_date})`,
-                client,
-                date: dueDate,
-                payment,
-                urgency: "medium"
-              });
+            if (payment.due_date) {
+              description += ` - Venceu em ${payment.due_date}`;
             }
-            // If due date is within the next 15 days
-            else if (daysUntilDue <= 15) {
-              duePaymentAlerts.push({
-                type: "due_payment",
-                title: `Pagamento próximo: R$ ${payment.amount.toFixed(2)}`,
-                description: `Cliente: ${client.name} - Vence em ${daysUntilDue} dias (${payment.due_date})`,
-                client,
-                date: dueDate,
-                payment,
-                urgency: "low"
-              });
+          } else if (payment.payment_status === "pendente") {
+            // Payment is pending
+            if (payment.due_date) {
+              const dueDate = stringToDate(payment.due_date);
+              if (dueDate) {
+                const daysUntilDue = differenceInDays(dueDate, now);
+                
+                if (daysUntilDue <= 0) {
+                  // Due date has passed
+                  title = `Pagamento ATRASADO: R$ ${payment.amount.toFixed(2)}`;
+                  description = `Cliente: ${client.name} - Venceu há ${Math.abs(daysUntilDue)} ${Math.abs(daysUntilDue) === 1 ? 'dia' : 'dias'} (${payment.due_date})`;
+                  urgency = "high";
+                } else if (daysUntilDue <= 7) {
+                  // Due within 7 days
+                  title = `Pagamento a vencer: R$ ${payment.amount.toFixed(2)}`;
+                  description = `Cliente: ${client.name} - Vence em ${daysUntilDue} ${daysUntilDue === 1 ? 'dia' : 'dias'} (${payment.due_date})`;
+                  urgency = "high";
+                } else if (daysUntilDue <= 15) {
+                  // Due within 15 days
+                  title = `Pagamento próximo: R$ ${payment.amount.toFixed(2)}`;
+                  description = `Cliente: ${client.name} - Vence em ${daysUntilDue} dias (${payment.due_date})`;
+                  urgency = "medium";
+                } else {
+                  // Due later but still pending
+                  title = `Pagamento pendente: R$ ${payment.amount.toFixed(2)}`;
+                  description = `Cliente: ${client.name} - Vence em ${daysUntilDue} dias (${payment.due_date})`;
+                  urgency = "low";
+                }
+              } else {
+                // Invalid due date
+                title = `Pagamento pendente: R$ ${payment.amount.toFixed(2)}`;
+                description = `Cliente: ${client.name} - Data de vencimento: ${payment.due_date}`;
+                urgency = "medium";
+              }
+            } else {
+              // No due date set, but payment is pending
+              title = `Pagamento pendente: R$ ${payment.amount.toFixed(2)}`;
+              description = `Cliente: ${client.name} - Sem data de vencimento definida`;
+              urgency = "low";
             }
           }
+          
+          duePaymentAlerts.push({
+            type: "due_payment",
+            title,
+            description,
+            client,
+            date: payment.due_date ? stringToDate(payment.due_date) || now : now,
+            payment,
+            urgency
+          });
         }
       });
     });

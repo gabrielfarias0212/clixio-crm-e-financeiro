@@ -94,7 +94,8 @@ export function usePreWeddingCalendarSync({
         currentKey,
         previousKey,
         hasChanged: currentKey !== previousKey,
-        clientId
+        clientId,
+        preWeddingDate
       });
 
       if (currentKey === previousKey) {
@@ -106,8 +107,8 @@ export function usePreWeddingCalendarSync({
       const existingEvent = findExistingPreWeddingEvent(clientId);
       console.log("[PreWeddingSync] Evento existente encontrado:", existingEvent);
 
-      // Se hasPreWedding é false ou preWeddingDate é null, remover o evento
-      if (!hasPreWedding || !preWeddingDate) {
+      // UPDATED LOGIC: Se hasPreWedding é false OU preWeddingDate é null/empty, remover o evento
+      if (!hasPreWedding || !preWeddingDate || preWeddingDate.trim() === '') {
         if (existingEvent) {
           console.log("[PreWeddingSync] Removendo evento pré-wedding:", existingEvent.id);
           deleteEvent(existingEvent.id);
@@ -166,7 +167,12 @@ export function usePreWeddingCalendarSync({
       return;
     }
 
-    console.log("[PreWeddingSync] Iniciando sincronização...");
+    console.log("[PreWeddingSync] Iniciando sincronização com dados:", {
+      clientId,
+      clientName,
+      preWeddingDate,
+      hasPreWedding
+    });
     
     // Usar setTimeout para debounce
     const timeoutId = setTimeout(debouncedSync, 100);

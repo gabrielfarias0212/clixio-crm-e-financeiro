@@ -178,17 +178,14 @@ export function useAlerts(clients: Client[] = []) {
     });
     
     // Pre-wedding alerts for clients with unscheduled pre-weddings
-    // - Show only when wedding date is <= 120 days away or no date set
-    // - Don't show if pre-wedding is scheduled or not needed
+    // UPDATED: Only show if preWeddingDate is NOT filled (indicating it's not scheduled)
     const preWeddingAlerts: AlertItem[] = clients
       .filter(client => {
-        // Verify if we need to show a pre-wedding alert for this client
-        
         // Requirement: Client needs a pre-wedding
         const needsPreWedding = client.hasPreWedding !== false;
         
-        // Scheduling: Pre-wedding not scheduled yet
-        const notScheduled = !client.preWeddingDate || client.preWeddingScheduled === false;
+        // UPDATED: Pre-wedding not scheduled if preWeddingDate is empty/null
+        const notScheduled = !client.preWeddingDate;
         
         // Status: Client has confirmed status
         const hasConfirmedStatus = client.status === "fechado" || client.status === "em andamento";

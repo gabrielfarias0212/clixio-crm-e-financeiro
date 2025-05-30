@@ -168,6 +168,26 @@ export const updatePaymentDueDate = async (paymentId: string, dueDate: string): 
   }
 };
 
+// Update payment notes
+export const updatePaymentNotes = async (paymentId: string, notes: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('wedding_payments')
+      .update({ notes })
+      .eq('id', paymentId);
+    
+    if (error) {
+      console.error('Error updating payment notes:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Exception updating payment notes:', error);
+    return false;
+  }
+};
+
 // Utility function to check for overdue payments
 export const checkAndUpdateOverduePayments = async (): Promise<void> => {
   const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format

@@ -3,7 +3,7 @@ import { Payment } from "@/utils/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Trash2 } from "lucide-react";
+import { AlertCircle, Trash2, Edit } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,16 +19,27 @@ import { useState } from "react";
 import { parseDate } from "@/utils/supabase/base";
 import { Badge } from "@/components/ui/badge";
 import { isBefore } from "date-fns";
+import { EditPaymentDialog } from "./EditPaymentDialog";
 
 interface PaymentHistoryProps {
   payments: Payment[];
   className?: string;
   onDeletePayment?: (paymentId: string) => void;
+  onUpdatePayment?: (updatedPayment: Payment) => void;
   isDeleting?: boolean;
+  isUpdating?: boolean;
 }
 
-export function PaymentHistory({ payments, className, onDeletePayment, isDeleting = false }: PaymentHistoryProps) {
+export function PaymentHistory({ 
+  payments, 
+  className, 
+  onDeletePayment, 
+  onUpdatePayment,
+  isDeleting = false,
+  isUpdating = false 
+}: PaymentHistoryProps) {
   const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
+  const [paymentToEdit, setPaymentToEdit] = useState<Payment | null>(null);
   
   // Sort payments by date (newest first) - using string comparison instead of Date.getTime()
   const sortedPayments = [...payments].sort((a, b) => {
@@ -44,6 +55,13 @@ export function PaymentHistory({ payments, className, onDeletePayment, isDeletin
     if (paymentToDelete && onDeletePayment) {
       onDeletePayment(paymentToDelete);
       setPaymentToDelete(null);
+    }
+  };
+
+  const handleUpdatePayment = (updatedPayment: Payment) => {
+    if (onUpdatePayment) {
+      onUpdatePayment(updatedPayment);
+      setPaymentToEdit(null);
     }
   };
 
@@ -92,7 +110,7 @@ export function PaymentHistory({ payments, className, onDeletePayment, isDeletin
               <TableHead className="hidden md:table-cell">Status</TableHead>
               <TableHead className="hidden sm:table-cell">Vencimento</TableHead>
               <TableHead className="hidden lg:table-cell">Detalhes</TableHead>
-              {onDeletePayment && <TableHead className="w-[80px]">Ações</TableHead>}
+              {(onDeletePayment || onUpdatePayment) && <TableHead className="w-[120px]">Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -114,46 +132,70 @@ export function PaymentHistory({ payments, className, onDeletePayment, isDeletin
                 <TableCell className="hidden lg:table-cell text-muted-foreground">
                   {payment.notes || "-"}
                 </TableCell>
-                {onDeletePayment && (
+                {(onDeletePayment || onUpdatePayment) && (
                   <TableCell>
-                    <AlertDialog open={paymentToDelete === payment.id} onOpenChange={(open) => {
-                      if (!open) setPaymentToDelete(null);
-                    }}>
-                      <AlertDialogTrigger asChild>
+                    <div className="flex gap-1">
+                      {onUpdatePayment && (
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          onClick={() => setPaymentToDelete(payment.id)}
-                          disabled={isDeleting}
+                          onClick={() => setPaymentToEdit(payment)}
+                          disabled={isUpdating}
                         >
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Edit className="h-4 w-4 text-blue-500" />
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tem certeza que deseja excluir este pagamento? 
-                            Esta ação não pode ser desfeita e o pagamento será removido do fluxo de caixa.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction 
-                            className="bg-red-500 hover:bg-red-600"
-                            onClick={handleDelete}
-                          >
-                            Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                      )}
+                      {onDeletePayment && (
+                        <AlertDialog open={paymentToDelete === payment.id} onOpenChange={(open) => {
+                          if (!open) setPaymentToDelete(null);
+                        }}>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => setPaymentToDelete(payment.id)}
+                              disabled={isDeleting}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir este pagamento? 
+                                Esta ação não pode ser desfeita e o pagamento será removido do fluxo de caixa.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                className="bg-red-500 hover:bg-red-600"
+                                onClick={handleDelete}
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
                   </TableCell>
                 )}
               </TableRow>
             ))}
           </TableBody>
         </Table>
+      )}
+
+      {paymentToEdit && (
+        <EditPaymentDialog
+          payment={paymentToEdit}
+          open={!!paymentToEdit}
+          onOpenChange={(open) => !open && setPaymentToEdit(null)}
+          onSave={handleUpdatePayment}
+          isLoading={isUpdating}
+        />
       )}
     </div>
   );

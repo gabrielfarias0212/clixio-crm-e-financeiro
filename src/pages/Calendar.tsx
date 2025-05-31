@@ -10,10 +10,13 @@ import { CalendarGrid } from "@/components/calendar/CalendarGrid";
 import { DayEventsSidebar } from "@/components/calendar/DayEventsSidebar";
 import { useCalendarPage } from "@/hooks/useCalendarPage";
 import { CalendarEvent } from "@/utils/types";
+import { useCalendarEvents } from "@/hooks/useCalendarEvents";
+import { toast } from "@/hooks/use-toast";
 
 export default function CalendarPage() {
   const navigate = useNavigate();
   const { clients, loading } = useClients();
+  const { error } = useCalendarEvents();
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   
   const {
@@ -31,6 +34,17 @@ export default function CalendarPage() {
   useEffect(() => {
     document.title = "Calendário | Wedding CRM";
   }, []);
+
+  // Show error toast if there's an error with calendar events
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Erro no calendário",
+        description: error,
+        variant: "destructive"
+      });
+    }
+  }, [error]);
   
   const handleOpenEditEvent = (event: CalendarEvent) => {
     setEditingEvent(event);

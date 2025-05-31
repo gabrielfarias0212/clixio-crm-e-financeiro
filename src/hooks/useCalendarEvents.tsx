@@ -1,7 +1,13 @@
 
 import { useCallback, useEffect, useState, createContext, useContext, ReactNode, useRef } from "react";
 import { CalendarEvent } from "@/utils/types";
-import { formatDate, stringToDate, dateToString, normalizeDate } from "@/utils/dates";
+import { normalizeDate } from "@/utils/dates";
+import { 
+  fetchCalendarEvents, 
+  createCalendarEvent, 
+  updateCalendarEvent, 
+  deleteCalendarEvent 
+} from "@/utils/supabase/calendar-events";
 
 interface CalendarEventsContextProps {
   events: CalendarEvent[];
@@ -10,6 +16,8 @@ interface CalendarEventsContextProps {
   deleteEvent: (eventId: string) => void;
   getEventById: (eventId: string) => CalendarEvent | undefined;
   getEventsByDate: (date: string) => CalendarEvent[];
+  loading: boolean;
+  error: string | null;
 }
 
 const CalendarEventsContext = createContext<CalendarEventsContextProps>({
@@ -18,69 +26,104 @@ const CalendarEventsContext = createContext<CalendarEventsContextProps>({
   updateEvent: () => {},
   deleteEvent: () => {},
   getEventById: () => undefined,
-  getEventsByDate: () => []
+  getEventsByDate: () => [],
+  loading: false,
+  error: null
 });
 
 export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const lastSaveTime = useRef<number>(0);
-  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const isInitialized = useRef(false);
   
-  // Load events from localStorage on component mount
+  // Load events from Supabase on component mount
   useEffect(() => {
-    const loadEvents = () => {
+    const loadEvents = async () => {
+      if (isInitialized.current) return;
+      
       try {
-        const storedEvents = localStorage.getItem("calendarEvents");
-        if (storedEvents) {
-          const parsedEvents = JSON.parse(storedEvents);
-          console.log("[CalendarEvents] Carregando eventos do localStorage:", parsedEvents.length);
-          
-          // Fix legacy events that have Date objects stored as strings
-          const formattedEvents = parsedEvents.map((event: any) => {
-            // If the date is an object (from older versions), convert to our string format
-            if (typeof event.date === 'object') {
-              const dateObj = new Date(event.date);
-              return {
-                ...event,
-                date: dateToString(dateObj),
-                startTime: event.startTime || event.time || "09:00",
-                endTime: event.endTime || (event.time ? 
-                  incrementTimeByOneHour(event.time) : "10:00")
-              };
+        setLoading(true);
+        setError(null);
+        
+        // Try to load from Supabase first
+        const supabaseEvents = await fetchCalendarEvents();
+        
+        if (supabaseEvents.length > 0) {
+          console.log("[CalendarEvents] Carregando eventos do Supabase:", supabaseEvents.length);
+          setEvents(supabaseEvents);
+        } else {
+          // Fallback to localStorage if no events in Supabase
+          const storedEvents = localStorage.getItem("calendarEvents");
+          if (storedEvents) {
+            try {
+              const parsedEvents = JSON.parse(storedEvents);
+              console.log("[CalendarEvents] Eventos encontrados no localStorage, migrando para Supabase:", parsedEvents.length);
+              
+              // Migrate localStorage events to Supabase
+              const migratedEvents = await migrateLocalStorageEvents(parsedEvents);
+              setEvents(migratedEvents);
+              
+              // Clear localStorage after successful migration
+              localStorage.removeItem("calendarEvents");
+              console.log("[CalendarEvents] Migração concluída, localStorage limpo");
+            } catch (parseError) {
+              console.error("[CalendarEvents] Erro ao parsear eventos do localStorage:", parseError);
+              setEvents([]);
             }
-            
-            // Handle legacy events with ISO date strings
-            if (typeof event.date === 'string' && event.date.includes('T')) {
-              const dateObj = new Date(event.date);
-              return {
-                ...event,
-                date: dateToString(dateObj),
-                startTime: event.startTime || event.time || "09:00",
-                endTime: event.endTime || (event.time ? 
-                  incrementTimeByOneHour(event.time) : "10:00")
-              };
-            }
-            
-            // If date is already properly formatted as DD/MM/YYYY, just ensure time fields
-            return {
-              ...event,
-              startTime: event.startTime || event.time || "09:00",
-              endTime: event.endTime || (event.time ? 
-                incrementTimeByOneHour(event.time) : "10:00")
-            };
-          });
-          
-          setEvents(formattedEvents);
+          } else {
+            setEvents([]);
+          }
         }
-      } catch (error) {
-        console.error("[CalendarEvents] Erro ao carregar eventos:", error);
-        // Em caso de erro, manter array vazio
-        setEvents([]);
+        
+        isInitialized.current = true;
+      } catch (loadError) {
+        console.error("[CalendarEvents] Erro ao carregar eventos:", loadError);
+        setError("Erro ao carregar eventos");
+        
+        // Fallback to localStorage on error
+        try {
+          const storedEvents = localStorage.getItem("calendarEvents");
+          if (storedEvents) {
+            const parsedEvents = JSON.parse(storedEvents);
+            setEvents(parsedEvents);
+          }
+        } catch (fallbackError) {
+          console.error("[CalendarEvents] Erro no fallback:", fallbackError);
+          setEvents([]);
+        }
+      } finally {
+        setLoading(false);
       }
     };
 
     loadEvents();
   }, []);
+  
+  // Migration helper function
+  const migrateLocalStorageEvents = async (localEvents: any[]): Promise<CalendarEvent[]> => {
+    const migratedEvents: CalendarEvent[] = [];
+    
+    for (const event of localEvents) {
+      try {
+        // Format the event data properly
+        const formattedEvent: CalendarEvent = {
+          ...event,
+          startTime: event.startTime || event.time || "09:00",
+          endTime: event.endTime || (event.time ? incrementTimeByOneHour(event.time) : "10:00")
+        };
+        
+        const createdEvent = await createCalendarEvent(formattedEvent);
+        if (createdEvent) {
+          migratedEvents.push(createdEvent);
+        }
+      } catch (error) {
+        console.error("[CalendarEvents] Erro ao migrar evento:", event.id, error);
+      }
+    }
+    
+    return migratedEvents;
+  };
   
   // Helper to increment time by one hour for legacy events
   const incrementTimeByOneHour = (time: string): string => {
@@ -89,78 +132,106 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
     return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
   
-  // Debounced save to localStorage
-  const saveToLocalStorage = useCallback((eventsToSave: CalendarEvent[]) => {
-    const now = Date.now();
-    
-    // Clear previous timeout
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    
-    // Debounce saves to avoid too frequent writes
-    saveTimeoutRef.current = setTimeout(() => {
-      try {
-        localStorage.setItem("calendarEvents", JSON.stringify(eventsToSave));
-        lastSaveTime.current = now;
-        console.log("[CalendarEvents] Eventos salvos no localStorage:", eventsToSave.length);
-      } catch (error) {
-        console.error("[CalendarEvents] Erro ao salvar eventos:", error);
-      }
-    }, 300);
-  }, []);
-  
-  // Save events to localStorage whenever they change
-  useEffect(() => {
-    if (events.length >= 0) { // Allow saving even when empty
-      saveToLocalStorage(events);
-    }
-  }, [events, saveToLocalStorage]);
-  
-  const addEvent = useCallback((event: CalendarEvent) => {
+  const addEvent = useCallback(async (event: CalendarEvent) => {
     console.log("[CalendarEvents] Adicionando evento:", event);
     
-    // Ensure the date is in the correct string format (DD/MM/YYYY)
-    const updatedEvent = { ...event };
-    
-    // Fix TypeScript error by properly checking the date type
-    if (typeof updatedEvent.date === 'object' && updatedEvent.date !== null) {
-      updatedEvent.date = dateToString(updatedEvent.date as Date);
-    }
-    
-    setEvents(prev => {
-      // Check if event already exists to avoid duplicates
-      const existingIndex = prev.findIndex(e => e.id === updatedEvent.id);
-      if (existingIndex !== -1) {
-        console.log("[CalendarEvents] Evento já existe, atualizando:", updatedEvent.id);
-        const newEvents = [...prev];
-        newEvents[existingIndex] = updatedEvent;
-        return newEvents;
-      }
+    try {
+      setError(null);
       
-      console.log("[CalendarEvents] Novo evento adicionado:", updatedEvent.id);
-      return [...prev, updatedEvent];
-    });
+      // Try to create in Supabase first
+      const createdEvent = await createCalendarEvent(event);
+      
+      if (createdEvent) {
+        setEvents(prev => {
+          // Check if event already exists to avoid duplicates
+          const existingIndex = prev.findIndex(e => e.id === createdEvent.id);
+          if (existingIndex !== -1) {
+            console.log("[CalendarEvents] Evento já existe, atualizando:", createdEvent.id);
+            const newEvents = [...prev];
+            newEvents[existingIndex] = createdEvent;
+            return newEvents;
+          }
+          
+          console.log("[CalendarEvents] Novo evento adicionado:", createdEvent.id);
+          return [...prev, createdEvent];
+        });
+      } else {
+        throw new Error("Falha ao criar evento no Supabase");
+      }
+    } catch (createError) {
+      console.error("[CalendarEvents] Erro ao adicionar evento:", createError);
+      setError("Erro ao salvar evento");
+      
+      // Fallback to local state only
+      setEvents(prev => {
+        const existingIndex = prev.findIndex(e => e.id === event.id);
+        if (existingIndex !== -1) {
+          const newEvents = [...prev];
+          newEvents[existingIndex] = event;
+          return newEvents;
+        }
+        return [...prev, event];
+      });
+    }
   }, []);
   
-  const updateEvent = useCallback((updatedEvent: CalendarEvent) => {
+  const updateEvent = useCallback(async (updatedEvent: CalendarEvent) => {
     console.log("[CalendarEvents] Atualizando evento:", updatedEvent);
     
-    setEvents(prev => 
-      prev.map(event => 
-        event.id === updatedEvent.id ? updatedEvent : event
-      )
-    );
+    try {
+      setError(null);
+      
+      const result = await updateCalendarEvent(updatedEvent);
+      
+      if (result) {
+        setEvents(prev => 
+          prev.map(event => 
+            event.id === updatedEvent.id ? result : event
+          )
+        );
+      } else {
+        throw new Error("Falha ao atualizar evento no Supabase");
+      }
+    } catch (updateError) {
+      console.error("[CalendarEvents] Erro ao atualizar evento:", updateError);
+      setError("Erro ao atualizar evento");
+      
+      // Fallback to local state only
+      setEvents(prev => 
+        prev.map(event => 
+          event.id === updatedEvent.id ? updatedEvent : event
+        )
+      );
+    }
   }, []);
   
-  const deleteEvent = useCallback((eventId: string) => {
+  const deleteEvent = useCallback(async (eventId: string) => {
     console.log("[CalendarEvents] Removendo evento:", eventId);
     
-    setEvents(prev => {
-      const filtered = prev.filter(event => event.id !== eventId);
-      console.log("[CalendarEvents] Eventos restantes após remoção:", filtered.length);
-      return filtered;
-    });
+    try {
+      setError(null);
+      
+      const success = await deleteCalendarEvent(eventId);
+      
+      if (success) {
+        setEvents(prev => {
+          const filtered = prev.filter(event => event.id !== eventId);
+          console.log("[CalendarEvents] Eventos restantes após remoção:", filtered.length);
+          return filtered;
+        });
+      } else {
+        throw new Error("Falha ao deletar evento no Supabase");
+      }
+    } catch (deleteError) {
+      console.error("[CalendarEvents] Erro ao remover evento:", deleteError);
+      setError("Erro ao remover evento");
+      
+      // Fallback to local state only
+      setEvents(prev => {
+        const filtered = prev.filter(event => event.id !== eventId);
+        return filtered;
+      });
+    }
   }, []);
   
   const getEventById = useCallback(
@@ -192,7 +263,9 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
     updateEvent,
     deleteEvent,
     getEventById,
-    getEventsByDate
+    getEventsByDate,
+    loading,
+    error
   };
   
   return (

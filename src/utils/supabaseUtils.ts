@@ -39,3 +39,10 @@ export {
   fetchFinancialCategories, 
   createFinancialCategory 
 } from './supabase/categories';
+
+export {
+  fetchCalendarEvents,
+  createCalendarEvent,
+  updateCalendarEvent,
+  deleteCalendarEvent
+} from './supabase/calendar-events';

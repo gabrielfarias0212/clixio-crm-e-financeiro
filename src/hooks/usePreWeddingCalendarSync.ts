@@ -21,7 +21,7 @@ export function usePreWeddingCalendarSync({
   preWeddingEndTime,
   hasPreWedding
 }: UsePreWeddingCalendarSyncProps) {
-  const { addEvent, updateEvent, deleteEvent, getEventById } = useCalendarEvents();
+  const { events, addEvent, updateEvent, deleteEvent } = useCalendarEvents();
   
   // Usar refs para evitar dependências problemáticas no useEffect
   const previousValues = useRef<{
@@ -41,24 +41,14 @@ export function usePreWeddingCalendarSync({
   const lastSyncTime = useRef<number>(0);
   const syncInProgress = useRef<boolean>(false);
 
-  // Função para buscar evento existente manualmente
+  // Função para buscar evento existente usando os eventos carregados
   const findExistingPreWeddingEvent = useCallback((searchClientId?: string) => {
     if (!searchClientId) return null;
     
-    // Buscar pelo ID do evento armazenado no localStorage se disponível
-    const storedEvents = localStorage.getItem("calendarEvents");
-    if (storedEvents) {
-      try {
-        const events = JSON.parse(storedEvents);
-        return events.find((event: CalendarEvent) => 
-          event.type === 'pre-wedding' && event.clientId === searchClientId
-        );
-      } catch (error) {
-        console.error("[PreWeddingSync] Erro ao buscar eventos do localStorage:", error);
-      }
-    }
-    return null;
-  }, []);
+    return events.find((event: CalendarEvent) => 
+      event.type === 'pre-wedding' && event.clientId === searchClientId
+    );
+  }, [events]);
 
   // Função para criar chave de comparação
   const createComparisonKey = useCallback((data: any) => {
@@ -103,11 +93,11 @@ export function usePreWeddingCalendarSync({
         return;
       }
 
-      // Buscar evento existente
+      // Buscar evento existente usando os eventos carregados
       const existingEvent = findExistingPreWeddingEvent(clientId);
       console.log("[PreWeddingSync] Evento existente encontrado:", existingEvent);
 
-      // UPDATED LOGIC: Se hasPreWedding é false OU preWeddingDate é null/empty, remover o evento
+      // Se hasPreWedding é false OU preWeddingDate é null/empty, remover o evento
       if (!hasPreWedding || !preWeddingDate || preWeddingDate.trim() === '') {
         if (existingEvent) {
           console.log("[PreWeddingSync] Removendo evento pré-wedding:", existingEvent.id);

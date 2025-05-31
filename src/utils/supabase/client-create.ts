@@ -2,6 +2,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Client } from '../types';
 import { formatDateForSupabase } from './base';
+import { createCalendarEvent } from './calendar-events';
+import { v4 as uuidv4 } from 'uuid';
 
 export const createClient = async (clientData: Omit<Client, 'id' | 'payments' | 'createdAt' | 'updatedAt'>): Promise<Client | null> => {
   try {
@@ -40,7 +42,38 @@ export const createClient = async (clientData: Omit<Client, 'id' | 'payments' | 
       return null;
     }
 
-    return data ? parseClientForCreate(data) : null;
+    const createdClient = data ? parseClientForCreate(data) : null;
+
+    // Se o cliente foi criado com sucesso e tem data de pré-wedding, criar evento no calendário
+    if (createdClient && clientData.preWeddingDate && clientData.hasPreWedding) {
+      console.log('[ClientCreate] Criando evento de pré-wedding no calendário:', {
+        clientId: createdClient.id,
+        clientName: createdClient.name,
+        preWeddingDate: clientData.preWeddingDate
+      });
+
+      const calendarEvent = {
+        id: uuidv4(),
+        title: `Pré-Wedding - ${createdClient.name}`,
+        description: `Sessão de pré-wedding para ${createdClient.name}`,
+        date: clientData.preWeddingDate,
+        startTime: clientData.preWeddingStartTime || "09:00",
+        endTime: clientData.preWeddingEndTime || "10:00",
+        type: 'pre-wedding' as const,
+        color: 'purple' as const,
+        clientId: createdClient.id
+      };
+
+      try {
+        await createCalendarEvent(calendarEvent);
+        console.log('[ClientCreate] Evento de pré-wedding criado com sucesso');
+      } catch (calendarError) {
+        console.error('[ClientCreate] Erro ao criar evento no calendário:', calendarError);
+        // Não falha a criação do cliente se o evento falhar
+      }
+    }
+
+    return createdClient;
   } catch (error) {
     console.error('Exception creating client:', error);
     return null;

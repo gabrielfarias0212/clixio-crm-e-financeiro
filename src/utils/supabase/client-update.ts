@@ -2,6 +2,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Client } from '../types';
 import { formatDateForSupabase } from './base';
+import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, fetchCalendarEvents } from './calendar-events';
+import { v4 as uuidv4 } from 'uuid';
 
 export const updateClient = async (id: string, clientData: Partial<Client>): Promise<Client | null> => {
   try {
@@ -45,10 +47,70 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
       return null;
     }
 
-    return data ? parseClientForUpdate(data) : null;
+    const updatedClient = data ? parseClientForUpdate(data) : null;
+
+    // Gerenciar evento de pré-wedding no calendário
+    if (updatedClient) {
+      await managePreWeddingCalendarEvent(updatedClient, clientData);
+    }
+
+    return updatedClient;
   } catch (error) {
     console.error('Exception updating client:', error);
     return null;
+  }
+};
+
+// Função para gerenciar evento de pré-wedding no calendário
+const managePreWeddingCalendarEvent = async (client: Client, updatedData: Partial<Client>) => {
+  try {
+    console.log('[ClientUpdate] Gerenciando evento de pré-wedding:', {
+      clientId: client.id,
+      clientName: client.name,
+      hasPreWedding: client.hasPreWedding,
+      preWeddingDate: client.preWeddingDate
+    });
+
+    // Buscar evento existente de pré-wedding para este cliente
+    const allEvents = await fetchCalendarEvents();
+    const existingEvent = allEvents.find(event => 
+      event.type === 'pre-wedding' && event.clientId === client.id
+    );
+
+    // Se não tem pré-wedding ou não tem data, remover evento existente
+    if (!client.hasPreWedding || !client.preWeddingDate) {
+      if (existingEvent) {
+        console.log('[ClientUpdate] Removendo evento de pré-wedding existente');
+        await deleteCalendarEvent(existingEvent.id);
+      }
+      return;
+    }
+
+    // Criar dados do evento
+    const eventData = {
+      id: existingEvent?.id || uuidv4(),
+      title: `Pré-Wedding - ${client.name}`,
+      description: `Sessão de pré-wedding para ${client.name}`,
+      date: client.preWeddingDate,
+      startTime: client.preWeddingStartTime || "09:00",
+      endTime: client.preWeddingEndTime || "10:00",
+      type: 'pre-wedding' as const,
+      color: 'purple' as const,
+      clientId: client.id
+    };
+
+    // Atualizar ou criar evento
+    if (existingEvent) {
+      console.log('[ClientUpdate] Atualizando evento de pré-wedding existente');
+      await updateCalendarEvent(eventData);
+    } else {
+      console.log('[ClientUpdate] Criando novo evento de pré-wedding');
+      await createCalendarEvent(eventData);
+    }
+
+  } catch (error) {
+    console.error('[ClientUpdate] Erro ao gerenciar evento de pré-wedding:', error);
+    // Não falha a atualização do cliente se o evento falhar
   }
 };
 

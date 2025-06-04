@@ -338,13 +338,13 @@ export const useProLabore = () => {
         return false;
       }
 
-      // Create transaction in cash flow
+      // Create transaction in cash flow using the correct table name
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
-          .from('transactions')
+          .from('financial_transactions')
           .insert({
-            user_id: user.id,
+            photographer_id: user.id,
             amount: valor,
             date: new Date().toISOString().split('T')[0],
             type: 'saída',

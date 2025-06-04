@@ -46,15 +46,3 @@ export {
   updateCalendarEvent,
   deleteCalendarEvent
 } from './supabase/calendar-events';
-
-export {
-  fetchProLaboreConfig,
-  createOrUpdateProLaboreConfig,
-  fetchProLaboreRegistros,
-  createProLaboreRegistro,
-  deleteProLaboreRegistro,
-  getCurrentPeriodReference,
-  type ProLaboreConfig,
-  type ProLaboreRegistro,
-  type CalculationType
-} from './supabase/prolabore';

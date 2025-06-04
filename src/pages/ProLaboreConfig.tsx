@@ -7,9 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useProLabore } from '@/hooks/useProLabore';
+import { useProLabore, type CalculationType } from '@/hooks/useProLabore';
 import { ArrowLeft, DollarSign, Calendar, Calculator } from 'lucide-react';
-import { CalculationType } from '@/utils/supabase/prolabore';
 
 export default function ProLaboreConfig() {
   const navigate = useNavigate();

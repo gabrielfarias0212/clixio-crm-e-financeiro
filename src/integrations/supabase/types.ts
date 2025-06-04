@@ -56,48 +56,6 @@ export type Database = {
           },
         ]
       }
-      cash_flow: {
-        Row: {
-          category: string
-          clientid: string | null
-          created_at: string | null
-          date: string
-          description: string
-          id: string
-          supplierid: string | null
-          type: string
-          updated_at: string | null
-          user_id: string
-          value: number
-        }
-        Insert: {
-          category: string
-          clientid?: string | null
-          created_at?: string | null
-          date: string
-          description: string
-          id?: string
-          supplierid?: string | null
-          type: string
-          updated_at?: string | null
-          user_id: string
-          value: number
-        }
-        Update: {
-          category?: string
-          clientid?: string | null
-          created_at?: string | null
-          date?: string
-          description?: string
-          id?: string
-          supplierid?: string | null
-          type?: string
-          updated_at?: string | null
-          user_id?: string
-          value?: number
-        }
-        Relationships: []
-      }
       client_credentials: {
         Row: {
           created_at: string | null
@@ -696,6 +654,69 @@ export type Database = {
         }
         Relationships: []
       }
+      pro_labore_config: {
+        Row: {
+          base_calculo: string
+          created_at: string
+          id: string
+          percentual: number
+          tipo_calculo: Database["public"]["Enums"]["calculation_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          base_calculo?: string
+          created_at?: string
+          id?: string
+          percentual: number
+          tipo_calculo?: Database["public"]["Enums"]["calculation_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          base_calculo?: string
+          created_at?: string
+          id?: string
+          percentual?: number
+          tipo_calculo?: Database["public"]["Enums"]["calculation_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pro_labore_registros: {
+        Row: {
+          created_at: string
+          data: string
+          id: string
+          observacao: string | null
+          periodo_referencia: string
+          tipo_calculo: Database["public"]["Enums"]["calculation_type"]
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          id?: string
+          observacao?: string | null
+          periodo_referencia: string
+          tipo_calculo: Database["public"]["Enums"]["calculation_type"]
+          user_id: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          id?: string
+          observacao?: string | null
+          periodo_referencia?: string
+          tipo_calculo?: Database["public"]["Enums"]["calculation_type"]
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           business_name: string | null
@@ -1120,7 +1141,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      calculation_type: "mensal" | "semanal"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1235,6 +1256,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      calculation_type: ["mensal", "semanal"],
+    },
   },
 } as const

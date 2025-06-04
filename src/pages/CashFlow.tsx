@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, TrendingUp } from "lucide-react";
 import { TransactionSummary } from "@/components/TransactionSummary";
 import { FutureProjections } from "@/components/FutureProjections";
+import { ProLaborePanel } from "@/components/ProLaborePanel";
 import { Transaction, TransactionType } from "@/utils/types";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -70,14 +71,17 @@ export default function CashFlow() {
       <div className="max-w-screen-lg mx-auto px-4 py-8 animate-fade-in">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <h1 className="text-2xl font-bold">Fluxo de Caixa</h1>
-          <Button 
-            onClick={() => setShowAddTransaction(true)}
-            disabled={showAddTransaction}
-            className="gap-2"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Nova Transação
-          </Button>
+          <div className="flex gap-2">
+            <ProLaborePanel />
+            <Button 
+              onClick={() => setShowAddTransaction(true)}
+              disabled={showAddTransaction}
+              className="gap-2"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Nova Transação
+            </Button>
+          </div>
         </div>
 
         <TransactionSummary transactions={transactions} className="mb-6" />

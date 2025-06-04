@@ -1,152 +1,70 @@
 
-import React from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Suspense, lazy } from "react";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthGuard } from "@/components/AuthGuard";
+import { ClientsProvider } from "@/contexts/ClientsContext";
+import { TransactionsProvider } from "@/contexts/TransactionsContext";
+import Index from "@/pages/Index";
+import Auth from "@/pages/Auth";
+import NotFound from "@/pages/NotFound";
 
-import Index from "./pages/Index";
-import ClientList from "./pages/ClientList";
-import ClientDetail from "./pages/ClientDetail";
-import AddClient from "./pages/AddClient";
-import EditClient from "./pages/EditClient";
-import ImportClients from "./pages/ImportClients";
-import Calendar from "./pages/Calendar";
-import CashFlow from "./pages/CashFlow";
-import NotFound from "./pages/NotFound";
-import Auth from "./pages/Auth";
-import { AuthProvider } from "./contexts/AuthContext";
-import { AuthGuard } from "./components/AuthGuard";
-import { ClientsProvider } from "./contexts/ClientsContext";
-import { TransactionsProvider } from "./contexts/TransactionsContext";
-import { CalendarEventsProvider } from "./hooks/useCalendarEvents";
+// Lazy load pages for better performance
+const ClientList = lazy(() => import("@/pages/ClientList"));
+const AddClient = lazy(() => import("@/pages/AddClient"));
+const EditClient = lazy(() => import("@/pages/EditClient"));
+const ClientDetail = lazy(() => import("@/pages/ClientDetail"));
+const ImportClients = lazy(() => import("@/pages/ImportClients"));
+const CashFlow = lazy(() => import("@/pages/CashFlow"));
+const Calendar = lazy(() => import("@/pages/Calendar"));
+const ProLaboreConfig = lazy(() => import("@/pages/ProLaboreConfig"));
 
-// Create a client
 const queryClient = new QueryClient();
 
 function App() {
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <AuthProvider>
-            <BrowserRouter>
-              <Toaster />
-              <Sonner />
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <div className="min-h-screen bg-background font-sans antialiased">
               <Routes>
                 <Route path="/auth" element={<Auth />} />
                 <Route 
-                  path="/" 
+                  path="/*" 
                   element={
                     <AuthGuard>
                       <ClientsProvider>
                         <TransactionsProvider>
-                          <CalendarEventsProvider>
-                            <Index />
-                          </CalendarEventsProvider>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <Routes>
+                              <Route path="/" element={<Index />} />
+                              <Route path="/clients" element={<ClientList />} />
+                              <Route path="/clients/add" element={<AddClient />} />
+                              <Route path="/clients/:id/edit" element={<EditClient />} />
+                              <Route path="/clients/:id" element={<ClientDetail />} />
+                              <Route path="/clients/import" element={<ImportClients />} />
+                              <Route path="/cash-flow" element={<CashFlow />} />
+                              <Route path="/calendar" element={<Calendar />} />
+                              <Route path="/prolabore-config" element={<ProLaboreConfig />} />
+                              <Route path="*" element={<NotFound />} />
+                            </Routes>
+                          </Suspense>
                         </TransactionsProvider>
                       </ClientsProvider>
                     </AuthGuard>
                   } 
                 />
-                <Route 
-                  path="/clients" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <ClientList />
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/clients/:id" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <ClientDetail />
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/clients/add" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <CalendarEventsProvider>
-                            <AddClient />
-                          </CalendarEventsProvider>
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/clients/import" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <ImportClients />
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/clients/:id/edit" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <CalendarEventsProvider>
-                            <EditClient />
-                          </CalendarEventsProvider>
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/calendar" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <CalendarEventsProvider>
-                            <Calendar />
-                          </CalendarEventsProvider>
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route 
-                  path="/cashflow" 
-                  element={
-                    <AuthGuard>
-                      <ClientsProvider>
-                        <TransactionsProvider>
-                          <CashFlow />
-                        </TransactionsProvider>
-                      </ClientsProvider>
-                    </AuthGuard>
-                  } 
-                />
-                <Route path="*" element={<NotFound />} />
               </Routes>
-            </BrowserRouter>
-          </AuthProvider>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+            </div>
+            <Toaster />
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 

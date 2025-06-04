@@ -27,9 +27,13 @@ export interface ProLaboreRegistro {
 // Config functions
 export const fetchProLaboreConfig = async (): Promise<ProLaboreConfig | null> => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
     const { data, error } = await supabase
       .from('pro_labore_config')
       .select('*')
+      .eq('user_id', user.id)
       .single();
 
     if (error && error.code !== 'PGRST116') {
@@ -50,9 +54,13 @@ export const createOrUpdateProLaboreConfig = async (config: {
   base_calculo: string;
 }): Promise<ProLaboreConfig | null> => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
     const { data, error } = await supabase
       .from('pro_labore_config')
       .upsert({
+        user_id: user.id,
         percentual: config.percentual,
         tipo_calculo: config.tipo_calculo,
         base_calculo: config.base_calculo,
@@ -79,9 +87,13 @@ export const fetchProLaboreRegistros = async (
   endDate?: string
 ): Promise<ProLaboreRegistro[]> => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
     let query = supabase
       .from('pro_labore_registros')
       .select('*')
+      .eq('user_id', user.id)
       .order('data', { ascending: false });
 
     if (startDate) {
@@ -113,9 +125,19 @@ export const createProLaboreRegistro = async (registro: {
   periodo_referencia: string;
 }): Promise<ProLaboreRegistro | null> => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
     const { data, error } = await supabase
       .from('pro_labore_registros')
-      .insert(registro)
+      .insert({
+        user_id: user.id,
+        valor: registro.valor,
+        data: registro.data,
+        observacao: registro.observacao,
+        tipo_calculo: registro.tipo_calculo,
+        periodo_referencia: registro.periodo_referencia
+      })
       .select()
       .single();
 
@@ -133,10 +155,14 @@ export const createProLaboreRegistro = async (registro: {
 
 export const deleteProLaboreRegistro = async (id: string): Promise<boolean> => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
     const { error } = await supabase
       .from('pro_labore_registros')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', user.id);
 
     if (error) {
       console.error('Error deleting pro-labore registro:', error);

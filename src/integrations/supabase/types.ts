@@ -490,59 +490,6 @@ export type Database = {
         }
         Relationships: []
       }
-      financial_transactions: {
-        Row: {
-          amount: number
-          category: string
-          contract_id: string | null
-          created_at: string
-          date: string
-          description: string
-          id: string
-          notes: string | null
-          payment_method: string | null
-          photographer_id: string
-          reference: string | null
-          type: string
-        }
-        Insert: {
-          amount: number
-          category: string
-          contract_id?: string | null
-          created_at?: string
-          date?: string
-          description: string
-          id?: string
-          notes?: string | null
-          payment_method?: string | null
-          photographer_id: string
-          reference?: string | null
-          type: string
-        }
-        Update: {
-          amount?: number
-          category?: string
-          contract_id?: string | null
-          created_at?: string
-          date?: string
-          description?: string
-          id?: string
-          notes?: string | null
-          payment_method?: string | null
-          photographer_id?: string
-          reference?: string | null
-          type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "financial_transactions_photographer_id_fkey"
-            columns: ["photographer_id"]
-            isOneToOne: false
-            referencedRelation: "photographers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       packages: {
         Row: {
           created_at: string | null

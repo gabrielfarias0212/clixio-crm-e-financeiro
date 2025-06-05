@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useProLabore, type CalculationType } from '@/hooks/useProLabore';
 import { ArrowLeft, DollarSign, Calendar, Calculator, Info, AlertCircle } from 'lucide-react';
 
@@ -64,7 +63,7 @@ export default function ProLaboreConfig() {
 
   return (
     <Layout>
-      <div className="h-full flex flex-col">
+      <div className="min-h-screen">
         <div className="flex items-center gap-4 mb-6 px-4 pt-8">
           <Button
             variant="ghost"
@@ -81,8 +80,8 @@ export default function ProLaboreConfig() {
           </div>
         </div>
 
-        <ScrollArea className="flex-1 px-4">
-          <div className="max-w-2xl mx-auto space-y-6 pb-8">
+        <div className="px-4 pb-8">
+          <div className="max-w-2xl mx-auto space-y-6">
             {/* Info sobre dados */}
             <Card className="border-blue-200 bg-blue-50">
               <CardContent className="p-4 flex items-start gap-3">
@@ -237,7 +236,7 @@ export default function ProLaboreConfig() {
               </Button>
             </div>
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </Layout>
   );

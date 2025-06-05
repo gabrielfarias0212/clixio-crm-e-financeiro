@@ -14,7 +14,7 @@ import {
   deleteProLaboreRegistro
 } from './api';
 
-export { CalculationType, ProLaboreConfig, ProLaboreRegistro } from './types';
+export type { CalculationType, ProLaboreConfig, ProLaboreRegistro } from './types';
 
 export const useProLabore = () => {
   const { transactions, refreshTransactions } = useTransactions();

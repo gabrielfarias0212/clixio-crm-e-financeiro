@@ -56,6 +56,48 @@ export type Database = {
           },
         ]
       }
+      cash_flow: {
+        Row: {
+          category: string
+          clientid: string | null
+          created_at: string | null
+          date: string
+          description: string
+          id: string
+          supplierid: string | null
+          type: string
+          updated_at: string | null
+          user_id: string
+          value: number
+        }
+        Insert: {
+          category: string
+          clientid?: string | null
+          created_at?: string | null
+          date: string
+          description: string
+          id?: string
+          supplierid?: string | null
+          type: string
+          updated_at?: string | null
+          user_id: string
+          value: number
+        }
+        Update: {
+          category?: string
+          clientid?: string | null
+          created_at?: string | null
+          date?: string
+          description?: string
+          id?: string
+          supplierid?: string | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
+      }
       client_credentials: {
         Row: {
           created_at: string | null
@@ -490,6 +532,59 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_transactions: {
+        Row: {
+          amount: number
+          category: string
+          contract_id: string | null
+          created_at: string
+          date: string
+          description: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          photographer_id: string
+          reference: string | null
+          type: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          contract_id?: string | null
+          created_at?: string
+          date?: string
+          description: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          photographer_id: string
+          reference?: string | null
+          type: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          contract_id?: string | null
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          photographer_id?: string
+          reference?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_photographer_id_fkey"
+            columns: ["photographer_id"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       packages: {
         Row: {
           created_at: string | null
@@ -598,69 +693,6 @@ export type Database = {
           id?: string
           password?: string
           phone?: string | null
-        }
-        Relationships: []
-      }
-      pro_labore_config: {
-        Row: {
-          base_calculo: string
-          created_at: string
-          id: string
-          percentual: number
-          tipo_calculo: Database["public"]["Enums"]["calculation_type"]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          base_calculo?: string
-          created_at?: string
-          id?: string
-          percentual: number
-          tipo_calculo?: Database["public"]["Enums"]["calculation_type"]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          base_calculo?: string
-          created_at?: string
-          id?: string
-          percentual?: number
-          tipo_calculo?: Database["public"]["Enums"]["calculation_type"]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      pro_labore_registros: {
-        Row: {
-          created_at: string
-          data: string
-          id: string
-          observacao: string | null
-          periodo_referencia: string
-          tipo_calculo: Database["public"]["Enums"]["calculation_type"]
-          user_id: string
-          valor: number
-        }
-        Insert: {
-          created_at?: string
-          data?: string
-          id?: string
-          observacao?: string | null
-          periodo_referencia: string
-          tipo_calculo: Database["public"]["Enums"]["calculation_type"]
-          user_id: string
-          valor: number
-        }
-        Update: {
-          created_at?: string
-          data?: string
-          id?: string
-          observacao?: string | null
-          periodo_referencia?: string
-          tipo_calculo?: Database["public"]["Enums"]["calculation_type"]
-          user_id?: string
-          valor?: number
         }
         Relationships: []
       }
@@ -1088,7 +1120,7 @@ export type Database = {
       }
     }
     Enums: {
-      calculation_type: "mensal" | "semanal"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1203,8 +1235,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      calculation_type: ["mensal", "semanal"],
-    },
+    Enums: {},
   },
 } as const

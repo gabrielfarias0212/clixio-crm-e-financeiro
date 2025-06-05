@@ -20,22 +20,31 @@ export const calculateNetRevenue = (
     const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
     startDate = new Date(now);
     startDate.setDate(diff);
+    startDate.setHours(0, 0, 0, 0);
     endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + 6);
+    endDate.setHours(23, 59, 59, 999);
   }
 
   const startDateStr = startDate.toISOString().split('T')[0];
   const endDateStr = endDate.toISOString().split('T')[0];
 
   console.log('=== Calculando receita líquida ===');
+  console.log('Tipo de cálculo:', tipo);
   console.log('Período:', startDateStr, 'até', endDateStr);
-  console.log('Total de transações:', transactions.length);
+  console.log('Total de transações recebidas:', transactions.length);
 
-  const periodTransactions = transactions.filter(t => 
-    t.date >= startDateStr && t.date <= endDateStr
-  );
+  // Filtrar transações do período
+  const periodTransactions = transactions.filter(t => {
+    const transactionDate = t.date;
+    const isInPeriod = transactionDate >= startDateStr && transactionDate <= endDateStr;
+    if (isInPeriod) {
+      console.log('Transação no período:', t.date, t.type, t.amount, t.description);
+    }
+    return isInPeriod;
+  });
 
-  console.log('Transações do período:', periodTransactions.length);
+  console.log('Transações do período filtradas:', periodTransactions.length);
 
   const receitas = periodTransactions
     .filter(t => t.type === 'entrada')
@@ -49,7 +58,7 @@ export const calculateNetRevenue = (
 
   console.log('Receitas do período:', receitas);
   console.log('Despesas do período:', despesas);
-  console.log('Receita líquida:', receitaLiquida);
+  console.log('Receita líquida calculada:', receitaLiquida);
 
   return receitaLiquida;
 };
@@ -66,9 +75,9 @@ export const calculateAvailableAmount = (
   const proLaboreAmount = (netRevenue * config.percentual) / 100;
   
   console.log('=== Calculando pró-labore disponível ===');
-  console.log('Receita líquida:', netRevenue);
-  console.log('Percentual:', config.percentual);
-  console.log('Valor calculado:', proLaboreAmount);
+  console.log('Receita líquida recebida:', netRevenue);
+  console.log('Percentual configurado:', config.percentual);
+  console.log('Valor do pró-labore calculado:', proLaboreAmount);
   
   return Math.max(0, proLaboreAmount);
 };
@@ -77,17 +86,20 @@ export const calculateWithdrawnAmount = (
   config: ProLaboreConfig | null,
   registros: ProLaboreRegistro[]
 ): number => {
-  if (!config) return 0;
+  if (!config) {
+    console.log('Sem configuração para calcular valor retirado');
+    return 0;
+  }
 
   const currentPeriod = getCurrentPeriodReference(config.tipo_calculo);
-  const withdrawn = registros
-    .filter(r => r.periodo_referencia === currentPeriod)
-    .reduce((sum, r) => sum + r.valor, 0);
+  const periodRegistros = registros.filter(r => r.periodo_referencia === currentPeriod);
+  const withdrawn = periodRegistros.reduce((sum, r) => sum + r.valor, 0);
   
   console.log('=== Calculando valor já retirado ===');
   console.log('Período atual:', currentPeriod);
-  console.log('Registros do período:', registros.filter(r => r.periodo_referencia === currentPeriod).length);
-  console.log('Valor retirado:', withdrawn);
+  console.log('Registros do período:', periodRegistros.length);
+  console.log('Registros encontrados:', periodRegistros);
+  console.log('Valor total retirado:', withdrawn);
   
   return withdrawn;
 };

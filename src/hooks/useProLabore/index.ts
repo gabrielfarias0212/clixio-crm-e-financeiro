@@ -27,10 +27,14 @@ export const useProLabore = () => {
     const loadData = async () => {
       setLoading(true);
       try {
+        console.log('=== Carregando dados do pró-labore ===');
         const [configData, registrosData] = await Promise.all([
           fetchProLaboreConfig(),
           fetchProLaboreRegistros()
         ]);
+        
+        console.log('Configuração carregada:', configData);
+        console.log('Registros carregados:', registrosData.length);
         
         setConfig(configData);
         setRegistros(registrosData);
@@ -46,19 +50,39 @@ export const useProLabore = () => {
 
   // Calculate net revenue for current period
   const calcNetRevenue = useCallback((tipo: CalculationType): number => {
-    return calculateNetRevenue(transactions, tipo);
+    console.log('=== Iniciando cálculo de receita líquida ===');
+    console.log('Tipo de cálculo solicitado:', tipo);
+    console.log('Total de transações disponíveis:', transactions.length);
+    
+    const result = calculateNetRevenue(transactions, tipo);
+    console.log('Resultado do cálculo:', result);
+    return result;
   }, [transactions]);
 
   // Calculate available pro-labore amount
   const calcAvailableAmount = useCallback((): number => {
-    if (!config) return 0;
+    console.log('=== Iniciando cálculo do valor disponível ===');
+    if (!config) {
+      console.log('Sem configuração, retornando 0');
+      return 0;
+    }
+    
+    console.log('Configuração encontrada:', config);
     const netRevenue = calcNetRevenue(config.tipo_calculo);
-    return calculateAvailableAmount(config, netRevenue);
+    console.log('Receita líquida calculada:', netRevenue);
+    
+    const available = calculateAvailableAmount(config, netRevenue);
+    console.log('Valor disponível final:', available);
+    
+    return available;
   }, [config, calcNetRevenue]);
 
   // Calculate already withdrawn amount for current period
   const calcWithdrawnAmount = useCallback((): number => {
-    return calculateWithdrawnAmount(config, registros);
+    console.log('=== Iniciando cálculo do valor retirado ===');
+    const withdrawn = calculateWithdrawnAmount(config, registros);
+    console.log('Valor retirado calculado:', withdrawn);
+    return withdrawn;
   }, [config, registros]);
 
   // Save or update configuration
@@ -68,8 +92,10 @@ export const useProLabore = () => {
     base_calculo: string;
   }) => {
     try {
+      console.log('Salvando configuração:', newConfig);
       const savedConfig = await createOrUpdateProLaboreConfig(newConfig);
       if (savedConfig) {
+        console.log('Configuração salva com sucesso:', savedConfig);
         setConfig(savedConfig);
         toast.success('Configuração salva com sucesso!');
         return true;
@@ -95,6 +121,12 @@ export const useProLabore = () => {
     const available = calcAvailableAmount();
     const withdrawn = calcWithdrawnAmount();
     const remaining = available - withdrawn;
+
+    console.log('=== Registrando retirada ===');
+    console.log('Valor solicitado:', valor);
+    console.log('Disponível:', available);
+    console.log('Já retirado:', withdrawn);
+    console.log('Restante:', remaining);
 
     if (valor > remaining) {
       toast.error('Valor excede o limite disponível para retirada');

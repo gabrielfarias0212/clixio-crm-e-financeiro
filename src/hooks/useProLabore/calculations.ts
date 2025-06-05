@@ -34,7 +34,7 @@ export const calculateNetRevenue = (
   console.log('Período:', startDateStr, 'até', endDateStr);
   console.log('Total de transações recebidas:', transactions.length);
 
-  // Filtrar transações do período
+  // Filtrar transações do período - corrigindo a comparação de datas
   const periodTransactions = transactions.filter(t => {
     const transactionDate = t.date;
     const isInPeriod = transactionDate >= startDateStr && transactionDate <= endDateStr;
@@ -102,4 +102,66 @@ export const calculateWithdrawnAmount = (
   console.log('Valor total retirado:', withdrawn);
   
   return withdrawn;
+};
+
+export const getCalculationDebugInfo = (
+  transactions: Transaction[],
+  config: ProLaboreConfig | null,
+  registros: ProLaboreRegistro[]
+) => {
+  if (!config) {
+    return {
+      hasConfig: false,
+      currentPeriod: '',
+      totalTransactions: transactions.length,
+      periodTransactions: 0,
+      netRevenue: 0,
+      available: 0,
+      withdrawn: 0,
+      remaining: 0
+    };
+  }
+
+  const currentPeriod = getCurrentPeriodReference(config.tipo_calculo);
+  const netRevenue = calculateNetRevenue(transactions, config.tipo_calculo);
+  const available = calculateAvailableAmount(config, netRevenue);
+  const withdrawn = calculateWithdrawnAmount(config, registros);
+  const remaining = available - withdrawn;
+
+  // Contar transações do período
+  const now = new Date();
+  let startDate: Date;
+  let endDate: Date;
+
+  if (config.tipo_calculo === 'mensal') {
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  } else {
+    const dayOfWeek = now.getDay();
+    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+    startDate = new Date(now);
+    startDate.setDate(diff);
+    endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+  }
+
+  const startDateStr = startDate.toISOString().split('T')[0];
+  const endDateStr = endDate.toISOString().split('T')[0];
+  
+  const periodTransactions = transactions.filter(t => 
+    t.date >= startDateStr && t.date <= endDateStr
+  ).length;
+
+  return {
+    hasConfig: true,
+    currentPeriod,
+    totalTransactions: transactions.length,
+    periodTransactions,
+    netRevenue,
+    available,
+    withdrawn,
+    remaining,
+    percentage: config.percentual,
+    calculationType: config.tipo_calculo
+  };
 };

@@ -9,11 +9,11 @@ import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useProLabore, type CalculationType } from '@/hooks/useProLabore';
-import { ArrowLeft, DollarSign, Calendar, Calculator } from 'lucide-react';
+import { ArrowLeft, DollarSign, Calendar, Calculator, Info, AlertCircle } from 'lucide-react';
 
 export default function ProLaboreConfig() {
   const navigate = useNavigate();
-  const { config, saveConfig, loading, calculateNetRevenue } = useProLabore();
+  const { config, saveConfig, loading, calculateNetRevenue, getDebugInfo } = useProLabore();
   
   const [percentual, setPercentual] = useState<number[]>([30]);
   const [tipoCalculo, setTipoCalculo] = useState<CalculationType>('mensal');
@@ -47,6 +47,7 @@ export default function ProLaboreConfig() {
 
   const netRevenue = calculateNetRevenue(tipoCalculo);
   const proLaboreAmount = (netRevenue * percentual[0]) / 100;
+  const debugInfo = getDebugInfo();
 
   if (loading) {
     return (
@@ -82,6 +83,26 @@ export default function ProLaboreConfig() {
 
         <ScrollArea className="flex-1 px-4">
           <div className="max-w-2xl mx-auto space-y-6 pb-8">
+            {/* Info sobre dados */}
+            <Card className="border-blue-200 bg-blue-50">
+              <CardContent className="p-4 flex items-start gap-3">
+                <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div className="text-sm text-blue-800">
+                  <div className="font-medium mb-1">Informações do Sistema</div>
+                  <div>Total de transações: {debugInfo.totalTransactions}</div>
+                  <div>Transações no período {tipoCalculo}: {debugInfo.periodTransactions}</div>
+                  {debugInfo.periodTransactions === 0 && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-yellow-600" />
+                      <span className="text-yellow-800">
+                        Não há transações no período atual. Adicione receitas e despesas primeiro.
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -190,6 +211,12 @@ export default function ProLaboreConfig() {
                     </div>
                   </div>
                 </div>
+                
+                {debugInfo.periodTransactions > 0 && (
+                  <div className="text-xs text-muted-foreground text-center">
+                    Baseado em {debugInfo.periodTransactions} transação(ões) do período {tipoCalculo}
+                  </div>
+                )}
               </CardContent>
             </Card>
 

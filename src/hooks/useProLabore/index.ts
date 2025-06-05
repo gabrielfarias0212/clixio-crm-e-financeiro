@@ -5,7 +5,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ProLaboreConfig, ProLaboreRegistro, CalculationType } from './types';
 import { getCurrentPeriodReference } from './utils';
-import { calculateNetRevenue, calculateAvailableAmount, calculateWithdrawnAmount } from './calculations';
+import { 
+  calculateNetRevenue, 
+  calculateAvailableAmount, 
+  calculateWithdrawnAmount,
+  getCalculationDebugInfo 
+} from './calculations';
 import {
   fetchProLaboreConfig,
   createOrUpdateProLaboreConfig,
@@ -85,6 +90,11 @@ export const useProLabore = () => {
     return withdrawn;
   }, [config, registros]);
 
+  // Get debug information
+  const getDebugInfo = useCallback(() => {
+    return getCalculationDebugInfo(transactions, config, registros);
+  }, [transactions, config, registros]);
+
   // Save or update configuration
   const saveConfig = async (newConfig: {
     percentual: number;
@@ -150,7 +160,7 @@ export const useProLabore = () => {
         return false;
       }
 
-      // Create transaction in cash flow using the correct table name
+      // Create transaction in cash flow using financial_transactions table
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
@@ -204,6 +214,7 @@ export const useProLabore = () => {
     calculateNetRevenue: calcNetRevenue,
     calculateAvailableAmount: calcAvailableAmount,
     calculateWithdrawnAmount: calcWithdrawnAmount,
+    getDebugInfo,
     saveConfig,
     registerWithdrawal,
     deleteWithdrawal

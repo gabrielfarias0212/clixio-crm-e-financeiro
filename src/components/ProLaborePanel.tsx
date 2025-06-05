@@ -35,7 +35,8 @@ import {
   TrendingUp, 
   Calendar,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Info
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -48,12 +49,14 @@ export const ProLaborePanel = () => {
     loading,
     calculateAvailableAmount,
     calculateWithdrawnAmount,
+    getDebugInfo,
     registerWithdrawal,
     deleteWithdrawal
   } = useProLabore();
 
   const [open, setOpen] = useState(false);
   const [showWithdrawalForm, setShowWithdrawalForm] = useState(false);
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
   const [withdrawalNote, setWithdrawalNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -105,6 +108,7 @@ export const ProLaborePanel = () => {
   const withdrawn = calculateWithdrawnAmount();
   const remaining = available - withdrawn;
   const progressPercentage = available > 0 ? (withdrawn / available) * 100 : 0;
+  const debugInfo = getDebugInfo();
 
   const handleWithdrawal = async () => {
     const amount = parseFloat(withdrawalAmount);
@@ -152,19 +156,48 @@ export const ProLaborePanel = () => {
               Período {config.tipo_calculo} • {config.percentual}% da receita líquida
             </p>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => {
-              setOpen(false);
-              navigate('/prolabore-config');
-            }}
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setShowDebugInfo(!showDebugInfo)}
+            >
+              <Info className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => {
+                setOpen(false);
+                navigate('/prolabore-config');
+              }}
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
         </DrawerHeader>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Debug Info */}
+          {showDebugInfo && (
+            <Card className="border-blue-200 bg-blue-50">
+              <CardHeader>
+                <CardTitle className="text-sm">Informações de Debug</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm space-y-2">
+                <div>Período atual: <strong>{debugInfo.currentPeriod}</strong></div>
+                <div>Total de transações: <strong>{debugInfo.totalTransactions}</strong></div>
+                <div>Transações do período: <strong>{debugInfo.periodTransactions}</strong></div>
+                <div>Receita líquida: <strong>{new Intl.NumberFormat('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL'
+                }).format(debugInfo.netRevenue)}</strong></div>
+                <div>Percentual: <strong>{debugInfo.percentage}%</strong></div>
+                <div>Tipo de cálculo: <strong>{debugInfo.calculationType}</strong></div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Status Cards */}
           <div className="grid grid-cols-3 gap-4">
             <Card>
@@ -201,6 +234,19 @@ export const ProLaborePanel = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Warning se não há transações */}
+          {debugInfo.periodTransactions === 0 && (
+            <Card className="border-yellow-200 bg-yellow-50">
+              <CardContent className="p-4 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-yellow-600" />
+                <span className="text-sm text-yellow-800">
+                  Não há transações no período {config.tipo_calculo} atual. 
+                  O valor disponível será R$ 0,00.
+                </span>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Progress */}
           <Card>

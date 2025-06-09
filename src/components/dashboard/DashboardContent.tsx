@@ -17,7 +17,13 @@ export function DashboardContent() {
     <div className="space-y-8">
       <DashboardStats />
 
-      {/* Nova seção: Visão Estratégica de Contratos e Eventos Futuros */}
+      {/* Seção de Indicadores de Desempenho do Negócio - movida para cima */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <BusinessMetrics />
+        <ProductionIndicators />
+      </div>
+
+      {/* Seção: Visão Estratégica de Contratos e Eventos Futuros */}
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-semibold mb-4">Visão Estratégica - Contratos e Eventos Futuros</h2>
@@ -29,11 +35,6 @@ export function DashboardContent() {
             <ContractProjections />
           </div>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <BusinessMetrics />
-        <ProductionIndicators />
       </div>
 
       <div className="grid grid-cols-1 gap-8">

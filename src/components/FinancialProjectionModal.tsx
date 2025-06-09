@@ -81,20 +81,75 @@ export function FinancialProjectionModal({
   };
 
   const filteredEvents = useMemo(() => {
+    console.log("=== Debug Modal Filter ===");
+    console.log("monthFilter:", monthFilter);
+    console.log("events count:", events.length);
+    console.log("events sample:", events.slice(0, 2));
+
     if (!monthFilter) return events;
     
     return events.filter(event => {
       try {
         const eventDate = new Date(event.eventDate);
-        const eventMonth = eventDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-        return eventMonth.toLowerCase() === monthFilter.toLowerCase();
-      } catch {
+        
+        // Extrair mês e ano do evento
+        const eventMonth = eventDate.getMonth(); // 0-11
+        const eventYear = eventDate.getFullYear();
+        
+        // Normalizar o monthFilter removendo preposições e espaços extras
+        const normalizedFilter = monthFilter
+          .toLowerCase()
+          .replace(/\s+de\s+/g, ' ') // Remove "de" entre mês e ano
+          .replace(/\s+/g, ' ')      // Normaliza espaços
+          .trim();
+        
+        console.log("normalizedFilter:", normalizedFilter);
+        
+        // Extrair mês e ano do filtro
+        const filterParts = normalizedFilter.split(' ');
+        if (filterParts.length >= 2) {
+          const filterMonthName = filterParts[0];
+          const filterYear = parseInt(filterParts[filterParts.length - 1]);
+          
+          // Mapear nomes de mês para números
+          const monthNames = [
+            'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+            'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+          ];
+          
+          const filterMonth = monthNames.indexOf(filterMonthName);
+          
+          console.log("Event:", { eventMonth, eventYear, eventDate: event.eventDate });
+          console.log("Filter:", { filterMonth, filterYear, filterMonthName });
+          
+          const matches = eventMonth === filterMonth && eventYear === filterYear;
+          console.log("Matches:", matches);
+          
+          return matches;
+        }
+        
+        // Fallback: comparação de string normalizada
+        const eventMonthYear = eventDate.toLocaleDateString('pt-BR', { 
+          month: 'long', 
+          year: 'numeric' 
+        }).toLowerCase();
+        
+        const matches = eventMonthYear === normalizedFilter;
+        console.log("Fallback comparison:", eventMonthYear, "===", normalizedFilter, "=>", matches);
+        
+        return matches;
+      } catch (error) {
+        console.error("Error filtering event:", error, event);
         return false;
       }
     });
   }, [events, monthFilter]);
 
   const totalValue = filteredEvents.reduce((sum, event) => sum + event.amount, 0);
+
+  console.log("=== Final Results ===");
+  console.log("filteredEvents count:", filteredEvents.length);
+  console.log("totalValue:", totalValue);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -107,6 +162,11 @@ export function FinancialProjectionModal({
             <p className="text-sm text-muted-foreground">
               {filteredEvents.length} evento(s) • Total: {formatCurrency(totalValue)}
             </p>
+            {monthFilter && (
+              <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                Filtro: {monthFilter}
+              </p>
+            )}
           </div>
         </DialogHeader>
 
@@ -116,6 +176,9 @@ export function FinancialProjectionModal({
               <div className="text-center py-8 text-muted-foreground">
                 <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p>Nenhum evento encontrado para este período</p>
+                {monthFilter && (
+                  <p className="text-xs mt-2">Filtro aplicado: {monthFilter}</p>
+                )}
               </div>
             ) : (
               filteredEvents.map((event) => (

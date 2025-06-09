@@ -1,98 +1,84 @@
-import { useState, useEffect } from "react";
+
 import { Link, useLocation } from "react-router-dom";
-import { BarChart, CalendarDays, Menu, Users, X, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
+import { 
+  Users, 
+  Calendar, 
+  DollarSign, 
+  Home, 
+  Upload,
+  Package
+} from "lucide-react";
 import { UserMenu } from "./UserMenu";
 
 export function Navbar() {
-  const isMobile = useIsMobile();
-  const [open, setOpen] = useState(false);
   const location = useLocation();
 
-  // Close mobile menu when location changes
-  useEffect(() => {
-    if (open) setOpen(false);
-  }, [location.pathname]);
-
-  // Close mobile menu when escape key is pressed
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, []);
-
   const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+    if (path === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname.startsWith(path);
   };
 
-  const handleToggle = () => {
-    setOpen(!open);
-  };
+  const navItems = [
+    { path: "/", icon: Home, label: "Dashboard" },
+    { path: "/clients", icon: Users, label: "Clientes" },
+    { path: "/calendar", icon: Calendar, label: "Agenda" },
+    { path: "/cash-flow", icon: DollarSign, label: "Fluxo de Caixa" },
+    { path: "/products", icon: Package, label: "Produtos" },
+  ];
 
-  const closeMenu = () => {
-    setOpen(false);
-  };
+  return (
+    <nav className="bg-white shadow-sm border-b">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex items-center space-x-8">
+            <Link to="/" className="flex items-center">
+              <span className="text-xl font-bold text-gray-900">PhotoManager</span>
+            </Link>
+            
+            <div className="hidden md:flex space-x-1">
+              {navItems.map(({ path, icon: Icon, label }) => (
+                <Link key={path} to={path}>
+                  <Button
+                    variant={isActive(path) ? "default" : "ghost"}
+                    className="flex items-center gap-2"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </Button>
+                </Link>
+              ))}
+            </div>
+          </div>
 
-  // List of nav items
-  const navItems = [{
-    name: "Dashboard",
-    path: "/",
-    icon: <BarChart className="h-5 w-5" />
-  }, {
-    name: "Clientes",
-    path: "/clients",
-    icon: <Users className="h-5 w-5" />
-  }, {
-    name: "Calendário",
-    path: "/calendar",
-    icon: <CalendarDays className="h-5 w-5" />
-  }, {
-    name: "Financeiro",
-    path: "/cashflow",
-    icon: <DollarSign className="h-5 w-5" />
-  }];
-
-  return <header className="sticky top-0 z-30 bg-white shadow-sm">
-      <div className="container mx-auto px-4 flex h-16 items-center justify-between">
-        <div className="flex items-center">
-          <Link to="/" className="flex items-center">
-            <img 
-              src="/lovable-uploads/6b189f38-b0b9-4a2e-8ff2-6635102e14a9.png" 
-              alt="GCLIXIO Logo" 
-              className="h-auto w-[180px]"
-            />
-          </Link>
+          <div className="flex items-center space-x-4">
+            <Link to="/import-clients">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                <span className="hidden sm:inline">Importar</span>
+              </Button>
+            </Link>
+            <UserMenu />
+          </div>
         </div>
 
-        {/* Desktop nav */}
-        {!isMobile && <nav className="ml-10 flex gap-6">
-            {navItems.map(item => <Link key={item.path} to={item.path} className={cn("flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary", isActive(item.path) ? "text-primary" : "text-gray-600")}>
-                {item.icon}
-                {item.name}
-              </Link>)}
-          </nav>}
-
-        {/* User Menu */}
-        <UserMenu />
-
-        {/* Mobile menu button */}
-        {isMobile && <Button variant="ghost" className="flex items-center gap-1.5 text-sm font-medium" onClick={handleToggle}>
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>}
+        {/* Mobile navigation */}
+        <div className="md:hidden pb-3 space-y-1">
+          {navItems.map(({ path, icon: Icon, label }) => (
+            <Link key={path} to={path} className="block">
+              <Button
+                variant={isActive(path) ? "default" : "ghost"}
+                className="w-full justify-start flex items-center gap-2"
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </Button>
+            </Link>
+          ))}
+        </div>
       </div>
-
-      {/* Mobile navigation */}
-      {isMobile && open && <div className="fixed inset-0 top-16 z-20 bg-white">
-          <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
-            {navItems.map(item => <Link key={item.path} to={item.path} className={cn("flex items-center gap-2 px-3 py-4 text-base rounded-md font-medium transition-colors hover:bg-gray-100", isActive(item.path) ? "bg-gray-100 text-primary" : "text-gray-600")} onClick={closeMenu}>
-                {item.icon}
-                {item.name}
-              </Link>)}
-          </nav>
-        </div>}
-    </header>;
+    </nav>
+  );
 }

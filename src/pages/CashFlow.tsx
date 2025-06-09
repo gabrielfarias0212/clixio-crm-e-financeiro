@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, TrendingUp } from "lucide-react";
 import { TransactionSummary } from "@/components/TransactionSummary";
 import { FutureProjections } from "@/components/FutureProjections";
+import { TransactionCategoryCharts } from "@/components/TransactionCategoryCharts";
 import { Transaction, TransactionType } from "@/utils/types";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -135,6 +136,9 @@ export default function CashFlow() {
               clients={clients} 
               onDeleteTransaction={handleDeleteTransaction}
             />
+
+            {/* Gráficos de categorias - adicionados abaixo das transações */}
+            <TransactionCategoryCharts transactions={transactions} />
           </TabsContent>
 
           <TabsContent value="projections">

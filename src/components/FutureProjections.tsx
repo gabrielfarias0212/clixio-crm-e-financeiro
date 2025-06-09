@@ -4,21 +4,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFinancialProjections } from "@/hooks/useFinancialProjections";
+import { FinancialProjectionModal } from "@/components/FinancialProjectionModal";
 import { CalendarDays, TrendingUp, AlertTriangle, RefreshCw, Clock, DollarSign, Info } from "lucide-react";
 
-// Componente memoizado para cards de resumo
-const SummaryCard = React.memo(({ 
+// Componente memoizado para cards de resumo interativos
+const InteractiveSummaryCard = React.memo(({ 
   title, 
   value, 
   subtitle, 
   icon: Icon, 
-  colorClass 
+  colorClass,
+  onClick
 }: {
   title: string;
   value: number;
   subtitle: string;
   icon: React.ComponentType<{ className?: string }>;
   colorClass: string;
+  onClick: () => void;
 }) => {
   const formatCurrency = useCallback((value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -28,7 +31,10 @@ const SummaryCard = React.memo(({
   }, []);
 
   return (
-    <Card>
+    <Card 
+      className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+      onClick={onClick}
+    >
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
           <Icon className={`h-4 w-4 ${colorClass}`} />
@@ -40,6 +46,7 @@ const SummaryCard = React.memo(({
           {formatCurrency(value)}
         </div>
         <p className="text-sm text-gray-500">{subtitle}</p>
+        <p className="text-xs text-primary mt-1 opacity-75">Clique para ver detalhes →</p>
       </CardContent>
     </Card>
   );
@@ -77,15 +84,20 @@ const PaymentAlert = React.memo(({
   </div>
 ));
 
-// Componente memoizado para projeção mensal
-const MonthlyProjectionCard = React.memo(({ 
+// Componente memoizado para projeção mensal interativa
+const InteractiveMonthlyProjectionCard = React.memo(({ 
   projection, 
-  formatCurrency 
+  formatCurrency,
+  onCardClick
 }: {
   projection: any;
   formatCurrency: (value: number) => string;
+  onCardClick: (month: string, year: number) => void;
 }) => (
-  <div className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+  <div 
+    className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer hover:shadow-md"
+    onClick={() => onCardClick(projection.month, projection.year)}
+  >
     <div className="flex items-center justify-between mb-3">
       <h3 className="font-medium capitalize text-lg">
         {projection.month} {projection.year}
@@ -140,12 +152,28 @@ const MonthlyProjectionCard = React.memo(({
         </div>
       </div>
     )}
+    
+    <p className="text-xs text-primary mt-2 text-center opacity-75">
+      Clique para ver {projection.events?.length || 0} evento(s) →
+    </p>
   </div>
 ));
 
 export function FutureProjections() {
-  const { projections, paymentAlerts, loading, summary, refreshProjections } = useFinancialProjections();
+  const { projections, paymentAlerts, loading, summary, detailedEvents, refreshProjections } = useFinancialProjections();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalData, setModalData] = useState<{
+    type: 'guaranteed' | 'probable' | 'potential' | 'monthly';
+    title: string;
+    events: any[];
+    monthFilter?: string;
+  }>({
+    type: 'guaranteed',
+    title: '',
+    events: [],
+    monthFilter: undefined
+  });
 
   // Memoizar funções auxiliares
   const formatCurrency = useCallback((value: number) => {
@@ -171,6 +199,34 @@ export function FutureProjections() {
       setTimeout(() => setIsRefreshing(false), 500);
     }
   }, [refreshProjections]);
+
+  const handleSummaryCardClick = useCallback((type: 'guaranteed' | 'probable' | 'potential') => {
+    const titles = {
+      guaranteed: 'Receita Garantida - Pagamentos Agendados',
+      probable: 'Receita Provável - Contratos Fechados',
+      potential: 'Receita Potencial - Orçamentos Pendentes'
+    };
+
+    setModalData({
+      type,
+      title: titles[type],
+      events: detailedEvents[type] || []
+    });
+    setModalOpen(true);
+  }, [detailedEvents]);
+
+  const handleMonthlyCardClick = useCallback((month: string, year: number) => {
+    const monthProjection = projections.find(p => p.month === month && p.year === year);
+    const monthFilter = `${month} ${year}`;
+    
+    setModalData({
+      type: 'monthly',
+      title: `Projeções Detalhadas - ${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`,
+      events: monthProjection?.events || [],
+      monthFilter
+    });
+    setModalOpen(true);
+  }, [projections]);
 
   // Memoizar alertas limitados
   const limitedAlerts = useMemo(() => 
@@ -234,28 +290,31 @@ export function FutureProjections() {
         </CardContent>
       </Card>
 
-      {/* Cards de Resumo */}
+      {/* Cards de Resumo Interativos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <SummaryCard
+        <InteractiveSummaryCard
           title="Receita Garantida"
           value={summary.totalGuaranteed}
           subtitle="Pagamentos agendados"
           icon={DollarSign}
           colorClass="text-green-500"
+          onClick={() => handleSummaryCardClick('guaranteed')}
         />
-        <SummaryCard
+        <InteractiveSummaryCard
           title="Receita Provável"
           value={summary.totalProbable}
           subtitle="Contratos fechados"
           icon={TrendingUp}
           colorClass="text-blue-500"
+          onClick={() => handleSummaryCardClick('probable')}
         />
-        <SummaryCard
+        <InteractiveSummaryCard
           title="Receita Potencial"
           value={summary.totalPotential}
           subtitle="Orçamentos pendentes"
           icon={CalendarDays}
           colorClass="text-purple-500"
+          onClick={() => handleSummaryCardClick('potential')}
         />
       </div>
 
@@ -288,7 +347,7 @@ export function FutureProjections() {
         </Card>
       )}
 
-      {/* Projeções Mensais */}
+      {/* Projeções Mensais Interativas */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Projeções Detalhadas por Mês</CardTitle>
@@ -296,10 +355,11 @@ export function FutureProjections() {
         <CardContent>
           <div className="space-y-4">
             {projections.map((projection, index) => (
-              <MonthlyProjectionCard
+              <InteractiveMonthlyProjectionCard
                 key={`${projection.month}-${projection.year}`}
                 projection={projection}
                 formatCurrency={formatCurrency}
+                onCardClick={handleMonthlyCardClick}
               />
             ))}
           </div>
@@ -313,6 +373,16 @@ export function FutureProjections() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de Detalhes */}
+      <FinancialProjectionModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        type={modalData.type}
+        title={modalData.title}
+        events={modalData.events}
+        monthFilter={modalData.monthFilter}
+      />
     </div>
   );
 }

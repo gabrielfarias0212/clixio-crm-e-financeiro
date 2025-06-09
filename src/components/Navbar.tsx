@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { BarChart, CalendarDays, Menu, Users, X, DollarSign } from "lucide-react";
@@ -52,7 +51,7 @@ export function Navbar() {
     path: "/calendar",
     icon: <CalendarDays className="h-5 w-5" />
   }, {
-    name: "Fluxo de Caixa",
+    name: "Financeiro",
     path: "/cashflow",
     icon: <DollarSign className="h-5 w-5" />
   }];

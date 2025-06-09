@@ -11,6 +11,7 @@ interface MonthlyProjection {
   probable: number;
   potential: number;
   total: number;
+  events: ProjectionEvent[];
 }
 
 interface PaymentAlert {
@@ -23,9 +24,26 @@ interface PaymentAlert {
   description: string;
 }
 
+interface ProjectionEvent {
+  id: string;
+  clientName: string;
+  clientId: string;
+  eventDate: string;
+  amount: number;
+  type: 'guaranteed' | 'probable' | 'potential';
+  status: string;
+  description: string;
+  location?: string;
+}
+
 interface ProjectionCache {
   data: MonthlyProjection[];
   alerts: PaymentAlert[];
+  events: {
+    guaranteed: ProjectionEvent[];
+    probable: ProjectionEvent[];
+    potential: ProjectionEvent[];
+  };
   timestamp: number;
 }
 
@@ -38,6 +56,15 @@ export function useFinancialProjections() {
   const { transactions } = useTransactions();
   const [projections, setProjections] = useState<MonthlyProjection[]>([]);
   const [paymentAlerts, setPaymentAlerts] = useState<PaymentAlert[]>([]);
+  const [detailedEvents, setDetailedEvents] = useState<{
+    guaranteed: ProjectionEvent[];
+    probable: ProjectionEvent[];
+    potential: ProjectionEvent[];
+  }>({
+    guaranteed: [],
+    probable: [],
+    potential: []
+  });
   const [loading, setLoading] = useState(true);
 
   // Memoizar dados de entrada para evitar recálculos desnecessários
@@ -62,6 +89,7 @@ export function useFinancialProjections() {
       console.log("Usando dados do cache");
       setProjections(cached.data);
       setPaymentAlerts(cached.alerts);
+      setDetailedEvents(cached.events);
       setLoading(false);
       return;
     }
@@ -80,11 +108,17 @@ export function useFinancialProjections() {
           guaranteed: 0,
           probable: 0,
           potential: 0,
-          total: 0
+          total: 0,
+          events: []
         };
       });
 
       const alerts: PaymentAlert[] = [];
+      const events = {
+        guaranteed: [] as ProjectionEvent[],
+        probable: [] as ProjectionEvent[],
+        potential: [] as ProjectionEvent[]
+      };
 
       // Otimizar o processamento de clientes usando Map para lookup de transações
       const transactionsByClient = new Map<string, typeof transactionsData>();
@@ -117,6 +151,19 @@ export function useFinancialProjections() {
                 parseInt(dueDateParts[0])
               );
               
+              // Adicionar evento garantido
+              events.guaranteed.push({
+                id: payment.id,
+                clientName: client.name,
+                clientId: client.id,
+                eventDate: dueDate.toISOString(),
+                amount: Number(payment.amount),
+                type: 'guaranteed',
+                status: client.status || 'pendente',
+                description: payment.notes || 'Pagamento agendado',
+                location: client.eventLocation
+              });
+              
               // Otimizar busca do mês correto
               const monthIndex = nextSixMonths.findIndex(month => {
                 const monthStart = new Date(today.getFullYear(), today.getMonth() + nextSixMonths.indexOf(month), 1);
@@ -126,6 +173,7 @@ export function useFinancialProjections() {
 
               if (monthIndex !== -1) {
                 nextSixMonths[monthIndex].guaranteed += Number(payment.amount);
+                nextSixMonths[monthIndex].events.push(events.guaranteed[events.guaranteed.length - 1]);
               }
 
               // Criar alertas otimizado
@@ -163,8 +211,39 @@ export function useFinancialProjections() {
           if (monthIndex !== -1) {
             if (client.status === 'fechado' || client.status === 'em andamento') {
               nextSixMonths[monthIndex].probable += pendingAmount;
+              
+              const probableEvent: ProjectionEvent = {
+                id: `probable-${client.id}`,
+                clientName: client.name,
+                clientId: client.id,
+                eventDate: client.weddingDate,
+                amount: pendingAmount,
+                type: 'probable',
+                status: client.status || 'fechado',
+                description: `Valor pendente do contrato - ${client.eventCategory || 'Casamento'}`,
+                location: client.eventLocation
+              };
+              
+              events.probable.push(probableEvent);
+              nextSixMonths[monthIndex].events.push(probableEvent);
             } else if (client.status === 'orçamento enviado' || client.status === 'follow-up') {
-              nextSixMonths[monthIndex].potential += pendingAmount * 0.3;
+              const potentialAmount = pendingAmount * 0.3;
+              nextSixMonths[monthIndex].potential += potentialAmount;
+              
+              const potentialEvent: ProjectionEvent = {
+                id: `potential-${client.id}`,
+                clientName: client.name,
+                clientId: client.id,
+                eventDate: client.weddingDate,
+                amount: potentialAmount,
+                type: 'potential',
+                status: client.status || 'orçamento enviado',
+                description: `Receita potencial (30%) - ${client.eventCategory || 'Casamento'}`,
+                location: client.eventLocation
+              };
+              
+              events.potential.push(potentialEvent);
+              nextSixMonths[monthIndex].events.push(potentialEvent);
             }
           }
         }
@@ -174,6 +253,21 @@ export function useFinancialProjections() {
           const monthlyInstallment = pendingAmount / 3;
           for (let i = 0; i < Math.min(3, 6); i++) {
             nextSixMonths[i].probable += monthlyInstallment;
+            
+            const installmentEvent: ProjectionEvent = {
+              id: `installment-${client.id}-${i}`,
+              clientName: client.name,
+              clientId: client.id,
+              eventDate: new Date(today.getFullYear(), today.getMonth() + i, 15).toISOString(),
+              amount: monthlyInstallment,
+              type: 'probable',
+              status: client.status || 'fechado',
+              description: `Parcela ${i + 1}/3 - Valor pendente`,
+              location: client.eventLocation
+            };
+            
+            events.probable.push(installmentEvent);
+            nextSixMonths[i].events.push(installmentEvent);
           }
         }
       });
@@ -190,16 +284,19 @@ export function useFinancialProjections() {
       projectionCache = {
         data: nextSixMonths,
         alerts: sortedAlerts,
+        events,
         timestamp: Date.now()
       };
 
       setProjections(nextSixMonths);
       setPaymentAlerts(sortedAlerts);
+      setDetailedEvents(events);
 
     } catch (error) {
       console.error("Erro ao calcular projeções:", error);
       setProjections([]);
       setPaymentAlerts([]);
+      setDetailedEvents({ guaranteed: [], probable: [], potential: [] });
     } finally {
       setLoading(false);
     }
@@ -234,6 +331,7 @@ export function useFinancialProjections() {
     paymentAlerts,
     loading,
     summary,
+    detailedEvents,
     refreshProjections
   };
 }

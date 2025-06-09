@@ -20,7 +20,7 @@ export default function CashFlow() {
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
 
   useEffect(() => {
-    document.title = "Fluxo de Caixa | Wedding CRM";
+    document.title = "Financeiro | Wedding CRM";
     
     // Ensure we have the latest data when the page loads
     refreshTransactions();
@@ -69,7 +69,7 @@ export default function CashFlow() {
     <Layout>
       <div className="max-w-screen-lg mx-auto px-4 py-8 animate-fade-in">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-          <h1 className="text-2xl font-bold">Fluxo de Caixa</h1>
+          <h1 className="text-2xl font-bold">Financeiro</h1>
           <Button 
             onClick={() => setShowAddTransaction(true)}
             disabled={showAddTransaction}

@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { ClientsProvider } from '@/contexts/ClientsContext';
 import { TransactionsProvider } from '@/contexts/TransactionsContext';
 import { AuthProvider } from '@/contexts/AuthContext';
-import AuthGuard from '@/components/AuthGuard';
+import { AuthGuard } from '@/components/AuthGuard';
 import Layout from '@/components/Layout';
 import Index from '@/pages/Index';
 import ClientList from '@/pages/ClientList';

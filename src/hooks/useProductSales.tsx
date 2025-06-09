@@ -26,7 +26,8 @@ export function useProductSales() {
   });
 
   const createMutation = useMutation({
-    mutationFn: createProductSale,
+    mutationFn: (data: Omit<ProductSale, 'id' | 'created_at' | 'updated_at' | 'user_id'>) =>
+      createProductSale({ ...data, user_id: '' }), // user_id will be set in the function
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['product-sales'] });
       toast.success('Venda de produto criada com sucesso!');

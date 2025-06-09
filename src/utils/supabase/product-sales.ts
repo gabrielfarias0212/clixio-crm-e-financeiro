@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ProductSale, ProductPayment } from "@/utils/types";
+import { ProductSale, ProductPayment, ProductType, ProductOrderStatus, ProductPaymentStatus, PaymentStatus } from "@/utils/types";
 
 export async function fetchProductSales(): Promise<ProductSale[]> {
   console.log("Fetching product sales...");
@@ -19,7 +19,16 @@ export async function fetchProductSales(): Promise<ProductSale[]> {
     throw error;
   }
 
-  return data || [];
+  return (data || []).map(sale => ({
+    ...sale,
+    product_type: sale.product_type as ProductType,
+    order_status: sale.order_status as ProductOrderStatus,
+    payment_status: sale.payment_status as ProductPaymentStatus,
+    payments: (sale.payments || []).map((payment: any) => ({
+      ...payment,
+      status: payment.status as PaymentStatus
+    }))
+  }));
 }
 
 export async function createProductSale(productSale: Omit<ProductSale, 'id' | 'created_at' | 'updated_at'>): Promise<ProductSale> {
@@ -46,7 +55,16 @@ export async function createProductSale(productSale: Omit<ProductSale, 'id' | 'c
     throw error;
   }
 
-  return data;
+  return {
+    ...data,
+    product_type: data.product_type as ProductType,
+    order_status: data.order_status as ProductOrderStatus,
+    payment_status: data.payment_status as ProductPaymentStatus,
+    payments: (data.payments || []).map((payment: any) => ({
+      ...payment,
+      status: payment.status as PaymentStatus
+    }))
+  };
 }
 
 export async function updateProductSale(id: string, updates: Partial<ProductSale>): Promise<ProductSale> {
@@ -68,7 +86,16 @@ export async function updateProductSale(id: string, updates: Partial<ProductSale
     throw error;
   }
 
-  return data;
+  return {
+    ...data,
+    product_type: data.product_type as ProductType,
+    order_status: data.order_status as ProductOrderStatus,
+    payment_status: data.payment_status as ProductPaymentStatus,
+    payments: (data.payments || []).map((payment: any) => ({
+      ...payment,
+      status: payment.status as PaymentStatus
+    }))
+  };
 }
 
 export async function deleteProductSale(id: string): Promise<void> {
@@ -99,7 +126,10 @@ export async function createProductPayment(payment: Omit<ProductPayment, 'id' | 
     throw error;
   }
 
-  return data;
+  return {
+    ...data,
+    status: data.status as PaymentStatus
+  };
 }
 
 export async function updateProductPayment(id: string, updates: Partial<ProductPayment>): Promise<ProductPayment> {
@@ -117,7 +147,10 @@ export async function updateProductPayment(id: string, updates: Partial<ProductP
     throw error;
   }
 
-  return data;
+  return {
+    ...data,
+    status: data.status as PaymentStatus
+  };
 }
 
 export async function deleteProductPayment(id: string): Promise<void> {

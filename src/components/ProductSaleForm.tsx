@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { ProductSale, ProductType, Client } from '@/utils/types';
+import { ProductSale, ProductType, Client, ProductOrderStatus, ProductPaymentStatus } from '@/utils/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,8 +31,8 @@ interface FormData {
   unit_price: number;
   delivery_date?: Date;
   payment_method: string;
-  payment_status: string;
-  order_status: string;
+  payment_status: ProductPaymentStatus;
+  order_status: ProductOrderStatus;
   notes?: string;
 }
 
@@ -299,7 +299,7 @@ export function ProductSaleForm({ onSubmit, clients, isLoading, initialData }: P
               <Label>Status do Pagamento</Label>
               <Select
                 value={watch('payment_status')}
-                onValueChange={(value) => setValue('payment_status', value)}
+                onValueChange={(value) => setValue('payment_status', value as ProductPaymentStatus)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -317,7 +317,7 @@ export function ProductSaleForm({ onSubmit, clients, isLoading, initialData }: P
               <Label>Status do Pedido</Label>
               <Select
                 value={watch('order_status')}
-                onValueChange={(value) => setValue('order_status', value)}
+                onValueChange={(value) => setValue('order_status', value as ProductOrderStatus)}
               >
                 <SelectTrigger>
                   <SelectValue />

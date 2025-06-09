@@ -30,15 +30,7 @@ export function AlertsTabContent({
       case "preWedding":
         return preWedding;
       default:
-        const allAlerts = [...editTasks, ...deliverTasks, ...payments, ...preWedding];
-        return allAlerts.sort((a, b) => {
-          const urgencyOrder = { high: 0, medium: 1, low: 2 };
-          return (
-            (urgencyOrder[a.urgency || "medium"] -
-              urgencyOrder[b.urgency || "medium"]) ||
-            new Date(a.date).getTime() - new Date(b.date).getTime()
-          );
-        });
+        return editTasks; // Default to edit tasks instead of all
     }
   };
 

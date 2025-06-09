@@ -7,7 +7,6 @@ import { AlertsTabContent } from "./AlertsTabContent";
 import { useAlerts } from "@/hooks/useAlerts";
 import { Client } from "@/utils/types";
 import { 
-  Bell, 
   DollarSign, 
   CalendarHeart, 
   Edit3, 
@@ -21,19 +20,12 @@ interface AlertsRemindersProps {
 }
 
 export function AlertsReminders({ clients = [] }: AlertsRemindersProps) {
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("edit");
   const alerts = useAlerts(clients);
 
   const totalAlerts = alerts.editTasks.length + alerts.deliverTasks.length + alerts.payments.length + alerts.preWedding.length;
 
   const tabsConfig = [
-    {
-      value: "all",
-      label: "Todos",
-      icon: Bell,
-      count: totalAlerts,
-      className: "flex-1 min-w-0"
-    },
     {
       value: "edit",
       label: "Editar",
@@ -85,10 +77,10 @@ export function AlertsReminders({ clients = [] }: AlertsRemindersProps) {
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+        <Tabs defaultValue="edit" value={activeTab} onValueChange={setActiveTab}>
           <div className="px-6 pt-4">
             <ScrollArea className="w-full">
-              <TabsList className="grid w-full grid-cols-5 mb-0 bg-muted/50">
+              <TabsList className="grid w-full grid-cols-4 mb-0 bg-muted/50">
                 {tabsConfig.map((tab) => {
                   const Icon = tab.icon;
                   return (

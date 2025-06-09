@@ -36,7 +36,7 @@ function App() {
                     <TransactionsProvider>
                       <Layout>
                         <Routes>
-                          <Route index element={<Index />} />
+                          <Route path="/" element={<Index />} />
                           <Route path="/clients" element={<ClientList />} />
                           <Route path="/clients/add" element={<AddClient />} />
                           <Route path="/clients/:id" element={<ClientDetail />} />

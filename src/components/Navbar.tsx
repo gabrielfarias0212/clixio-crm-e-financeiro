@@ -35,7 +35,7 @@ export function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center space-x-8">
             <Link to="/" className="flex items-center">
-              <span className="text-xl font-bold text-gray-900">PhotoManager</span>
+              <span className="text-xl font-bold text-gray-900">GCLIXIO</span>
             </Link>
             
             <div className="hidden md:flex space-x-1">

@@ -1,22 +1,13 @@
 
 import { useMemo } from 'react';
 import { useClients } from '@/contexts/ClientsContext';
-import { Client } from '@/utils/types';
 
 export interface ContractsByYear {
   year: number;
-  contracts: Client[];
+  contracts: any[];
   totalValue: number;
   count: number;
   statusBreakdown: Record<string, number>;
-}
-
-export interface EventsByMonth {
-  month: string;
-  year: number;
-  events: Client[];
-  count: number;
-  totalValue: number;
 }
 
 export function useFutureContracts() {
@@ -63,41 +54,6 @@ export function useFutureContracts() {
     return Array.from(yearMap.values()).sort((a, b) => a.year - b.year);
   }, [futureContracts]);
 
-  const eventsByMonth = useMemo(() => {
-    const monthMap = new Map<string, EventsByMonth>();
-    
-    futureContracts.forEach(client => {
-      if (!client.weddingDate) return;
-      
-      const date = new Date(client.weddingDate);
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
-      const monthName = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-      
-      if (!monthMap.has(monthKey)) {
-        monthMap.set(monthKey, {
-          month: monthName,
-          year,
-          events: [],
-          count: 0,
-          totalValue: 0
-        });
-      }
-      
-      const monthData = monthMap.get(monthKey)!;
-      monthData.events.push(client);
-      monthData.count += 1;
-      monthData.totalValue += client.contractValue;
-    });
-
-    return Array.from(monthMap.values()).sort((a, b) => {
-      const aDate = new Date(a.year, parseInt(a.month.split(' ')[0]) - 1);
-      const bDate = new Date(b.year, parseInt(b.month.split(' ')[0]) - 1);
-      return aDate.getTime() - bDate.getTime();
-    });
-  }, [futureContracts]);
-
   const projections = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const nextYear = currentYear + 1;
@@ -122,7 +78,6 @@ export function useFutureContracts() {
   return {
     futureContracts,
     contractsByYear,
-    eventsByMonth,
     projections
   };
 }

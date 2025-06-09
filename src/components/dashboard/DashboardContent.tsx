@@ -8,8 +8,6 @@ import { BusinessMetrics } from "./BusinessMetrics";
 import { ProductionIndicators } from "./ProductionIndicators";
 import { AlertsReminders } from "./AlertsReminders";
 import { FutureContractsOverview } from "./FutureContractsOverview";
-import { ContractsByYear } from "./ContractsByYear";
-import { EventsTimeline } from "./EventsTimeline";
 import { ContractProjections } from "./ContractProjections";
 
 export function DashboardContent() {
@@ -24,11 +22,6 @@ export function DashboardContent() {
         <div>
           <h2 className="text-xl font-semibold mb-4">Visão Estratégica - Contratos e Eventos Futuros</h2>
           <FutureContractsOverview />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ContractsByYear />
-          <EventsTimeline />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

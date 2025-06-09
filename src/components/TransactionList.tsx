@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { Button } from "./ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { stringToDate } from "@/utils/dates";
 
 interface TransactionListProps {
@@ -73,89 +74,91 @@ export function TransactionList({ transactions, clients, onDeleteTransaction }: 
   };
 
   return (
-    <div className="space-y-3 overflow-x-auto">
+    <div className="space-y-3">
       {transactions.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-500 italic">Nenhuma transação registrada</p>
         </div>
       ) : (
-        <div className="w-full overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead className="hidden sm:table-cell">Cliente</TableHead>
-                <TableHead className="text-right">Valor</TableHead>
-                <TableHead className="w-[50px]">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transactions.map((transaction) => (
-                <TableRow key={transaction.id} className="group">
-                  <TableCell className="font-medium whitespace-nowrap">
-                    {safeFormatDate(transaction.date)}
-                  </TableCell>
-                  <TableCell className="max-w-[180px] sm:max-w-none truncate">
-                    <div className="flex items-center">
-                      {transaction.type === "entrada" ? (
-                        <ArrowUpCircle className="h-4 w-4 mr-2 text-green-500 shrink-0" />
-                      ) : (
-                        <ArrowDownCircle className="h-4 w-4 mr-2 text-red-500 shrink-0" />
-                      )}
-                      <span className="truncate">{transaction.description}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={`${
-                        transaction.type === "entrada"
-                          ? "bg-green-50 text-green-700 border-green-200"
-                          : "bg-red-50 text-red-700 border-red-200"
-                      }`}
-                    >
-                      {transaction.category}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    {transaction.clientId ? (
-                      <Link
-                        to={`/clients/${transaction.clientId}`}
-                        className="flex items-center text-blue-600 hover:underline group-hover:text-blue-800"
-                      >
-                        {getClientName(transaction.clientId)}
-                        <ExternalLink className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </Link>
-                    ) : (
-                      "-"
-                    )}
-                  </TableCell>
-                  <TableCell className={`text-right font-medium whitespace-nowrap ${
-                    transaction.type === "entrada" ? "text-green-600" : "text-red-600"
-                  }`}>
-                    {transaction.type === "entrada" ? "+" : "-"}
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL'
-                    }).format(transaction.amount)}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-gray-500 hover:text-red-600"
-                      onClick={() => setTransactionToDelete(transaction.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+        <ScrollArea className="h-[450px] w-full rounded-md border">
+          <div className="w-full overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead className="hidden sm:table-cell">Cliente</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="w-[50px]">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {transactions.map((transaction) => (
+                  <TableRow key={transaction.id} className="group">
+                    <TableCell className="font-medium whitespace-nowrap">
+                      {safeFormatDate(transaction.date)}
+                    </TableCell>
+                    <TableCell className="max-w-[180px] sm:max-w-none truncate">
+                      <div className="flex items-center">
+                        {transaction.type === "entrada" ? (
+                          <ArrowUpCircle className="h-4 w-4 mr-2 text-green-500 shrink-0" />
+                        ) : (
+                          <ArrowDownCircle className="h-4 w-4 mr-2 text-red-500 shrink-0" />
+                        )}
+                        <span className="truncate">{transaction.description}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={`${
+                          transaction.type === "entrada"
+                            ? "bg-green-50 text-green-700 border-green-200"
+                            : "bg-red-50 text-red-700 border-red-200"
+                        }`}
+                      >
+                        {transaction.category}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {transaction.clientId ? (
+                        <Link
+                          to={`/clients/${transaction.clientId}`}
+                          className="flex items-center text-blue-600 hover:underline group-hover:text-blue-800"
+                        >
+                          {getClientName(transaction.clientId)}
+                          <ExternalLink className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </Link>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell className={`text-right font-medium whitespace-nowrap ${
+                      transaction.type === "entrada" ? "text-green-600" : "text-red-600"
+                    }`}>
+                      {transaction.type === "entrada" ? "+" : "-"}
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                      }).format(transaction.amount)}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-500 hover:text-red-600"
+                        onClick={() => setTransactionToDelete(transaction.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </ScrollArea>
       )}
 
       <AlertDialog open={!!transactionToDelete} onOpenChange={handleOpenChange}>

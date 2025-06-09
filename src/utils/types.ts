@@ -82,7 +82,12 @@ export interface ProductSale {
   notes?: string;
   created_at: string;
   updated_at: string;
-  client?: Client;
+  client?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+  };
   payments?: ProductPayment[];
 }
 

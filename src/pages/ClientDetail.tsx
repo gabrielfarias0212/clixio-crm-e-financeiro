@@ -50,9 +50,12 @@ export default function ClientDetail() {
     }
   };
   
-  // Function to update the client when payments are modified
-  const handleClientUpdate = (updatedClient: Client) => {
-    setClient(updatedClient);
+  // Update the function signature to match what ClientDetails expects
+  const handleClientUpdate = (clientId: string, data: Partial<Client>) => {
+    if (client) {
+      const updatedClient = { ...client, ...data };
+      setClient(updatedClient);
+    }
   };
 
   if (!client) {

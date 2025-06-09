@@ -14,11 +14,11 @@ interface ClientDetailsProps {
 export function ClientDetails({ client, onUpdate }: ClientDetailsProps) {
   return (
     <div className="space-y-6">
-      <ClientInfo client={client} onUpdate={onUpdate} />
-      <DeliveryWorkflow client={client} onUpdate={onUpdate} />
+      <ClientInfo client={client} />
+      <DeliveryWorkflow client={client} />
       <FinancialInfo client={client} />
       <ClientProductSales client={client} />
-      <ClientNotes client={client} onUpdate={onUpdate} />
+      <ClientNotes notes={client.notes} />
     </div>
   );
 }

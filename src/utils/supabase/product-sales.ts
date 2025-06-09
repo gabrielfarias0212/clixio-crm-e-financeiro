@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ProductSale, ProductPayment, ProductType, ProductOrderStatus, ProductPaymentStatus, PaymentStatus } from "@/utils/types";
 
@@ -24,6 +23,12 @@ export async function fetchProductSales(): Promise<ProductSale[]> {
     product_type: sale.product_type as ProductType,
     order_status: sale.order_status as ProductOrderStatus,
     payment_status: sale.payment_status as ProductPaymentStatus,
+    client: sale.client ? {
+      id: sale.client.id,
+      name: sale.client.name,
+      email: sale.client.email,
+      phone: sale.client.phone,
+    } : undefined,
     payments: (sale.payments || []).map((payment: any) => ({
       ...payment,
       status: payment.status as PaymentStatus
@@ -60,6 +65,12 @@ export async function createProductSale(productSale: Omit<ProductSale, 'id' | 'c
     product_type: data.product_type as ProductType,
     order_status: data.order_status as ProductOrderStatus,
     payment_status: data.payment_status as ProductPaymentStatus,
+    client: data.client ? {
+      id: data.client.id,
+      name: data.client.name,
+      email: data.client.email,
+      phone: data.client.phone,
+    } : undefined,
     payments: (data.payments || []).map((payment: any) => ({
       ...payment,
       status: payment.status as PaymentStatus
@@ -91,6 +102,12 @@ export async function updateProductSale(id: string, updates: Partial<ProductSale
     product_type: data.product_type as ProductType,
     order_status: data.order_status as ProductOrderStatus,
     payment_status: data.payment_status as ProductPaymentStatus,
+    client: data.client ? {
+      id: data.client.id,
+      name: data.client.name,
+      email: data.client.email,
+      phone: data.client.phone,
+    } : undefined,
     payments: (data.payments || []).map((payment: any) => ({
       ...payment,
       status: payment.status as PaymentStatus

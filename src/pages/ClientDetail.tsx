@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -66,7 +65,7 @@ export default function ClientDetail() {
     );
   }
 
-  const isDelivered = client.status === "todas as entregas finalizadas";
+  const isDelivered = client.status === "entregue";
   const hasDeliveryWorkflow = client.eventCategory === "Casamento" || client.eventCategory === "Aniversario";
   
   return (

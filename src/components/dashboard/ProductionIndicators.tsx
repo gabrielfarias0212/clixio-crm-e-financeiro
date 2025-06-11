@@ -36,23 +36,23 @@ export function ProductionIndicators() {
       // Events scheduled but not delivered
       editing: 0,
       // In editing process
-      delivered: 0 // Only count clients with status "todas as entregas finalizadas"
+      delivered: 0 // Only count clients with status "entregue"
     };
     
     clients.forEach(client => {
       // Only count as scheduled if not delivered and in progress
-      if (client.status === "evento principal fotografado") statusCounts.scheduled++;
-      if (client.nextAction === "iniciar pós-produção") statusCounts.editing++;
-      // Only count as delivered if status is specifically "todas as entregas finalizadas"
-      if (client.status === "todas as entregas finalizadas") statusCounts.delivered++;
+      if (client.status === "em andamento") statusCounts.scheduled++;
+      if (client.nextAction === "editar") statusCounts.editing++;
+      // Only count as delivered if status is specifically "entregue"
+      if (client.status === "entregue") statusCounts.delivered++;
     });
 
     // Calculate average delivery time (for delivered events)
     let totalDeliveryDays = 0;
     let deliveredCount = 0;
     clients.forEach(client => {
-      // Only calculate delivery time for clients with status "todas as entregas finalizadas"
-      if (client.status === "todas as entregas finalizadas" && client.weddingDate) {
+      // Only calculate delivery time for clients with status "entregue"
+      if (client.status === "entregue" && client.weddingDate) {
         const weddingDate = stringToDate(client.weddingDate);
         if (weddingDate) {
           const deliveryTime = Math.abs(now.getTime() - weddingDate.getTime());
@@ -89,13 +89,13 @@ export function ProductionIndicators() {
         break;
       case "editing":
         title = "Eventos em Edição";
-        clientsToShow = clients.filter(client => client.nextAction === "iniciar pós-produção");
+        clientsToShow = clients.filter(client => client.nextAction === "editar");
         modalType = "contracts";
         break;
       case "delivered":
         title = "Eventos Entregues";
-        // Only show clients with status "todas as entregas finalizadas"
-        clientsToShow = clients.filter(client => client.status === "todas as entregas finalizadas");
+        // Only show clients with status "entregue"
+        clientsToShow = clients.filter(client => client.status === "entregue");
         modalType = "delivered";
         break;
     }

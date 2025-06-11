@@ -15,9 +15,9 @@ export function useBusinessMetrics() {
 
   // Calculate metrics using useMemo to avoid recalculations on every render
   const metrics = useMemo(() => {
-    // 1. Total de contratos ativos no ano (exclude delivered/contrato oficializado e entrada confirmada status)
+    // 1. Total de contratos ativos no ano (exclude delivered/"pago" status)
     const activeContractsData = clients.filter(client => {
-      if (!(client.status === "evento principal fotografado" || client.status === "fechado (aguardando assinatura)")) return false;
+      if (!(client.status === "em andamento" || client.status === "fechado")) return false;
       if (!client.createdAt) return false;
       
       const createdAt = stringToDate(client.createdAt);
@@ -77,7 +77,7 @@ export function useBusinessMetrics() {
     const totalLeads = totalLeadsData.length;
     
     const closedContractsData = clients.filter(client => {
-      if (!(client.status === "fechado (aguardando assinatura)" || client.status === "evento principal fotografado" || client.status === "contrato oficializado e entrada confirmada")) return false;
+      if (!(client.status === "fechado" || client.status === "em andamento" || client.status === "pago")) return false;
       if (!client.createdAt) return false;
       
       const createdAt = stringToDate(client.createdAt);

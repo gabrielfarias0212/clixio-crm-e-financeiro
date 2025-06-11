@@ -66,7 +66,7 @@ export function ClientCards({ clients }: ClientCardsProps) {
             client={client} 
             onClick={() => navigate(`/clients/${client.id}`)}
           />
-          {client.status === "todas as entregas finalizadas" && (
+          {client.status === "pago" && (
             <div 
               className="absolute -top-2 -right-2 bg-green-100 rounded-full p-1 border border-green-200"
               aria-label="Trabalho Entregue"

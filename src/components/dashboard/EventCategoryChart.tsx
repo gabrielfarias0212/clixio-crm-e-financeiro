@@ -126,12 +126,12 @@ export function EventCategoryChart() {
       const monthsAgo = parseInt(timeRange);
       const cutoffDate = subMonths(now, monthsAgo);
       
-      return createdAt >= cutoffDate && client.status === "fechado (aguardando assinatura)";
+      return createdAt >= cutoffDate && client.status === "fechado";
     });
     
     // Count clients by event category
     filteredClients.forEach(client => {
-      if (client.eventCategory && client.status === "fechado (aguardando assinatura)") {
+      if (client.eventCategory && client.status === "fechado") {
         const category = client.eventCategory;
         categoryCount[category] = (categoryCount[category] || 0) + 1;
       }

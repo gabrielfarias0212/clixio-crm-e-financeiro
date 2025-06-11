@@ -12,9 +12,9 @@ export function useAlerts(clients: Client[] = []) {
   const alerts = useMemo(() => {
     const now = new Date();
     
-    // Edit tasks (clients with nextAction "iniciar pós-produção")
+    // Edit tasks (clients with nextAction "editar")
     const editTasks: AlertItem[] = clients
-      .filter(client => client.nextAction === "iniciar pós-produção")
+      .filter(client => client.nextAction === "editar")
       .map(client => ({
         type: "task" as const,
         title: `Ação pendente: ${client.nextAction}`,
@@ -24,9 +24,9 @@ export function useAlerts(clients: Client[] = []) {
         urgency: "medium" as const
       }));
     
-    // Deliver tasks (clients with nextAction "finalizar entregas")
+    // Deliver tasks (clients with nextAction "entregar")
     const deliverTasks: AlertItem[] = clients
-      .filter(client => client.nextAction === "finalizar entregas")
+      .filter(client => client.nextAction === "entregar")
       .map(client => ({
         type: "task" as const,
         title: `Ação pendente: ${client.nextAction}`,
@@ -44,7 +44,7 @@ export function useAlerts(clients: Client[] = []) {
         if (!client.weddingDate) return false;
         
         // Check if client status is active
-        if (client.status !== "fechado (aguardando assinatura)" && client.status !== "evento principal fotografado") return false;
+        if (client.status !== "fechado" && client.status !== "em andamento") return false;
         
         // Check if fully paid already
         if (isFullyPaid(client)) return false;
@@ -188,7 +188,7 @@ export function useAlerts(clients: Client[] = []) {
         const notScheduled = !client.preWeddingDate;
         
         // Status: Client has confirmed status
-        const hasConfirmedStatus = client.status === "fechado (aguardando assinatura)" || client.status === "evento principal fotografado";
+        const hasConfirmedStatus = client.status === "fechado" || client.status === "em andamento";
         
         // Timeframe: Wedding within 120 days OR no date defined
         const weddingDate = client.weddingDate ? stringToDate(client.weddingDate) : null;

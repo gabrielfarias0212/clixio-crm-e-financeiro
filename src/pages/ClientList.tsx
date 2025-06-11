@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Client, ClientStatus } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
@@ -16,12 +16,13 @@ import { DeliveryAlert } from "@/components/clients/DeliveryAlert";
 
 export default function ClientList() {
   const { clients, loading, refreshClients } = useClients();
+  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ClientStatus | "all">("all");
   const [clearingData, setClearingData] = useState(false);
   const [showDeliveredAlert, setShowDeliveredAlert] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
-
+  
   // Check if there are any newly delivered clients
   useEffect(() => {
     const hasDeliveredClients = sessionStorage.getItem('hasDeliveredWork');
@@ -36,8 +37,8 @@ export default function ClientList() {
   }, []);
 
   // Apply filters when search or status changes
-  const filteredClients = useMemo(() => {
-    if (!clients) return [];
+  useEffect(() => {
+    if (!clients) return;
     
     let result = [...clients];
 
@@ -57,7 +58,7 @@ export default function ClientList() {
       result = result.filter(client => client.status === statusFilter);
     }
 
-    return result;
+    setFilteredClients(result);
   }, [searchQuery, statusFilter, clients]);
 
   // Set page title
@@ -91,8 +92,8 @@ export default function ClientList() {
     }
   };
 
-  // Count delivered works - only count clients with status "todas as entregas finalizadas"
-  const deliveredWorksCount = clients.filter(client => client.status === "todas as entregas finalizadas").length;
+  // Count delivered works - only count clients with status "entregue"
+  const deliveredWorksCount = clients.filter(client => client.status === "entregue").length;
   
   // Check if filters are active
   const hasActiveFilters = searchQuery !== "" || statusFilter !== "all";

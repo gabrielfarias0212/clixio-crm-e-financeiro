@@ -65,12 +65,11 @@ export function ClientFilters({
         <DropdownMenuContent className="w-56">
           <DropdownMenuRadioGroup value={statusFilter} onValueChange={(value) => setStatusFilter(value as ClientStatus | "all")}>
             <DropdownMenuRadioItem value="all">Todos os status</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="novo lead">Novo lead</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="proposta enviada">Proposta enviada</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="negociação">Negociação</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="fechado (aguardando assinatura)">Fechado (aguardando assinatura)</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="contrato assinado">Contrato assinado</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="contrato oficializado e entrada confirmada">Contrato oficializado e entrada confirmada</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="orçamento enviado">Orçamento enviado</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="follow-up">Follow-up</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="fechado">Fechado</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="em andamento">Em andamento</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="pago">Pago</DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
       </DropdownMenu>

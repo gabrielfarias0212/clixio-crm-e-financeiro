@@ -36,22 +36,12 @@ export function StatusFields({ control }: StatusFieldsProps) {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="novo lead">Novo lead</SelectItem>
-                <SelectItem value="proposta enviada">Proposta enviada</SelectItem>
-                <SelectItem value="negociação">Negociação</SelectItem>
-                <SelectItem value="fechado (aguardando assinatura)">Fechado (aguardando assinatura)</SelectItem>
-                <SelectItem value="contrato assinado">Contrato assinado</SelectItem>
-                <SelectItem value="contrato oficializado e entrada confirmada">Contrato oficializado e entrada confirmada</SelectItem>
-                <SelectItem value="pré-wedding agendado">Pré-wedding agendado</SelectItem>
-                <SelectItem value="pré-wedding feito">Pré-wedding feito</SelectItem>
-                <SelectItem value="pré-wedding entregue">Pré-wedding entregue</SelectItem>
-                <SelectItem value="evento principal fotografado">Evento principal fotografado</SelectItem>
-                <SelectItem value="material em pós-produção">Material em pós-produção</SelectItem>
-                <SelectItem value="galeria/link entregue">Galeria/link entregue</SelectItem>
-                <SelectItem value="álbum aprovado / em produção">Álbum aprovado / em produção</SelectItem>
-                <SelectItem value="cliente escolheu as fotos e álbum está sendo feito">Cliente escolheu as fotos e álbum está sendo feito</SelectItem>
-                <SelectItem value="trabalho entregue">Trabalho entregue</SelectItem>
-                <SelectItem value="todas as entregas finalizadas">Todas as entregas finalizadas</SelectItem>
+                <SelectItem value="orçamento enviado">Orçamento enviado</SelectItem>
+                <SelectItem value="follow-up">Follow-up</SelectItem>
+                <SelectItem value="fechado">Fechado</SelectItem>
+                <SelectItem value="em andamento">Em andamento</SelectItem>
+                <SelectItem value="pago">Pago</SelectItem>
+                <SelectItem value="entregue">Entregue</SelectItem>
               </SelectContent>
             </Select>
             <FormMessage />
@@ -72,21 +62,11 @@ export function StatusFields({ control }: StatusFieldsProps) {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="enviar proposta inicial">Enviar proposta inicial</SelectItem>
-                <SelectItem value="aguardar resposta do cliente">Aguardar resposta do cliente</SelectItem>
-                <SelectItem value="negociar condições">Negociar condições</SelectItem>
-                <SelectItem value="preparar contrato">Preparar contrato</SelectItem>
-                <SelectItem value="oficializar entrada">Oficializar entrada</SelectItem>
-                <SelectItem value="agendar pré-wedding">Agendar pré-wedding</SelectItem>
-                <SelectItem value="realizar pré-wedding">Realizar pré-wedding</SelectItem>
-                <SelectItem value="editar e entregar pré-wedding">Editar e entregar pré-wedding</SelectItem>
-                <SelectItem value="fotografar evento principal">Fotografar evento principal</SelectItem>
-                <SelectItem value="iniciar pós-produção">Iniciar pós-produção</SelectItem>
-                <SelectItem value="preparar galeria">Preparar galeria</SelectItem>
-                <SelectItem value="apresentar álbum">Apresentar álbum</SelectItem>
-                <SelectItem value="produzir álbum">Produzir álbum</SelectItem>
-                <SelectItem value="finalizar entregas">Finalizar entregas</SelectItem>
-                <SelectItem value="nenhuma ação pendente">Nenhuma ação pendente</SelectItem>
+                <SelectItem value="responder">Responder</SelectItem>
+                <SelectItem value="enviar proposta">Enviar proposta</SelectItem>
+                <SelectItem value="editar">Editar</SelectItem>
+                <SelectItem value="entregar">Entregar</SelectItem>
+                <SelectItem value="nenhuma">Nenhuma</SelectItem>
               </SelectContent>
             </Select>
             <FormMessage />

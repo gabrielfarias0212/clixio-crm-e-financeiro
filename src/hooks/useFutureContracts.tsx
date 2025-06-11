@@ -61,7 +61,7 @@ export function useFutureContracts() {
     const nextYearContracts = contractsByYear.find(c => c.year === nextYear);
     const totalActiveContracts = futureContracts.length;
     const guaranteedRevenue = futureContracts
-      .filter(c => c.status === "fechado (aguardando assinatura)" || c.status === "contrato oficializado e entrada confirmada")
+      .filter(c => c.status === 'fechado' || c.status === 'pago')
       .reduce((sum, c) => sum + c.contractValue, 0);
     
     const totalProjectedRevenue = futureContracts.reduce((sum, c) => sum + c.contractValue, 0);

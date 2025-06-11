@@ -1,37 +1,19 @@
+
 export type ClientStatus = 
-  | "novo lead"
-  | "proposta enviada"
-  | "negociação"
-  | "fechado (aguardando assinatura)"
-  | "contrato assinado"
-  | "contrato oficializado e entrada confirmada"
-  | "pré-wedding agendado"
-  | "pré-wedding feito"
-  | "pré-wedding entregue"
-  | "evento principal fotografado"
-  | "material em pós-produção"
-  | "galeria/link entregue"
-  | "álbum aprovado / em produção"
-  | "cliente escolheu as fotos e álbum está sendo feito"
-  | "trabalho entregue"
-  | "todas as entregas finalizadas";
+  | "orçamento enviado" 
+  | "follow-up" 
+  | "fechado" 
+  | "em andamento" 
+  | "pago"
+  | "entregue";
 
 export type NextAction = 
-  | "enviar proposta inicial"
-  | "aguardar resposta do cliente"
-  | "negociar condições"
-  | "preparar contrato"
-  | "oficializar entrada"
-  | "agendar pré-wedding"
-  | "realizar pré-wedding"
-  | "editar e entregar pré-wedding"
-  | "fotografar evento principal"
-  | "iniciar pós-produção"
-  | "preparar galeria"
-  | "apresentar álbum"
-  | "produzir álbum"
-  | "finalizar entregas"
-  | "nenhuma ação pendente";
+  | "responder" 
+  | "enviar proposta" 
+  | "editar" 
+  | "entregar" 
+  | "nenhuma"
+  | "agendar reunião";
 
 export type TransactionType = "entrada" | "saída";
 

@@ -1,226 +1,182 @@
 
 import { ClientStatus, NextAction, EventCategory } from "@/utils/types";
 
-export function normalizeStatus(status: string): ClientStatus {
-  const statusMap: Record<string, ClientStatus> = {
-    // Novos status
-    "novo lead": "novo lead",
-    "proposta enviada": "proposta enviada", 
-    "negociação": "negociação",
-    "fechado (aguardando assinatura)": "fechado (aguardando assinatura)",
-    "contrato assinado": "contrato assinado",
-    "contrato oficializado e entrada confirmada": "contrato oficializado e entrada confirmada",
-    "pré-wedding agendado": "pré-wedding agendado",
-    "pré-wedding feito": "pré-wedding feito",
-    "pré-wedding entregue": "pré-wedding entregue",
-    "evento principal fotografado": "evento principal fotografado",
-    "material em pós-produção": "material em pós-produção",
-    "galeria/link entregue": "galeria/link entregue",
-    "álbum aprovado / em produção": "álbum aprovado / em produção",
-    "cliente escolheu as fotos e álbum está sendo feito": "cliente escolheu as fotos e álbum está sendo feito",
-    "trabalho entregue": "trabalho entregue",
-    "todas as entregas finalizadas": "todas as entregas finalizadas",
-    
-    // Mapeamento de status antigos para novos
-    "orçamento enviado": "proposta enviada",
-    "follow-up": "novo lead",
-    "fechado": "fechado (aguardando assinatura)",
-    "em andamento": "evento principal fotografado",
-    "pago": "contrato oficializado e entrada confirmada",
-    "entregue": "todas as entregas finalizadas",
-    "concluído": "todas as entregas finalizadas",
-    "finalizado": "todas as entregas finalizadas"
-  };
+/**
+ * Normalizes a date string to a Date object
+ */
+export function normalizeDate(dateStr: string | null): Date | null {
+  if (!dateStr) return null;
 
-  const lowerStatus = status.toLowerCase().trim();
-  
-  // Tentar encontrar correspondência exata primeiro
-  for (const [key, value] of Object.entries(statusMap)) {
-    if (key.toLowerCase() === lowerStatus) {
-      return value;
-    }
+  // First try parsing as ISO format
+  let date = new Date(dateStr);
+  if (!isNaN(date.getTime())) {
+    return date;
   }
-  
-  // Tentar correspondência parcial
-  if (lowerStatus.includes("proposta") || lowerStatus.includes("orçamento")) {
-    return "proposta enviada";
-  }
-  
-  if (lowerStatus.includes("negociaç") || lowerStatus.includes("follow")) {
-    return "negociação";
-  }
-  
-  if (lowerStatus.includes("fechado") || lowerStatus.includes("assinatura")) {
-    return "fechado (aguardando assinatura)";
-  }
-  
-  if (lowerStatus.includes("andamento") || lowerStatus.includes("produção")) {
-    return "evento principal fotografado";
-  }
-  
-  if (lowerStatus.includes("pago") || lowerStatus.includes("confirmada")) {
-    return "contrato oficializado e entrada confirmada";
-  }
-  
-  // Default para novo lead se não encontrar correspondência
-  return "novo lead";
-}
 
-export function normalizeNextAction(action: string): NextAction {
-  const actionMap: Record<string, NextAction> = {
-    // Novas ações
-    "enviar proposta inicial": "enviar proposta inicial",
-    "aguardar resposta do cliente": "aguardar resposta do cliente",
-    "negociar condições": "negociar condições",
-    "preparar contrato": "preparar contrato",
-    "oficializar entrada": "oficializar entrada",
-    "agendar pré-wedding": "agendar pré-wedding",
-    "realizar pré-wedding": "realizar pré-wedding",
-    "editar e entregar pré-wedding": "editar e entregar pré-wedding",
-    "fotografar evento principal": "fotografar evento principal",
-    "iniciar pós-produção": "iniciar pós-produção",
-    "preparar galeria": "preparar galeria",
-    "apresentar álbum": "apresentar álbum",
-    "produzir álbum": "produzir álbum",
-    "finalizar entregas": "finalizar entregas",
-    "nenhuma ação pendente": "nenhuma ação pendente",
-    
-    // Mapeamento de ações antigas para novas
-    "responder": "aguardar resposta do cliente",
-    "enviar proposta": "enviar proposta inicial",
-    "editar": "iniciar pós-produção",
-    "entregar": "finalizar entregas",
-    "nenhuma": "nenhuma ação pendente"
-  };
-
-  const lowerAction = action.toLowerCase().trim();
-  
-  // Tentar encontrar correspondência exata primeiro
-  for (const [key, value] of Object.entries(actionMap)) {
-    if (key.toLowerCase() === lowerAction) {
-      return value;
-    }
-  }
-  
-  // Tentar correspondência parcial
-  if (lowerAction.includes("proposta")) {
-    return "enviar proposta inicial";
-  }
-  
-  if (lowerAction.includes("resposta") || lowerAction.includes("aguardar")) {
-    return "aguardar resposta do cliente";
-  }
-  
-  if (lowerAction.includes("contrato")) {
-    return "preparar contrato";
-  }
-  
-  if (lowerAction.includes("editar") || lowerAction.includes("produção")) {
-    return "iniciar pós-produção";
-  }
-  
-  if (lowerAction.includes("entregar") || lowerAction.includes("finalizar")) {
-    return "finalizar entregas";
-  }
-  
-  // Default para enviar proposta inicial se não encontrar correspondência
-  return "enviar proposta inicial";
-}
-
-export function normalizeEventCategory(category: string): EventCategory {
-  const categoryMap: Record<string, EventCategory> = {
-    "casamento": "Casamento",
-    "wedding": "Casamento",
-    "aniversario": "Aniversario",
-    "aniversário": "Aniversario",
-    "birthday": "Aniversario",
-    "civil": "Civil",
-    "ensaio estudio": "Ensaio Estudio",
-    "ensaio externo": "Ensaio externo",
-    "evento corporativo": "Evento Corporativo",
-    "corporativo": "Evento Corporativo",
-    "15 anos": "15 anos",
-    "quinze anos": "15 anos"
-  };
-
-  const lowerCategory = category.toLowerCase().trim();
-  
-  // Tentar encontrar correspondência exata primeiro
-  for (const [key, value] of Object.entries(categoryMap)) {
-    if (key === lowerCategory) {
-      return value;
-    }
-  }
-  
-  // Correspondência parcial
-  if (lowerCategory.includes("casam") || lowerCategory.includes("wedding")) {
-    return "Casamento";
-  }
-  
-  if (lowerCategory.includes("aniver") || lowerCategory.includes("birthday")) {
-    return "Aniversario";
-  }
-  
-  if (lowerCategory.includes("ensaio")) {
-    return lowerCategory.includes("externo") ? "Ensaio externo" : "Ensaio Estudio";
-  }
-  
-  if (lowerCategory.includes("corporativ")) {
-    return "Evento Corporativo";
-  }
-  
-  if (lowerCategory.includes("15") || lowerCategory.includes("quinze")) {
-    return "15 anos";
-  }
-  
-  // Default para Casamento se não encontrar correspondência
-  return "Casamento";
-}
-
-export function normalizeDate(dateString: string): Date | null {
-  if (!dateString) return null;
-  
-  try {
-    // Try parsing as-is first
-    const date = new Date(dateString);
-    if (!isNaN(date.getTime())) {
-      return date;
+  // Try Brazilian format (DD/MM/YYYY)
+  const brMatch = dateStr.match(/(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})/);
+  if (brMatch) {
+    // Convert to YYYY-MM-DD for proper parsing
+    const day = brMatch[1].padStart(2, '0');
+    const month = brMatch[2].padStart(2, '0');
+    let year = brMatch[3];
+    // Handle 2-digit years
+    if (year.length === 2) {
+      const currentYear = new Date().getFullYear();
+      const century = Math.floor(currentYear / 100) * 100;
+      year = String(century + parseInt(year));
     }
     
-    // Try parsing Brazilian date format (DD/MM/YYYY)
-    const parts = dateString.split('/');
-    if (parts.length === 3) {
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
-      const year = parseInt(parts[2], 10);
-      
-      const parsedDate = new Date(year, month, day);
-      if (!isNaN(parsedDate.getTime())) {
-        return parsedDate;
-      }
+    // Parse with a timezone-safe approach (noon to avoid DST issues)
+    return new Date(`${year}-${month}-${day}T12:00:00`);
+  }
+
+  // Try US format (MM/DD/YYYY)
+  const usMatch = dateStr.match(/(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})/);
+  if (usMatch) {
+    const month = usMatch[1].padStart(2, '0');
+    const day = usMatch[2].padStart(2, '0');
+    let year = usMatch[3];
+    if (year.length === 2) {
+      const currentYear = new Date().getFullYear();
+      const century = Math.floor(currentYear / 100) * 100;
+      year = String(century + parseInt(year));
     }
     
-    return null;
-  } catch (error) {
-    return null;
+    return new Date(`${year}-${month}-${day}T12:00:00`);
   }
+
+  // If all else fails, return null
+  return null;
 }
 
+/**
+ * Normalizes a phone number string
+ */
 export function normalizePhoneNumber(phone: string | null): string {
   if (!phone) return '';
   
-  // Remove all non-digits
-  const digits = phone.replace(/\D/g, '');
+  // Remove all non-numeric characters
+  return phone.replace(/[^0-9+]/g, '');
+}
+
+/**
+ * Normalizes a status string to a valid ClientStatus
+ */
+export function normalizeStatus(status: string | null): ClientStatus {
+  if (!status) return "orçamento enviado";
   
-  // Brazilian phone number formatting
-  if (digits.length === 11) {
-    // Mobile: (XX) 9XXXX-XXXX
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  } else if (digits.length === 10) {
-    // Landline: (XX) XXXX-XXXX
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  const normalizedStatus = status.toLowerCase().trim();
+  
+  // Check for exact matches first
+  if (normalizedStatus === "orçamento enviado" || 
+      normalizedStatus === "follow-up" || 
+      normalizedStatus === "fechado" || 
+      normalizedStatus === "em andamento" || 
+      normalizedStatus === "pago") {
+    return normalizedStatus as ClientStatus;
   }
   
-  // Return as-is if doesn't match expected patterns
-  return phone;
+  // Check for partial matches
+  if (normalizedStatus.includes("orça") || normalizedStatus.includes("propos")) {
+    return "orçamento enviado";
+  }
+  
+  if (normalizedStatus.includes("follow") || normalizedStatus.includes("contato") || normalizedStatus.includes("negoci")) {
+    return "follow-up";
+  }
+  
+  if (normalizedStatus.includes("fecha") || normalizedStatus.includes("confirm") || normalizedStatus.includes("contrat") || normalizedStatus.includes("aprova")) {
+    return "fechado";
+  }
+  
+  if (normalizedStatus.includes("andamento") || normalizedStatus.includes("progress") || normalizedStatus.includes("produção") || normalizedStatus.includes("execu")) {
+    return "em andamento";
+  }
+  
+  if (normalizedStatus.includes("pago") || normalizedStatus.includes("entregue") || normalizedStatus.includes("conclu") || normalizedStatus.includes("final")) {
+    return "pago";
+  }
+  
+  // Default value if no match is found
+  return "orçamento enviado";
+}
+
+/**
+ * Normalizes a next action string to a valid NextAction
+ */
+export function normalizeNextAction(action: string | null): NextAction {
+  if (!action) return "responder";
+  
+  const normalizedAction = action.toLowerCase().trim();
+  
+  // Check for exact matches first
+  if (normalizedAction === "responder" || 
+      normalizedAction === "enviar proposta" || 
+      normalizedAction === "editar" || 
+      normalizedAction === "entregar" || 
+      normalizedAction === "nenhuma") {
+    return normalizedAction as NextAction;
+  }
+  
+  // Check for partial matches
+  if (normalizedAction.includes("respond") || normalizedAction.includes("contato") || normalizedAction.includes("reply")) {
+    return "responder";
+  }
+  
+  if (normalizedAction.includes("envi") || normalizedAction.includes("propos") || normalizedAction.includes("orça")) {
+    return "enviar proposta";
+  }
+  
+  if (normalizedAction.includes("edit") || normalizedAction.includes("process") || normalizedAction.includes("revis")) {
+    return "editar";
+  }
+  
+  if (normalizedAction.includes("entreg") || normalizedAction.includes("deliver") || normalizedAction.includes("final")) {
+    return "entregar";
+  }
+  
+  if (normalizedAction.includes("nenhum") || normalizedAction.includes("none") || normalizedAction.includes("conclu")) {
+    return "nenhuma";
+  }
+  
+  // Default value if no match is found
+  return "responder";
+}
+
+/**
+ * Normalizes an event category string to a valid EventCategory
+ */
+export function normalizeEventCategory(category: string | null): EventCategory {
+  if (!category) return "Casamento";
+  
+  const normalizedCategory = category.toLowerCase().trim();
+  
+  // Check for matches
+  if (normalizedCategory.includes("casamento") || normalizedCategory.includes("wedding")) {
+    return "Casamento";
+  }
+  
+  if (normalizedCategory.includes("aniversa") || normalizedCategory.includes("birthday")) {
+    return "Aniversario";
+  }
+  
+  if (normalizedCategory.includes("civil") || normalizedCategory.includes("cartório")) {
+    return "Civil";
+  }
+  
+  if (normalizedCategory.includes("estudio") || normalizedCategory.includes("studio")) {
+    return "Ensaio Estudio";
+  }
+  
+  if (normalizedCategory.includes("extern") || normalizedCategory.includes("outdoor")) {
+    return "Ensaio externo";
+  }
+  
+  if (normalizedCategory.includes("corpor") || normalizedCategory.includes("business") || normalizedCategory.includes("empresa")) {
+    return "Evento Corporativo";
+  }
+  
+  // Default value if no match is found
+  return "Casamento";
 }

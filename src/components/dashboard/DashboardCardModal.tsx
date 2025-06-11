@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Client, AlertItem } from "@/utils/types"; // Import AlertItem from types.ts
@@ -126,7 +125,7 @@ export function DashboardCardModal({ title, open, onClose, clients, type, custom
                       {safeFormatDate(client.weddingDate)}
                     </TableCell>
                     <TableCell>
-                      <span className={client.status === "proposta enviada" || client.status === "negociação" ? "text-gray-400 italic" : "font-medium"}>
+                      <span className={client.status === "orçamento enviado" || client.status === "follow-up" ? "text-gray-400 italic" : "font-medium"}>
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(client.contractValue)}
                       </span>
                     </TableCell>

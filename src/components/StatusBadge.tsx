@@ -42,7 +42,15 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     }
   };
 
-  const { bg, text, border } = colorMap[status];
+  // Get the configuration for the status, with a fallback for unknown statuses
+  const config = colorMap[status];
+  
+  // If config is undefined (unknown status), use a default fallback
+  const { bg, text, border } = config || {
+    bg: "bg-gray-50",
+    text: "text-gray-600", 
+    border: "border-gray-200"
+  };
 
   return (
     <span 

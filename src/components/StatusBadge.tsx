@@ -92,7 +92,14 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     }
   };
 
-  const { bg, text, border } = colorMap[status];
+  // Get the color configuration, with fallback for unknown statuses
+  const colorConfig = colorMap[status] || {
+    bg: "bg-gray-50",
+    text: "text-gray-600",
+    border: "border-gray-200"
+  };
+
+  const { bg, text, border } = colorConfig;
 
   return (
     <span 

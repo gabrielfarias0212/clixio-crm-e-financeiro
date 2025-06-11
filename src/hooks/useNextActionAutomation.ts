@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { Client, ClientStatus, NextAction, DEFAULT_STATUS_ACTION_MAPPING } from '@/utils/types';
-import { useClients } from '@/contexts/ClientsContext';
 import { toast } from 'sonner';
 
 export interface UseNextActionAutomationProps {
@@ -15,7 +14,6 @@ interface PendingUpdate {
 }
 
 export function useNextActionAutomation({ client, onClientUpdate }: UseNextActionAutomationProps) {
-  const { updateClient } = useClients();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingUpdate, setPendingUpdate] = useState<PendingUpdate | null>(null);
   const [history, setHistory] = useState<any[]>([]);
@@ -73,22 +71,6 @@ export function useNextActionAutomation({ client, onClientUpdate }: UseNextActio
     toast.info('Próxima ação mantida como estava');
   };
 
-  const toggleAutomation = async (enabled: boolean) => {
-    try {
-      const updatedClient = await updateClient(client.id, {
-        autoUpdateNextAction: enabled
-      });
-
-      if (updatedClient && onClientUpdate) {
-        onClientUpdate(updatedClient);
-        toast.success(enabled ? 'Automação habilitada!' : 'Automação desabilitada!');
-      }
-    } catch (error) {
-      console.error('Error toggling automation:', error);
-      toast.error('Erro ao alterar configuração de automação');
-    }
-  };
-
   return {
     history,
     showConfirmDialog,
@@ -96,7 +78,6 @@ export function useNextActionAutomation({ client, onClientUpdate }: UseNextActio
     handleStatusChange,
     confirmAutomaticUpdate,
     rejectAutomaticUpdate,
-    toggleAutomation,
     setShowConfirmDialog
   };
 }

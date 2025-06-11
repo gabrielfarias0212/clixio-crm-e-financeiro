@@ -48,9 +48,9 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
         setClient(updatedClient);
         
         // Check if work is now delivered and update status automatically
-        if (isWorkDelivered(updatedClient) && isFullyPaid(updatedClient) && updatedClient.status !== "entregue") {
-          await updateClient(client.id, { status: "entregue" });
-          setClient(prev => ({ ...prev, status: "entregue" }));
+        if (isWorkDelivered(updatedClient) && isFullyPaid(updatedClient) && updatedClient.status !== "trabalho entregue") {
+          await updateClient(client.id, { status: "trabalho entregue" });
+          setClient(prev => ({ ...prev, status: "trabalho entregue" }));
         }
         
         toast({
@@ -80,7 +80,7 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
     try {
       const updates = { 
         isDelivered: true,
-        status: "entregue" as const
+        status: "todas as entregas finalizadas" as const
       };
       const result = await updateClient(client.id, updates);
       
@@ -130,7 +130,7 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
   const progressPercentage = Math.round((completedSteps / totalSteps) * 100);
   const workFullyDelivered = isWorkDelivered(client);
   const fullyPaid = isFullyPaid(client);
-  const canMarkAsDelivered = workFullyDelivered && fullyPaid && client.status !== "entregue";
+  const canMarkAsDelivered = workFullyDelivered && fullyPaid && client.status !== "todas as entregas finalizadas";
 
   const CheckboxItem = ({ 
     label, 
@@ -265,7 +265,7 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
               )}
             </div>
             
-            {client.status === "entregue" && (
+            {client.status === "todas as entregas finalizadas" && (
               <div className="mt-2 text-sm text-green-600">
                 ✅ Trabalho marcado como entregue e concluído
               </div>

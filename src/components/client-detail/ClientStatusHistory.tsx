@@ -2,7 +2,7 @@
 import { Clock, User, Zap, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClientStatusHistory } from "@/utils/types";
+import { type ClientStatusHistory } from "@/utils/types";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 

@@ -34,7 +34,7 @@ export function FormFields({ control, watchStatus, watchHasPreWedding, clientId 
       />
 
       {/* Informações Financeiras */}
-      <PaymentFields control={control} />
+      <PaymentFields control={control} watchStatus={watchStatus} />
 
       {/* Status e Próxima Ação - com automação para clientes existentes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

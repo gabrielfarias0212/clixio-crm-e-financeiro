@@ -27,7 +27,7 @@ export function ClientDetails({ client, onUpdate }: ClientDetailsProps) {
     setShowConfirmDialog
   } = useNextActionAutomation({
     client,
-    onUpdate: onUpdate || (() => {})
+    onClientUpdate: onUpdate || (() => {})
   });
 
   return (

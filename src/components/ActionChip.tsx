@@ -1,7 +1,22 @@
 
 import { NextAction } from "@/utils/types";
 import { cn } from "@/lib/utils";
-import { CheckCircle, Clock, Edit, Mail, Send, Calendar } from "lucide-react";
+import { 
+  CheckCircle, 
+  Clock, 
+  Edit, 
+  Mail, 
+  Send, 
+  Calendar,
+  FileText,
+  Camera,
+  Image,
+  Package,
+  Star,
+  Handshake,
+  DollarSign,
+  PenTool
+} from "lucide-react";
 
 interface ActionChipProps {
   action: NextAction;
@@ -16,41 +31,95 @@ export function ActionChip({ action, className }: ActionChipProps) {
     text: string;
     border: string;
   }> = {
-    "responder": {
-      icon: <Mail className="h-3 w-3 mr-1" />,
+    "enviar proposta inicial": {
+      icon: <Send className="h-3 w-3 mr-1" />,
       bg: "bg-blue-50",
       text: "text-blue-600",
       border: "border-blue-100"
     },
-    "enviar proposta": {
-      icon: <Send className="h-3 w-3 mr-1" />,
+    "aguardar resposta do cliente": {
+      icon: <Clock className="h-3 w-3 mr-1" />,
       bg: "bg-amber-50",
       text: "text-amber-600",
       border: "border-amber-100"
     },
-    "editar": {
-      icon: <Edit className="h-3 w-3 mr-1" />,
+    "negociar condições": {
+      icon: <Handshake className="h-3 w-3 mr-1" />,
+      bg: "bg-orange-50",
+      text: "text-orange-600",
+      border: "border-orange-100"
+    },
+    "preparar contrato": {
+      icon: <FileText className="h-3 w-3 mr-1" />,
       bg: "bg-purple-50",
       text: "text-purple-600",
       border: "border-purple-100"
     },
-    "entregar": {
-      icon: <CheckCircle className="h-3 w-3 mr-1" />,
+    "oficializar entrada": {
+      icon: <DollarSign className="h-3 w-3 mr-1" />,
       bg: "bg-green-50",
       text: "text-green-600",
       border: "border-green-100"
     },
-    "nenhuma": {
-      icon: <Clock className="h-3 w-3 mr-1" />,
-      bg: "bg-gray-50",
-      text: "text-gray-500",
-      border: "border-gray-100"
-    },
-    "agendar reunião": {
+    "agendar pré-wedding": {
       icon: <Calendar className="h-3 w-3 mr-1" />,
       bg: "bg-indigo-50",
       text: "text-indigo-600",
       border: "border-indigo-100"
+    },
+    "realizar pré-wedding": {
+      icon: <Camera className="h-3 w-3 mr-1" />,
+      bg: "bg-violet-50",
+      text: "text-violet-600",
+      border: "border-violet-100"
+    },
+    "editar e entregar pré-wedding": {
+      icon: <Edit className="h-3 w-3 mr-1" />,
+      bg: "bg-cyan-50",
+      text: "text-cyan-600",
+      border: "border-cyan-100"
+    },
+    "fotografar evento principal": {
+      icon: <Camera className="h-3 w-3 mr-1" />,
+      bg: "bg-sky-50",
+      text: "text-sky-600",
+      border: "border-sky-100"
+    },
+    "iniciar pós-produção": {
+      icon: <PenTool className="h-3 w-3 mr-1" />,
+      bg: "bg-slate-50",
+      text: "text-slate-600",
+      border: "border-slate-100"
+    },
+    "preparar galeria": {
+      icon: <Image className="h-3 w-3 mr-1" />,
+      bg: "bg-teal-50",
+      text: "text-teal-600",
+      border: "border-teal-100"
+    },
+    "apresentar álbum": {
+      icon: <Star className="h-3 w-3 mr-1" />,
+      bg: "bg-yellow-50",
+      text: "text-yellow-600",
+      border: "border-yellow-100"
+    },
+    "produzir álbum": {
+      icon: <Package className="h-3 w-3 mr-1" />,
+      bg: "bg-lime-50",
+      text: "text-lime-600",
+      border: "border-lime-100"
+    },
+    "finalizar entregas": {
+      icon: <CheckCircle className="h-3 w-3 mr-1" />,
+      bg: "bg-emerald-50",
+      text: "text-emerald-600",
+      border: "border-emerald-100"
+    },
+    "nenhuma ação pendente": {
+      icon: <CheckCircle className="h-3 w-3 mr-1" />,
+      bg: "bg-gray-50",
+      text: "text-gray-500",
+      border: "border-gray-100"
     }
   };
 

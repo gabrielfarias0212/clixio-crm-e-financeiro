@@ -32,6 +32,7 @@ export function useNextActionAutomation({ client, onClientUpdate }: UseNextActio
 
   const handleStatusChange = async (newStatus: ClientStatus) => {
     if (!client.autoUpdateNextAction) {
+      console.log('Automation is disabled for this client');
       return;
     }
 
@@ -39,8 +40,16 @@ export function useNextActionAutomation({ client, onClientUpdate }: UseNextActio
     
     // If the suggested action is different from current action, show confirmation
     if (suggestedAction !== client.nextAction) {
+      console.log('Status change detected, showing automation dialog:', {
+        newStatus,
+        currentAction: client.nextAction,
+        suggestedAction
+      });
+      
       setPendingUpdate({ newStatus, suggestedAction });
       setShowConfirmDialog(true);
+    } else {
+      console.log('Status changed but action remains the same:', suggestedAction);
     }
   };
 
@@ -48,18 +57,10 @@ export function useNextActionAutomation({ client, onClientUpdate }: UseNextActio
     if (!pendingUpdate) return;
 
     try {
-      const updatedClient = await updateClient(client.id, {
-        status: pendingUpdate.newStatus,
-        nextAction: pendingUpdate.suggestedAction
-      });
-
-      if (updatedClient && onClientUpdate) {
-        onClientUpdate(updatedClient);
-        toast.success('Status e próxima ação atualizados automaticamente!');
-      }
+      toast.success('Próxima ação atualizada automaticamente!');
     } catch (error) {
-      console.error('Error updating client:', error);
-      toast.error('Erro ao atualizar cliente');
+      console.error('Error in automation confirmation:', error);
+      toast.error('Erro ao confirmar automação');
     } finally {
       setShowConfirmDialog(false);
       setPendingUpdate(null);

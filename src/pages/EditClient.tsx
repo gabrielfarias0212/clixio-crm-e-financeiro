@@ -7,6 +7,8 @@ import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Client, ClientStatus, NextAction, EventCategory } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
+import { useNextActionAutomation } from "@/hooks/useNextActionAutomation";
+import { AutomationConfirmDialog } from "@/components/client-detail/AutomationConfirmDialog";
 
 export default function EditClient() {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +18,20 @@ export default function EditClient() {
     () => clients.find(c => c.id === id)
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<ClientFormValues | null>(null);
+
+  // Initialize automation hook when client is available
+  const {
+    showConfirmDialog,
+    pendingUpdate,
+    handleStatusChange,
+    confirmAutomaticUpdate,
+    rejectAutomaticUpdate,
+    setShowConfirmDialog
+  } = useNextActionAutomation({
+    client: client!,
+    onClientUpdate: (updatedClient) => setClient(updatedClient)
+  });
 
   useEffect(() => {
     if (!client && clients.length > 0) {
@@ -40,10 +56,25 @@ export default function EditClient() {
     if (!client || !id) return;
     
     console.log("Updating client with data:", data);
+    
+    // Check if automation is enabled and status has changed
+    if (client.autoUpdateNextAction && data.status !== client.status) {
+      // Store form data and trigger automation check
+      setPendingFormData(data);
+      await handleStatusChange(data.status as ClientStatus);
+      return; // Don't proceed with update yet
+    }
+    
+    // Proceed with normal update
+    await performUpdate(data);
+  };
+
+  const performUpdate = async (data: ClientFormValues) => {
+    if (!client || !id) return;
+    
     setIsSubmitting(true);
     
     try {
-      // Use the string dates directly
       const updatedClient = await updateClient(id, {
         name: data.name,
         coupleName: data.coupleName,
@@ -63,6 +94,7 @@ export default function EditClient() {
         preWeddingEndTime: data.preWeddingEndTime,
         contractLink: data.contractLink,
         hasPreWedding: data.hasPreWedding,
+        autoUpdateNextAction: data.autoUpdateNextAction,
         notes: data.notes || "",
       });
       
@@ -78,6 +110,28 @@ export default function EditClient() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleConfirmAutomation = async () => {
+    if (!pendingFormData || !pendingUpdate) return;
+    
+    // Update form data with suggested action
+    const updatedData = {
+      ...pendingFormData,
+      nextAction: pendingUpdate.suggestedAction
+    };
+    
+    confirmAutomaticUpdate();
+    await performUpdate(updatedData);
+    setPendingFormData(null);
+  };
+
+  const handleRejectAutomation = async () => {
+    if (!pendingFormData) return;
+    
+    rejectAutomaticUpdate();
+    await performUpdate(pendingFormData);
+    setPendingFormData(null);
   };
 
   if (!client) return (
@@ -107,6 +161,19 @@ export default function EditClient() {
           onSubmit={handleUpdateClient} 
           isSubmitting={isSubmitting}
         />
+
+        {/* Dialog de Confirmação de Automação */}
+        {pendingUpdate && (
+          <AutomationConfirmDialog
+            open={showConfirmDialog}
+            onOpenChange={setShowConfirmDialog}
+            newStatus={pendingUpdate.newStatus}
+            currentAction={client.nextAction}
+            suggestedAction={pendingUpdate.suggestedAction}
+            onConfirm={handleConfirmAutomation}
+            onReject={handleRejectAutomation}
+          />
+        )}
       </div>
     </Layout>
   );

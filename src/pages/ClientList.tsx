@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { Client, ClientStatus } from "@/utils/types";
@@ -15,14 +16,11 @@ import { DeliveryAlert } from "@/components/clients/DeliveryAlert";
 
 export default function ClientList() {
   const { clients, loading, refreshClients } = useClients();
-  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ClientStatus | "all">("all");
   const [clearingData, setClearingData] = useState(false);
   const [showDeliveredAlert, setShowDeliveredAlert] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
-  const [deliveryFilter, setDeliveryFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
 
   // Check if there are any newly delivered clients
   useEffect(() => {
@@ -38,8 +36,8 @@ export default function ClientList() {
   }, []);
 
   // Apply filters when search or status changes
-  useEffect(() => {
-    if (!clients) return;
+  const filteredClients = useMemo(() => {
+    if (!clients) return [];
     
     let result = [...clients];
 
@@ -59,7 +57,7 @@ export default function ClientList() {
       result = result.filter(client => client.status === statusFilter);
     }
 
-    setFilteredClients(result);
+    return result;
   }, [searchQuery, statusFilter, clients]);
 
   // Set page title
@@ -93,41 +91,11 @@ export default function ClientList() {
     }
   };
 
-  // Count delivered works - only count clients with status "entregue"
-  const deliveredWorksCount = clients.filter(client => client.status === "entregue").length;
+  // Count delivered works - only count clients with status "todas as entregas finalizadas"
+  const deliveredWorksCount = clients.filter(client => client.status === "todas as entregas finalizadas").length;
   
   // Check if filters are active
   const hasActiveFilters = searchQuery !== "" || statusFilter !== "all";
-
-  const filteredClients = useMemo(() => {
-    return clients.filter(client => {
-      // Status filter
-      if (statusFilter !== "all" && statusFilter !== client.status) {
-        return false;
-      }
-
-      // Delivery filter
-      if (deliveryFilter === "delivered") {
-        return client.status === "todas as entregas finalizadas";
-      } else if (deliveryFilter === "pending") {
-        return client.status !== "todas as entregas finalizadas";
-      }
-
-      // Search filter
-      if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase();
-        return (
-          client.name.toLowerCase().includes(searchLower) ||
-          client.email.toLowerCase().includes(searchLower) ||
-          client.phone.toLowerCase().includes(searchLower) ||
-          client.status.toLowerCase().includes(searchLower) ||
-          client.eventCategory.toLowerCase().includes(searchLower)
-        );
-      }
-
-      return true;
-    });
-  }, [clients, statusFilter, deliveryFilter, searchTerm]);
 
   return (
     <Layout>
@@ -153,10 +121,6 @@ export default function ClientList() {
           setViewMode={setViewMode}
           clearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
-          deliveryFilter={deliveryFilter}
-          setDeliveryFilter={setDeliveryFilter}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
         />
 
         {/* Results */}

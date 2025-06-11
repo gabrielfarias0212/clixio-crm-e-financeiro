@@ -1,3 +1,4 @@
+
 import { Client, ClientStatus, NextAction, EventCategory, Payment } from "./types";
 import { v4 as uuidv4 } from 'uuid';
 import { dateToString } from "./dateUtils";
@@ -15,22 +16,22 @@ const now = new Date();
 const nextYear = new Date(now.getFullYear() + 1, 0, 1);
 const inTwoYears = new Date(now.getFullYear() + 2, 0, 1);
 
-// Sample status options
+// Sample status options - using new status values
 const statusOptions: ClientStatus[] = [
-  "orçamento enviado",
-  "follow-up",
-  "fechado",
-  "em andamento",
-  "pago"
+  "novo lead",
+  "proposta enviada",
+  "negociação",
+  "fechado (aguardando assinatura)",
+  "contrato oficializado e entrada confirmada"
 ];
 
-// Sample next action options
+// Sample next action options - using new action values
 const nextActionOptions: NextAction[] = [
-  "responder",
-  "enviar proposta",
-  "editar",
-  "entregar",
-  "nenhuma"
+  "enviar proposta inicial",
+  "aguardar resposta do cliente",
+  "negociar condições",
+  "preparar contrato",
+  "oficializar entrada"
 ];
 
 // Sample event categories
@@ -51,26 +52,26 @@ export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
   
   // Set next action based on status (more realistic)
   let nextAction: NextAction;
-  if (status === "orçamento enviado") {
-    nextAction = Math.random() > 0.5 ? "responder" : "enviar proposta";
-  } else if (status === "follow-up") {
-    nextAction = "responder";
-  } else if (status === "fechado") {
-    nextAction = "editar";
-  } else if (status === "em andamento") {
-    nextAction = "entregar";
+  if (status === "novo lead") {
+    nextAction = Math.random() > 0.5 ? "aguardar resposta do cliente" : "enviar proposta inicial";
+  } else if (status === "proposta enviada") {
+    nextAction = "aguardar resposta do cliente";
+  } else if (status === "negociação") {
+    nextAction = "negociar condições";
+  } else if (status === "fechado (aguardando assinatura)") {
+    nextAction = "preparar contrato";
   } else {
-    nextAction = "nenhuma";
+    nextAction = "nenhuma ação pendente";
   }
   
   // Generate a random wedding date, with some nulls for prospects
-  const weddingDate = status === "orçamento enviado" && Math.random() > 0.7 
+  const weddingDate = status === "novo lead" && Math.random() > 0.7 
     ? null 
     : randomDate(nextYear, inTwoYears);
   
   // Contract value varies by status
   let contractValue = 0;
-  if (status === "orçamento enviado" || status === "follow-up") {
+  if (status === "novo lead" || status === "proposta enviada") {
     // Potential value
     contractValue = Math.floor(Math.random() * 4000) + 2000;
   } else {
@@ -79,7 +80,7 @@ export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
   }
 
   // Generate downpayment (30-50% of contract value for closed contracts)
-  const downPayment = (status === "fechado" || status === "em andamento" || status === "pago") 
+  const downPayment = (status === "fechado (aguardando assinatura)" || status === "contrato oficializado e entrada confirmada") 
     ? Math.round(contractValue * (0.3 + Math.random() * 0.2)) 
     : 0;
   
@@ -95,8 +96,8 @@ export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
     });
     
     // Add additional payments for some clients
-    if (status === "em andamento" || status === "pago") {
-      const numExtraPayments = Math.floor(Math.random() * 3) + (status === "pago" ? 2 : 0);
+    if (status === "contrato oficializado e entrada confirmada") {
+      const numExtraPayments = Math.floor(Math.random() * 3) + 2;
       
       let remainingAmount = contractValue - downPayment;
       const paymentDates = Array(numExtraPayments).fill(0)
@@ -104,7 +105,7 @@ export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
         .sort();
       
       for (let j = 0; j < numExtraPayments; j++) {
-        const isLastPayment = j === numExtraPayments - 1 && status === "pago";
+        const isLastPayment = j === numExtraPayments - 1;
         const paymentAmount = isLastPayment 
           ? remainingAmount 
           : Math.min(Math.round(remainingAmount / (numExtraPayments - j) * Math.random() * 1.5), remainingAmount);

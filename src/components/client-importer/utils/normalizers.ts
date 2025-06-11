@@ -176,3 +176,51 @@ export function normalizeEventCategory(category: string): EventCategory {
   // Default para Casamento se não encontrar correspondência
   return "Casamento";
 }
+
+export function normalizeDate(dateString: string): Date | null {
+  if (!dateString) return null;
+  
+  try {
+    // Try parsing as-is first
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+      return date;
+    }
+    
+    // Try parsing Brazilian date format (DD/MM/YYYY)
+    const parts = dateString.split('/');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+      const year = parseInt(parts[2], 10);
+      
+      const parsedDate = new Date(year, month, day);
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+export function normalizePhoneNumber(phone: string | null): string {
+  if (!phone) return '';
+  
+  // Remove all non-digits
+  const digits = phone.replace(/\D/g, '');
+  
+  // Brazilian phone number formatting
+  if (digits.length === 11) {
+    // Mobile: (XX) 9XXXX-XXXX
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  } else if (digits.length === 10) {
+    // Landline: (XX) XXXX-XXXX
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  
+  // Return as-is if doesn't match expected patterns
+  return phone;
+}

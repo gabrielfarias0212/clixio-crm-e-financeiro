@@ -1,22 +1,17 @@
-import * as z from "zod";
-import { Client } from "@/utils/types";
+
+import { z } from "zod";
+import { Client, ClientStatus, NextAction, EventCategory } from "@/utils/types";
 
 export const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Nome deve ter pelo menos 2 caracteres.",
-  }),
+  name: z.string().min(1, "Nome é obrigatório"),
   coupleName: z.string().optional(),
-  email: z.string().email({
-    message: "Email inválido.",
-  }),
-  phone: z.string().min(10, {
-    message: "Telefone deve ter pelo menos 10 caracteres.",
-  }),
+  email: z.string().email("Email inválido"),
+  phone: z.string().min(1, "Telefone é obrigatório"),
   weddingDate: z.string().nullable(),
   weddingStartTime: z.string().optional(),
   weddingEndTime: z.string().optional(),
-  contractValue: z.number(),
-  downPayment: z.number(),
+  contractValue: z.number().min(0, "Valor deve ser positivo"),
+  downPayment: z.number().min(0, "Entrada deve ser positiva"),
   status: z.string(),
   nextAction: z.string(),
   eventCategory: z.string(),
@@ -25,35 +20,15 @@ export const formSchema = z.object({
   preWeddingStartTime: z.string().optional(),
   preWeddingEndTime: z.string().optional(),
   contractLink: z.string().optional(),
-  hasPreWedding: z.boolean().optional(),
+  hasPreWedding: z.boolean(),
+  autoUpdateNextAction: z.boolean().optional(), // Add automation field
   notes: z.string().optional(),
 });
 
-export interface ClientFormProps {
-    client?: Client;
-    onSubmit: (values: ClientFormValues) => void;
-    isSubmitting?: boolean;
-}
+export type ClientFormValues = z.infer<typeof formSchema>;
 
-// Update the ClientFormValues interface to include hasPreWedding
-export interface ClientFormValues {
-  name: string;
-  coupleName: string;
-  email: string;
-  phone: string;
-  weddingDate: string | null;
-  weddingStartTime: string;
-  weddingEndTime: string;
-  contractValue: number;
-  downPayment: number;
-  status: string;
-  nextAction: string;
-  eventCategory: string;
-  eventLocation: string;
-  preWeddingDate: string | null;
-  preWeddingStartTime: string;
-  preWeddingEndTime: string;
-  contractLink: string;
-  hasPreWedding: boolean;
-  notes: string;
+export interface ClientFormProps {
+  client?: Client;
+  onSubmit: (data: ClientFormValues) => void;
+  isSubmitting?: boolean;
 }

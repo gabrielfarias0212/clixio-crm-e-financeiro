@@ -21,7 +21,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           coupleName: client.coupleName || "",
           email: client.email,
           phone: client.phone,
-          weddingDate: client.weddingDate, // Now a string
+          weddingDate: client.weddingDate,
           weddingStartTime: client.weddingStartTime || "",
           weddingEndTime: client.weddingEndTime || "",
           contractValue: client.contractValue,
@@ -30,11 +30,12 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           nextAction: client.nextAction,
           eventCategory: client.eventCategory,
           eventLocation: client.eventLocation || "",
-          preWeddingDate: client.preWeddingDate, // Now a string
+          preWeddingDate: client.preWeddingDate,
           preWeddingStartTime: client.preWeddingStartTime || "",
           preWeddingEndTime: client.preWeddingEndTime || "",
           contractLink: client.contractLink || "",
-          hasPreWedding: client.hasPreWedding !== false, // Default to true if undefined
+          hasPreWedding: client.hasPreWedding !== false,
+          autoUpdateNextAction: client.autoUpdateNextAction || false, // Add automation field
           notes: client.notes,
         }
       : {
@@ -47,15 +48,16 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           weddingEndTime: "",
           contractValue: 0,
           downPayment: 0,
-          status: "orçamento enviado",
-          nextAction: "enviar proposta",
+          status: "novo_lead", // Updated default status
+          nextAction: "enviar_proposta", // Updated default action
           eventCategory: "Casamento",
           eventLocation: "",
           preWeddingDate: null,
           preWeddingStartTime: "",
           preWeddingEndTime: "",
           contractLink: "",
-          hasPreWedding: true, // Default to true for new clients
+          hasPreWedding: true,
+          autoUpdateNextAction: true, // Default automation enabled for new clients
           notes: "",
         },
   });

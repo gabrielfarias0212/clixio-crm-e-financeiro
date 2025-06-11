@@ -1,3 +1,4 @@
+
 import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { BadgeAlert, Calendar, CalendarCheck, FileCheck, Users } from "lucide-react";
@@ -38,15 +39,15 @@ export function DashboardStats() {
       const createdAt = stringToDate(client.createdAt);
       return createdAt && 
              isWithinInterval(createdAt, { start: monthStart, end: monthEnd }) && 
-             (client.status === "fechado" || client.status === "em andamento");
+             (client.status === "fechado (aguardando assinatura)" || client.status === "evento principal fotografado");
     });
   }, [clients, monthStart, monthEnd]);
   
   const monthlyClosedContracts = monthlyClosedContractsClients.length;
 
-  // Delivered events (status pago)
+  // Delivered events (status todas as entregas finalizadas)
   const deliveredEventsClients = useMemo(() => {
-    return clients.filter(client => client.status === "pago");
+    return clients.filter(client => client.status === "todas as entregas finalizadas");
   }, [clients]);
   
   const deliveredEvents = deliveredEventsClients.length;
@@ -54,7 +55,7 @@ export function DashboardStats() {
   // Pending payments
   const pendingPaymentsClients = useMemo(() => {
     return clients.filter(client => 
-      (client.status === "em andamento" || client.status === "fechado") &&
+      (client.status === "evento principal fotografado" || client.status === "fechado (aguardando assinatura)") &&
       client.payments.reduce((sum, payment) => sum + payment.amount, 0) < client.contractValue
     );
   }, [clients]);

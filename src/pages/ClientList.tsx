@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { Client, ClientStatus } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
@@ -22,7 +21,9 @@ export default function ClientList() {
   const [clearingData, setClearingData] = useState(false);
   const [showDeliveredAlert, setShowDeliveredAlert] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
-  
+  const [deliveryFilter, setDeliveryFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+
   // Check if there are any newly delivered clients
   useEffect(() => {
     const hasDeliveredClients = sessionStorage.getItem('hasDeliveredWork');
@@ -98,6 +99,36 @@ export default function ClientList() {
   // Check if filters are active
   const hasActiveFilters = searchQuery !== "" || statusFilter !== "all";
 
+  const filteredClients = useMemo(() => {
+    return clients.filter(client => {
+      // Status filter
+      if (statusFilter !== "all" && statusFilter !== client.status) {
+        return false;
+      }
+
+      // Delivery filter
+      if (deliveryFilter === "delivered") {
+        return client.status === "todas as entregas finalizadas";
+      } else if (deliveryFilter === "pending") {
+        return client.status !== "todas as entregas finalizadas";
+      }
+
+      // Search filter
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          client.name.toLowerCase().includes(searchLower) ||
+          client.email.toLowerCase().includes(searchLower) ||
+          client.phone.toLowerCase().includes(searchLower) ||
+          client.status.toLowerCase().includes(searchLower) ||
+          client.eventCategory.toLowerCase().includes(searchLower)
+        );
+      }
+
+      return true;
+    });
+  }, [clients, statusFilter, deliveryFilter, searchTerm]);
+
   return (
     <Layout>
       <div className="max-w-screen-2xl mx-auto px-4 py-8 animate-fade-in">
@@ -122,6 +153,10 @@ export default function ClientList() {
           setViewMode={setViewMode}
           clearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
+          deliveryFilter={deliveryFilter}
+          setDeliveryFilter={setDeliveryFilter}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
         />
 
         {/* Results */}

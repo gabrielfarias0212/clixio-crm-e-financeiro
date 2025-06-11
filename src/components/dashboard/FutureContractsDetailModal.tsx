@@ -29,13 +29,13 @@ export function FutureContractsDetailModal({ open, onClose, type }: FutureContra
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'fechado':
+      case 'fechado (aguardando assinatura)':
         return 'bg-green-100 text-green-800';
-      case 'em andamento':
+      case 'evento principal fotografado':
         return 'bg-blue-100 text-blue-800';
-      case 'pago':
+      case 'contrato oficializado e entrada confirmada':
         return 'bg-emerald-100 text-emerald-800';
-      case 'entregue':
+      case 'todas as entregas finalizadas':
         return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -56,11 +56,11 @@ export function FutureContractsDetailModal({ open, onClose, type }: FutureContra
         });
       case "guaranteed":
         return futureContracts.filter(client => 
-          client.status === 'fechado' || client.status === 'pago'
+          client.status === 'fechado (aguardando assinatura)' || client.status === 'contrato oficializado e entrada confirmada'
         );
       case "projected":
         return futureContracts.filter(client => 
-          client.status === 'em andamento' || client.status === 'orçamento enviado'
+          client.status === 'evento principal fotografado' || client.status === 'proposta enviada'
         );
       default:
         return [];

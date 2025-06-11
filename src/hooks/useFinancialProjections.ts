@@ -209,7 +209,7 @@ export function useFinancialProjections() {
           });
 
           if (monthIndex !== -1) {
-            if (client.status === 'fechado' || client.status === 'em andamento') {
+            if (client.status === 'fechado (aguardando assinatura)' || client.status === 'evento principal fotografado') {
               nextSixMonths[monthIndex].probable += pendingAmount;
               
               const probableEvent: ProjectionEvent = {
@@ -219,14 +219,14 @@ export function useFinancialProjections() {
                 eventDate: client.weddingDate,
                 amount: pendingAmount,
                 type: 'probable',
-                status: client.status || 'fechado',
+                status: client.status || 'fechado (aguardando assinatura)',
                 description: `Valor pendente do contrato - ${client.eventCategory || 'Casamento'}`,
                 location: client.eventLocation
               };
               
               events.probable.push(probableEvent);
               nextSixMonths[monthIndex].events.push(probableEvent);
-            } else if (client.status === 'orçamento enviado' || client.status === 'follow-up') {
+            } else if (client.status === 'proposta enviada' || client.status === 'negociação') {
               const potentialAmount = pendingAmount * 0.3;
               nextSixMonths[monthIndex].potential += potentialAmount;
               
@@ -237,7 +237,7 @@ export function useFinancialProjections() {
                 eventDate: client.weddingDate,
                 amount: potentialAmount,
                 type: 'potential',
-                status: client.status || 'orçamento enviado',
+                status: client.status || 'proposta enviada',
                 description: `Receita potencial (30%) - ${client.eventCategory || 'Casamento'}`,
                 location: client.eventLocation
               };
@@ -249,7 +249,7 @@ export function useFinancialProjections() {
         }
 
         // Distribuir valores pendentes otimizado
-        if (!client.weddingDate && pendingAmount > 0 && (client.status === 'fechado' || client.status === 'em andamento')) {
+        if (!client.weddingDate && pendingAmount > 0 && (client.status === 'fechado (aguardando assinatura)' || client.status === 'evento principal fotografado')) {
           const monthlyInstallment = pendingAmount / 3;
           for (let i = 0; i < Math.min(3, 6); i++) {
             nextSixMonths[i].probable += monthlyInstallment;
@@ -261,7 +261,7 @@ export function useFinancialProjections() {
               eventDate: new Date(today.getFullYear(), today.getMonth() + i, 15).toISOString(),
               amount: monthlyInstallment,
               type: 'probable',
-              status: client.status || 'fechado',
+              status: client.status || 'fechado (aguardando assinatura)',
               description: `Parcela ${i + 1}/3 - Valor pendente`,
               location: client.eventLocation
             };

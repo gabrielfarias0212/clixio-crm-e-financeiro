@@ -168,7 +168,7 @@ export function TransactionList({ transactions, clients, onDeleteTransaction }: 
                       )}
                       {isProLaboreTransaction(transaction) && (
                         <div className="h-8 w-8 flex items-center justify-center">
-                          <Wallet className="h-3 w-3 text-gray-400" title="Transação de pró-labore" />
+                          <Wallet className="h-3 w-3 text-gray-400" />
                         </div>
                       )}
                     </TableCell>

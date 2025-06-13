@@ -14,6 +14,7 @@ import EditClient from "./pages/EditClient";
 import ImportClients from "./pages/ImportClients";
 import Calendar from "./pages/Calendar";
 import CashFlow from "./pages/CashFlow";
+import PersonalControl from "./pages/PersonalControl";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -137,6 +138,14 @@ function App() {
                           <CashFlow />
                         </TransactionsProvider>
                       </ClientsProvider>
+                    </AuthGuard>
+                  } 
+                />
+                <Route 
+                  path="/personal-control" 
+                  element={
+                    <AuthGuard>
+                      <PersonalControl />
                     </AuthGuard>
                   } 
                 />

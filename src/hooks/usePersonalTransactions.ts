@@ -1,34 +1,48 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { 
+  fetchPersonalTransactions, 
+  createPersonalTransaction, 
+  deletePersonalTransaction,
+  migrateLocalStorageToDatabase,
+  PersonalTransaction
+} from "@/utils/supabase/personal-transactions";
 
-export interface PersonalTransaction {
-  id: string;
-  type: 'entrada' | 'saida';
-  amount: number;
-  description: string;
-  date: string;
-  category?: string;
-  proLaboreWeekKey?: string; // Para vincular com registros de pró-labore
-}
+export type { PersonalTransaction };
 
 export function usePersonalTransactions() {
   const [transactions, setTransactions] = useState<PersonalTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load transactions from localStorage on hook initialization
-  useEffect(() => {
-    const savedTransactions = localStorage.getItem('personalTransactions');
-    if (savedTransactions) {
-      setTransactions(JSON.parse(savedTransactions));
+  // Carregar transações do banco de dados
+  const loadTransactions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Executar migração se necessário
+      await migrateLocalStorageToDatabase();
+      
+      // Buscar transações do banco
+      const data = await fetchPersonalTransactions();
+      setTransactions(data);
+    } catch (err) {
+      console.error('Erro ao carregar transações:', err);
+      setError('Erro ao carregar transações');
+      toast.error('Erro ao carregar transações');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Carregar transações na inicialização
+  useEffect(() => {
+    loadTransactions();
   }, []);
 
-  // Save transactions to localStorage whenever transactions change
-  useEffect(() => {
-    localStorage.setItem('personalTransactions', JSON.stringify(transactions));
-  }, [transactions]);
-
-  const addTransaction = (
+  const addTransaction = async (
     type: 'entrada' | 'saida', 
     amount: string, 
     description: string, 
@@ -40,27 +54,37 @@ export function usePersonalTransactions() {
       return false;
     }
 
-    const newTransaction: PersonalTransaction = {
-      id: Date.now().toString(),
-      type,
-      amount: parseFloat(amount),
-      description,
-      date: new Date().toLocaleDateString('pt-BR'),
-      category,
-      proLaboreWeekKey
-    };
+    try {
+      const newTransaction = await createPersonalTransaction(
+        type,
+        parseFloat(amount),
+        description,
+        category,
+        proLaboreWeekKey
+      );
 
-    setTransactions(prev => [newTransaction, ...prev]);
-    
-    const successMessage = type === 'entrada' ? 'Entrada registrada com sucesso!' : 'Saída registrada com sucesso!';
-    toast.success(successMessage);
-    
-    return true;
+      setTransactions(prev => [newTransaction, ...prev]);
+      
+      const successMessage = type === 'entrada' ? 'Entrada registrada com sucesso!' : 'Saída registrada com sucesso!';
+      toast.success(successMessage);
+      
+      return true;
+    } catch (err) {
+      console.error('Erro ao adicionar transação:', err);
+      toast.error('Erro ao registrar transação');
+      return false;
+    }
   };
 
-  const removeTransaction = (transactionId: string) => {
-    setTransactions(prev => prev.filter(t => t.id !== transactionId));
-    toast.success('Transação removida com sucesso!');
+  const removeTransaction = async (transactionId: string) => {
+    try {
+      await deletePersonalTransaction(transactionId);
+      setTransactions(prev => prev.filter(t => t.id !== transactionId));
+      toast.success('Transação removida com sucesso!');
+    } catch (err) {
+      console.error('Erro ao remover transação:', err);
+      toast.error('Erro ao remover transação');
+    }
   };
 
   const getTotals = () => {
@@ -79,8 +103,11 @@ export function usePersonalTransactions() {
 
   return {
     transactions,
+    loading,
+    error,
     addTransaction,
     removeTransaction,
-    getTotals
+    getTotals,
+    refreshTransactions: loadTransactions
   };
 }

@@ -2,12 +2,13 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MinusCircle } from "lucide-react";
+import { PlusCircle, MinusCircle, Loader2 } from "lucide-react";
 import { PersonalFinancialSummary } from "@/components/personal/PersonalFinancialSummary";
 import { PersonalTransactionForm } from "@/components/personal/PersonalTransactionForm";
 import { PersonalTransactionsList } from "@/components/personal/PersonalTransactionsList";
 import { PersonalControlCards } from "@/components/personal/PersonalControlCards";
 import { usePersonalTransactions } from "@/hooks/usePersonalTransactions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function PersonalControl() {
   const [showEntryForm, setShowEntryForm] = useState(false);
@@ -19,11 +20,19 @@ export default function PersonalControl() {
   const [expenseDescription, setExpenseDescription] = useState('');
   const [expenseCategory, setExpenseCategory] = useState('');
 
-  const { transactions, addTransaction, getTotals } = usePersonalTransactions();
+  const { 
+    transactions, 
+    loading, 
+    error, 
+    addTransaction, 
+    getTotals, 
+    refreshTransactions 
+  } = usePersonalTransactions();
+  
   const { totalEntries, totalExpenses, balance } = getTotals();
 
-  const handleAddEntry = () => {
-    const success = addTransaction('entrada', entryAmount, entryDescription, entryCategory);
+  const handleAddEntry = async () => {
+    const success = await addTransaction('entrada', entryAmount, entryDescription, entryCategory);
     if (success) {
       setEntryAmount('');
       setEntryDescription('');
@@ -32,8 +41,8 @@ export default function PersonalControl() {
     }
   };
 
-  const handleAddExpense = () => {
-    const success = addTransaction('saida', expenseAmount, expenseDescription, expenseCategory);
+  const handleAddExpense = async () => {
+    const success = await addTransaction('saida', expenseAmount, expenseDescription, expenseCategory);
     if (success) {
       setExpenseAmount('');
       setExpenseDescription('');
@@ -43,10 +52,21 @@ export default function PersonalControl() {
   };
 
   const handleTransactionRemoved = () => {
-    // Force re-render by triggering a state update
-    // This will cause the transactions to be re-fetched from localStorage
-    window.location.reload();
+    refreshTransactions();
   };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="max-w-screen-2xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Carregando transações...</span>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -59,6 +79,12 @@ export default function PersonalControl() {
             </p>
           </div>
         </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         <PersonalFinancialSummary 
           totalEntries={totalEntries}

@@ -6,16 +6,7 @@ import { TrendingUp, TrendingDown, RotateCcw } from "lucide-react";
 import { useProLabore } from "@/hooks/useProLabore";
 import { WeekInfo } from "@/utils/dates/weekUtils";
 import { toast } from "sonner";
-
-interface PersonalTransaction {
-  id: string;
-  type: 'entrada' | 'saida';
-  amount: number;
-  description: string;
-  date: string;
-  category?: string;
-  proLaboreWeekKey?: string;
-}
+import { PersonalTransaction } from "@/hooks/usePersonalTransactions";
 
 interface PersonalTransactionsListProps {
   transactions: PersonalTransaction[];
@@ -39,10 +30,10 @@ export function PersonalTransactionsList({
     }).format(value);
   };
 
-  const handleReturnProLabore = (transaction: PersonalTransaction) => {
-    if (!transaction.proLaboreWeekKey) return;
+  const handleReturnProLabore = async (transaction: PersonalTransaction) => {
+    if (!transaction.pro_labore_week_key) return;
     
-    const success = returnProLabore(transaction.proLaboreWeekKey);
+    const success = await returnProLabore(transaction.pro_labore_week_key);
     if (success) {
       toast.success('Pró-labore devolvido para a empresa com sucesso!');
       onTransactionRemoved?.();
@@ -91,14 +82,16 @@ export function PersonalTransactionsList({
                     <p className="font-medium">{transaction.description}</p>
                     {getCategoryBadge(transaction.category)}
                   </div>
-                  <p className="text-sm text-muted-foreground">{transaction.date}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(transaction.date).toLocaleDateString('pt-BR')}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <div className={`font-bold ${transaction.type === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
                   {transaction.type === 'entrada' ? '+' : '-'}{formatCurrency(transaction.amount)}
                 </div>
-                {transaction.category === 'pró-labore' && transaction.proLaboreWeekKey && (
+                {transaction.category === 'pró-labore' && transaction.pro_labore_week_key && (
                   <Button
                     size="sm"
                     variant="outline"

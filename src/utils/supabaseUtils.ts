@@ -46,3 +46,10 @@ export {
   updateCalendarEvent,
   deleteCalendarEvent
 } from './supabase/calendar-events';
+
+export {
+  fetchPersonalTransactions,
+  createPersonalTransaction,
+  deletePersonalTransaction,
+  migrateLocalStorageToDatabase
+} from './supabase/personal-transactions';

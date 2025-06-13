@@ -22,7 +22,14 @@ export function PersonalTransactionsList({
   weeklyBalance = 0,
   onTransactionRemoved 
 }: PersonalTransactionsListProps) {
-  const { returnProLabore } = currentWeek ? useProLabore(currentWeek, weeklyBalance) : { returnProLabore: () => false };
+  // Usar valores padrão quando currentWeek não estiver disponível
+  const defaultWeek: WeekInfo = {
+    start: new Date(),
+    end: new Date(),
+    label: "Semana atual"
+  };
+  
+  const { returnProLabore } = useProLabore(currentWeek || defaultWeek, weeklyBalance);
   
   // Hook para refresh das transações empresariais
   const { refreshTransactions } = useTransactions();
@@ -35,21 +42,39 @@ export function PersonalTransactionsList({
   };
 
   const handleReturnProLabore = async (transaction: PersonalTransaction) => {
-    if (!transaction.pro_labore_week_key) return;
+    if (!transaction.pro_labore_week_key) {
+      toast.error('Transação não possui chave de pró-labore válida');
+      return;
+    }
     
-    const success = await returnProLabore(transaction.pro_labore_week_key);
-    if (success) {
-      toast.success('Pró-labore devolvido para a empresa com sucesso!');
+    console.log('Devolvendo pró-labore:', {
+      transactionId: transaction.id,
+      weekKey: transaction.pro_labore_week_key,
+      amount: transaction.amount
+    });
+    
+    try {
+      const success = await returnProLabore(transaction.pro_labore_week_key);
       
-      // Refresh both personal and business transactions
-      if (onTransactionRemoved) {
-        onTransactionRemoved();
+      if (success) {
+        toast.success('Pró-labore devolvido para a empresa com sucesso!');
+        
+        // Refresh both personal and business transactions
+        if (onTransactionRemoved) {
+          onTransactionRemoved();
+        }
+        
+        // Also refresh business transactions to remove the debit entry
+        await refreshTransactions();
+        
+        console.log('Pró-labore devolvido com sucesso');
+      } else {
+        toast.error('Não foi possível devolver o pró-labore');
+        console.error('Falha ao devolver pró-labore');
       }
-      
-      // Also refresh business transactions to remove the debit entry
-      await refreshTransactions();
-    } else {
-      toast.error('Não foi possível devolver o pró-labore');
+    } catch (error) {
+      console.error('Erro ao devolver pró-labore:', error);
+      toast.error('Erro interno ao devolver pró-labore');
     }
   };
 
@@ -108,7 +133,6 @@ export function PersonalTransactionsList({
                     variant="outline"
                     onClick={() => handleReturnProLabore(transaction)}
                     className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                    title="Devolver pró-labore para o fluxo empresarial"
                   >
                     <RotateCcw className="h-3 w-3 mr-1" />
                     Devolver

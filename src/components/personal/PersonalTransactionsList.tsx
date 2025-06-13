@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, RotateCcw } from "lucide-react";
 import { useProLabore } from "@/hooks/useProLabore";
+import { useTransactions } from "@/contexts/TransactionsContext";
 import { WeekInfo } from "@/utils/dates/weekUtils";
 import { toast } from "sonner";
 import { PersonalTransaction } from "@/hooks/usePersonalTransactions";
@@ -22,6 +23,9 @@ export function PersonalTransactionsList({
   onTransactionRemoved 
 }: PersonalTransactionsListProps) {
   const { returnProLabore } = currentWeek ? useProLabore(currentWeek, weeklyBalance) : { returnProLabore: () => false };
+  
+  // Hook para refresh das transações empresariais
+  const { refreshTransactions } = useTransactions();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -36,7 +40,14 @@ export function PersonalTransactionsList({
     const success = await returnProLabore(transaction.pro_labore_week_key);
     if (success) {
       toast.success('Pró-labore devolvido para a empresa com sucesso!');
-      onTransactionRemoved?.();
+      
+      // Refresh both personal and business transactions
+      if (onTransactionRemoved) {
+        onTransactionRemoved();
+      }
+      
+      // Also refresh business transactions to remove the debit entry
+      await refreshTransactions();
     } else {
       toast.error('Não foi possível devolver o pró-labore');
     }
@@ -97,6 +108,7 @@ export function PersonalTransactionsList({
                     variant="outline"
                     onClick={() => handleReturnProLabore(transaction)}
                     className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                    title="Devolver pró-labore para o fluxo empresarial"
                   >
                     <RotateCcw className="h-3 w-3 mr-1" />
                     Devolver

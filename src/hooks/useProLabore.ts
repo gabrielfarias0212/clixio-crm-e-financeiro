@@ -1,7 +1,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { WeekInfo } from "@/utils/dates/weekUtils";
-import { createPersonalTransaction } from "@/utils/supabase/personal-transactions";
+import { createPersonalTransaction, deletePersonalTransaction } from "@/utils/supabase/personal-transactions";
+import { createTransaction, deleteTransaction } from "@/utils/supabase/transactions";
+import { Transaction } from "@/utils/types";
 
 export interface ProLaboreRecord {
   weekKey: string;
@@ -9,6 +11,7 @@ export interface ProLaboreRecord {
   withdrawn: boolean;
   date: string;
   personalTransactionId?: string;
+  businessTransactionId?: string; // Nova propriedade para vincular transação empresarial
 }
 
 export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
@@ -43,15 +46,30 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
   // Calcular valor disponível (30% do saldo positivo)
   const availableAmount = weeklyBalance > 0 ? weeklyBalance * 0.3 : 0;
 
-  // Função para retirar pró-labore
+  // Função para retirar pró-labore (cria transações duplas)
   const withdrawProLabore = useCallback(async () => {
     if (isAlreadyWithdrawn || availableAmount <= 0) {
       return false;
     }
 
     try {
-      // Criar transação pessoal no banco de dados
-      const newPersonalTransaction = await createPersonalTransaction(
+      // 1. Criar transação empresarial de saída (débito do fluxo de caixa)
+      const businessTransactionData: Omit<Transaction, 'id' | 'createdAt'> = {
+        amount: availableAmount,
+        date: new Date().toISOString().split('T')[0],
+        type: 'saída',
+        category: 'pró-labore',
+        description: `Retirada de pró-labore da semana ${currentWeek.label}`,
+      };
+
+      const businessTransaction = await createTransaction(businessTransactionData);
+      
+      if (!businessTransaction) {
+        throw new Error('Falha ao criar transação empresarial');
+      }
+
+      // 2. Criar transação pessoal de entrada (crédito no controle pessoal)
+      const personalTransaction = await createPersonalTransaction(
         'entrada',
         availableAmount,
         `Pró-labore da semana ${currentWeek.label}`,
@@ -59,12 +77,14 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
         currentWeekKey
       );
 
+      // 3. Salvar registro local com IDs das duas transações
       const newRecord: ProLaboreRecord = {
         weekKey: currentWeekKey,
         amount: availableAmount,
         withdrawn: true,
         date: new Date().toISOString(),
-        personalTransactionId: newPersonalTransaction.id
+        personalTransactionId: personalTransaction.id,
+        businessTransactionId: businessTransaction.id
       };
 
       const updatedRecords = proLaboreRecords.filter(record => record.weekKey !== currentWeekKey);
@@ -72,7 +92,10 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
       
       saveRecords(updatedRecords);
 
-      console.log(`Pró-labore de R$ ${availableAmount.toFixed(2)} transferido para controle pessoal`);
+      console.log(`Pró-labore de R$ ${availableAmount.toFixed(2)} processado:
+        - Debitado do fluxo empresarial (ID: ${businessTransaction.id})
+        - Creditado no controle pessoal (ID: ${personalTransaction.id})`);
+      
       return true;
     } catch (error) {
       console.error('Erro ao retirar pró-labore:', error);
@@ -80,7 +103,7 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
     }
   }, [isAlreadyWithdrawn, availableAmount, currentWeekKey, proLaboreRecords, saveRecords, currentWeek.label]);
 
-  // Função para devolver pró-labore
+  // Função para devolver pró-labore (remove ambas as transações)
   const returnProLabore = useCallback(async (weekKey: string) => {
     const recordToReturn = proLaboreRecords.find(record => record.weekKey === weekKey);
     
@@ -89,19 +112,33 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
     }
 
     try {
-      // A remoção da transação pessoal será feita pelo componente PersonalTransactionsList
-      // quando o usuário clicar no botão "Devolver"
-      
-      // Marcar o pró-labore como não retirado
+      // 1. Remover transação pessoal se existir
+      if (recordToReturn.personalTransactionId) {
+        await deletePersonalTransaction(recordToReturn.personalTransactionId);
+        console.log(`Transação pessoal removida: ${recordToReturn.personalTransactionId}`);
+      }
+
+      // 2. Remover transação empresarial se existir
+      if (recordToReturn.businessTransactionId) {
+        await deleteTransaction(recordToReturn.businessTransactionId);
+        console.log(`Transação empresarial removida: ${recordToReturn.businessTransactionId}`);
+      }
+
+      // 3. Marcar o pró-labore como não retirado
       const updatedRecords = proLaboreRecords.map(record => 
         record.weekKey === weekKey 
-          ? { ...record, withdrawn: false, personalTransactionId: undefined }
+          ? { 
+              ...record, 
+              withdrawn: false, 
+              personalTransactionId: undefined,
+              businessTransactionId: undefined
+            }
           : record
       );
       
       saveRecords(updatedRecords);
 
-      console.log(`Pró-labore da semana ${weekKey} devolvido para a empresa`);
+      console.log(`Pró-labore da semana ${weekKey} devolvido completamente`);
       return true;
     } catch (error) {
       console.error('Erro ao devolver pró-labore:', error);

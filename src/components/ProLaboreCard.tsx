@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Wallet, CheckCircle, AlertCircle, TrendingUp } from "lucide-react";
 import { useProLabore } from "@/hooks/useProLabore";
+import { useTransactions } from "@/contexts/TransactionsContext";
 import { WeekInfo } from "@/utils/dates/weekUtils";
 import { toast } from "sonner";
 
@@ -17,6 +18,9 @@ export function ProLaboreCard({ currentWeek, weeklyBalance }: ProLaboreCardProps
     currentWeek,
     weeklyBalance
   );
+  
+  // Hook para forçar refresh das transações empresariais
+  const { refreshTransactions } = useTransactions();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -25,10 +29,13 @@ export function ProLaboreCard({ currentWeek, weeklyBalance }: ProLaboreCardProps
     }).format(value);
   };
 
-  const handleWithdraw = () => {
-    const success = withdrawProLabore();
+  const handleWithdraw = async () => {
+    const success = await withdrawProLabore();
     if (success) {
-      toast.success(`Pró-labore de ${formatCurrency(availableAmount)} transferido para o controle pessoal!`);
+      toast.success(`Pró-labore de ${formatCurrency(availableAmount)} processado com sucesso!`);
+      
+      // Forçar refresh das transações empresariais para mostrar a nova transação de saída
+      await refreshTransactions();
     } else {
       toast.error('Não foi possível retirar o pró-labore');
     }
@@ -84,9 +91,14 @@ export function ProLaboreCard({ currentWeek, weeklyBalance }: ProLaboreCardProps
               Pró-labore disponível apenas com saldo positivo na semana
             </p>
           ) : isAlreadyWithdrawn ? (
-            <p className="text-sm text-gray-500 text-center">
-              Pró-labore já retirado nesta semana. Próximo disponível na semana seguinte.
-            </p>
+            <div className="text-center space-y-2">
+              <p className="text-sm text-gray-500">
+                Pró-labore já retirado nesta semana. Próximo disponível na semana seguinte.
+              </p>
+              <p className="text-xs text-blue-600">
+                ✓ Valor debitado do fluxo empresarial e creditado no controle pessoal
+              </p>
+            </div>
           ) : (
             <Button 
               onClick={handleWithdraw}

@@ -25,6 +25,7 @@ export type TransactionCategory =
   | "imposto"
   | "outras receitas"
   | "outras despesas"
+  | "pró-labore"
   | string;
 
 export type EventCategory = 

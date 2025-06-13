@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { ArrowDownCircle, ArrowUpCircle, ExternalLink, Trash2 } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ExternalLink, Trash2, Wallet } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,6 +73,11 @@ export function TransactionList({ transactions, clients, onDeleteTransaction }: 
     }
   };
 
+  // Verificar se é uma transação de pró-labore
+  const isProLaboreTransaction = (transaction: Transaction) => {
+    return transaction.category === 'pró-labore';
+  };
+
   return (
     <div className="space-y-3">
       {transactions.length === 0 ? (
@@ -101,7 +106,9 @@ export function TransactionList({ transactions, clients, onDeleteTransaction }: 
                     </TableCell>
                     <TableCell className="max-w-[180px] sm:max-w-none truncate">
                       <div className="flex items-center">
-                        {transaction.type === "entrada" ? (
+                        {isProLaboreTransaction(transaction) ? (
+                          <Wallet className="h-4 w-4 mr-2 text-blue-500 shrink-0" />
+                        ) : transaction.type === "entrada" ? (
                           <ArrowUpCircle className="h-4 w-4 mr-2 text-green-500 shrink-0" />
                         ) : (
                           <ArrowDownCircle className="h-4 w-4 mr-2 text-red-500 shrink-0" />
@@ -113,7 +120,9 @@ export function TransactionList({ transactions, clients, onDeleteTransaction }: 
                       <Badge
                         variant="outline"
                         className={`${
-                          transaction.type === "entrada"
+                          isProLaboreTransaction(transaction)
+                            ? "bg-blue-50 text-blue-700 border-blue-200"
+                            : transaction.type === "entrada"
                             ? "bg-green-50 text-green-700 border-green-200"
                             : "bg-red-50 text-red-700 border-red-200"
                         }`}
@@ -130,6 +139,8 @@ export function TransactionList({ transactions, clients, onDeleteTransaction }: 
                           {getClientName(transaction.clientId)}
                           <ExternalLink className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </Link>
+                      ) : isProLaboreTransaction(transaction) ? (
+                        <span className="text-blue-600 text-sm">Sistema</span>
                       ) : (
                         "-"
                       )}
@@ -144,14 +155,22 @@ export function TransactionList({ transactions, clients, onDeleteTransaction }: 
                       }).format(transaction.amount)}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-500 hover:text-red-600"
-                        onClick={() => setTransactionToDelete(transaction.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {/* Não permitir exclusão manual de transações de pró-labore */}
+                      {!isProLaboreTransaction(transaction) && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-gray-500 hover:text-red-600"
+                          onClick={() => setTransactionToDelete(transaction.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {isProLaboreTransaction(transaction) && (
+                        <div className="h-8 w-8 flex items-center justify-center">
+                          <Wallet className="h-3 w-3 text-gray-400" title="Transação de pró-labore" />
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

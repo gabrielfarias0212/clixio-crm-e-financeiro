@@ -14,28 +14,38 @@ export default function PersonalControl() {
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [entryAmount, setEntryAmount] = useState('');
   const [entryDescription, setEntryDescription] = useState('');
+  const [entryCategory, setEntryCategory] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseDescription, setExpenseDescription] = useState('');
+  const [expenseCategory, setExpenseCategory] = useState('');
 
   const { transactions, addTransaction, getTotals } = usePersonalTransactions();
   const { totalEntries, totalExpenses, balance } = getTotals();
 
   const handleAddEntry = () => {
-    const success = addTransaction('entrada', entryAmount, entryDescription);
+    const success = addTransaction('entrada', entryAmount, entryDescription, entryCategory);
     if (success) {
       setEntryAmount('');
       setEntryDescription('');
+      setEntryCategory('');
       setShowEntryForm(false);
     }
   };
 
   const handleAddExpense = () => {
-    const success = addTransaction('saida', expenseAmount, expenseDescription);
+    const success = addTransaction('saida', expenseAmount, expenseDescription, expenseCategory);
     if (success) {
       setExpenseAmount('');
       setExpenseDescription('');
+      setExpenseCategory('');
       setShowExpenseForm(false);
     }
+  };
+
+  const handleTransactionRemoved = () => {
+    // Force re-render by triggering a state update
+    // This will cause the transactions to be re-fetched from localStorage
+    window.location.reload();
   };
 
   return (
@@ -79,8 +89,10 @@ export default function PersonalControl() {
           show={showEntryForm}
           amount={entryAmount}
           description={entryDescription}
+          category={entryCategory}
           onAmountChange={setEntryAmount}
           onDescriptionChange={setEntryDescription}
+          onCategoryChange={setEntryCategory}
           onSubmit={handleAddEntry}
           onCancel={() => setShowEntryForm(false)}
         />
@@ -90,13 +102,18 @@ export default function PersonalControl() {
           show={showExpenseForm}
           amount={expenseAmount}
           description={expenseDescription}
+          category={expenseCategory}
           onAmountChange={setExpenseAmount}
           onDescriptionChange={setExpenseDescription}
+          onCategoryChange={setExpenseCategory}
           onSubmit={handleAddExpense}
           onCancel={() => setShowExpenseForm(false)}
         />
 
-        <PersonalTransactionsList transactions={transactions} />
+        <PersonalTransactionsList 
+          transactions={transactions} 
+          onTransactionRemoved={handleTransactionRemoved}
+        />
 
         <PersonalControlCards />
       </div>

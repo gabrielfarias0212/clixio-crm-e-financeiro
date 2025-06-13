@@ -1,6 +1,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { TrendingUp, TrendingDown, RotateCcw } from "lucide-react";
+import { useProLabore } from "@/hooks/useProLabore";
+import { WeekInfo } from "@/utils/dates/weekUtils";
+import { toast } from "sonner";
 
 interface PersonalTransaction {
   id: string;
@@ -8,18 +13,60 @@ interface PersonalTransaction {
   amount: number;
   description: string;
   date: string;
+  category?: string;
+  proLaboreWeekKey?: string;
 }
 
 interface PersonalTransactionsListProps {
   transactions: PersonalTransaction[];
+  currentWeek?: WeekInfo;
+  weeklyBalance?: number;
+  onTransactionRemoved?: () => void;
 }
 
-export function PersonalTransactionsList({ transactions }: PersonalTransactionsListProps) {
+export function PersonalTransactionsList({ 
+  transactions, 
+  currentWeek, 
+  weeklyBalance = 0,
+  onTransactionRemoved 
+}: PersonalTransactionsListProps) {
+  const { returnProLabore } = currentWeek ? useProLabore(currentWeek, weeklyBalance) : { returnProLabore: () => false };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
+  };
+
+  const handleReturnProLabore = (transaction: PersonalTransaction) => {
+    if (!transaction.proLaboreWeekKey) return;
+    
+    const success = returnProLabore(transaction.proLaboreWeekKey);
+    if (success) {
+      toast.success('Pró-labore devolvido para a empresa com sucesso!');
+      onTransactionRemoved?.();
+    } else {
+      toast.error('Não foi possível devolver o pró-labore');
+    }
+  };
+
+  const getCategoryBadge = (category?: string) => {
+    if (!category) return null;
+    
+    if (category === 'pró-labore') {
+      return (
+        <Badge className="bg-blue-100 text-blue-700 text-xs">
+          Pró-labore
+        </Badge>
+      );
+    }
+    
+    return (
+      <Badge variant="secondary" className="text-xs">
+        {category}
+      </Badge>
+    );
   };
 
   if (transactions.length === 0) return null;
@@ -39,13 +86,29 @@ export function PersonalTransactionsList({ transactions }: PersonalTransactionsL
                 ) : (
                   <TrendingDown className="h-5 w-5 text-red-600" />
                 )}
-                <div>
-                  <p className="font-medium">{transaction.description}</p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-medium">{transaction.description}</p>
+                    {getCategoryBadge(transaction.category)}
+                  </div>
                   <p className="text-sm text-muted-foreground">{transaction.date}</p>
                 </div>
               </div>
-              <div className={`font-bold ${transaction.type === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
-                {transaction.type === 'entrada' ? '+' : '-'}{formatCurrency(transaction.amount)}
+              <div className="flex items-center gap-3">
+                <div className={`font-bold ${transaction.type === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
+                  {transaction.type === 'entrada' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                </div>
+                {transaction.category === 'pró-labore' && transaction.proLaboreWeekKey && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleReturnProLabore(transaction)}
+                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                  >
+                    <RotateCcw className="h-3 w-3 mr-1" />
+                    Devolver
+                  </Button>
+                )}
               </div>
             </div>
           ))}

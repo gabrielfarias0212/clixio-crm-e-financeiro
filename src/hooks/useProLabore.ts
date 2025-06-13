@@ -7,6 +7,7 @@ export interface ProLaboreRecord {
   amount: number;
   withdrawn: boolean;
   date: string;
+  personalTransactionId?: string; // Para vincular com a transação pessoal
 }
 
 export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
@@ -47,11 +48,14 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
       return false;
     }
 
+    const personalTransactionId = Date.now().toString();
+
     const newRecord: ProLaboreRecord = {
       weekKey: currentWeekKey,
       amount: availableAmount,
       withdrawn: true,
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      personalTransactionId
     };
 
     const updatedRecords = proLaboreRecords.filter(record => record.weekKey !== currentWeekKey);
@@ -59,14 +63,16 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
     
     saveRecords(updatedRecords);
 
-    // Adicionar entrada no controle pessoal
+    // Adicionar entrada no controle pessoal com categoria pró-labore
     const personalTransactions = JSON.parse(localStorage.getItem('personalTransactions') || '[]');
     const newPersonalTransaction = {
-      id: Date.now().toString(),
+      id: personalTransactionId,
       type: 'entrada',
       amount: availableAmount,
       description: `Pró-labore da semana ${currentWeek.label}`,
-      date: new Date().toLocaleDateString('pt-BR')
+      date: new Date().toLocaleDateString('pt-BR'),
+      category: 'pró-labore',
+      proLaboreWeekKey: currentWeekKey
     };
 
     personalTransactions.unshift(newPersonalTransaction);
@@ -76,11 +82,42 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
     return true;
   }, [isAlreadyWithdrawn, availableAmount, currentWeekKey, proLaboreRecords, saveRecords, currentWeek.label]);
 
+  // Função para devolver pró-labore
+  const returnProLabore = useCallback((weekKey: string) => {
+    const recordToReturn = proLaboreRecords.find(record => record.weekKey === weekKey);
+    
+    if (!recordToReturn || !recordToReturn.withdrawn) {
+      return false;
+    }
+
+    // Remover a transação pessoal
+    if (recordToReturn.personalTransactionId) {
+      const personalTransactions = JSON.parse(localStorage.getItem('personalTransactions') || '[]');
+      const updatedPersonalTransactions = personalTransactions.filter(
+        (t: any) => t.id !== recordToReturn.personalTransactionId
+      );
+      localStorage.setItem('personalTransactions', JSON.stringify(updatedPersonalTransactions));
+    }
+
+    // Marcar o pró-labore como não retirado
+    const updatedRecords = proLaboreRecords.map(record => 
+      record.weekKey === weekKey 
+        ? { ...record, withdrawn: false, personalTransactionId: undefined }
+        : record
+    );
+    
+    saveRecords(updatedRecords);
+
+    console.log(`Pró-labore da semana ${weekKey} devolvido para a empresa`);
+    return true;
+  }, [proLaboreRecords, saveRecords]);
+
   return {
     availableAmount,
     isAlreadyWithdrawn,
     canWithdraw: !isAlreadyWithdrawn && availableAmount > 0,
     withdrawProLabore,
+    returnProLabore,
     currentWeekRecord
   };
 }

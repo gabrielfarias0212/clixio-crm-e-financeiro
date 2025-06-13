@@ -8,6 +8,8 @@ export interface PersonalTransaction {
   amount: number;
   description: string;
   date: string;
+  category?: string;
+  proLaboreWeekKey?: string; // Para vincular com registros de pró-labore
 }
 
 export function usePersonalTransactions() {
@@ -26,7 +28,13 @@ export function usePersonalTransactions() {
     localStorage.setItem('personalTransactions', JSON.stringify(transactions));
   }, [transactions]);
 
-  const addTransaction = (type: 'entrada' | 'saida', amount: string, description: string) => {
+  const addTransaction = (
+    type: 'entrada' | 'saida', 
+    amount: string, 
+    description: string, 
+    category?: string,
+    proLaboreWeekKey?: string
+  ) => {
     if (!amount || !description) {
       toast.error('Preencha todos os campos');
       return false;
@@ -37,7 +45,9 @@ export function usePersonalTransactions() {
       type,
       amount: parseFloat(amount),
       description,
-      date: new Date().toLocaleDateString('pt-BR')
+      date: new Date().toLocaleDateString('pt-BR'),
+      category,
+      proLaboreWeekKey
     };
 
     setTransactions(prev => [newTransaction, ...prev]);
@@ -46,6 +56,11 @@ export function usePersonalTransactions() {
     toast.success(successMessage);
     
     return true;
+  };
+
+  const removeTransaction = (transactionId: string) => {
+    setTransactions(prev => prev.filter(t => t.id !== transactionId));
+    toast.success('Transação removida com sucesso!');
   };
 
   const getTotals = () => {
@@ -65,6 +80,7 @@ export function usePersonalTransactions() {
   return {
     transactions,
     addTransaction,
+    removeTransaction,
     getTotals
   };
 }

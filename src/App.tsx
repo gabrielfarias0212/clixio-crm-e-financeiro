@@ -145,7 +145,9 @@ function App() {
                   path="/personal-control" 
                   element={
                     <AuthGuard>
-                      <PersonalControl />
+                      <TransactionsProvider>
+                        <PersonalControl />
+                      </TransactionsProvider>
                     </AuthGuard>
                   } 
                 />

@@ -1,4 +1,5 @@
 
+
 import { useEffect, useState } from "react";
 import { Transaction } from "@/utils/types";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,13 +13,15 @@ interface TransactionSummaryProps {
   className?: string;
   periodType?: PeriodType;
   currentWeek?: WeekInfo;
+  onWeeklyBalanceChange?: (balance: number) => void;
 }
 
 export function TransactionSummary({
   transactions,
   className,
   periodType = "monthly",
-  currentWeek
+  currentWeek,
+  onWeeklyBalanceChange
 }: TransactionSummaryProps) {
   const [summary, setSummary] = useState({
     totalIncome: 0,
@@ -109,7 +112,12 @@ export function TransactionSummary({
     console.log(`Saldo do ${periodType === "monthly" ? "mês" : "semana"}:`, newSummary.periodBalance);
     
     setSummary(newSummary);
-  }, [transactions, periodType, currentWeek]);
+    
+    // Notificar o componente pai sobre mudanças no saldo semanal
+    if (periodType === "weekly" && onWeeklyBalanceChange) {
+      onWeeklyBalanceChange(newSummary.periodBalance);
+    }
+  }, [transactions, periodType, currentWeek, onWeeklyBalanceChange]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -194,3 +202,4 @@ export function TransactionSummary({
     </Card>
   );
 }
+

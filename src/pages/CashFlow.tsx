@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
@@ -9,6 +10,7 @@ import { PlusCircle, TrendingUp } from "lucide-react";
 import { TransactionSummary } from "@/components/TransactionSummary";
 import { FutureProjections } from "@/components/FutureProjections";
 import { TransactionCategoryCharts } from "@/components/TransactionCategoryCharts";
+import { ProLaboreCard } from "@/components/ProLaboreCard";
 import { Transaction, TransactionType } from "@/utils/types";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,6 +22,7 @@ export default function CashFlow() {
   const { clients, refreshClients } = useClients();
   const { transactions, addTransaction, deleteTransaction, refreshTransactions } = useTransactions();
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
+  const [weeklyBalance, setWeeklyBalance] = useState(0);
   
   // Hook para filtro semanal
   const weeklyFilter = useWeeklyFilter();
@@ -100,7 +103,18 @@ export default function CashFlow() {
           className="mb-6"
           periodType={weeklyFilter.periodType}
           currentWeek={weeklyFilter.currentWeek}
+          onWeeklyBalanceChange={setWeeklyBalance}
         />
+
+        {/* Card de Pró-Labore - Mostrar apenas em modo semanal */}
+        {weeklyFilter.periodType === "weekly" && (
+          <div className="mb-6">
+            <ProLaboreCard 
+              currentWeek={weeklyFilter.currentWeek}
+              weeklyBalance={weeklyBalance}
+            />
+          </div>
+        )}
 
         {/* Tabs para separar Transações e Projeções */}
         <Tabs defaultValue="transactions" className="space-y-6">

@@ -25,7 +25,8 @@ export const fetchPersonalTransactions = async (): Promise<PersonalTransaction[]
     throw error;
   }
 
-  return data || [];
+  // Type casting para garantir que o tipo está correto
+  return (data || []) as PersonalTransaction[];
 };
 
 export const createPersonalTransaction = async (
@@ -62,7 +63,8 @@ export const createPersonalTransaction = async (
     throw error;
   }
 
-  return data;
+  // Type casting para garantir que o tipo está correto
+  return data as PersonalTransaction;
 };
 
 export const deletePersonalTransaction = async (transactionId: string): Promise<void> => {
@@ -116,7 +118,7 @@ export const migrateLocalStorageToDatabase = async (): Promise<void> => {
     // Converter dados do localStorage para o formato do banco
     const transactionsToInsert = localTransactions.map((transaction: any) => ({
       user_id: user.id,
-      type: transaction.type,
+      type: transaction.type as 'entrada' | 'saida', // Type casting explícito
       amount: parseFloat(transaction.amount),
       description: transaction.description,
       date: transaction.date ? new Date(transaction.date.split('/').reverse().join('-')).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],

@@ -7,6 +7,7 @@ import { PersonalFinancialSummary } from "@/components/personal/PersonalFinancia
 import { PersonalTransactionForm } from "@/components/personal/PersonalTransactionForm";
 import { PersonalTransactionsList } from "@/components/personal/PersonalTransactionsList";
 import { PersonalControlCards } from "@/components/personal/PersonalControlCards";
+import { CategoryManager } from "@/components/personal/CategoryManager";
 import { usePersonalTransactions } from "@/hooks/usePersonalTransactions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -140,6 +141,8 @@ export default function PersonalControl() {
           transactions={transactions} 
           onTransactionRemoved={handleTransactionRemoved}
         />
+
+        <CategoryManager />
 
         <PersonalControlCards />
       </div>

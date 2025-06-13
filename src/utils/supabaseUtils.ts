@@ -53,3 +53,12 @@ export {
   deletePersonalTransaction,
   migrateLocalStorageToDatabase
 } from './supabase/personal-transactions';
+
+export {
+  fetchPersonalCategories,
+  createPersonalCategory,
+  deletePersonalCategory,
+  DEFAULT_INCOME_CATEGORIES,
+  DEFAULT_EXPENSE_CATEGORIES,
+  PersonalCategory
+} from './supabase/personal-categories';

@@ -59,6 +59,8 @@ export {
   createPersonalCategory,
   deletePersonalCategory,
   DEFAULT_INCOME_CATEGORIES,
-  DEFAULT_EXPENSE_CATEGORIES,
-  PersonalCategory
+  DEFAULT_EXPENSE_CATEGORIES
 } from './supabase/personal-categories';
+
+// Export types separately to fix isolatedModules issue
+export type { PersonalCategory } from './supabase/personal-categories';

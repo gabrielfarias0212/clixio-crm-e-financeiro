@@ -4,35 +4,39 @@ import { Transaction } from "@/utils/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowDownCircle, ArrowUpCircle, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isTransactionInWeek, WeekInfo } from "@/utils/dates/weekUtils";
+import { PeriodType } from "@/hooks/useWeeklyFilter";
 
 interface TransactionSummaryProps {
   transactions: Transaction[];
   className?: string;
+  periodType?: PeriodType;
+  currentWeek?: WeekInfo;
 }
 
 export function TransactionSummary({
   transactions,
-  className
+  className,
+  periodType = "monthly",
+  currentWeek
 }: TransactionSummaryProps) {
   const [summary, setSummary] = useState({
     totalIncome: 0,
     totalExpenses: 0,
     balance: 0,
-    thisMonthIncome: 0,
-    thisMonthExpenses: 0,
-    thisMonthBalance: 0
+    periodIncome: 0,
+    periodExpenses: 0,
+    periodBalance: 0
   });
 
   useEffect(() => {
-    console.log("=== TransactionSummary: Calculando resumo ===");
+    console.log(`=== TransactionSummary: Calculando resumo (${periodType}) ===`);
     console.log("Total de transações recebidas:", transactions.length);
     
     const now = new Date();
-    const currentMonth = now.getMonth(); // 0-11
+    const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     
-    console.log(`Mês/Ano atual: ${currentMonth + 1}/${currentYear}`);
-
     const totals = transactions.reduce((acc, transaction) => {
       const amount = Number(transaction.amount);
       
@@ -45,11 +49,9 @@ export function TransactionSummary({
       let transactionDate: Date;
       try {
         if (transaction.date.includes('/')) {
-          // DD/MM/YYYY format
           const [day, month, year] = transaction.date.split('/').map(Number);
           transactionDate = new Date(year, month - 1, day);
         } else {
-          // ISO format
           transactionDate = new Date(transaction.date);
         }
         
@@ -62,21 +64,26 @@ export function TransactionSummary({
         return acc;
       }
 
-      const transactionMonth = transactionDate.getMonth();
-      const transactionYear = transactionDate.getFullYear();
-      const isCurrentMonth = transactionMonth === currentMonth && transactionYear === currentYear;
+      // Determinar se a transação está no período atual
+      let isInCurrentPeriod = false;
+      
+      if (periodType === "monthly") {
+        const transactionMonth = transactionDate.getMonth();
+        const transactionYear = transactionDate.getFullYear();
+        isInCurrentPeriod = transactionMonth === currentMonth && transactionYear === currentYear;
+      } else if (periodType === "weekly" && currentWeek) {
+        isInCurrentPeriod = isTransactionInWeek(transaction.date, currentWeek);
+      }
 
       if (transaction.type === "entrada") {
         acc.totalIncome += amount;
-        if (isCurrentMonth) {
-          acc.thisMonthIncome += amount;
-          console.log(`Entrada do mês: R$ ${amount} (Total mês: R$ ${acc.thisMonthIncome})`);
+        if (isInCurrentPeriod) {
+          acc.periodIncome += amount;
         }
       } else if (transaction.type === "saída") {
         acc.totalExpenses += amount;
-        if (isCurrentMonth) {
-          acc.thisMonthExpenses += amount;
-          console.log(`Saída do mês: R$ ${amount} (Total mês: R$ ${acc.thisMonthExpenses})`);
+        if (isInCurrentPeriod) {
+          acc.periodExpenses += amount;
         }
       }
       
@@ -84,33 +91,34 @@ export function TransactionSummary({
     }, {
       totalIncome: 0,
       totalExpenses: 0,
-      thisMonthIncome: 0,
-      thisMonthExpenses: 0
+      periodIncome: 0,
+      periodExpenses: 0
     });
 
     const newSummary = {
       ...totals,
       balance: totals.totalIncome - totals.totalExpenses,
-      thisMonthBalance: totals.thisMonthIncome - totals.thisMonthExpenses
+      periodBalance: totals.periodIncome - totals.periodExpenses
     };
     
     console.log("=== Resumo Final ===");
     console.log("Total entradas:", totals.totalIncome);
     console.log("Total saídas:", totals.totalExpenses);
-    console.log("Entradas do mês:", totals.thisMonthIncome);
-    console.log("Saídas do mês:", totals.thisMonthExpenses);
-    console.log("Saldo do mês:", newSummary.thisMonthBalance);
+    console.log(`${periodType === "monthly" ? "Mês" : "Semana"} - Entradas:`, totals.periodIncome);
+    console.log(`${periodType === "monthly" ? "Mês" : "Semana"} - Saídas:`, totals.periodExpenses);
+    console.log(`Saldo do ${periodType === "monthly" ? "mês" : "semana"}:`, newSummary.periodBalance);
     
     setSummary(newSummary);
-  }, [transactions]);
+  }, [transactions, periodType, currentWeek]);
 
-  // Format currency
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
   };
+
+  const periodLabel = periodType === "monthly" ? "Mês Atual" : "Semana Selecionada";
 
   return (
     <Card className={cn("", className)}>
@@ -129,11 +137,11 @@ export function TransactionSummary({
             </div>
             
             <div className="space-y-1">
-              <h3 className="text-sm font-medium text-gray-500">Saldo do Mês Atual</h3>
+              <h3 className="text-sm font-medium text-gray-500">Saldo do {periodLabel}</h3>
               <div className="flex items-center">
-                {summary.thisMonthBalance >= 0 ? <TrendingUp className="h-5 w-5 mr-2 text-green-500" /> : <TrendingDown className="h-5 w-5 mr-2 text-red-500" />}
-                <span className={`text-xl font-bold ${summary.thisMonthBalance >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {formatCurrency(summary.thisMonthBalance)}
+                {summary.periodBalance >= 0 ? <TrendingUp className="h-5 w-5 mr-2 text-green-500" /> : <TrendingDown className="h-5 w-5 mr-2 text-red-500" />}
+                <span className={`text-xl font-bold ${summary.periodBalance >= 0 ? "text-green-600" : "text-red-600"}`}>
+                  {formatCurrency(summary.periodBalance)}
                 </span>
               </div>
             </div>
@@ -149,7 +157,7 @@ export function TransactionSummary({
               </span>
             </div>
             <div className="text-sm text-gray-500">
-              Mês atual: {formatCurrency(summary.thisMonthIncome)}
+              {periodLabel}: {formatCurrency(summary.periodIncome)}
             </div>
           </div>
           
@@ -163,7 +171,7 @@ export function TransactionSummary({
               </span>
             </div>
             <div className="text-sm text-gray-500">
-              Mês atual: {formatCurrency(summary.thisMonthExpenses)}
+              {periodLabel}: {formatCurrency(summary.periodExpenses)}
             </div>
           </div>
           
@@ -176,9 +184,9 @@ export function TransactionSummary({
                 {formatCurrency(summary.balance)}
               </span>
             </div>
-            <div className={`text-sm ${summary.thisMonthBalance >= 0 ? "text-green-500" : "text-red-500"}`}>
-              {summary.thisMonthBalance >= 0 ? "+" : ""}
-              {formatCurrency(summary.thisMonthBalance)} no mês atual
+            <div className={`text-sm ${summary.periodBalance >= 0 ? "text-green-500" : "text-red-500"}`}>
+              {summary.periodBalance >= 0 ? "+" : ""}
+              {formatCurrency(summary.periodBalance)} no {periodType === "monthly" ? "mês atual" : "período"}
             </div>
           </div>
         </div>

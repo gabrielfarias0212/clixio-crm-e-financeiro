@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
@@ -13,12 +12,17 @@ import { TransactionCategoryCharts } from "@/components/TransactionCategoryChart
 import { Transaction, TransactionType } from "@/utils/types";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WeeklyControls } from "@/components/WeeklyControls";
+import { useWeeklyFilter } from "@/hooks/useWeeklyFilter";
 
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const { clients, refreshClients } = useClients();
   const { transactions, addTransaction, deleteTransaction, refreshTransactions } = useTransactions();
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
+  
+  // Hook para filtro semanal
+  const weeklyFilter = useWeeklyFilter();
 
   useEffect(() => {
     document.title = "Financeiro | Wedding CRM";
@@ -81,7 +85,22 @@ export default function CashFlow() {
           </Button>
         </div>
 
-        <TransactionSummary transactions={transactions} className="mb-6" />
+        {/* Controles de Filtro Semanal */}
+        <WeeklyControls
+          periodType={weeklyFilter.periodType}
+          currentWeek={weeklyFilter.currentWeek}
+          onTogglePeriod={weeklyFilter.togglePeriod}
+          onPreviousWeek={weeklyFilter.goToPreviousWeek}
+          onNextWeek={weeklyFilter.goToNextWeek}
+          onCurrentWeek={weeklyFilter.goToCurrentWeek}
+        />
+
+        <TransactionSummary 
+          transactions={transactions} 
+          className="mb-6"
+          periodType={weeklyFilter.periodType}
+          currentWeek={weeklyFilter.currentWeek}
+        />
 
         {/* Tabs para separar Transações e Projeções */}
         <Tabs defaultValue="transactions" className="space-y-6">

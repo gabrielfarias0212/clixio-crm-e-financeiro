@@ -1,4 +1,3 @@
-
 import { ClientStatus, NextAction, EventCategory } from "@/utils/types";
 
 /**
@@ -69,33 +68,45 @@ export function normalizeStatus(status: string | null): ClientStatus {
   const normalizedStatus = status.toLowerCase().trim();
   
   // Check for exact matches first
-  if (normalizedStatus === "orçamento enviado" || 
-      normalizedStatus === "follow-up" || 
-      normalizedStatus === "fechado" || 
-      normalizedStatus === "em andamento" || 
-      normalizedStatus === "pago") {
-    return normalizedStatus as ClientStatus;
+  if (normalizedStatus === "primeiro_contato") {
+    return "primeiro_contato";
   }
   
-  // Check for partial matches
+  if (normalizedStatus === "orçamento enviado") {
+    return "orçamento enviado";
+  }
+  
+  if (normalizedStatus === "negociacao") {
+    return "negociacao";
+  }
+  
+  if (normalizedStatus === "fechado") {
+    return "fechado";
+  }
+  
+  if (normalizedStatus === "projeto_finalizado") {
+    return "projeto_finalizado";
+  }
+  
+  // Check for partial matches and map to new status
+  if (normalizedStatus.includes("follow") || normalizedStatus.includes("contato") || normalizedStatus.includes("negoci")) {
+    return "negociacao";
+  }
+  
   if (normalizedStatus.includes("orça") || normalizedStatus.includes("propos")) {
     return "orçamento enviado";
   }
   
-  if (normalizedStatus.includes("follow") || normalizedStatus.includes("contato") || normalizedStatus.includes("negoci")) {
-    return "follow-up";
+  if (normalizedStatus.includes("andamento") || normalizedStatus.includes("progress") || normalizedStatus.includes("produção") || normalizedStatus.includes("execu")) {
+    return "fechado";
+  }
+  
+  if (normalizedStatus.includes("pago") || normalizedStatus.includes("entregue") || normalizedStatus.includes("conclu") || normalizedStatus.includes("final")) {
+    return "projeto_finalizado";
   }
   
   if (normalizedStatus.includes("fecha") || normalizedStatus.includes("confirm") || normalizedStatus.includes("contrat") || normalizedStatus.includes("aprova")) {
     return "fechado";
-  }
-  
-  if (normalizedStatus.includes("andamento") || normalizedStatus.includes("progress") || normalizedStatus.includes("produção") || normalizedStatus.includes("execu")) {
-    return "em andamento";
-  }
-  
-  if (normalizedStatus.includes("pago") || normalizedStatus.includes("entregue") || normalizedStatus.includes("conclu") || normalizedStatus.includes("final")) {
-    return "pago";
   }
   
   // Default value if no match is found

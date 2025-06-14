@@ -44,7 +44,7 @@ export function useAlerts(clients: Client[] = []) {
         if (!client.weddingDate) return false;
         
         // Check if client status is active
-        if (client.status !== "fechado" && client.status !== "em andamento") return false;
+        if (client.status !== "fechado") return false;
         
         // Check if fully paid already
         if (isFullyPaid(client)) return false;
@@ -188,7 +188,7 @@ export function useAlerts(clients: Client[] = []) {
         const notScheduled = !client.preWeddingDate;
         
         // Status: Client has confirmed status
-        const hasConfirmedStatus = client.status === "fechado" || client.status === "em andamento";
+        const hasConfirmedStatus = client.status === "fechado";
         
         // Timeframe: Wedding within 120 days OR no date defined
         const weddingDate = client.weddingDate ? stringToDate(client.weddingDate) : null;

@@ -172,6 +172,7 @@ export function useFinancialProjections() {
               });
 
               if (monthIndex !== -1) {
+                nextS:
                 nextSixMonths[monthIndex].guaranteed += Number(payment.amount);
                 nextSixMonths[monthIndex].events.push(events.guaranteed[events.guaranteed.length - 1]);
               }
@@ -209,7 +210,7 @@ export function useFinancialProjections() {
           });
 
           if (monthIndex !== -1) {
-            if (client.status === 'fechado' || client.status === 'em andamento') {
+            if (client.status === 'fechado') {
               nextSixMonths[monthIndex].probable += pendingAmount;
               
               const probableEvent: ProjectionEvent = {
@@ -226,7 +227,7 @@ export function useFinancialProjections() {
               
               events.probable.push(probableEvent);
               nextSixMonths[monthIndex].events.push(probableEvent);
-            } else if (client.status === 'orçamento enviado' || client.status === 'follow-up') {
+            } else if (client.status === 'orçamento enviado' || client.status === 'negociacao') {
               const potentialAmount = pendingAmount * 0.3;
               nextSixMonths[monthIndex].potential += potentialAmount;
               
@@ -249,7 +250,7 @@ export function useFinancialProjections() {
         }
 
         // Distribuir valores pendentes otimizado
-        if (!client.weddingDate && pendingAmount > 0 && (client.status === 'fechado' || client.status === 'em andamento')) {
+        if (!client.weddingDate && pendingAmount > 0 && client.status === 'fechado') {
           const monthlyInstallment = pendingAmount / 3;
           for (let i = 0; i < Math.min(3, 6); i++) {
             nextSixMonths[i].probable += monthlyInstallment;

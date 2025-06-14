@@ -13,7 +13,7 @@ import { ClientTable } from "@/components/clients/ClientTable";
 import { ClientCards } from "@/components/clients/ClientCards";
 import { EmptyClientState } from "@/components/clients/EmptyClientState";
 import { DeliveryAlert } from "@/components/clients/DeliveryAlert";
-import { SalesFunnel } from "@/components/clients/SalesFunnel";
+import { KanbanBoard } from "@/components/clients/KanbanBoard";
 
 export default function ClientList() {
   const { clients, loading, refreshClients } = useClients();
@@ -155,7 +155,7 @@ export default function ClientList() {
                 <p>Carregando funil de vendas...</p>
               </div>
             ) : (
-              <SalesFunnel clients={clients} />
+              <KanbanBoard clients={clients} />
             )}
           </TabsContent>
         </Tabs>

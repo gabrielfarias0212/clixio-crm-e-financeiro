@@ -76,7 +76,7 @@ export function ClientTable({ clients }: ClientTableProps) {
               >
                 <div className="flex items-center">
                   {client.name}
-                  {client.status === "pago" && (
+                  {client.status === "projeto_finalizado" && (
                     <span className="ml-2" aria-label="Trabalho Entregue">
                       <CheckCircle className="h-4 w-4 text-green-500" />
                     </span>

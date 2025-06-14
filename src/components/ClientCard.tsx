@@ -20,7 +20,7 @@ export function ClientCard({ client, className, onClick }: ClientCardProps) {
     currency: 'BRL' 
   }).format(contractValue);
 
-  const isPotential = status === "orçamento enviado" || status === "follow-up";
+  const isPotential = status === "orçamento enviado" || status === "primeiro_contato";
 
   return (
     <Card 

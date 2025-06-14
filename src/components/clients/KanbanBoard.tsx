@@ -26,7 +26,7 @@ const funnelStages: Array<{
     icon: Users,
     color: "text-blue-600",
     bgColor: "bg-blue-50",
-    statusMapping: ["orçamento enviado"]
+    statusMapping: ["primeiro_contato"]
   },
   {
     key: "orcamento_enviado",
@@ -42,7 +42,7 @@ const funnelStages: Array<{
     icon: MessageCircle,
     color: "text-yellow-600",
     bgColor: "bg-yellow-50",
-    statusMapping: ["follow-up"]
+    statusMapping: ["negociacao"]
   },
   {
     key: "contrato_fechado",
@@ -50,7 +50,7 @@ const funnelStages: Array<{
     icon: FileCheck,
     color: "text-green-600",
     bgColor: "bg-green-50",
-    statusMapping: ["fechado", "em andamento", "pago"]
+    statusMapping: ["fechado"]
   },
   {
     key: "projeto_finalizado",
@@ -58,7 +58,7 @@ const funnelStages: Array<{
     icon: Archive,
     color: "text-gray-600",
     bgColor: "bg-gray-50",
-    statusMapping: ["entregue"]
+    statusMapping: ["projeto_finalizado"]
   }
 ];
 
@@ -84,7 +84,7 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
 
   const mapFunnelStageToStatus = (stage: SalesFunnelStage): ClientStatus => {
     const stageConfig = funnelStages.find(s => s.key === stage);
-    return stageConfig?.statusMapping[0] || "orçamento enviado";
+    return stageConfig?.statusMapping[0] || "primeiro_contato";
   };
 
   const handleDragEnd = async (result: DropResult) => {

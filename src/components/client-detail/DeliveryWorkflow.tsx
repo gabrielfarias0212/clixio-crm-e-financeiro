@@ -48,9 +48,9 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
         setClient(updatedClient);
         
         // Check if work is now delivered and update status automatically
-        if (isWorkDelivered(updatedClient) && isFullyPaid(updatedClient) && updatedClient.status !== "entregue") {
-          await updateClient(client.id, { status: "entregue" });
-          setClient(prev => ({ ...prev, status: "entregue" }));
+        if (isWorkDelivered(updatedClient) && isFullyPaid(updatedClient) && updatedClient.status !== "projeto_finalizado") {
+          await updateClient(client.id, { status: "projeto_finalizado" });
+          setClient(prev => ({ ...prev, status: "projeto_finalizado" }));
         }
         
         toast({
@@ -80,7 +80,7 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
     try {
       const updates = { 
         isDelivered: true,
-        status: "entregue" as const
+        status: "projeto_finalizado" as const
       };
       const result = await updateClient(client.id, updates);
       
@@ -130,7 +130,7 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
   const progressPercentage = Math.round((completedSteps / totalSteps) * 100);
   const workFullyDelivered = isWorkDelivered(client);
   const fullyPaid = isFullyPaid(client);
-  const canMarkAsDelivered = workFullyDelivered && fullyPaid && client.status !== "entregue";
+  const canMarkAsDelivered = workFullyDelivered && fullyPaid && client.status !== "projeto_finalizado";
 
   const CheckboxItem = ({ 
     label, 
@@ -265,7 +265,7 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
               )}
             </div>
             
-            {client.status === "entregue" && (
+            {client.status === "projeto_finalizado" && (
               <div className="mt-2 text-sm text-green-600">
                 ✅ Trabalho marcado como entregue e concluído
               </div>

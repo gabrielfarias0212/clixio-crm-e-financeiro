@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Client, ClientStatus } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
 import { clearAllData } from "@/utils/supabaseUtils";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Import our new component files
 import { ClientHeader } from "@/components/clients/ClientHeader";
@@ -13,6 +13,7 @@ import { ClientTable } from "@/components/clients/ClientTable";
 import { ClientCards } from "@/components/clients/ClientCards";
 import { EmptyClientState } from "@/components/clients/EmptyClientState";
 import { DeliveryAlert } from "@/components/clients/DeliveryAlert";
+import { SalesFunnel } from "@/components/clients/SalesFunnel";
 
 export default function ClientList() {
   const { clients, loading, refreshClients } = useClients();
@@ -22,6 +23,7 @@ export default function ClientList() {
   const [clearingData, setClearingData] = useState(false);
   const [showDeliveredAlert, setShowDeliveredAlert] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
+  const [activeTab, setActiveTab] = useState("clients");
   
   // Check if there are any newly delivered clients
   useEffect(() => {
@@ -113,31 +115,50 @@ export default function ClientList() {
           clearingData={clearingData}
         />
         
-        <ClientFilters
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          clearFilters={clearFilters}
-          hasActiveFilters={hasActiveFilters}
-        />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="clients">Lista de Clientes</TabsTrigger>
+            <TabsTrigger value="funnel">Funil de Vendas</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="clients">
+            <ClientFilters
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              clearFilters={clearFilters}
+              hasActiveFilters={hasActiveFilters}
+            />
 
-        {/* Results */}
-        {loading ? (
-          <div className="text-center py-12">
-            <p>Carregando clientes...</p>
-          </div>
-        ) : filteredClients.length > 0 ? (
-          viewMode === "list" ? (
-            <ClientTable clients={filteredClients} />
-          ) : (
-            <ClientCards clients={filteredClients} />
-          )
-        ) : (
-          <EmptyClientState hasFilters={hasActiveFilters} />
-        )}
+            {/* Results */}
+            {loading ? (
+              <div className="text-center py-12">
+                <p>Carregando clientes...</p>
+              </div>
+            ) : filteredClients.length > 0 ? (
+              viewMode === "list" ? (
+                <ClientTable clients={filteredClients} />
+              ) : (
+                <ClientCards clients={filteredClients} />
+              )
+            ) : (
+              <EmptyClientState hasFilters={hasActiveFilters} />
+            )}
+          </TabsContent>
+          
+          <TabsContent value="funnel">
+            {loading ? (
+              <div className="text-center py-12">
+                <p>Carregando funil de vendas...</p>
+              </div>
+            ) : (
+              <SalesFunnel clients={clients} />
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );

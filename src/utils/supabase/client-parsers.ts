@@ -1,42 +1,32 @@
 
 import { Client } from '../types';
 
-/**
- * Parses a client from the database format to the application format
- */
-export const parseClient = (client: any): Client => {
+export const parseClient = (data: any): Client => {
   return {
-    id: client.id,
-    name: client.name,
-    coupleName: client.couple_name,
-    email: client.email || '',
-    phone: client.phone || '',
-    weddingDate: client.wedding_date,
-    weddingStartTime: client.wedding_start_time,
-    weddingEndTime: client.wedding_end_time,
-    contractValue: client.contract_value || 0,
-    status: client.status || 'orçamento enviado',
-    nextAction: client.next_action || 'enviar proposta',
-    notes: client.notes || '',
-    downPayment: client.down_payment || 0,
-    eventCategory: client.event_category || 'Casamento',
-    eventLocation: client.event_location,
-    preWeddingDate: client.pre_wedding_date,
-    preWeddingStartTime: client.pre_wedding_start_time,
-    preWeddingEndTime: client.pre_wedding_end_time,
-    contractLink: client.contract_link,
-    hasPreWedding: client.has_pre_wedding !== false, // Default to true if undefined
-    preWeddingScheduled: client.pre_wedding_scheduled,
-    preWeddingCompleted: client.pre_wedding_completed,
-    preWeddingDelivered: client.pre_wedding_delivered,
-    weddingPhotographed: client.wedding_photographed,
-    inEditing: client.in_editing,
-    linkSent: client.link_sent,
-    boxDelivered: client.box_delivered,
-    albumDesigned: client.album_designed,
-    albumApprovedDelivered: client.album_approved_delivered,
-    payments: client.payments || [],
-    createdAt: client.created_at,
-    updatedAt: client.updated_at,
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    coupleName: data.couple_name,
+    weddingDate: data.wedding_date,
+    weddingStartTime: data.wedding_start_time,
+    weddingEndTime: data.wedding_end_time,
+    contractValue: Number(data.contract_value) || 0,
+    downPayment: Number(data.down_payment) || 0,
+    status: data.status,
+    nextAction: data.next_action,
+    eventCategory: data.event_category,
+    eventLocation: data.event_location,
+    preWeddingDate: data.pre_wedding_date,
+    preWeddingStartTime: data.pre_wedding_start_time,
+    preWeddingEndTime: data.pre_wedding_end_time,
+    preWeddingScheduled: data.pre_wedding_scheduled,
+    contractLink: data.contract_link,
+    hasPreWedding: data.has_pre_wedding,
+    salesFunnelStage: data.sales_funnel_stage || 'primeiro_contato', // New field
+    notes: data.notes,
+    payments: [], // Will be loaded separately
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
   };
 };

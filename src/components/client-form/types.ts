@@ -1,3 +1,4 @@
+
 import * as z from "zod";
 import { Client } from "@/utils/types";
 
@@ -35,7 +36,6 @@ export interface ClientFormProps {
     isSubmitting?: boolean;
 }
 
-// Update the ClientFormValues interface to include hasPreWedding
 export interface ClientFormValues {
   name: string;
   coupleName: string;

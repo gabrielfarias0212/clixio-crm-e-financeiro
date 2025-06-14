@@ -1,4 +1,3 @@
-
 export type ClientStatus = 
   | "orçamento enviado" 
   | "follow-up" 
@@ -38,6 +37,13 @@ export type EventCategory =
   | "15 anos";
 
 export type PaymentStatus = "pendente" | "pago" | "atrasado";
+
+export type SalesFunnelStage = 
+  | "primeiro_contato" 
+  | "orcamento_enviado" 
+  | "negociacao" 
+  | "contrato_fechado" 
+  | "projeto_finalizado";
 
 export interface Payment {
   id: string;
@@ -97,7 +103,8 @@ export interface Client {
   boxDelivered?: boolean;
   albumDesigned?: boolean;
   albumApprovedDelivered?: boolean;
-  isDelivered?: boolean; // New field to explicitly mark delivery
+  isDelivered?: boolean;
+  salesFunnelStage: SalesFunnelStage;
   payments: Payment[];
   createdAt: string;
   updatedAt: string;

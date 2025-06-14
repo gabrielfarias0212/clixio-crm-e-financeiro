@@ -1,9 +1,26 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { Client } from '../types';
+import { Client, SalesFunnelStage } from '../types';
 import { formatDateForSupabase } from './base';
 import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, fetchCalendarEvents } from './calendar-events';
 import { v4 as uuidv4 } from 'uuid';
+
+// Function to map client status to sales funnel stage
+const mapStatusToFunnelStage = (status: string): SalesFunnelStage => {
+  switch (status) {
+    case 'orçamento enviado':
+      return 'orcamento_enviado';
+    case 'follow-up':
+      return 'negociacao';
+    case 'fechado':
+    case 'em andamento':
+    case 'pago':
+      return 'contrato_fechado';
+    case 'entregue':
+      return 'projeto_finalizado';
+    default:
+      return 'primeiro_contato';
+  }
+};
 
 export const updateClient = async (id: string, clientData: Partial<Client>): Promise<Client | null> => {
   try {
@@ -13,31 +30,41 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
       pre_wedding_scheduled: !!clientData.preWeddingDate // true if date exists, false if null/empty
     };
 
+    // Update sales funnel stage based on status if status is being updated
+    const salesFunnelStage = clientData.status ? mapStatusToFunnelStage(clientData.status) : undefined;
+
+    const updatePayload: any = {
+      name: updatedData.name,
+      email: updatedData.email,
+      phone: updatedData.phone,
+      couple_name: updatedData.coupleName,
+      wedding_date: updatedData.weddingDate ? formatDateForSupabase(updatedData.weddingDate) : null,
+      wedding_start_time: updatedData.weddingStartTime,
+      wedding_end_time: updatedData.weddingEndTime,
+      contract_value: updatedData.contractValue,
+      down_payment: updatedData.downPayment,
+      status: updatedData.status,
+      next_action: updatedData.nextAction,
+      event_category: updatedData.eventCategory,
+      event_location: updatedData.eventLocation,
+      pre_wedding_date: updatedData.preWeddingDate ? formatDateForSupabase(updatedData.preWeddingDate) : null,
+      pre_wedding_start_time: updatedData.preWeddingStartTime,
+      pre_wedding_end_time: updatedData.preWeddingEndTime,
+      pre_wedding_scheduled: updatedData.pre_wedding_scheduled,
+      contract_link: updatedData.contractLink,
+      has_pre_wedding: updatedData.hasPreWedding,
+      notes: updatedData.notes,
+      updated_at: new Date().toISOString()
+    };
+
+    // Add sales funnel stage if status is being updated
+    if (salesFunnelStage) {
+      updatePayload.sales_funnel_stage = salesFunnelStage;
+    }
+
     const { data, error } = await supabase
       .from('wedding_clients')
-      .update({
-        name: updatedData.name,
-        email: updatedData.email,
-        phone: updatedData.phone,
-        couple_name: updatedData.coupleName,
-        wedding_date: updatedData.weddingDate ? formatDateForSupabase(updatedData.weddingDate) : null,
-        wedding_start_time: updatedData.weddingStartTime,
-        wedding_end_time: updatedData.weddingEndTime,
-        contract_value: updatedData.contractValue,
-        down_payment: updatedData.downPayment,
-        status: updatedData.status,
-        next_action: updatedData.nextAction,
-        event_category: updatedData.eventCategory,
-        event_location: updatedData.eventLocation,
-        pre_wedding_date: updatedData.preWeddingDate ? formatDateForSupabase(updatedData.preWeddingDate) : null,
-        pre_wedding_start_time: updatedData.preWeddingStartTime,
-        pre_wedding_end_time: updatedData.preWeddingEndTime,
-        pre_wedding_scheduled: updatedData.pre_wedding_scheduled,
-        contract_link: updatedData.contractLink,
-        has_pre_wedding: updatedData.hasPreWedding,
-        notes: updatedData.notes,
-        updated_at: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single();
@@ -137,6 +164,7 @@ const parseClientForUpdate = (data: any): Client => {
     preWeddingScheduled: data.pre_wedding_scheduled,
     contractLink: data.contract_link,
     hasPreWedding: data.has_pre_wedding,
+    salesFunnelStage: data.sales_funnel_stage || 'primeiro_contato', // New field
     notes: data.notes,
     payments: [], // Will be loaded separately
     createdAt: data.created_at,

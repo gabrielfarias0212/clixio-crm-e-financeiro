@@ -7,15 +7,15 @@ import { v4 as uuidv4 } from 'uuid';
 // Function to map client status to sales funnel stage
 const mapStatusToFunnelStage = (status: string): SalesFunnelStage => {
   switch (status) {
-    case 'primeiro_contato':
-      return 'primeiro_contato';
     case 'orçamento enviado':
       return 'orcamento_enviado';
-    case 'negociacao':
+    case 'follow-up':
       return 'negociacao';
     case 'fechado':
+    case 'em andamento':
+    case 'pago':
       return 'contrato_fechado';
-    case 'projeto_finalizado':
+    case 'entregue':
       return 'projeto_finalizado';
     default:
       return 'primeiro_contato';

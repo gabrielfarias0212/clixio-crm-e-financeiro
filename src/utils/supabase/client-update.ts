@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Client, SalesFunnelStage } from '../types';
 import { formatDateForSupabase } from './base';
@@ -6,15 +7,19 @@ import { v4 as uuidv4 } from 'uuid';
 
 // Function to map client status to sales funnel stage
 const mapStatusToFunnelStage = (status: string): SalesFunnelStage => {
-  switch (status) {
+  switch (status.toLowerCase()) {
+    case 'primeiro_contato':
+      return 'primeiro_contato';
     case 'orçamento enviado':
       return 'orcamento_enviado';
+    case 'negociacao':
     case 'follow-up':
       return 'negociacao';
     case 'fechado':
     case 'em andamento':
     case 'pago':
       return 'contrato_fechado';
+    case 'projeto_finalizado':
     case 'entregue':
       return 'projeto_finalizado';
     default:
@@ -30,8 +35,11 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
       pre_wedding_scheduled: !!clientData.preWeddingDate // true if date exists, false if null/empty
     };
 
-    // Update sales funnel stage based on status if status is being updated
-    const salesFunnelStage = clientData.status ? mapStatusToFunnelStage(clientData.status) : undefined;
+    // Prioritize salesFunnelStage from clientData. If not present, derive from status.
+    let salesFunnelStage = clientData.salesFunnelStage;
+    if (!salesFunnelStage && clientData.status) {
+      salesFunnelStage = mapStatusToFunnelStage(clientData.status);
+    }
 
     const updatePayload: any = {
       name: updatedData.name,
@@ -57,7 +65,7 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
       updated_at: new Date().toISOString()
     };
 
-    // Add sales funnel stage if status is being updated
+    // Add sales funnel stage to the payload if it exists
     if (salesFunnelStage) {
       updatePayload.sales_funnel_stage = salesFunnelStage;
     }

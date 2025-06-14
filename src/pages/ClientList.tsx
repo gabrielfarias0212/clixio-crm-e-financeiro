@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Client, ClientStatus } from "@/utils/types";
@@ -94,8 +95,8 @@ export default function ClientList() {
     }
   };
 
-  // Count delivered works - only count clients with status "entregue"
-  const deliveredWorksCount = clients.filter(client => client.status === "entregue").length;
+  // Count delivered works - only count clients with status "projeto_finalizado"
+  const deliveredWorksCount = clients.filter(client => client.status === "projeto_finalizado").length;
   
   // Check if filters are active
   const hasActiveFilters = searchQuery !== "" || statusFilter !== "all";

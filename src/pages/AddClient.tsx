@@ -18,18 +18,18 @@ export default function AddClient() {
     document.title = "Adicionar Cliente | Wedding CRM";
   }, []);
 
-  // Function to map client status to sales funnel stage
+  // Function to map client status to sales funnel stage - now 1:1 mapping
   const mapStatusToFunnelStage = (status: string): SalesFunnelStage => {
     switch (status) {
+      case 'primeiro_contato':
+        return 'primeiro_contato';
       case 'orçamento enviado':
         return 'orcamento_enviado';
-      case 'follow-up':
+      case 'negociacao':
         return 'negociacao';
       case 'fechado':
-      case 'em andamento':
-      case 'pago':
         return 'contrato_fechado';
-      case 'entregue':
+      case 'projeto_finalizado':
         return 'projeto_finalizado';
       default:
         return 'primeiro_contato';

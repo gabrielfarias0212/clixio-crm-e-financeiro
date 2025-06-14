@@ -1,10 +1,9 @@
 export type ClientStatus = 
+  | "primeiro_contato"
   | "orçamento enviado" 
-  | "follow-up" 
-  | "fechado" 
-  | "em andamento" 
-  | "pago"
-  | "entregue";
+  | "negociacao"
+  | "fechado"
+  | "projeto_finalizado";
 
 export type NextAction = 
   | "responder" 

@@ -10,12 +10,17 @@ interface StatusBadgeProps {
 export function StatusBadge({ status, className }: StatusBadgeProps) {
   // Define color mappings for different statuses
   const colorMap: Record<ClientStatus, { bg: string; text: string; border: string }> = {
+    "primeiro_contato": {
+      bg: "bg-gray-50",
+      text: "text-gray-600",
+      border: "border-gray-200"
+    },
     "orçamento enviado": {
       bg: "bg-blue-50",
       text: "text-blue-600",
       border: "border-blue-200"
     },
-    "follow-up": {
+    "negociacao": {
       bg: "bg-amber-50",
       text: "text-amber-600",
       border: "border-amber-200"
@@ -25,17 +30,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       text: "text-green-600",
       border: "border-green-200"
     },
-    "em andamento": {
-      bg: "bg-purple-50",
-      text: "text-purple-600",
-      border: "border-purple-200"
-    },
-    "pago": {
-      bg: "bg-teal-50",
-      text: "text-teal-600",
-      border: "border-teal-200"
-    },
-    "entregue": {
+    "projeto_finalizado": {
       bg: "bg-emerald-50",
       text: "text-emerald-600",
       border: "border-emerald-200"

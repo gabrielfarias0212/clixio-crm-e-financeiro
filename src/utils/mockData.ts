@@ -16,13 +16,13 @@ const now = new Date();
 const nextYear = new Date(now.getFullYear() + 1, 0, 1);
 const inTwoYears = new Date(now.getFullYear() + 2, 0, 1);
 
-// Sample status options
+// Sample status options - now aligned with funnel stages
 const statusOptions: ClientStatus[] = [
+  "primeiro_contato",
   "orçamento enviado",
-  "follow-up",
+  "negociacao",
   "fechado",
-  "em andamento",
-  "pago"
+  "projeto_finalizado"
 ];
 
 // Sample next action options
@@ -44,18 +44,18 @@ const eventCategories: EventCategory[] = [
   "Evento Corporativo"
 ];
 
-// Function to map client status to sales funnel stage
+// Function to map client status to sales funnel stage - now 1:1 mapping
 const mapStatusToFunnelStage = (status: string): SalesFunnelStage => {
   switch (status) {
+    case 'primeiro_contato':
+      return 'primeiro_contato';
     case 'orçamento enviado':
       return 'orcamento_enviado';
-    case 'follow-up':
+    case 'negociacao':
       return 'negociacao';
     case 'fechado':
-    case 'em andamento':
-    case 'pago':
       return 'contrato_fechado';
-    case 'entregue':
+    case 'projeto_finalizado':
       return 'projeto_finalizado';
     default:
       return 'primeiro_contato';
@@ -70,26 +70,26 @@ export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
   
   // Set next action based on status (more realistic)
   let nextAction: NextAction;
-  if (status === "orçamento enviado") {
+  if (status === "primeiro_contato") {
+    nextAction = "enviar proposta";
+  } else if (status === "orçamento enviado") {
     nextAction = Math.random() > 0.5 ? "responder" : "enviar proposta";
-  } else if (status === "follow-up") {
+  } else if (status === "negociacao") {
     nextAction = "responder";
   } else if (status === "fechado") {
     nextAction = "editar";
-  } else if (status === "em andamento") {
-    nextAction = "entregar";
   } else {
     nextAction = "nenhuma";
   }
   
   // Generate a random wedding date, with some nulls for prospects
-  const weddingDate = status === "orçamento enviado" && Math.random() > 0.7 
+  const weddingDate = status === "primeiro_contato" && Math.random() > 0.7 
     ? null 
     : randomDate(nextYear, inTwoYears);
   
   // Contract value varies by status
   let contractValue = 0;
-  if (status === "orçamento enviado" || status === "follow-up") {
+  if (status === "primeiro_contato" || status === "orçamento enviado" || status === "negociacao") {
     // Potential value
     contractValue = Math.floor(Math.random() * 4000) + 2000;
   } else {
@@ -98,7 +98,7 @@ export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
   }
 
   // Generate downpayment (30-50% of contract value for closed contracts)
-  const downPayment = (status === "fechado" || status === "em andamento" || status === "pago") 
+  const downPayment = (status === "fechado" || status === "projeto_finalizado") 
     ? Math.round(contractValue * (0.3 + Math.random() * 0.2)) 
     : 0;
   
@@ -114,8 +114,8 @@ export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
     });
     
     // Add additional payments for some clients
-    if (status === "em andamento" || status === "pago") {
-      const numExtraPayments = Math.floor(Math.random() * 3) + (status === "pago" ? 2 : 0);
+    if (status === "fechado" || status === "projeto_finalizado") {
+      const numExtraPayments = Math.floor(Math.random() * 3) + (status === "projeto_finalizado" ? 2 : 0);
       
       let remainingAmount = contractValue - downPayment;
       const paymentDates = Array(numExtraPayments).fill(0)
@@ -123,7 +123,7 @@ export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
         .sort();
       
       for (let j = 0; j < numExtraPayments; j++) {
-        const isLastPayment = j === numExtraPayments - 1 && status === "pago";
+        const isLastPayment = j === numExtraPayments - 1 && status === "projeto_finalizado";
         const paymentAmount = isLastPayment 
           ? remainingAmount 
           : Math.min(Math.round(remainingAmount / (numExtraPayments - j) * Math.random() * 1.5), remainingAmount);

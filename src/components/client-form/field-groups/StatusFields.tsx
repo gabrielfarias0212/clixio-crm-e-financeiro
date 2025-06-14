@@ -36,12 +36,11 @@ export function StatusFields({ control }: StatusFieldsProps) {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="orçamento enviado">Orçamento enviado</SelectItem>
-                <SelectItem value="follow-up">Follow-up</SelectItem>
+                <SelectItem value="primeiro_contato">Primeiro Contato</SelectItem>
+                <SelectItem value="orçamento enviado">Orçamento Enviado</SelectItem>
+                <SelectItem value="negociacao">Negociação</SelectItem>
                 <SelectItem value="fechado">Fechado</SelectItem>
-                <SelectItem value="em andamento">Em andamento</SelectItem>
-                <SelectItem value="pago">Pago</SelectItem>
-                <SelectItem value="entregue">Entregue</SelectItem>
+                <SelectItem value="projeto_finalizado">Projeto Finalizado</SelectItem>
               </SelectContent>
             </Select>
             <FormMessage />

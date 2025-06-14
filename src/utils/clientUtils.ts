@@ -1,4 +1,3 @@
-
 import { Client, ClientStatus } from "./types";
 import { format } from "date-fns";
 
@@ -50,21 +49,21 @@ export const getUpdatedStatus = (client: Client, newPaymentAmount: number = 0): 
   const fullyPaid = totalPaid >= client.contractValue;
   const workDelivered = isWorkDelivered(client);
   
-  // If work is delivered, mark as delivered
+  // If work is delivered, mark as project finalized
   if (workDelivered && fullyPaid) {
-    return "entregue";
+    return "projeto_finalizado";
   }
   
-  // If fully paid but not delivered, keep as paid
+  // If fully paid but not delivered, keep as closed
   if (fullyPaid) {
-    return "pago";
+    return "fechado";
   }
   
   return client.status;
 };
 
 // Helper function to check if client should show delivery indicator
-// Only show for clients with status "entregue"
+// Only show for clients with status "projeto_finalizado"
 export const shouldShowDeliveredIndicator = (client: Client): boolean => {
-  return client.status === "entregue";
+  return client.status === "projeto_finalizado";
 };

@@ -4,7 +4,6 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautif
 import { Client, SalesFunnelStage, ClientStatus } from "@/utils/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, Send, MessageCircle, FileCheck, Archive } from "lucide-react";
 import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
@@ -27,7 +26,7 @@ const funnelStages: Array<{
     icon: Users,
     color: "text-blue-600",
     bgColor: "bg-blue-50",
-    statusMapping: ["orçamento enviado"] // Default for new contacts
+    statusMapping: ["orçamento enviado"]
   },
   {
     key: "orcamento_enviado",
@@ -83,7 +82,6 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
     }).format(value);
   };
 
-  // Map funnel stage to client status
   const mapFunnelStageToStatus = (stage: SalesFunnelStage): ClientStatus => {
     const stageConfig = funnelStages.find(s => s.key === stage);
     return stageConfig?.statusMapping[0] || "orçamento enviado";
@@ -92,12 +90,10 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
-    // If dropped outside a droppable area
     if (!destination) {
       return;
     }
 
-    // If dropped in the same position
     if (
       destination.droppableId === source.droppableId &&
       destination.index === source.index
@@ -127,7 +123,7 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Funil de Vendas - Kanban</h2>
         <Badge variant="outline" className="text-sm">
@@ -136,20 +132,21 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <ScrollArea className="w-full">
-          <div className="flex gap-6 pb-4 min-w-max">
+        {/* Container principal com scroll horizontal */}
+        <div className="w-full overflow-x-auto pb-4">
+          <div className="flex gap-4 min-w-max">
             {funnelStages.map((stage) => {
               const clientsInStage = getClientsInStage(stage.key);
               const totalValue = getTotalValue(clientsInStage);
               const Icon = stage.icon;
               
               return (
-                <div key={stage.key} className="flex-shrink-0 w-80">
+                <div key={stage.key} className="flex-none w-72">
                   <Card className="h-full">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div className={`p-2 rounded-lg ${stage.bgColor}`}>
-                          <Icon className={`h-5 w-5 ${stage.color}`} />
+                          <Icon className={`h-4 w-4 ${stage.color}`} />
                         </div>
                         <Badge variant="secondary" className="text-xs">
                           {clientsInStage.length}
@@ -169,49 +166,47 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
                           <div
                             ref={provided.innerRef}
                             {...provided.droppableProps}
-                            className={`min-h-32 space-y-2 p-2 rounded-lg transition-colors ${
+                            className={`min-h-32 max-h-96 overflow-y-auto space-y-2 p-2 rounded-lg transition-colors ${
                               snapshot.isDraggingOver ? 'bg-blue-50 border-2 border-blue-200 border-dashed' : 'bg-gray-50'
                             }`}
                           >
-                            <ScrollArea className="max-h-96">
-                              {clientsInStage.map((client, index) => (
-                                <Draggable
-                                  key={client.id}
-                                  draggableId={client.id}
-                                  index={index}
-                                >
-                                  {(provided, snapshot) => (
-                                    <div
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                      className={`mb-2 p-3 bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-move ${
-                                        snapshot.isDragging ? 'shadow-lg rotate-2' : ''
-                                      }`}
-                                    >
-                                      <div className="space-y-1">
-                                        <h4 className="font-medium text-sm text-gray-900 truncate">
-                                          {client.name}
-                                        </h4>
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-xs font-semibold text-green-600">
-                                            {formatCurrency(client.contractValue)}
-                                          </span>
-                                          <Badge variant="outline" className="text-xs">
-                                            {client.eventCategory}
-                                          </Badge>
-                                        </div>
-                                        {client.weddingDate && (
-                                          <div className="text-xs text-gray-500">
-                                            {new Date(client.weddingDate).toLocaleDateString('pt-BR')}
-                                          </div>
-                                        )}
+                            {clientsInStage.map((client, index) => (
+                              <Draggable
+                                key={client.id}
+                                draggableId={client.id}
+                                index={index}
+                              >
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    className={`mb-2 p-3 bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-move ${
+                                      snapshot.isDragging ? 'shadow-lg rotate-2' : ''
+                                    }`}
+                                  >
+                                    <div className="space-y-1">
+                                      <h4 className="font-medium text-sm text-gray-900 truncate">
+                                        {client.name}
+                                      </h4>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-xs font-semibold text-green-600">
+                                          {formatCurrency(client.contractValue)}
+                                        </span>
+                                        <Badge variant="outline" className="text-xs">
+                                          {client.eventCategory}
+                                        </Badge>
                                       </div>
+                                      {client.weddingDate && (
+                                        <div className="text-xs text-gray-500">
+                                          {new Date(client.weddingDate).toLocaleDateString('pt-BR')}
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
-                                </Draggable>
-                              ))}
-                            </ScrollArea>
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
                             {provided.placeholder}
                             {clientsInStage.length === 0 && (
                               <div className="text-center text-gray-400 text-sm py-8">
@@ -227,10 +222,10 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
               );
             })}
           </div>
-        </ScrollArea>
+        </div>
       </DragDropContext>
 
-      {/* Conversion Metrics */}
+      {/* Métricas de Conversão */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Métricas de Conversão</CardTitle>

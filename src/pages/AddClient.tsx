@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useClients } from "@/contexts/ClientsContext";
-import { ClientStatus, NextAction, EventCategory } from "@/utils/types";
+import { ClientStatus, NextAction, EventCategory, SalesFunnelStage } from "@/utils/types";
 
 export default function AddClient() {
   const navigate = useNavigate();
@@ -17,6 +17,24 @@ export default function AddClient() {
   useEffect(() => {
     document.title = "Adicionar Cliente | Wedding CRM";
   }, []);
+
+  // Function to map client status to sales funnel stage
+  const mapStatusToFunnelStage = (status: string): SalesFunnelStage => {
+    switch (status) {
+      case 'orçamento enviado':
+        return 'orcamento_enviado';
+      case 'follow-up':
+        return 'negociacao';
+      case 'fechado':
+      case 'em andamento':
+      case 'pago':
+        return 'contrato_fechado';
+      case 'entregue':
+        return 'projeto_finalizado';
+      default:
+        return 'primeiro_contato';
+    }
+  };
 
   const handleCreateClient = async (data: ClientFormValues) => {
     setSubmitting(true);
@@ -48,6 +66,7 @@ export default function AddClient() {
         preWeddingEndTime: data.preWeddingEndTime,
         contractLink: data.contractLink,
         hasPreWedding: data.hasPreWedding,
+        salesFunnelStage: mapStatusToFunnelStage(data.status),
         notes: data.notes || "",
       });
       

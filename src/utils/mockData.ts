@@ -1,4 +1,5 @@
-import { Client, ClientStatus, NextAction, EventCategory, Payment } from "./types";
+
+import { Client, ClientStatus, NextAction, EventCategory, Payment, SalesFunnelStage } from "./types";
 import { v4 as uuidv4 } from 'uuid';
 import { dateToString } from "./dateUtils";
 
@@ -42,6 +43,24 @@ const eventCategories: EventCategory[] = [
   "Ensaio externo",
   "Evento Corporativo"
 ];
+
+// Function to map client status to sales funnel stage
+const mapStatusToFunnelStage = (status: string): SalesFunnelStage => {
+  switch (status) {
+    case 'orçamento enviado':
+      return 'orcamento_enviado';
+    case 'follow-up':
+      return 'negociacao';
+    case 'fechado':
+    case 'em andamento':
+    case 'pago':
+      return 'contrato_fechado';
+    case 'entregue':
+      return 'projeto_finalizado';
+    default:
+      return 'primeiro_contato';
+  }
+};
 
 // Generate a list of 15 sample clients
 export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
@@ -158,6 +177,7 @@ export const clients: Client[] = Array.from({ length: 15 }, (_, i) => {
     eventLocation: eventCategory === "Casamento" ? "São Paulo, SP" : "",
     preWeddingDate: eventCategory === "Casamento" ? randomDate(new Date(), nextYear) : null,
     contractLink: "",
+    salesFunnelStage: mapStatusToFunnelStage(status),
     // Delivery workflow fields
     preWeddingScheduled: eventCategory === "Casamento" ? Math.random() > 0.5 : false,
     preWeddingCompleted: eventCategory === "Casamento" ? Math.random() > 0.6 : false,

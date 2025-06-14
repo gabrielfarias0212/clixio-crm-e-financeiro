@@ -6,7 +6,7 @@ import { useTransactions } from "@/contexts/TransactionsContext";
 import { TransactionList } from "@/components/TransactionList";
 import { AddTransactionForm } from "@/components/AddTransactionForm";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, TrendingUp } from "lucide-react";
+import { PlusCircle, TrendingUp, Settings } from "lucide-react";
 import { TransactionSummary } from "@/components/TransactionSummary";
 import { FutureProjections } from "@/components/FutureProjections";
 import { TransactionCategoryCharts } from "@/components/TransactionCategoryCharts";
@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WeeklyControls } from "@/components/WeeklyControls";
 import { useWeeklyFilter } from "@/hooks/useWeeklyFilter";
+import { useFinancialCategories } from "@/hooks/useFinancialCategories";
+import { FinancialCategoryManager } from "@/components/financial/FinancialCategoryManager";
 
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
@@ -23,6 +25,9 @@ export default function CashFlow() {
   const { transactions, addTransaction, deleteTransaction, refreshTransactions } = useTransactions();
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
   const [weeklyBalance, setWeeklyBalance] = useState(0);
+  const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
+
+  const { categories, loading: loadingCategories, addCategory, removeCategory } = useFinancialCategories();
   
   // Hook para filtro semanal
   const weeklyFilter = useWeeklyFilter();
@@ -78,14 +83,24 @@ export default function CashFlow() {
       <div className="max-w-screen-lg mx-auto px-4 py-8 animate-fade-in">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <h1 className="text-2xl font-bold">Financeiro</h1>
-          <Button 
-            onClick={() => setShowAddTransaction(true)}
-            disabled={showAddTransaction}
-            className="gap-2"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Nova Transação
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={() => setShowAddTransaction(true)}
+              disabled={showAddTransaction}
+              className="gap-2"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Nova Transação
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsCategoryManagerOpen(true)}
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Categorias
+            </Button>
+          </div>
         </div>
 
         {/* Controles de Filtro Semanal */}
@@ -134,6 +149,7 @@ export default function CashFlow() {
                   clients={clients}
                   onAddTransaction={handleAddTransaction}
                   onCancel={() => setShowAddTransaction(false)}
+                  financialCategories={categories}
                 />
               </div>
             )}
@@ -179,6 +195,14 @@ export default function CashFlow() {
           </TabsContent>
         </Tabs>
       </div>
+      <FinancialCategoryManager
+        isOpen={isCategoryManagerOpen}
+        onClose={() => setIsCategoryManagerOpen(false)}
+        categories={categories}
+        addCategory={addCategory}
+        removeCategory={removeCategory}
+        loading={loadingCategories}
+      />
     </Layout>
   );
 }

@@ -1,8 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { FinancialCategory, TransactionType } from '../types';
 import { dateToString } from '../dateUtils';
-import { useAuth } from '@/contexts/AuthContext';
 
 // Helper function to convert database type to app type
 const mapDbTypeToAppType = (dbType: string): TransactionType => {
@@ -70,5 +68,25 @@ export const createFinancialCategory = async ({
   } catch (error) {
     console.error('Error creating financial category:', error);
     return null;
+  }
+};
+
+// Delete a financial category
+export const deleteFinancialCategory = async (categoryId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('financial_categories')
+      .delete()
+      .eq('id', categoryId);
+
+    if (error) {
+      console.error('Error deleting financial category:', error.message);
+      throw error;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting financial category:', error);
+    return false;
   }
 };

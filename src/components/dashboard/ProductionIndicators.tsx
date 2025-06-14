@@ -33,26 +33,26 @@ export function ProductionIndicators() {
     // Count events by status
     const statusCounts = {
       scheduled: 0,
-      // Events scheduled but not delivered
+      // Events scheduled but not delivered - using "fechado" status
       editing: 0,
       // In editing process
-      delivered: 0 // Only count clients with status "entregue"
+      delivered: 0 // Only count clients with status "projeto_finalizado"
     };
     
     clients.forEach(client => {
       // Only count as scheduled if not delivered and in progress
-      if (client.status === "em andamento") statusCounts.scheduled++;
+      if (client.status === "fechado") statusCounts.scheduled++;
       if (client.nextAction === "editar") statusCounts.editing++;
-      // Only count as delivered if status is specifically "entregue"
-      if (client.status === "entregue") statusCounts.delivered++;
+      // Only count as delivered if status is specifically "projeto_finalizado"
+      if (client.status === "projeto_finalizado") statusCounts.delivered++;
     });
 
     // Calculate average delivery time (for delivered events)
     let totalDeliveryDays = 0;
     let deliveredCount = 0;
     clients.forEach(client => {
-      // Only calculate delivery time for clients with status "entregue"
-      if (client.status === "entregue" && client.weddingDate) {
+      // Only calculate delivery time for clients with status "projeto_finalizado"
+      if (client.status === "projeto_finalizado" && client.weddingDate) {
         const weddingDate = stringToDate(client.weddingDate);
         if (weddingDate) {
           const deliveryTime = Math.abs(now.getTime() - weddingDate.getTime());
@@ -94,8 +94,8 @@ export function ProductionIndicators() {
         break;
       case "delivered":
         title = "Eventos Entregues";
-        // Only show clients with status "entregue"
-        clientsToShow = clients.filter(client => client.status === "entregue");
+        // Only show clients with status "projeto_finalizado"
+        clientsToShow = clients.filter(client => client.status === "projeto_finalizado");
         modalType = "delivered";
         break;
     }

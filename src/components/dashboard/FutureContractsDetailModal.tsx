@@ -31,11 +31,11 @@ export function FutureContractsDetailModal({ open, onClose, type }: FutureContra
     switch (status) {
       case 'fechado':
         return 'bg-green-100 text-green-800';
-      case 'em andamento':
+      case 'negociacao':
         return 'bg-blue-100 text-blue-800';
-      case 'pago':
+      case 'projeto_finalizado':
         return 'bg-emerald-100 text-emerald-800';
-      case 'entregue':
+      case 'orçamento enviado':
         return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -56,11 +56,11 @@ export function FutureContractsDetailModal({ open, onClose, type }: FutureContra
         });
       case "guaranteed":
         return futureContracts.filter(client => 
-          client.status === 'fechado' || client.status === 'pago'
+          client.status === 'fechado' || client.status === 'projeto_finalizado'
         );
       case "projected":
         return futureContracts.filter(client => 
-          client.status === 'em andamento' || client.status === 'orçamento enviado'
+          client.status === 'negociacao' || client.status === 'orçamento enviado'
         );
       default:
         return [];
@@ -74,9 +74,9 @@ export function FutureContractsDetailModal({ open, onClose, type }: FutureContra
       case "nextYear":
         return "Contratos do Próximo Ano";
       case "guaranteed":
-        return "Receita Garantida - Contratos Fechados/Pagos";
+        return "Receita Garantida - Contratos Fechados/Finalizados";
       case "projected":
-        return "Receita Projetada - Contratos em Andamento";
+        return "Receita Projetada - Contratos em Negociação";
       default:
         return "Detalhes dos Contratos";
     }

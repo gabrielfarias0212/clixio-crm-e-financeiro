@@ -1,4 +1,3 @@
-
 import React from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { Client, SalesFunnelStage, ClientStatus } from "@/utils/types";
@@ -83,8 +82,20 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
   };
 
   const mapFunnelStageToStatus = (stage: SalesFunnelStage): ClientStatus => {
-    const stageConfig = funnelStages.find(s => s.key === stage);
-    return stageConfig?.statusMapping[0] || "primeiro_contato";
+    switch (stage) {
+      case "primeiro_contato":
+        return "primeiro_contato";
+      case "orcamento_enviado":
+        return "orçamento enviado";
+      case "negociacao":
+        return "negociacao";
+      case "contrato_fechado":
+        return "fechado";
+      case "projeto_finalizado":
+        return "projeto_finalizado";
+      default:
+        return "primeiro_contato";
+    }
   };
 
   const handleDragEnd = async (result: DropResult) => {

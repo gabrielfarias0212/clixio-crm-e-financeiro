@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { FinancialCategory, TransactionType } from '../types';
 import { dateToString } from '../dateUtils';
@@ -5,6 +6,11 @@ import { dateToString } from '../dateUtils';
 // Helper function to convert database type to app type
 const mapDbTypeToAppType = (dbType: string): TransactionType => {
   return dbType === 'entrada' || dbType === 'income' ? 'entrada' : 'saída';
+};
+
+// Helper function to convert app type to database type
+const mapAppTypeToDbType = (appType: TransactionType): 'income' | 'expense' => {
+  return appType === 'entrada' ? 'income' : 'expense';
 };
 
 // Fetch all financial categories
@@ -46,11 +52,13 @@ export const createFinancialCategory = async ({
       throw new Error('User not authenticated');
     }
     
+    const dbType = mapAppTypeToDbType(type);
+    
     const { data, error } = await supabase
       .from('financial_categories')
       .insert({
         name,
-        type,
+        type: dbType, // Use converted type for DB insertion
         photographer_id: photographerId
       })
       .select()

@@ -453,15 +453,7 @@ export type Database = {
           photographer_id?: string
           type?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "financial_categories_photographer_id_fkey"
-            columns: ["photographer_id"]
-            isOneToOne: false
-            referencedRelation: "photographers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       financial_settings: {
         Row: {

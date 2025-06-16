@@ -14,7 +14,7 @@ interface DashboardCardModalProps {
   open: boolean;
   onClose: () => void;
   clients: Client[];
-  type: "leads" | "contracts" | "delivered" | "pending";
+  type: "leads" | "contracts" | "delivered" | "pending" | "monthly-events";
   customData?: AlertItem[]; // Use the imported AlertItem type
 }
 

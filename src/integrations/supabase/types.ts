@@ -97,42 +97,6 @@ export type Database = {
           },
         ]
       }
-      clients: {
-        Row: {
-          address: string | null
-          created_at: string | null
-          email: string
-          id: string
-          name: string
-          notes: string | null
-          phone: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          address?: string | null
-          created_at?: string | null
-          email: string
-          id?: string
-          name: string
-          notes?: string | null
-          phone?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          address?: string | null
-          created_at?: string | null
-          email?: string
-          id?: string
-          name?: string
-          notes?: string | null
-          phone?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       companies: {
         Row: {
           address: string | null
@@ -365,13 +329,6 @@ export type Database = {
           title?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "contracts_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "contracts_package_id_fkey"
             columns: ["package_id"]
@@ -955,15 +912,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "sessions_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       suppliers: {
         Row: {

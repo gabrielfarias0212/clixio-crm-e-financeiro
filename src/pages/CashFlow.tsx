@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
@@ -17,6 +18,8 @@ import { WeeklyControls } from "@/components/WeeklyControls";
 import { useWeeklyFilter } from "@/hooks/useWeeklyFilter";
 import { useFinancialCategories } from "@/hooks/useFinancialCategories";
 import { FinancialCategoryManager } from "@/components/financial/FinancialCategoryManager";
+import { SearchInput } from "@/components/SearchInput";
+import { MonthFilter } from "@/components/financial/MonthFilter";
 
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
@@ -25,6 +28,12 @@ export default function CashFlow() {
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
   const [weeklyBalance, setWeeklyBalance] = useState(0);
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
+  
+  // Estados para pesquisa e filtro mensal das transações
+  const [searchQuery, setSearchQuery] = useState("");
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(String(currentDate.getMonth() + 1).padStart(2, '0'));
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
   const { categories, loading: loadingCategories, addCategory, removeCategory } = useFinancialCategories();
   
@@ -39,13 +48,51 @@ export default function CashFlow() {
     refreshClients();
   }, [refreshTransactions, refreshClients]);
 
-  // Use useMemo to filter transactions for better performance
+  // Filtrar transações por tipo, pesquisa e mês
   const filteredTransactions = useMemo(() => {
-    if (typeFilter === "all") {
-      return transactions;
+    let filtered = transactions;
+
+    // Filtro por tipo
+    if (typeFilter !== "all") {
+      filtered = filtered.filter(t => t.type === typeFilter);
     }
-    return transactions.filter(t => t.type === typeFilter);
-  }, [transactions, typeFilter]);
+
+    // Filtro por pesquisa
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(t => 
+        t.description.toLowerCase().includes(query) ||
+        t.category.toLowerCase().includes(query) ||
+        (t.clientId && clients.find(c => c.id === t.clientId)?.name.toLowerCase().includes(query))
+      );
+    }
+
+    // Filtro por mês/ano
+    filtered = filtered.filter(transaction => {
+      let transactionDate: Date;
+      try {
+        if (transaction.date.includes('/')) {
+          const [day, month, year] = transaction.date.split('/').map(Number);
+          transactionDate = new Date(year, month - 1, day);
+        } else {
+          transactionDate = new Date(transaction.date);
+        }
+        
+        if (isNaN(transactionDate.getTime())) {
+          return false;
+        }
+      } catch (err) {
+        return false;
+      }
+
+      const transactionMonth = String(transactionDate.getMonth() + 1).padStart(2, '0');
+      const transactionYear = transactionDate.getFullYear();
+      
+      return transactionMonth === selectedMonth && transactionYear === selectedYear;
+    });
+
+    return filtered;
+  }, [transactions, typeFilter, searchQuery, selectedMonth, selectedYear, clients]);
 
   const handleAddTransaction = async (newTransaction: Omit<Transaction, "id" | "createdAt">) => {
     const result = await addTransaction(newTransaction);
@@ -75,6 +122,11 @@ export default function CashFlow() {
     
     // Also refresh transactions to update all views
     refreshTransactions();
+  };
+
+  const handleMonthChange = (month: string, year: number) => {
+    setSelectedMonth(month);
+    setSelectedYear(year);
   };
 
   return (
@@ -153,30 +205,53 @@ export default function CashFlow() {
               </div>
             )}
 
-            <div className="mb-4 flex flex-wrap gap-2">
-              <Button
-                variant={typeFilter === "all" ? "default" : "outline"}
-                onClick={() => setTypeFilter("all")}
-                size="sm"
-              >
-                Todas
-              </Button>
-              <Button
-                variant={typeFilter === "entrada" ? "default" : "outline"}
-                onClick={() => setTypeFilter("entrada")}
-                size="sm"
-                className="text-green-700 bg-green-100 hover:bg-green-200 border-green-200"
-              >
-                Entradas
-              </Button>
-              <Button
-                variant={typeFilter === "saída" ? "default" : "outline"}
-                onClick={() => setTypeFilter("saída")}
-                size="sm"
-                className="text-red-700 bg-red-100 hover:bg-red-200 border-red-200"
-              >
-                Saídas
-              </Button>
+            {/* Seção de filtros para transações */}
+            <div className="space-y-4">
+              {/* Barra de pesquisa */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <SearchInput
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    placeholder="Pesquisar por descrição, categoria ou cliente..."
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Filtro mensal */}
+              <MonthFilter
+                selectedMonth={selectedMonth}
+                selectedYear={selectedYear}
+                onMonthChange={handleMonthChange}
+              />
+
+              {/* Filtros de tipo */}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={typeFilter === "all" ? "default" : "outline"}
+                  onClick={() => setTypeFilter("all")}
+                  size="sm"
+                >
+                  Todas
+                </Button>
+                <Button
+                  variant={typeFilter === "entrada" ? "default" : "outline"}
+                  onClick={() => setTypeFilter("entrada")}
+                  size="sm"
+                  className="text-green-700 bg-green-100 hover:bg-green-200 border-green-200"
+                >
+                  Entradas
+                </Button>
+                <Button
+                  variant={typeFilter === "saída" ? "default" : "outline"}
+                  onClick={() => setTypeFilter("saída")}
+                  size="sm"
+                  className="text-red-700 bg-red-100 hover:bg-red-200 border-red-200"
+                >
+                  Saídas
+                </Button>
+              </div>
             </div>
 
             <TransactionList 

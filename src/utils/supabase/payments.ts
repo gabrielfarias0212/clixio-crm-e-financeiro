@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Payment, PaymentStatus } from '../types';
 import { parseDate, formatDateForSupabase } from './base';
@@ -236,9 +237,75 @@ export const markContractAsPaid = async (clientId: string, createTransactionFlag
       return false;
     }
 
+    // If there are no pending payments, we need to check if there are ANY payments at all
     if (!pendingPayments || pendingPayments.length === 0) {
-      console.log('No pending payments found for client');
-      return true; // Already fully paid
+      // Check if client has any payments at all
+      const { data: allPayments, error: allPaymentsError } = await supabase
+        .from('wedding_payments')
+        .select('*')
+        .eq('client_id', clientId);
+      
+      if (allPaymentsError) {
+        console.error('Error fetching all payments:', allPaymentsError);
+        return false;
+      }
+
+      // If client has no payments at all, we need to create one with the contract value
+      if (!allPayments || allPayments.length === 0) {
+        // Get the client's contract value
+        const { data: clientData, error: clientError } = await supabase
+          .from('wedding_clients')
+          .select('contract_value')
+          .eq('id', clientId)
+          .single();
+        
+        if (clientError) {
+          console.error('Error fetching client contract value:', clientError);
+          return false;
+        }
+
+        if (!clientData || !clientData.contract_value) {
+          console.error('Client has no contract value defined');
+          return false;
+        }
+
+        // Create a payment with the full contract value and mark it as paid
+        const { data: newPayment, error: createPaymentError } = await supabase
+          .from('wedding_payments')
+          .insert({
+            client_id: clientId,
+            amount: clientData.contract_value,
+            date: formatDateForSupabase(new Date().toISOString()),
+            notes: 'Contrato quitado integralmente',
+            payment_status: 'pago'
+          })
+          .select()
+          .single();
+
+        if (createPaymentError) {
+          console.error('Error creating payment for contract:', createPaymentError);
+          return false;
+        }
+
+        // Create transaction if requested
+        if (createTransactionFlag && newPayment) {
+          await createTransaction({
+            amount: Number(clientData.contract_value),
+            date: formatDateForSupabase(new Date().toISOString()),
+            type: 'entrada',
+            category: 'pagamento de cliente',
+            description: 'Contrato quitado integralmente',
+            clientId: clientId,
+            paymentId: newPayment.id
+          });
+        }
+
+        return true;
+      } else {
+        // Client has payments but all are already paid
+        console.log('All payments are already marked as paid');
+        return true;
+      }
     }
 
     // Update all pending payments to "pago" status

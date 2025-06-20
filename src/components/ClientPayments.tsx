@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Client, Payment, PaymentStatus } from "@/utils/types";
 import { PaymentHistory } from "./PaymentHistory";
@@ -172,14 +171,35 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
       const success = await markContractAsPaid(client.id, createTransaction);
       
       if (success) {
-        // Update client locally - mark all payments as paid
-        const updatedClient: Client = {
-          ...client,
-          payments: client.payments.map(payment => ({
-            ...payment,
+        // Check if client had no payments before marking as paid
+        const hadNoPayments = client.payments.length === 0;
+        
+        let updatedClient: Client;
+        
+        if (hadNoPayments) {
+          // If client had no payments, add a new payment with the full contract value
+          const newPayment: Payment = {
+            id: `temp-${Date.now()}`, // Temporary ID, will be replaced when data is refreshed
+            amount: client.contractValue,
+            date: new Date().toISOString().split('T')[0],
+            notes: 'Contrato quitado integralmente',
             payment_status: "pago" as PaymentStatus
-          }))
-        };
+          };
+          
+          updatedClient = {
+            ...client,
+            payments: [newPayment]
+          };
+        } else {
+          // If client had payments, mark all as paid
+          updatedClient = {
+            ...client,
+            payments: client.payments.map(payment => ({
+              ...payment,
+              payment_status: "pago" as PaymentStatus
+            }))
+          };
+        }
         
         if (onUpdate) {
           onUpdate(updatedClient);

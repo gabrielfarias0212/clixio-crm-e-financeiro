@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Payment, PaymentStatus } from '../types';
 import { parseDate, formatDateForSupabase } from './base';
@@ -220,5 +219,63 @@ export const checkAndUpdateOverduePayments = async (): Promise<void> => {
     }
   } catch (error) {
     console.error('Exception in checking overdue payments:', error);
+  }
+};
+
+export const markContractAsPaid = async (clientId: string, createTransaction: boolean = true): Promise<boolean> => {
+  try {
+    // First, get all pending payments for this client
+    const { data: pendingPayments, error: fetchError } = await supabase
+      .from('wedding_payments')
+      .select('*')
+      .eq('client_id', clientId)
+      .neq('payment_status', 'pago');
+    
+    if (fetchError) {
+      console.error('Error fetching pending payments:', fetchError);
+      return false;
+    }
+
+    if (!pendingPayments || pendingPayments.length === 0) {
+      console.log('No pending payments found for client');
+      return true; // Already fully paid
+    }
+
+    // Update all pending payments to "pago" status
+    const paymentIds = pendingPayments.map(p => p.id);
+    
+    const { error: updateError } = await supabase
+      .from('wedding_payments')
+      .update({ payment_status: 'pago' })
+      .in('id', paymentIds);
+    
+    if (updateError) {
+      console.error('Error updating payment status:', updateError);
+      return false;
+    }
+
+    // Create transactions only if requested
+    if (createTransaction) {
+      for (const payment of pendingPayments) {
+        const transactionDescription = payment.notes 
+          ? `Pagamento de cliente: ${payment.notes}`
+          : `Pagamento de cliente - Contrato quitado`;
+          
+        await createTransaction({
+          amount: Number(payment.amount),
+          date: formatDateForSupabase(new Date().toISOString()),
+          type: 'entrada',
+          category: 'pagamento de cliente',
+          description: transactionDescription,
+          clientId: clientId,
+          paymentId: payment.id
+        });
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Exception in markContractAsPaid:', error);
+    return false;
   }
 };

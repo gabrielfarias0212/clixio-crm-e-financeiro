@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Client, Payment } from "@/utils/types";
 import { PaymentHistory } from "./PaymentHistory";
 import { AddPaymentForm } from "./AddPaymentForm";
+import { MarkContractAsPaidDialog } from "./MarkContractAsPaidDialog";
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, CheckCircleIcon } from "lucide-react";
 import { DialogContent, Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { createPayment, deletePayment, updatePaymentStatus, updatePaymentDueDate } from "@/utils/supabaseUtils";
+import { createPayment, deletePayment, updatePaymentStatus, updatePaymentDueDate, markContractAsPaid } from "@/utils/supabaseUtils";
 import { toast } from "sonner";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { createTransaction, deleteTransaction } from "@/utils/supabase/transactions";
@@ -17,8 +18,14 @@ export interface ClientPaymentsProps {
 
 export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
   const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
+  const [isMarkAsPaidOpen, setIsMarkAsPaidOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { refreshTransactions } = useTransactions();
+  
+  // Calculate if contract has pending payments
+  const totalPaid = client.payments.reduce((sum, payment) => sum + payment.amount, 0);
+  const pendingAmount = client.contractValue - totalPaid;
+  const hasPendingPayments = pendingAmount > 0;
   
   const handlePaymentAdded = async (updatedClient: Client) => {
     try {
@@ -157,25 +164,80 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
     }
   };
 
+  const handleMarkContractAsPaid = async (createTransaction: boolean) => {
+    try {
+      setIsSubmitting(true);
+      
+      const success = await markContractAsPaid(client.id, createTransaction);
+      
+      if (success) {
+        // Update client locally - mark all payments as paid
+        const updatedClient = {
+          ...client,
+          payments: client.payments.map(payment => ({
+            ...payment,
+            payment_status: "pago"
+          }))
+        };
+        
+        if (onUpdate) {
+          onUpdate(updatedClient);
+        }
+
+        // Refresh transactions if transaction was created
+        if (createTransaction) {
+          refreshTransactions();
+        }
+        
+        setIsMarkAsPaidOpen(false);
+        
+        const message = createTransaction 
+          ? "Contrato marcado como pago! O fluxo de caixa e resumo financeiro foram atualizados."
+          : "Contrato marcado como pago! Nenhuma transação foi criada no fluxo de caixa.";
+        
+        toast.success(message);
+      } else {
+        toast.error("Erro ao marcar contrato como pago. Tente novamente.");
+      }
+    } catch (error) {
+      console.error("Error marking contract as paid:", error);
+      toast.error("Erro ao marcar contrato como pago. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Pagamentos</h2>
-        <Dialog open={isAddPaymentOpen} onOpenChange={setIsAddPaymentOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" variant="outline">
-              <PlusIcon className="h-4 w-4 mr-1" />
-              Adicionar Pagamento
+        <div className="flex gap-2">
+          {hasPendingPayments && (
+            <Button 
+              size="sm" 
+              onClick={() => setIsMarkAsPaidOpen(true)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <CheckCircleIcon className="h-4 w-4 mr-1" />
+              Marcar como Pago
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <AddPaymentForm 
-              client={client} 
-              onSuccess={handlePaymentAdded}
-              onCancel={() => setIsAddPaymentOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
+          )}
+          <Dialog open={isAddPaymentOpen} onOpenChange={setIsAddPaymentOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline">
+                <PlusIcon className="h-4 w-4 mr-1" />
+                Adicionar Pagamento
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <AddPaymentForm 
+                client={client} 
+                onSuccess={handlePaymentAdded}
+                onCancel={() => setIsAddPaymentOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       
       <PaymentHistory 
@@ -184,6 +246,14 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
         onUpdatePayment={handleUpdatePayment}
         isDeleting={isSubmitting}
         isUpdating={isSubmitting}
+      />
+
+      <MarkContractAsPaidDialog
+        open={isMarkAsPaidOpen}
+        onClose={() => setIsMarkAsPaidOpen(false)}
+        client={client}
+        onConfirm={handleMarkContractAsPaid}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

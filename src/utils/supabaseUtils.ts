@@ -1,4 +1,3 @@
-
 // This file re-exports all Supabase utility functions from the modular files
 // to maintain backwards compatibility with existing code
 
@@ -25,7 +24,8 @@ export {
   updatePaymentStatus,
   updatePaymentDueDate,
   updatePaymentNotes,
-  checkAndUpdateOverduePayments
+  checkAndUpdateOverduePayments,
+  markContractAsPaid
 } from './supabase/payments';
 
 export { 

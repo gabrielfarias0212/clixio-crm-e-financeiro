@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { Client, Payment } from "@/utils/types";
+import { Client, Payment, PaymentStatus } from "@/utils/types";
 import { PaymentHistory } from "./PaymentHistory";
 import { AddPaymentForm } from "./AddPaymentForm";
 import { MarkContractAsPaidDialog } from "./MarkContractAsPaidDialog";
@@ -172,11 +173,11 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
       
       if (success) {
         // Update client locally - mark all payments as paid
-        const updatedClient = {
+        const updatedClient: Client = {
           ...client,
           payments: client.payments.map(payment => ({
             ...payment,
-            payment_status: "pago"
+            payment_status: "pago" as PaymentStatus
           }))
         };
         

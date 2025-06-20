@@ -10,7 +10,7 @@ export const parsePayment = (payment: any): Payment => {
     date: parseDate(payment.date) || "",
     notes: payment.notes,
     due_date: payment.due_date ? parseDate(payment.due_date) : undefined,
-    payment_status: payment.payment_status || "pendente"
+    payment_status: payment.payment_status as PaymentStatus || "pendente"
   };
 };
 
@@ -222,7 +222,7 @@ export const checkAndUpdateOverduePayments = async (): Promise<void> => {
   }
 };
 
-export const markContractAsPaid = async (clientId: string, createTransaction: boolean = true): Promise<boolean> => {
+export const markContractAsPaid = async (clientId: string, createTransactionFlag: boolean = true): Promise<boolean> => {
   try {
     // First, get all pending payments for this client
     const { data: pendingPayments, error: fetchError } = await supabase
@@ -255,7 +255,7 @@ export const markContractAsPaid = async (clientId: string, createTransaction: bo
     }
 
     // Create transactions only if requested
-    if (createTransaction) {
+    if (createTransactionFlag) {
       for (const payment of pendingPayments) {
         const transactionDescription = payment.notes 
           ? `Pagamento de cliente: ${payment.notes}`

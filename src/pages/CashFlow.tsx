@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, TrendingUp, Settings } from "lucide-react";
 import { TransactionSummary } from "@/components/TransactionSummary";
 import { FutureProjections } from "@/components/FutureProjections";
-import { EnhancedCategoryCharts } from "@/components/financial/EnhancedCategoryCharts";
+import { TransactionCategoryCharts } from "@/components/TransactionCategoryCharts";
 import { ProLaboreCard } from "@/components/ProLaboreCard";
 import { Transaction, TransactionType } from "@/utils/types";
 import { toast } from "sonner";
@@ -186,10 +186,10 @@ export default function CashFlow() {
               onDeleteTransaction={handleDeleteTransaction}
             />
 
-            {/* Novos gráficos de categorias melhorados */}
+            {/* Gráficos de categorias originais */}
             <div className="mt-8">
               <h2 className="text-xl font-semibold mb-4">Análise por Categorias</h2>
-              <EnhancedCategoryCharts transactions={transactions} />
+              <TransactionCategoryCharts transactions={transactions} />
             </div>
           </TabsContent>
 

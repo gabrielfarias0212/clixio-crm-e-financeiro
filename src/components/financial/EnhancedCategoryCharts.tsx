@@ -1,4 +1,3 @@
-
 import { useMemo, useState } from 'react';
 import { Transaction } from '@/utils/types';
 import { useTransactionCategories, CategoryData } from '@/hooks/useTransactionCategories';
@@ -6,11 +5,11 @@ import { MonthFilter } from './MonthFilter';
 import { CategoryChart } from './CategoryChart';
 import { CategorySummaryCards } from './CategorySummaryCards';
 
-interface EnhancedCategoryCha rtsProps {
+interface EnhancedCategoryChartsProps {
   transactions: Transaction[];
 }
 
-export function EnhancedCategoryCharts({ transactions }: EnhancedCategoryCha rtsProps) {
+export function EnhancedCategoryCharts({ transactions }: EnhancedCategoryChartsProps) {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(String(currentDate.getMonth() + 1).padStart(2, '0'));
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());

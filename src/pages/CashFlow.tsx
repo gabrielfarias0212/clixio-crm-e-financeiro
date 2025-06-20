@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
@@ -186,10 +185,14 @@ export default function CashFlow() {
               onDeleteTransaction={handleDeleteTransaction}
             />
 
-            {/* Gráficos de categorias originais */}
+            {/* Gráficos de categorias sincronizados com o período principal */}
             <div className="mt-8">
               <h2 className="text-xl font-semibold mb-4">Análise por Categorias</h2>
-              <TransactionCategoryCharts transactions={transactions} />
+              <TransactionCategoryCharts 
+                transactions={transactions}
+                periodType={weeklyFilter.periodType}
+                currentWeek={weeklyFilter.currentWeek}
+              />
             </div>
           </TabsContent>
 

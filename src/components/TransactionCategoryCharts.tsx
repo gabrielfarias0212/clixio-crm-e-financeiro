@@ -1,46 +1,73 @@
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTransactionCategories } from '@/hooks/useTransactionCategories';
 import { ExpensesByCategoryChart } from './ExpensesByCategoryChart';
 import { IncomesByCategoryChart } from './IncomesByCategoryChart';
-import { MonthFilter } from './financial/MonthFilter';
 import { Transaction } from '@/utils/types';
+import { isTransactionInWeek, WeekInfo } from '@/utils/dates/weekUtils';
+import { PeriodType } from '@/hooks/useWeeklyFilter';
 
 interface TransactionCategoryChartsProps {
   transactions: Transaction[];
+  periodType?: PeriodType;
+  currentWeek?: WeekInfo;
 }
 
-export function TransactionCategoryCharts({ transactions }: TransactionCategoryChartsProps) {
-  const currentDate = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(String(currentDate.getMonth() + 1).padStart(2, '0'));
-  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
-
-  // Filtrar transações pelo mês/ano selecionado APENAS para os gráficos
+export function TransactionCategoryCharts({ 
+  transactions, 
+  periodType = "monthly", 
+  currentWeek 
+}: TransactionCategoryChartsProps) {
+  
+  // Filtrar transações usando a mesma lógica do TransactionSummary
   const filteredTransactions = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
     return transactions.filter(transaction => {
-      const transactionDate = new Date(transaction.date);
-      const transactionMonth = String(transactionDate.getMonth() + 1).padStart(2, '0');
-      const transactionYear = transactionDate.getFullYear();
+      // Parse transaction date
+      let transactionDate: Date;
+      try {
+        if (transaction.date.includes('/')) {
+          const [day, month, year] = transaction.date.split('/').map(Number);
+          transactionDate = new Date(year, month - 1, day);
+        } else {
+          transactionDate = new Date(transaction.date);
+        }
+        
+        if (isNaN(transactionDate.getTime())) {
+          return false;
+        }
+      } catch (err) {
+        return false;
+      }
+
+      // Aplicar o mesmo filtro usado no TransactionSummary
+      if (periodType === "monthly") {
+        const transactionMonth = transactionDate.getMonth();
+        const transactionYear = transactionDate.getFullYear();
+        return transactionMonth === currentMonth && transactionYear === currentYear;
+      } else if (periodType === "weekly" && currentWeek) {
+        return isTransactionInWeek(transaction.date, currentWeek);
+      }
       
-      return transactionMonth === selectedMonth && transactionYear === selectedYear;
+      return true;
     });
-  }, [transactions, selectedMonth, selectedYear]);
+  }, [transactions, periodType, currentWeek]);
 
   const { expenses, incomes, totalExpenses, totalIncomes } = useTransactionCategories(filteredTransactions);
 
-  const handleMonthChange = (month: string, year: number) => {
-    setSelectedMonth(month);
-    setSelectedYear(year);
-  };
+  const periodLabel = periodType === "monthly" ? "Mês Atual" : "Semana Selecionada";
 
   return (
     <div className="space-y-6">
-      {/* Filtro de mês */}
-      <MonthFilter
-        selectedMonth={selectedMonth}
-        selectedYear={selectedYear}
-        onMonthChange={handleMonthChange}
-      />
+      {/* Indicador do período sendo exibido */}
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground">
+          Dados exibidos para: <span className="font-medium">{periodLabel}</span>
+        </p>
+      </div>
       
       {/* Gráficos lado a lado */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

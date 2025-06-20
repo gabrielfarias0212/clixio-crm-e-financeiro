@@ -3,13 +3,9 @@ import { useState, useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
-import { TransactionList } from "@/components/TransactionList";
-import { AddTransactionForm } from "@/components/AddTransactionForm";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, TrendingUp, Settings } from "lucide-react";
 import { TransactionSummary } from "@/components/TransactionSummary";
-import { FutureProjections } from "@/components/FutureProjections";
-import { TransactionCategoryCharts } from "@/components/TransactionCategoryCharts";
 import { ProLaboreCard } from "@/components/ProLaboreCard";
 import { Transaction, TransactionType } from "@/utils/types";
 import { toast } from "sonner";
@@ -18,8 +14,8 @@ import { WeeklyControls } from "@/components/WeeklyControls";
 import { useWeeklyFilter } from "@/hooks/useWeeklyFilter";
 import { useFinancialCategories } from "@/hooks/useFinancialCategories";
 import { FinancialCategoryManager } from "@/components/financial/FinancialCategoryManager";
-import { SearchInput } from "@/components/SearchInput";
-import { MonthFilter } from "@/components/financial/MonthFilter";
+import { TransactionSection } from "@/components/financial/TransactionSection";
+import { ProjectionsSection } from "@/components/financial/ProjectionsSection";
 
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
@@ -193,86 +189,29 @@ export default function CashFlow() {
           </TabsList>
 
           <TabsContent value="transactions" className="space-y-6">
-            {showAddTransaction && (
-              <div className="mb-6 p-4 border rounded-lg bg-gray-50">
-                <h2 className="text-lg font-medium mb-4">Registrar Nova Transação</h2>
-                <AddTransactionForm 
-                  clients={clients}
-                  onAddTransaction={handleAddTransaction}
-                  onCancel={() => setShowAddTransaction(false)}
-                  financialCategories={categories}
-                />
-              </div>
-            )}
-
-            {/* Seção de filtros para transações */}
-            <div className="space-y-4">
-              {/* Barra de pesquisa */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <SearchInput
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                    placeholder="Pesquisar por descrição, categoria ou cliente..."
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              {/* Filtro mensal */}
-              <MonthFilter
-                selectedMonth={selectedMonth}
-                selectedYear={selectedYear}
-                onMonthChange={handleMonthChange}
-              />
-
-              {/* Filtros de tipo */}
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant={typeFilter === "all" ? "default" : "outline"}
-                  onClick={() => setTypeFilter("all")}
-                  size="sm"
-                >
-                  Todas
-                </Button>
-                <Button
-                  variant={typeFilter === "entrada" ? "default" : "outline"}
-                  onClick={() => setTypeFilter("entrada")}
-                  size="sm"
-                  className="text-green-700 bg-green-100 hover:bg-green-200 border-green-200"
-                >
-                  Entradas
-                </Button>
-                <Button
-                  variant={typeFilter === "saída" ? "default" : "outline"}
-                  onClick={() => setTypeFilter("saída")}
-                  size="sm"
-                  className="text-red-700 bg-red-100 hover:bg-red-200 border-red-200"
-                >
-                  Saídas
-                </Button>
-              </div>
-            </div>
-
-            <TransactionList 
-              transactions={filteredTransactions} 
-              clients={clients} 
+            <TransactionSection
+              showAddTransaction={showAddTransaction}
+              onToggleAddTransaction={setShowAddTransaction}
+              clients={clients}
+              financialCategories={categories}
+              onAddTransaction={handleAddTransaction}
+              filteredTransactions={filteredTransactions}
               onDeleteTransaction={handleDeleteTransaction}
+              allTransactions={transactions}
+              periodType={weeklyFilter.periodType}
+              currentWeek={weeklyFilter.currentWeek}
+              typeFilter={typeFilter}
+              onTypeFilterChange={setTypeFilter}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              selectedMonth={selectedMonth}
+              selectedYear={selectedYear}
+              onMonthChange={handleMonthChange}
             />
-
-            {/* Gráficos de categorias sincronizados com o período principal */}
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4">Análise por Categorias</h2>
-              <TransactionCategoryCharts 
-                transactions={transactions}
-                periodType={weeklyFilter.periodType}
-                currentWeek={weeklyFilter.currentWeek}
-              />
-            </div>
           </TabsContent>
 
           <TabsContent value="projections">
-            <FutureProjections />
+            <ProjectionsSection />
           </TabsContent>
         </Tabs>
       </div>

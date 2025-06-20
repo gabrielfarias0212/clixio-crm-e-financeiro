@@ -18,7 +18,11 @@ export default function Index() {
     return <Navigate to="/auth" replace />;
   }
 
-  // Usar hooks de forma otimizada
+  return <AuthenticatedDashboard />;
+}
+
+function AuthenticatedDashboard() {
+  // Agora os hooks podem ser chamados com segurança dentro do contexto
   const { refreshTransactions, loading: transactionsLoading } = useTransactions();
   const { refreshClients, loading: clientsLoading } = useClients();
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);

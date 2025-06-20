@@ -1,7 +1,6 @@
-
 import { Card, CardContent } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, PieChart, BarChart3 } from 'lucide-react';
-import { formatCurrency } from '@/utils/dateUtils';
+import { formatCurrency } from '@/utils/currency';
 
 interface CategorySummaryCardsProps {
   totalIncomes: number;

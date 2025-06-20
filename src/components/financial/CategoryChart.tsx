@@ -2,7 +2,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CategoryData } from '@/hooks/useTransactionCategories';
-import { formatCurrency } from '@/utils/dateUtils';
+import { formatCurrency } from '@/utils/currency';
 import { TrendingDown, TrendingUp } from 'lucide-react';
 
 interface CategoryChartProps {

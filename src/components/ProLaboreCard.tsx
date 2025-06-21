@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, CheckCircle, AlertCircle, TrendingUp } from "lucide-react";
+import { Wallet, CheckCircle, AlertCircle, TrendingUp, Calendar } from "lucide-react";
 import { useProLabore } from "@/hooks/useProLabore";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { WeekInfo } from "@/utils/dates/weekUtils";
@@ -14,10 +14,15 @@ interface ProLaboreCardProps {
 }
 
 export function ProLaboreCard({ currentWeek, weeklyBalance }: ProLaboreCardProps) {
-  const { availableAmount, isAlreadyWithdrawn, canWithdraw, withdrawProLabore } = useProLabore(
-    currentWeek,
-    weeklyBalance
-  );
+  const { 
+    availableAmount, 
+    monthlyIncomes, 
+    totalProLabore, 
+    alreadyWithdrawn, 
+    canWithdraw, 
+    withdrawProLabore,
+    currentMonthRecords 
+  } = useProLabore(currentWeek, weeklyBalance);
   
   // Hook para forçar refresh das transações empresariais
   const { refreshTransactions } = useTransactions();
@@ -41,18 +46,21 @@ export function ProLaboreCard({ currentWeek, weeklyBalance }: ProLaboreCardProps
     }
   };
 
+  const hasWithdrawals = currentMonthRecords.length > 0;
+  const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
   return (
     <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold text-blue-800 flex items-center gap-2">
             <Wallet className="h-5 w-5" />
-            Pró-Labore Semanal
+            Pró-Labore Mensal
           </CardTitle>
-          {isAlreadyWithdrawn ? (
+          {!canWithdraw && hasWithdrawals ? (
             <Badge variant="secondary" className="bg-gray-100 text-gray-600">
               <CheckCircle className="h-3 w-3 mr-1" />
-              Retirado
+              Retirado Totalmente
             </Badge>
           ) : canWithdraw ? (
             <Badge className="bg-green-100 text-green-700">
@@ -71,32 +79,50 @@ export function ProLaboreCard({ currentWeek, weeklyBalance }: ProLaboreCardProps
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <p className="text-sm text-gray-600">Saldo da Semana</p>
-            <p className={`text-lg font-bold ${weeklyBalance > 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrency(weeklyBalance)}
+            <p className="text-sm text-gray-600">Entradas do Mês</p>
+            <p className={`text-lg font-bold ${monthlyIncomes > 0 ? 'text-green-600' : 'text-gray-500'}`}>
+              {formatCurrency(monthlyIncomes)}
             </p>
           </div>
           
           <div className="space-y-1">
-            <p className="text-sm text-gray-600">Pró-Labore (30%)</p>
+            <p className="text-sm text-gray-600">Pró-Labore Total (25%)</p>
             <p className="text-lg font-bold text-blue-600">
-              {formatCurrency(availableAmount)}
+              {formatCurrency(totalProLabore)}
             </p>
           </div>
         </div>
 
+        {hasWithdrawals && (
+          <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+            <div className="space-y-1">
+              <p className="text-sm text-gray-600">Já Retirado</p>
+              <p className="text-lg font-bold text-orange-600">
+                {formatCurrency(alreadyWithdrawn)}
+              </p>
+            </div>
+            
+            <div className="space-y-1">
+              <p className="text-sm text-gray-600">Disponível</p>
+              <p className="text-lg font-bold text-green-600">
+                {formatCurrency(availableAmount)}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="pt-2">
-          {weeklyBalance <= 0 ? (
+          {monthlyIncomes <= 0 ? (
             <p className="text-sm text-gray-500 text-center">
-              Pró-labore disponível apenas com saldo positivo na semana
+              Pró-labore disponível apenas com entradas no mês
             </p>
-          ) : isAlreadyWithdrawn ? (
+          ) : !canWithdraw && hasWithdrawals ? (
             <div className="text-center space-y-2">
               <p className="text-sm text-gray-500">
-                Pró-labore já retirado nesta semana. Próximo disponível na semana seguinte.
+                Pró-labore totalmente retirado neste mês ({currentMonthRecords.length} retirada{currentMonthRecords.length > 1 ? 's' : ''}).
               </p>
               <p className="text-xs text-blue-600">
-                ✓ Valor debitado do fluxo empresarial e creditado no controle pessoal
+                ✓ Valores debitados do fluxo empresarial e creditados no controle pessoal
               </p>
             </div>
           ) : (
@@ -111,8 +137,9 @@ export function ProLaboreCard({ currentWeek, weeklyBalance }: ProLaboreCardProps
           )}
         </div>
 
-        <div className="text-xs text-gray-500 text-center pt-2 border-t">
-          Semana: {currentWeek.label}
+        <div className="text-xs text-gray-500 text-center pt-2 border-t flex items-center justify-center gap-1">
+          <Calendar className="h-3 w-3" />
+          Mês: {currentMonth}
         </div>
       </CardContent>
     </Card>

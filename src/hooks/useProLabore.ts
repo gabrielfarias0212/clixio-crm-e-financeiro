@@ -4,28 +4,43 @@ import { WeekInfo } from "@/utils/dates/weekUtils";
 import { createPersonalTransaction, deletePersonalTransaction } from "@/utils/supabase/personal-transactions";
 import { createTransaction, deleteTransaction } from "@/utils/supabase/transactions";
 import { Transaction } from "@/utils/types";
+import { useTransactions } from "@/contexts/TransactionsContext";
 
 export interface ProLaboreRecord {
-  weekKey: string;
+  id: string;
+  monthKey: string;
   amount: number;
   withdrawn: boolean;
   date: string;
   personalTransactionId?: string;
-  businessTransactionId?: string; // Nova propriedade para vincular transação empresarial
+  businessTransactionId?: string;
 }
 
 export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
   const [proLaboreRecords, setProLaboreRecords] = useState<ProLaboreRecord[]>([]);
+  const { transactions } = useTransactions();
   
-  // Gerar chave única para a semana atual
-  const currentWeekKey = currentWeek.start.toISOString().split('T')[0];
+  // Gerar chave única para o mês atual
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   
-  // Carregar registros do localStorage (mantém compatibilidade temporária)
+  // Carregar registros do localStorage
   useEffect(() => {
     const saved = localStorage.getItem('proLaboreRecords');
     if (saved) {
       try {
-        setProLaboreRecords(JSON.parse(saved));
+        const oldRecords = JSON.parse(saved);
+        // Migrar registros antigos (semanais) para novo formato (mensal)
+        const migratedRecords = oldRecords.map((record: any, index: number) => ({
+          id: record.id || `migrated-${index}`,
+          monthKey: record.weekKey ? convertWeekKeyToMonthKey(record.weekKey) : record.monthKey,
+          amount: record.amount,
+          withdrawn: record.withdrawn,
+          date: record.date,
+          personalTransactionId: record.personalTransactionId,
+          businessTransactionId: record.businessTransactionId
+        }));
+        setProLaboreRecords(migratedRecords);
       } catch (error) {
         console.error('Erro ao carregar registros de pró-labore:', error);
         setProLaboreRecords([]);
@@ -33,22 +48,73 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
     }
   }, []);
 
+  // Converter chave semanal para mensal (migração)
+  const convertWeekKeyToMonthKey = (weekKey: string): string => {
+    try {
+      const date = new Date(weekKey);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    } catch {
+      return currentMonthKey;
+    }
+  };
+
   // Salvar registros no localStorage
   const saveRecords = useCallback((records: ProLaboreRecord[]) => {
     localStorage.setItem('proLaboreRecords', JSON.stringify(records));
     setProLaboreRecords(records);
   }, []);
 
-  // Verificar se já foi retirado na semana atual
-  const currentWeekRecord = proLaboreRecords.find(record => record.weekKey === currentWeekKey);
-  const isAlreadyWithdrawn = currentWeekRecord?.withdrawn || false;
+  // Calcular entradas do mês atual
+  const currentMonthIncomes = useCallback(() => {
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    return transactions
+      .filter(transaction => {
+        // Filtrar apenas entradas
+        if (transaction.type !== "entrada") return false;
+        
+        // Parse da data da transação
+        let transactionDate: Date;
+        try {
+          if (transaction.date.includes('/')) {
+            const [day, month, year] = transaction.date.split('/').map(Number);
+            transactionDate = new Date(year, month - 1, day);
+          } else {
+            transactionDate = new Date(transaction.date);
+          }
+          
+          if (isNaN(transactionDate.getTime())) return false;
+        } catch {
+          return false;
+        }
 
-  // Calcular valor disponível (30% do saldo positivo)
-  const availableAmount = weeklyBalance > 0 ? weeklyBalance * 0.3 : 0;
+        // Verificar se é do mês atual
+        return transactionDate.getMonth() === currentMonth && 
+               transactionDate.getFullYear() === currentYear;
+      })
+      .reduce((total, transaction) => total + Number(transaction.amount), 0);
+  }, [transactions, now]);
 
-  // Função para retirar pró-labore (cria transações duplas)
+  // Calcular total já retirado no mês atual
+  const totalWithdrawnThisMonth = useCallback(() => {
+    return proLaboreRecords
+      .filter(record => record.monthKey === currentMonthKey && record.withdrawn)
+      .reduce((total, record) => total + record.amount, 0);
+  }, [proLaboreRecords, currentMonthKey]);
+
+  // Calcular valores
+  const monthlyIncomes = currentMonthIncomes();
+  const totalProLabore = monthlyIncomes * 0.25; // 25% das entradas
+  const alreadyWithdrawn = totalWithdrawnThisMonth();
+  const availableAmount = Math.max(0, totalProLabore - alreadyWithdrawn);
+
+  // Verificar se pode retirar
+  const canWithdraw = availableAmount > 0 && monthlyIncomes > 0;
+
+  // Função para retirar pró-labore (permite múltiplas retiradas)
   const withdrawProLabore = useCallback(async () => {
-    if (isAlreadyWithdrawn || availableAmount <= 0) {
+    if (!canWithdraw || availableAmount <= 0) {
       return false;
     }
 
@@ -59,7 +125,7 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
         date: new Date().toISOString().split('T')[0],
         type: 'saída',
         category: 'pró-labore',
-        description: `Retirada de pró-labore da semana ${currentWeek.label}`,
+        description: `Retirada de pró-labore do mês ${currentMonthKey}`,
       };
 
       const businessTransaction = await createTransaction(businessTransactionData);
@@ -72,14 +138,15 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
       const personalTransaction = await createPersonalTransaction(
         'entrada',
         availableAmount,
-        `Pró-labore da semana ${currentWeek.label}`,
+        `Pró-labore do mês ${currentMonthKey}`,
         'pró-labore',
-        currentWeekKey
+        currentMonthKey
       );
 
       // 3. Salvar registro local com IDs das duas transações
       const newRecord: ProLaboreRecord = {
-        weekKey: currentWeekKey,
+        id: `${currentMonthKey}-${Date.now()}`,
+        monthKey: currentMonthKey,
         amount: availableAmount,
         withdrawn: true,
         date: new Date().toISOString(),
@@ -87,9 +154,7 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
         businessTransactionId: businessTransaction.id
       };
 
-      const updatedRecords = proLaboreRecords.filter(record => record.weekKey !== currentWeekKey);
-      updatedRecords.push(newRecord);
-      
+      const updatedRecords = [...proLaboreRecords, newRecord];
       saveRecords(updatedRecords);
 
       console.log(`Pró-labore de R$ ${availableAmount.toFixed(2)} processado:
@@ -101,11 +166,11 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
       console.error('Erro ao retirar pró-labore:', error);
       return false;
     }
-  }, [isAlreadyWithdrawn, availableAmount, currentWeekKey, proLaboreRecords, saveRecords, currentWeek.label]);
+  }, [canWithdraw, availableAmount, currentMonthKey, proLaboreRecords, saveRecords]);
 
-  // Função para devolver pró-labore (remove ambas as transações)
-  const returnProLabore = useCallback(async (weekKey: string) => {
-    const recordToReturn = proLaboreRecords.find(record => record.weekKey === weekKey);
+  // Função para devolver pró-labore específico
+  const returnProLabore = useCallback(async (recordId: string) => {
+    const recordToReturn = proLaboreRecords.find(record => record.id === recordId);
     
     if (!recordToReturn || !recordToReturn.withdrawn) {
       return false;
@@ -124,21 +189,11 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
         console.log(`Transação empresarial removida: ${recordToReturn.businessTransactionId}`);
       }
 
-      // 3. Marcar o pró-labore como não retirado
-      const updatedRecords = proLaboreRecords.map(record => 
-        record.weekKey === weekKey 
-          ? { 
-              ...record, 
-              withdrawn: false, 
-              personalTransactionId: undefined,
-              businessTransactionId: undefined
-            }
-          : record
-      );
-      
+      // 3. Remover o registro
+      const updatedRecords = proLaboreRecords.filter(record => record.id !== recordId);
       saveRecords(updatedRecords);
 
-      console.log(`Pró-labore da semana ${weekKey} devolvido completamente`);
+      console.log(`Pró-labore do mês ${recordToReturn.monthKey} devolvido completamente`);
       return true;
     } catch (error) {
       console.error('Erro ao devolver pró-labore:', error);
@@ -148,10 +203,12 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
 
   return {
     availableAmount,
-    isAlreadyWithdrawn,
-    canWithdraw: !isAlreadyWithdrawn && availableAmount > 0,
+    monthlyIncomes,
+    totalProLabore,
+    alreadyWithdrawn,
+    canWithdraw,
     withdrawProLabore,
     returnProLabore,
-    currentWeekRecord
+    currentMonthRecords: proLaboreRecords.filter(record => record.monthKey === currentMonthKey)
   };
 }

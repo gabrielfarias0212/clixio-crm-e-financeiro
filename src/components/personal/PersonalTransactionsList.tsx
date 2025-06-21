@@ -47,14 +47,18 @@ export function PersonalTransactionsList({
       return;
     }
     
+    // Para compatibilidade, encontrar o registro baseado na chave (pode ser semanal ou mensal)
+    const recordId = `${transaction.pro_labore_week_key}-${transaction.id}`;
+    
     console.log('Devolvendo pró-labore:', {
       transactionId: transaction.id,
       weekKey: transaction.pro_labore_week_key,
-      amount: transaction.amount
+      amount: transaction.amount,
+      recordId
     });
     
     try {
-      const success = await returnProLabore(transaction.pro_labore_week_key);
+      const success = await returnProLabore(recordId);
       
       if (success) {
         toast.success('Pró-labore devolvido para a empresa com sucesso!');

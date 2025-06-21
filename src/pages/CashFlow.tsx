@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+
+import { useState, useEffect, useMemo, Suspense } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, TrendingUp, Settings } from "lucide-react";
-import { TransactionSummary } from "@/components/TransactionSummary";
 import { Transaction, TransactionType } from "@/utils/types";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +14,8 @@ import { useFinancialCategories } from "@/hooks/useFinancialCategories";
 import { FinancialCategoryManager } from "@/components/financial/FinancialCategoryManager";
 import { TransactionSection } from "@/components/financial/TransactionSection";
 import { ProjectionsSection } from "@/components/financial/ProjectionsSection";
+import { OptimizedFinancialSummary } from "@/components/financial/OptimizedFinancialSummary";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
@@ -149,16 +151,18 @@ export default function CashFlow() {
         </div>
 
         {/* Controles de Filtro Semanal */}
-        <WeeklyControls
-          periodType={weeklyFilter.periodType}
-          currentWeek={weeklyFilter.currentWeek}
-          onTogglePeriod={weeklyFilter.togglePeriod}
-          onPreviousWeek={weeklyFilter.goToPreviousWeek}
-          onNextWeek={weeklyFilter.goToNextWeek}
-          onCurrentWeek={weeklyFilter.goToCurrentWeek}
-        />
+        <Suspense fallback={<Skeleton className="h-16 mb-6" />}>
+          <WeeklyControls
+            periodType={weeklyFilter.periodType}
+            currentWeek={weeklyFilter.currentWeek}
+            onTogglePeriod={weeklyFilter.togglePeriod}
+            onPreviousWeek={weeklyFilter.goToPreviousWeek}
+            onNextWeek={weeklyFilter.goToNextWeek}
+            onCurrentWeek={weeklyFilter.goToCurrentWeek}
+          />
+        </Suspense>
 
-        <TransactionSummary 
+        <OptimizedFinancialSummary 
           transactions={transactions} 
           className="mb-6"
           periodType={weeklyFilter.periodType}
@@ -177,29 +181,33 @@ export default function CashFlow() {
           </TabsList>
 
           <TabsContent value="transactions" className="space-y-6">
-            <TransactionSection
-              showAddTransaction={showAddTransaction}
-              onToggleAddTransaction={setShowAddTransaction}
-              clients={clients}
-              financialCategories={categories}
-              onAddTransaction={handleAddTransaction}
-              filteredTransactions={filteredTransactions}
-              onDeleteTransaction={handleDeleteTransaction}
-              allTransactions={transactions}
-              periodType={weeklyFilter.periodType}
-              currentWeek={weeklyFilter.currentWeek}
-              typeFilter={typeFilter}
-              onTypeFilterChange={setTypeFilter}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              selectedMonth={selectedMonth}
-              selectedYear={selectedYear}
-              onMonthChange={handleMonthChange}
-            />
+            <Suspense fallback={<Skeleton className="h-96" />}>
+              <TransactionSection
+                showAddTransaction={showAddTransaction}
+                onToggleAddTransaction={setShowAddTransaction}
+                clients={clients}
+                financialCategories={categories}
+                onAddTransaction={handleAddTransaction}
+                filteredTransactions={filteredTransactions}
+                onDeleteTransaction={handleDeleteTransaction}
+                allTransactions={transactions}
+                periodType={weeklyFilter.periodType}
+                currentWeek={weeklyFilter.currentWeek}
+                typeFilter={typeFilter}
+                onTypeFilterChange={setTypeFilter}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                selectedMonth={selectedMonth}
+                selectedYear={selectedYear}
+                onMonthChange={handleMonthChange}
+              />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="projections">
-            <ProjectionsSection />
+            <Suspense fallback={<Skeleton className="h-96" />}>
+              <ProjectionsSection />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>

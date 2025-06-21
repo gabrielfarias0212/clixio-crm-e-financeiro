@@ -1,13 +1,13 @@
 
 import React, { memo, useCallback, useMemo } from 'react';
-import { useForm, FieldValues, Path, UseFormProps } from 'react-hook-form';
+import { useForm, FieldValues, Path, UseFormProps, DefaultValues } from 'react-hook-form';
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
 
 interface OptimizedFormProps<T extends FieldValues> {
   onSubmit: (data: T) => Promise<void> | void;
-  defaultValues?: Partial<T>;
+  defaultValues?: DefaultValues<T>;
   validationSchema?: any;
   children: (form: ReturnType<typeof useForm<T>>) => React.ReactNode;
   submitLabel?: string;
@@ -30,7 +30,7 @@ function OptimizedFormComponent<T extends FieldValues>({
   const formConfig: UseFormProps<T> = useMemo(() => ({
     defaultValues,
     resolver: validationSchema,
-    mode: 'onChange'
+    mode: 'onChange' as const
   }), [defaultValues, validationSchema]);
 
   const form = useForm<T>(formConfig);

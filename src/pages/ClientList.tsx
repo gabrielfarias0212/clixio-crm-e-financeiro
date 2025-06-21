@@ -1,165 +1,129 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useCallback, useMemo, Suspense } from "react";
 import Layout from "@/components/Layout";
-import { Client, ClientStatus } from "@/utils/types";
-import { useClients } from "@/contexts/ClientsContext";
-import { clearAllData } from "@/utils/supabaseUtils";
-import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-// Import our new component files
 import { ClientHeader } from "@/components/clients/ClientHeader";
-import { ClientFilters } from "@/components/clients/ClientFilters";
+import { OptimizedClientCards } from "@/components/clients/OptimizedClientCards";
 import { ClientTable } from "@/components/clients/ClientTable";
-import { ClientCards } from "@/components/clients/ClientCards";
+import { ClientFilters } from "@/components/clients/ClientFilters";
 import { EmptyClientState } from "@/components/clients/EmptyClientState";
+import { ClientListSkeleton } from "@/components/clients/ClientListSkeleton";
+import { ClientPagination } from "@/components/clients/ClientPagination";
+import { useOptimizedClients } from "@/hooks/useOptimizedClients";
 import { DeliveryAlert } from "@/components/clients/DeliveryAlert";
-import { KanbanBoard } from "@/components/clients/KanbanBoard";
 
 export default function ClientList() {
-  const { clients, loading, refreshClients } = useClients();
-  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ClientStatus | "all">("all");
-  const [clearingData, setClearingData] = useState(false);
-  const [showDeliveredAlert, setShowDeliveredAlert] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "card">("list");
-  const [activeTab, setActiveTab] = useState("clients");
-  
-  // Check if there are any newly delivered clients
-  useEffect(() => {
-    const hasDeliveredClients = sessionStorage.getItem('hasDeliveredWork');
-    if (hasDeliveredClients === 'true') {
-      setShowDeliveredAlert(true);
-      // Clear the flag after showing the alert
-      setTimeout(() => {
-        setShowDeliveredAlert(false);
-        sessionStorage.removeItem('hasDeliveredWork');
-      }, 5000); // Hide after 5 seconds
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+
+  // Hook otimizado para clientes
+  const { 
+    clients, 
+    allClients, 
+    loading, 
+    error, 
+    pagination 
+  } = useOptimizedClients({
+    pageSize: 50,
+    searchTerm,
+    statusFilter
+  });
+
+  // Callback para reset de página quando filtros mudam
+  const handleFiltersChange = useCallback((newSearchTerm: string, newStatusFilter: string) => {
+    setSearchTerm(newSearchTerm);
+    setStatusFilter(newStatusFilter);
+    pagination.resetPage();
+  }, [pagination]);
+
+  // Callback para atualização após exclusão
+  const handleDeleteSuccess = useCallback(() => {
+    // Se a página atual ficou vazia após exclusão, voltar uma página
+    if (clients.length === 1 && pagination.currentPage > 1) {
+      pagination.prevPage();
     }
-  }, []);
+  }, [clients.length, pagination]);
 
-  // Apply filters when search or status changes
-  useEffect(() => {
-    if (!clients) return;
-    
-    let result = [...clients];
+  // Memoizar estatísticas para evitar recálculos
+  const stats = useMemo(() => ({
+    total: allClients.length,
+    delivered: allClients.filter(c => c.status === "projeto_finalizado").length,
+    inProgress: allClients.filter(c => 
+      ["fotografado", "em_edicao", "link_enviado"].includes(c.status)
+    ).length
+  }), [allClients]);
 
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        client =>
-          client.name.toLowerCase().includes(query) ||
-          (client.email && client.email.toLowerCase().includes(query)) ||
-          (client.phone && client.phone.toLowerCase().includes(query))
-      );
-    }
-
-    // Filter by status
-    if (statusFilter !== "all") {
-      result = result.filter(client => client.status === statusFilter);
-    }
-
-    setFilteredClients(result);
-  }, [searchQuery, statusFilter, clients]);
-
-  // Set page title
-  useEffect(() => {
-    document.title = "Clientes | Wedding CRM";
-  }, []);
-
-  // Clear filters
-  const clearFilters = () => {
-    setSearchQuery("");
-    setStatusFilter("all");
-  };
-
-  const handleClearData = async () => {
-    if (window.confirm("Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.")) {
-      setClearingData(true);
-      try {
-        const success = await clearAllData();
-        if (success) {
-          toast.success("Todos os dados foram excluídos com sucesso");
-          await refreshClients();
-        } else {
-          toast.error("Erro ao limpar dados");
-        }
-      } catch (error) {
-        console.error("Error clearing data:", error);
-        toast.error("Erro ao limpar dados");
-      } finally {
-        setClearingData(false);
-      }
-    }
-  };
-
-  // Count delivered works - only count clients with status "projeto_finalizado"
-  const deliveredWorksCount = clients.filter(client => client.status === "projeto_finalizado").length;
-  
-  // Check if filters are active
-  const hasActiveFilters = searchQuery !== "" || statusFilter !== "all";
+  if (error) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Erro ao carregar clientes</h2>
+            <p className="text-gray-600">{error}</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <div className="max-w-screen-2xl mx-auto px-4 py-8 animate-fade-in">
-        <DeliveryAlert 
-          showAlert={showDeliveredAlert} 
-          deliveredCount={deliveredWorksCount} 
-        />
-        
-        <ClientHeader
-          clients={clients}
-          deliveredWorksCount={deliveredWorksCount}
-          onClearData={handleClearData}
-          clearingData={clearingData}
-        />
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="clients">Lista de Clientes</TabsTrigger>
-            <TabsTrigger value="funnel">Funil de Vendas</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="clients">
-            <ClientFilters
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-              clearFilters={clearFilters}
-              hasActiveFilters={hasActiveFilters}
-            />
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        <Suspense fallback={<div className="h-16 bg-gray-100 rounded animate-pulse" />}>
+          <ClientHeader totalClients={stats.total} />
+        </Suspense>
 
-            {/* Results */}
-            {loading ? (
-              <div className="text-center py-12">
-                <p>Carregando clientes...</p>
-              </div>
-            ) : filteredClients.length > 0 ? (
-              viewMode === "list" ? (
-                <ClientTable clients={filteredClients} />
-              ) : (
-                <ClientCards clients={filteredClients} />
-              )
+        <Suspense fallback={<div className="h-12 bg-gray-100 rounded animate-pulse" />}>
+          <DeliveryAlert />
+        </Suspense>
+
+        <Suspense fallback={<div className="h-20 bg-gray-100 rounded animate-pulse" />}>
+          <ClientFilters
+            searchTerm={searchTerm}
+            statusFilter={statusFilter}
+            viewMode={viewMode}
+            onSearchChange={(term) => handleFiltersChange(term, statusFilter)}
+            onStatusFilterChange={(status) => handleFiltersChange(searchTerm, status)}
+            onViewModeChange={setViewMode}
+            totalClients={stats.total}
+            deliveredClients={stats.delivered}
+            inProgressClients={stats.inProgress}
+          />
+        </Suspense>
+
+        {loading ? (
+          <ClientListSkeleton count={12} variant={viewMode} />
+        ) : allClients.length === 0 ? (
+          <EmptyClientState />
+        ) : clients.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">Nenhum cliente encontrado com os filtros aplicados.</p>
+          </div>
+        ) : (
+          <>
+            {viewMode === "cards" ? (
+              <OptimizedClientCards 
+                clients={clients} 
+                onDeleteSuccess={handleDeleteSuccess}
+              />
             ) : (
-              <EmptyClientState hasFilters={hasActiveFilters} />
+              <ClientTable clients={clients} />
             )}
-          </TabsContent>
-          
-          <TabsContent value="funnel">
-            {loading ? (
-              <div className="text-center py-12">
-                <p>Carregando funil de vendas...</p>
-              </div>
-            ) : (
-              <KanbanBoard clients={clients} />
-            )}
-          </TabsContent>
-        </Tabs>
+            
+            <ClientPagination
+              currentPage={pagination.currentPage}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.totalItems}
+              startIndex={pagination.startIndex}
+              endIndex={pagination.endIndex}
+              hasNextPage={pagination.hasNextPage}
+              hasPrevPage={pagination.hasPrevPage}
+              onPageChange={pagination.goToPage}
+              onNextPage={pagination.nextPage}
+              onPrevPage={pagination.prevPage}
+            />
+          </>
+        )}
       </div>
     </Layout>
   );

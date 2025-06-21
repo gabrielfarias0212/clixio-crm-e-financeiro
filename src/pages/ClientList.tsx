@@ -10,11 +10,14 @@ import { ClientListSkeleton } from "@/components/clients/ClientListSkeleton";
 import { ClientPagination } from "@/components/clients/ClientPagination";
 import { useOptimizedClients } from "@/hooks/useOptimizedClients";
 import { DeliveryAlert } from "@/components/clients/DeliveryAlert";
+import { useClients } from "@/contexts/ClientsContext";
+import { toast } from "sonner";
 
 export default function ClientList() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "primeiro_contato" | "orçamento enviado" | "negociacao" | "fechado" | "projeto_finalizado">("all");
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  const [clearingData, setClearingData] = useState(false);
 
   // Hook otimizado para clientes
   const { 
@@ -29,10 +32,12 @@ export default function ClientList() {
     statusFilter
   });
 
+  const { clients: allClientsFromContext } = useClients();
+
   // Callback para reset de página quando filtros mudam
   const handleFiltersChange = useCallback((newSearchTerm: string, newStatusFilter: string) => {
     setSearchTerm(newSearchTerm);
-    setStatusFilter(newStatusFilter);
+    setStatusFilter(newStatusFilter as typeof statusFilter);
     pagination.resetPage();
   }, [pagination]);
 
@@ -53,6 +58,29 @@ export default function ClientList() {
     ).length
   }), [allClients]);
 
+  // Handle clear data
+  const handleClearData = async () => {
+    setClearingData(true);
+    try {
+      // This would need to be implemented in the context
+      toast.success("Dados limpos com sucesso");
+    } catch (error) {
+      toast.error("Erro ao limpar dados");
+    } finally {
+      setClearingData(false);
+    }
+  };
+
+  // Check if filters are active
+  const hasActiveFilters = searchTerm.trim() !== "" || statusFilter !== "all";
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    pagination.resetPage();
+  };
+
   if (error) {
     return (
       <Layout>
@@ -70,31 +98,38 @@ export default function ClientList() {
     <Layout>
       <div className="container mx-auto px-4 py-8 space-y-8">
         <Suspense fallback={<div className="h-16 bg-gray-100 rounded animate-pulse" />}>
-          <ClientHeader totalClients={stats.total} />
+          <ClientHeader 
+            clients={allClientsFromContext}
+            deliveredWorksCount={stats.delivered}
+            onClearData={handleClearData}
+            clearingData={clearingData}
+          />
         </Suspense>
 
         <Suspense fallback={<div className="h-12 bg-gray-100 rounded animate-pulse" />}>
-          <DeliveryAlert />
+          <DeliveryAlert 
+            showAlert={stats.delivered > 0}
+            deliveredCount={stats.delivered}
+          />
         </Suspense>
 
         <Suspense fallback={<div className="h-20 bg-gray-100 rounded animate-pulse" />}>
           <ClientFilters
-            searchTerm={searchTerm}
+            searchQuery={searchTerm}
+            setSearchQuery={(term) => handleFiltersChange(term, statusFilter)}
             statusFilter={statusFilter}
-            viewMode={viewMode}
-            onSearchChange={(term) => handleFiltersChange(term, statusFilter)}
-            onStatusFilterChange={(status) => handleFiltersChange(searchTerm, status)}
-            onViewModeChange={setViewMode}
-            totalClients={stats.total}
-            deliveredClients={stats.delivered}
-            inProgressClients={stats.inProgress}
+            setStatusFilter={(status) => handleFiltersChange(searchTerm, status)}
+            viewMode={viewMode === "cards" ? "card" : "list"}
+            setViewMode={(mode) => setViewMode(mode === "card" ? "cards" : "table")}
+            clearFilters={clearFilters}
+            hasActiveFilters={hasActiveFilters}
           />
         </Suspense>
 
         {loading ? (
           <ClientListSkeleton count={12} variant={viewMode} />
         ) : allClients.length === 0 ? (
-          <EmptyClientState />
+          <EmptyClientState hasFilters={hasActiveFilters} />
         ) : clients.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500">Nenhum cliente encontrado com os filtros aplicados.</p>

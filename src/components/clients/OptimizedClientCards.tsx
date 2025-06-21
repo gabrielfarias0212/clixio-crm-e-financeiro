@@ -15,7 +15,7 @@ interface OptimizedClientCardsProps {
 }
 
 // Memoizar o item individual do card para evitar re-renders desnecessários
-const ClientCardItem = memo(({ client, onDelete }: { client: Client; onDelete: (id: string) => void }) => {
+const ClientCardItem = memo(({ client, onDelete }: { client: Client; onDelete: (id: string) => Promise<void> }) => {
   const navigate = useNavigate();
 
   return (
@@ -68,7 +68,7 @@ ClientCardItem.displayName = 'ClientCardItem';
 export const OptimizedClientCards = memo(({ clients, onDeleteSuccess }: OptimizedClientCardsProps) => {
   const { removeClient } = useClients();
 
-  const handleDelete = async (clientId: string) => {
+  const handleDelete = async (clientId: string): Promise<void> => {
     try {
       const success = await removeClient(clientId);
       if (success) {

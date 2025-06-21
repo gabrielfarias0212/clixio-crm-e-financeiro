@@ -22,38 +22,41 @@ export default function Index() {
 }
 
 function AuthenticatedDashboard() {
-  // Agora os hooks podem ser chamados com segurança dentro do contexto
   const { refreshTransactions, loading: transactionsLoading } = useTransactions();
   const { refreshClients, loading: clientsLoading } = useClients();
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [dataLoadError, setDataLoadError] = useState<string | null>(null);
   
-  // Memoizar estado de loading geral
+  // Loading otimizado - permitir carregamento parcial
   const isLoading = useMemo(() => 
-    transactionsLoading || clientsLoading || !initialDataLoaded,
+    !initialDataLoaded && (transactionsLoading || clientsLoading),
     [transactionsLoading, clientsLoading, initialDataLoaded]
   );
 
-  // Função otimizada para carregar dados
+  // Função otimizada para carregar dados com priorização
   const loadInitialData = useCallback(async () => {
     if (initialDataLoaded) return;
     
     try {
-      console.log("Dashboard: Carregando dados iniciais...");
+      console.log("Dashboard: Iniciando carregamento otimizado...");
       setDataLoadError(null);
       
-      // Carregar dados em paralelo para melhor performance
       const startTime = performance.now();
       
-      await Promise.all([
-        refreshTransactions(),
-        refreshClients()
-      ]);
+      // Carregar dados críticos primeiro, não críticos em background
+      const clientsPromise = refreshClients();
       
-      const endTime = performance.now();
-      console.log(`Dashboard: Dados carregados em ${Math.round(endTime - startTime)}ms`);
+      // Aguardar apenas dados críticos
+      await clientsPromise;
       
+      // Marcar como carregado mesmo que transações ainda estejam carregando
       setInitialDataLoaded(true);
+      
+      // Carregar transações em background
+      refreshTransactions().then(() => {
+        const endTime = performance.now();
+        console.log(`Dashboard: Carregamento completo em ${Math.round(endTime - startTime)}ms`);
+      });
       
     } catch (error) {
       console.error("Erro ao carregar dados do dashboard:", error);
@@ -63,12 +66,8 @@ function AuthenticatedDashboard() {
   
   useEffect(() => {
     document.title = "Dashboard | Wedding CRM";
-    
-    // Carregar dados apenas uma vez na inicialização
     loadInitialData();
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Array vazio intencional - carregar só uma vez
+  }, [loadInitialData]);
   
   // Renderizar estado de erro se houver
   if (dataLoadError) {
@@ -101,7 +100,7 @@ function AuthenticatedDashboard() {
       <div className="max-w-screen-2xl mx-auto px-4 py-8 space-y-8 animate-fade-in bg-background">
         <DashboardHeader />
         
-        {/* Mostrar skeleton ou conteúdo baseado no estado de loading */}
+        {/* Mostrar skeleton apenas para loading inicial crítico */}
         {isLoading ? (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

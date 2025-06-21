@@ -9,45 +9,73 @@ import { ProductionIndicators } from "./ProductionIndicators";
 import { AlertsReminders } from "./AlertsReminders";
 import { FutureContractsOverview } from "./FutureContractsOverview";
 import { ContractProjections } from "./ContractProjections";
+import { Suspense } from "react";
+
+// Skeleton components para lazy loading
+const ComponentSkeleton = ({ className = "" }: { className?: string }) => (
+  <div className={`animate-pulse bg-gray-200 rounded-lg ${className}`} />
+);
 
 export function DashboardContent() {
   const { clients, loading } = useClients();
 
   return (
     <div className="space-y-8">
-      <DashboardStats />
+      {/* Estatísticas principais - prioridade alta */}
+      <Suspense fallback={<ComponentSkeleton className="h-32" />}>
+        <DashboardStats />
+      </Suspense>
 
-      {/* Seção de Indicadores de Desempenho do Negócio - movida para cima */}
+      {/* Métricas de negócio - carregamento otimizado */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <BusinessMetrics />
-        <ProductionIndicators />
+        <Suspense fallback={<ComponentSkeleton className="h-64" />}>
+          <BusinessMetrics />
+        </Suspense>
+        <Suspense fallback={<ComponentSkeleton className="h-64" />}>
+          <ProductionIndicators />
+        </Suspense>
       </div>
 
-      {/* Seção: Visão Estratégica de Contratos e Eventos Futuros */}
+      {/* Seção de contratos futuros - lazy load */}
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-semibold mb-4">Visão Estratégica - Contratos e Eventos Futuros</h2>
-          <FutureContractsOverview />
+          <Suspense fallback={<ComponentSkeleton className="h-48" />}>
+            <FutureContractsOverview />
+          </Suspense>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <ContractProjections />
+            <Suspense fallback={<ComponentSkeleton className="h-64" />}>
+              <ContractProjections />
+            </Suspense>
           </div>
         </div>
       </div>
 
+      {/* Alertas e lembretes - lazy load após dados de clientes */}
       <div className="grid grid-cols-1 gap-8">
-        <AlertsReminders clients={clients} />
+        <Suspense fallback={<ComponentSkeleton className="h-48" />}>
+          <AlertsReminders clients={clients} />
+        </Suspense>
       </div>
 
+      {/* Resumo financeiro - lazy load */}
       <div className="grid grid-cols-1 gap-8">
-        <FinancialSummary />
+        <Suspense fallback={<ComponentSkeleton className="h-64" />}>
+          <FinancialSummary />
+        </Suspense>
       </div>
 
+      {/* Eventos e gráficos - menor prioridade */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <UpcomingEvents clients={clients} loading={loading} />
-        <EventCategoryChart />
+        <Suspense fallback={<ComponentSkeleton className="h-64" />}>
+          <UpcomingEvents clients={clients} loading={loading} />
+        </Suspense>
+        <Suspense fallback={<ComponentSkeleton className="h-64" />}>
+          <EventCategoryChart />
+        </Suspense>
       </div>
     </div>
   );

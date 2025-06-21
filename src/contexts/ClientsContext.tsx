@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Client } from '@/utils/types';
-import { fetchClients, createClient, updateClient, deleteClient } from '@/utils/supabaseUtils';
+import { fetchClients, invalidateClientsCache } from '@/utils/supabase/client-fetch';
+import { createClient, updateClient, deleteClient } from '@/utils/supabaseUtils';
 import { toast } from 'sonner';
 
 type ClientsContextType = {
@@ -25,8 +26,12 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       setError(null);
+      
+      const startTime = performance.now();
       const data = await fetchClients();
-      console.log("Fetched clients:", data);
+      const endTime = performance.now();
+      
+      console.log(`Clients loaded in ${Math.round(endTime - startTime)}ms`);
       setClients(data);
     } catch (err) {
       console.error('Error fetching clients:', err);
@@ -45,7 +50,11 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
       
       if (newClient) {
         console.log('Client created successfully:', newClient);
+        
+        // Invalidar cache e atualizar estado
+        invalidateClientsCache();
         setClients(prev => [newClient, ...prev]);
+        
         return newClient;
       } else {
         console.error('Failed to add client, no client returned from API');
@@ -66,9 +75,13 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
       const updatedClient = await updateClient(id, updates);
       if (updatedClient) {
         console.log('Client updated successfully:', updatedClient);
+        
+        // Invalidar cache e atualizar estado local
+        invalidateClientsCache();
         setClients(prev => 
           prev.map(client => client.id === id ? updatedClient : client)
         );
+        
         toast.success('Cliente atualizado com sucesso!');
         return updatedClient;
       }
@@ -84,7 +97,10 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
     try {
       const success = await deleteClient(id);
       if (success) {
+        // Invalidar cache e atualizar estado local
+        invalidateClientsCache();
         setClients(prev => prev.filter(client => client.id !== id));
+        
         toast.success('Cliente excluído com sucesso!');
         return true;
       } else {

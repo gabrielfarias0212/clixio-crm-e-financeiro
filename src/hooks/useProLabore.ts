@@ -71,10 +71,8 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
     
     return transactions
       .filter(transaction => {
-        // Filtrar apenas entradas
         if (transaction.type !== "entrada") return false;
         
-        // Parse da data da transação
         let transactionDate: Date;
         try {
           if (transaction.date.includes('/')) {
@@ -89,7 +87,35 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
           return false;
         }
 
-        // Verificar se é do mês atual
+        return transactionDate.getMonth() === currentMonth && 
+               transactionDate.getFullYear() === currentYear;
+      })
+      .reduce((total, transaction) => total + Number(transaction.amount), 0);
+  }, [transactions, now]);
+
+  // Calcular saídas do mês atual
+  const currentMonthExpenses = useCallback(() => {
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    return transactions
+      .filter(transaction => {
+        if (transaction.type !== "saída") return false;
+        
+        let transactionDate: Date;
+        try {
+          if (transaction.date.includes('/')) {
+            const [day, month, year] = transaction.date.split('/').map(Number);
+            transactionDate = new Date(year, month - 1, day);
+          } else {
+            transactionDate = new Date(transaction.date);
+          }
+          
+          if (isNaN(transactionDate.getTime())) return false;
+        } catch {
+          return false;
+        }
+
         return transactionDate.getMonth() === currentMonth && 
                transactionDate.getFullYear() === currentYear;
       })
@@ -105,12 +131,14 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
 
   // Calcular valores
   const monthlyIncomes = currentMonthIncomes();
-  const totalProLabore = monthlyIncomes * 0.25; // 25% das entradas
+  const monthlyExpenses = currentMonthExpenses();
+  const monthlyBalance = monthlyIncomes - monthlyExpenses;
+  const totalProLabore = monthlyBalance > 0 ? monthlyBalance * 0.25 : 0; // 25% do saldo positivo
   const alreadyWithdrawn = totalWithdrawnThisMonth();
   const availableAmount = Math.max(0, totalProLabore - alreadyWithdrawn);
 
-  // Verificar se pode retirar
-  const canWithdraw = availableAmount > 0 && monthlyIncomes > 0;
+  // Verificar se pode retirar (saldo deve ser positivo)
+  const canWithdraw = availableAmount > 0 && monthlyBalance > 0;
 
   // Função para retirar pró-labore (permite múltiplas retiradas)
   const withdrawProLabore = useCallback(async () => {
@@ -204,6 +232,8 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
   return {
     availableAmount,
     monthlyIncomes,
+    monthlyExpenses,
+    monthlyBalance,
     totalProLabore,
     alreadyWithdrawn,
     canWithdraw,

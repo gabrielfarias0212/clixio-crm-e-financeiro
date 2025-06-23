@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, CheckCircle, AlertCircle, TrendingUp, Calendar, TrendingDown } from "lucide-react";
+import { Wallet, CheckCircle, AlertCircle, TrendingUp, Calendar, TrendingDown, Undo2 } from "lucide-react";
 import { useProLabore } from "@/hooks/useProLabore";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { WeekInfo, getCurrentWeekInfo } from "@/utils/dates/weekUtils";
@@ -22,6 +22,7 @@ export function ProLaboreSection() {
     alreadyWithdrawn, 
     canWithdraw, 
     withdrawProLabore,
+    returnProLabore,
     currentMonthRecords 
   } = useProLabore(currentWeek, weeklyBalance);
   
@@ -44,6 +45,21 @@ export function ProLaboreSection() {
       await refreshTransactions();
     } else {
       toast.error('Não foi possível retirar o pró-labore');
+    }
+  };
+
+  const handleReturn = async (recordId: string) => {
+    const record = currentMonthRecords.find(r => r.id === recordId);
+    if (!record) return;
+
+    const success = await returnProLabore(recordId);
+    if (success) {
+      toast.success(`Pró-labore de ${formatCurrency(record.amount)} devolvido com sucesso!`);
+      
+      // Forçar refresh das transações para mostrar as mudanças
+      await refreshTransactions();
+    } else {
+      toast.error('Não foi possível devolver o pró-labore');
     }
   };
 
@@ -192,10 +208,21 @@ export function ProLaboreSection() {
                       {new Date(record.date).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-green-600">
-                      {formatCurrency(record.amount)}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="font-bold text-green-600">
+                        {formatCurrency(record.amount)}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleReturn(record.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Undo2 className="h-3 w-3 mr-1" />
+                      Devolver
+                    </Button>
                   </div>
                 </div>
               ))}

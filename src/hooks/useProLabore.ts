@@ -201,23 +201,34 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
     const recordToReturn = proLaboreRecords.find(record => record.id === recordId);
     
     if (!recordToReturn || !recordToReturn.withdrawn) {
+      console.error('Registro não encontrado ou não foi retirado:', recordId);
       return false;
     }
 
     try {
+      console.log('Iniciando devolução do pró-labore:', recordToReturn);
+
       // 1. Remover transação pessoal se existir
       if (recordToReturn.personalTransactionId) {
-        await deletePersonalTransaction(recordToReturn.personalTransactionId);
-        console.log(`Transação pessoal removida: ${recordToReturn.personalTransactionId}`);
+        try {
+          await deletePersonalTransaction(recordToReturn.personalTransactionId);
+          console.log(`Transação pessoal removida: ${recordToReturn.personalTransactionId}`);
+        } catch (error) {
+          console.warn('Erro ao remover transação pessoal (pode não existir):', error);
+        }
       }
 
       // 2. Remover transação empresarial se existir
       if (recordToReturn.businessTransactionId) {
-        await deleteTransaction(recordToReturn.businessTransactionId);
-        console.log(`Transação empresarial removida: ${recordToReturn.businessTransactionId}`);
+        try {
+          await deleteTransaction(recordToReturn.businessTransactionId);
+          console.log(`Transação empresarial removida: ${recordToReturn.businessTransactionId}`);
+        } catch (error) {
+          console.warn('Erro ao remover transação empresarial (pode não existir):', error);
+        }
       }
 
-      // 3. Remover o registro
+      // 3. Remover o registro do localStorage
       const updatedRecords = proLaboreRecords.filter(record => record.id !== recordId);
       saveRecords(updatedRecords);
 

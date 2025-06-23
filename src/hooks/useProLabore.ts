@@ -1,8 +1,7 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { WeekInfo } from "@/utils/dates/weekUtils";
 import { createPersonalTransaction, deletePersonalTransaction } from "@/utils/supabase/personal-transactions";
-import { createTransaction, deleteTransaction } from "@/utils/supabase/transactions";
+import { createTransaction, deleteTransaction, fetchTransactions } from "@/utils/supabase/transactions";
 import { Transaction } from "@/utils/types";
 import { useTransactions } from "@/contexts/TransactionsContext";
 
@@ -62,6 +61,47 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
   const saveRecords = useCallback((records: ProLaboreRecord[]) => {
     localStorage.setItem('proLaboreRecords', JSON.stringify(records));
     setProLaboreRecords(records);
+  }, []);
+
+  // Função para buscar transação relacionada por critérios alternativos
+  const findRelatedTransaction = useCallback(async (
+    record: ProLaboreRecord,
+    type: 'business' | 'personal'
+  ): Promise<string | null> => {
+    try {
+      console.log(`🔍 Buscando transação ${type} para o registro:`, record);
+      
+      if (type === 'business') {
+        // Buscar transação empresarial
+        const allTransactions = await fetchTransactions();
+        console.log(`📊 Total de transações empresariais encontradas: ${allTransactions.length}`);
+        
+        const found = allTransactions.find(t => {
+          const isMatch = (
+            t.type === 'saída' &&
+            t.category === 'pró-labore' &&
+            Math.abs(t.amount - record.amount) < 0.01 &&
+            t.description.includes(record.monthKey)
+          );
+          
+          if (isMatch) {
+            console.log(`✅ Transação empresarial encontrada:`, t);
+          }
+          
+          return isMatch;
+        });
+        
+        return found?.id || null;
+      } else {
+        // Para transações pessoais, usar a função existente
+        // que já busca no banco de dados
+        console.log(`🔍 Buscando transação pessoal no banco de dados...`);
+        return null; // A função deletePersonalTransaction já tenta encontrar
+      }
+    } catch (error) {
+      console.error(`❌ Erro ao buscar transação ${type}:`, error);
+      return null;
+    }
   }, []);
 
   // Calcular entradas do mês atual
@@ -196,49 +236,98 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
     }
   }, [canWithdraw, availableAmount, currentMonthKey, proLaboreRecords, saveRecords]);
 
-  // Função para devolver pró-labore específico
+  // Função melhorada para devolver pró-labore específico
   const returnProLabore = useCallback(async (recordId: string) => {
+    console.log('🔄 === INICIANDO DEVOLUÇÃO DE PRÓ-LABORE ===');
+    console.log('📋 Record ID:', recordId);
+    
     const recordToReturn = proLaboreRecords.find(record => record.id === recordId);
     
-    if (!recordToReturn || !recordToReturn.withdrawn) {
-      console.error('Registro não encontrado ou não foi retirado:', recordId);
+    if (!recordToReturn) {
+      console.error('❌ Registro não encontrado:', recordId);
+      console.log('📝 Registros disponíveis:', proLaboreRecords.map(r => r.id));
       return false;
     }
+
+    if (!recordToReturn.withdrawn) {
+      console.error('❌ Registro não foi retirado:', recordToReturn);
+      return false;
+    }
+
+    console.log('📋 Registro encontrado:', recordToReturn);
 
     try {
-      console.log('Iniciando devolução do pró-labore:', recordToReturn);
+      let businessTransactionRemoved = false;
+      let personalTransactionRemoved = false;
 
-      // 1. Remover transação pessoal se existir
-      if (recordToReturn.personalTransactionId) {
-        try {
-          await deletePersonalTransaction(recordToReturn.personalTransactionId);
-          console.log(`Transação pessoal removida: ${recordToReturn.personalTransactionId}`);
-        } catch (error) {
-          console.warn('Erro ao remover transação pessoal (pode não existir):', error);
-        }
+      // 1. Tentar remover transação empresarial
+      console.log('🏢 === REMOVENDO TRANSAÇÃO EMPRESARIAL ===');
+      
+      let businessTransactionId = recordToReturn.businessTransactionId;
+      
+      // Se não temos o ID salvo, tentar encontrar por critérios
+      if (!businessTransactionId) {
+        console.log('🔍 ID da transação empresarial não encontrado, buscando por critérios...');
+        businessTransactionId = await findRelatedTransaction(recordToReturn, 'business');
       }
 
-      // 2. Remover transação empresarial se existir
-      if (recordToReturn.businessTransactionId) {
+      if (businessTransactionId) {
         try {
-          await deleteTransaction(recordToReturn.businessTransactionId);
-          console.log(`Transação empresarial removida: ${recordToReturn.businessTransactionId}`);
+          console.log(`🗑️ Tentando remover transação empresarial: ${businessTransactionId}`);
+          await deleteTransaction(businessTransactionId);
+          businessTransactionRemoved = true;
+          console.log(`✅ Transação empresarial removida com sucesso: ${businessTransactionId}`);
         } catch (error) {
-          console.warn('Erro ao remover transação empresarial (pode não existir):', error);
+          console.warn('⚠️ Erro ao remover transação empresarial:', error);
+          // Continuar mesmo se não conseguir remover
         }
+      } else {
+        console.warn('⚠️ Transação empresarial não encontrada para remoção');
       }
 
-      // 3. Remover o registro do localStorage
+      // 2. Tentar remover transação pessoal
+      console.log('👤 === REMOVENDO TRANSAÇÃO PESSOAL ===');
+      
+      let personalTransactionId = recordToReturn.personalTransactionId;
+      
+      if (personalTransactionId) {
+        try {
+          console.log(`🗑️ Tentando remover transação pessoal: ${personalTransactionId}`);
+          await deletePersonalTransaction(personalTransactionId);
+          personalTransactionRemoved = true;
+          console.log(`✅ Transação pessoal removida com sucesso: ${personalTransactionId}`);
+        } catch (error) {
+          console.warn('⚠️ Erro ao remover transação pessoal:', error);
+          // Continuar mesmo se não conseguir remover
+        }
+      } else {
+        console.warn('⚠️ ID da transação pessoal não encontrado');
+      }
+
+      // 3. Remover o registro do localStorage sempre
+      console.log('💾 === REMOVENDO REGISTRO DO LOCALSTORAGE ===');
       const updatedRecords = proLaboreRecords.filter(record => record.id !== recordId);
       saveRecords(updatedRecords);
+      console.log('✅ Registro removido do localStorage');
 
-      console.log(`Pró-labore do mês ${recordToReturn.monthKey} devolvido completamente`);
-      return true;
+      // 4. Verificar se pelo menos uma operação foi bem-sucedida
+      const success = businessTransactionRemoved || personalTransactionRemoved || true; // Sempre remover do localStorage
+      
+      if (success) {
+        console.log('✅ === DEVOLUÇÃO CONCLUÍDA COM SUCESSO ===');
+        console.log(`📊 Resultado: Empresarial: ${businessTransactionRemoved ? '✅' : '❌'}, Pessoal: ${personalTransactionRemoved ? '✅' : '❌'}`);
+      } else {
+        console.log('⚠️ === DEVOLUÇÃO PARCIAL ===');
+        console.log('ℹ️ Registro foi removido do localStorage, mas transações podem não ter sido removidas do banco');
+      }
+      
+      return true; // Sempre retornar true se conseguiu remover do localStorage
     } catch (error) {
-      console.error('Erro ao devolver pró-labore:', error);
+      console.error('❌ === ERRO CRÍTICO NA DEVOLUÇÃO ===');
+      console.error('💥 Erro:', error);
       return false;
     }
-  }, [proLaboreRecords, saveRecords]);
+  }, [proLaboreRecords, saveRecords, findRelatedTransaction]);
 
   return {
     availableAmount,

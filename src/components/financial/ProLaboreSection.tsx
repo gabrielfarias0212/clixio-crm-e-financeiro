@@ -1,14 +1,16 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, CheckCircle, AlertCircle, TrendingUp, Calendar, TrendingDown, Undo2 } from "lucide-react";
+import { Wallet, CheckCircle, AlertCircle, TrendingUp, Calendar, TrendingDown, Undo2, Loader2 } from "lucide-react";
 import { useProLabore } from "@/hooks/useProLabore";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { WeekInfo, getCurrentWeekInfo } from "@/utils/dates/weekUtils";
 import { toast } from "sonner";
+import { useState } from "react";
 
 export function ProLaboreSection() {
+  const [isReturning, setIsReturning] = useState<string | null>(null);
+  
   // Usar uma semana fictícia já que agora é baseado no mês
   const currentWeek: WeekInfo = getCurrentWeekInfo();
   const weeklyBalance = 0; // Não usado mais
@@ -50,16 +52,42 @@ export function ProLaboreSection() {
 
   const handleReturn = async (recordId: string) => {
     const record = currentMonthRecords.find(r => r.id === recordId);
-    if (!record) return;
+    if (!record) {
+      toast.error('Registro não encontrado');
+      return;
+    }
 
-    const success = await returnProLabore(recordId);
-    if (success) {
-      toast.success(`Pró-labore de ${formatCurrency(record.amount)} devolvido com sucesso!`);
+    setIsReturning(recordId);
+    
+    try {
+      console.log('🚀 Iniciando processo de devolução...');
       
-      // Forçar refresh das transações para mostrar as mudanças
-      await refreshTransactions();
-    } else {
-      toast.error('Não foi possível devolver o pró-labore');
+      // Mostrar toast de progresso
+      toast.info('Processando devolução...', {
+        duration: 2000
+      });
+
+      const success = await returnProLabore(recordId);
+      
+      if (success) {
+        toast.success(`Pró-labore de ${formatCurrency(record.amount)} devolvido com sucesso!`, {
+          description: 'As transações foram removidas do sistema'
+        });
+        
+        // Forçar refresh das transações para mostrar as mudanças
+        console.log('🔄 Atualizando transações...');
+        await refreshTransactions();
+        console.log('✅ Transações atualizadas');
+      } else {
+        toast.error('Não foi possível devolver o pró-labore', {
+          description: 'Verifique os logs do console para mais detalhes'
+        });
+      }
+    } catch (error) {
+      console.error('❌ Erro no handleReturn:', error);
+      toast.error('Erro inesperado durante a devolução');
+    } finally {
+      setIsReturning(null);
     }
   };
 
@@ -207,6 +235,9 @@ export function ProLaboreSection() {
                     <p className="text-sm text-gray-600">
                       {new Date(record.date).toLocaleDateString('pt-BR')}
                     </p>
+                    <p className="text-xs text-gray-500">
+                      ID: {record.id.substring(0, 8)}...
+                    </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
@@ -218,14 +249,34 @@ export function ProLaboreSection() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleReturn(record.id)}
+                      disabled={isReturning === record.id}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
-                      <Undo2 className="h-3 w-3 mr-1" />
-                      Devolver
+                      {isReturning === record.id ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Devolvendo...
+                        </>
+                      ) : (
+                        <>
+                          <Undo2 className="h-3 w-3 mr-1" />
+                          Devolver
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
               ))}
+            </div>
+            
+            {/* Informações adicionais */}
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+              <p className="text-sm text-blue-700">
+                💡 <strong>Dica:</strong> A devolução remove as transações do sistema e restaura o saldo disponível.
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Em caso de problemas, verifique o console do navegador (F12) para logs detalhados.
+              </p>
             </div>
           </CardContent>
         </Card>

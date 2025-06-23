@@ -2,34 +2,26 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, RotateCcw } from "lucide-react";
-import { useProLabore } from "@/hooks/useProLabore";
+import { TrendingUp, TrendingDown, RotateCcw, Loader2 } from "lucide-react";
 import { useTransactions } from "@/contexts/TransactionsContext";
-import { WeekInfo } from "@/utils/dates/weekUtils";
 import { toast } from "sonner";
 import { PersonalTransaction } from "@/hooks/usePersonalTransactions";
+import { deletePersonalTransaction } from "@/utils/supabase/personal-transactions";
+import { deleteTransaction, fetchTransactions } from "@/utils/supabase/transactions";
+import { useState } from "react";
 
 interface PersonalTransactionsListProps {
   transactions: PersonalTransaction[];
-  currentWeek?: WeekInfo;
+  currentWeek?: any;
   weeklyBalance?: number;
   onTransactionRemoved?: () => void;
 }
 
 export function PersonalTransactionsList({ 
   transactions, 
-  currentWeek, 
-  weeklyBalance = 0,
   onTransactionRemoved 
 }: PersonalTransactionsListProps) {
-  // Usar valores padrão quando currentWeek não estiver disponível
-  const defaultWeek: WeekInfo = {
-    start: new Date(),
-    end: new Date(),
-    label: "Semana atual"
-  };
-  
-  const { returnProLabore } = useProLabore(currentWeek || defaultWeek, weeklyBalance);
+  const [returningTransactionId, setReturningTransactionId] = useState<string | null>(null);
   
   // Hook para refresh das transações empresariais
   const { refreshTransactions } = useTransactions();
@@ -47,38 +39,92 @@ export function PersonalTransactionsList({
       return;
     }
     
-    // Para compatibilidade, encontrar o registro baseado na chave (pode ser semanal ou mensal)
-    const recordId = `${transaction.pro_labore_week_key}-${transaction.id}`;
-    
-    console.log('Devolvendo pró-labore:', {
-      transactionId: transaction.id,
-      weekKey: transaction.pro_labore_week_key,
-      amount: transaction.amount,
-      recordId
-    });
+    setReturningTransactionId(transaction.id);
     
     try {
-      const success = await returnProLabore(recordId);
+      console.log('🔄 === INICIANDO DEVOLUÇÃO DE PRÓ-LABORE (PESSOAL) ===');
+      console.log('📋 Transação:', transaction);
       
-      if (success) {
-        toast.success('Pró-labore devolvido para a empresa com sucesso!');
+      // Mostrar toast de progresso
+      toast.info('Processando devolução...', {
+        duration: 2000
+      });
+
+      let businessTransactionRemoved = false;
+      let personalTransactionRemoved = false;
+
+      // 1. Buscar e remover transação empresarial relacionada
+      console.log('🏢 === BUSCANDO TRANSAÇÃO EMPRESARIAL RELACIONADA ===');
+      
+      try {
+        const allBusinessTransactions = await fetchTransactions();
+        console.log(`📊 Total de transações empresariais: ${allBusinessTransactions.length}`);
         
-        // Refresh both personal and business transactions
+        // Buscar transação empresarial por critérios (valor, data e categoria)
+        const relatedBusinessTransaction = allBusinessTransactions.find(t => {
+          const isMatch = (
+            t.type === 'saída' &&
+            t.category === 'pró-labore' &&
+            Math.abs(t.amount - transaction.amount) < 0.01 &&
+            (t.description.includes(transaction.pro_labore_week_key!) || 
+             t.description.includes('pró-labore'))
+          );
+          
+          if (isMatch) {
+            console.log('✅ Transação empresarial relacionada encontrada:', t);
+          }
+          
+          return isMatch;
+        });
+        
+        if (relatedBusinessTransaction) {
+          console.log(`🗑️ Removendo transação empresarial: ${relatedBusinessTransaction.id}`);
+          await deleteTransaction(relatedBusinessTransaction.id);
+          businessTransactionRemoved = true;
+          console.log('✅ Transação empresarial removida com sucesso');
+        } else {
+          console.warn('⚠️ Transação empresarial relacionada não encontrada');
+        }
+      } catch (error) {
+        console.warn('⚠️ Erro ao buscar/remover transação empresarial:', error);
+      }
+
+      // 2. Remover transação pessoal
+      console.log('👤 === REMOVENDO TRANSAÇÃO PESSOAL ===');
+      
+      try {
+        console.log(`🗑️ Removendo transação pessoal: ${transaction.id}`);
+        await deletePersonalTransaction(transaction.id);
+        personalTransactionRemoved = true;
+        console.log('✅ Transação pessoal removida com sucesso');
+      } catch (error) {
+        console.error('❌ Erro ao remover transação pessoal:', error);
+      }
+
+      // 3. Verificar resultado
+      if (personalTransactionRemoved || businessTransactionRemoved) {
+        toast.success(`Pró-labore de ${formatCurrency(transaction.amount)} devolvido com sucesso!`, {
+          description: 'As transações foram removidas do sistema'
+        });
+        
+        // Refresh das transações
+        console.log('🔄 Atualizando transações...');
         if (onTransactionRemoved) {
           onTransactionRemoved();
         }
-        
-        // Also refresh business transactions to remove the debit entry
         await refreshTransactions();
-        
-        console.log('Pró-labore devolvido com sucesso');
+        console.log('✅ Transações atualizadas');
       } else {
-        toast.error('Não foi possível devolver o pró-labore');
-        console.error('Falha ao devolver pró-labore');
+        toast.error('Não foi possível devolver o pró-labore', {
+          description: 'Nenhuma transação foi removida'
+        });
       }
+      
     } catch (error) {
-      console.error('Erro ao devolver pró-labore:', error);
-      toast.error('Erro interno ao devolver pró-labore');
+      console.error('❌ Erro durante a devolução:', error);
+      toast.error('Erro inesperado durante a devolução');
+    } finally {
+      setReturningTransactionId(null);
     }
   };
 
@@ -136,10 +182,20 @@ export function PersonalTransactionsList({
                     size="sm"
                     variant="outline"
                     onClick={() => handleReturnProLabore(transaction)}
+                    disabled={returningTransactionId === transaction.id}
                     className="text-blue-600 border-blue-200 hover:bg-blue-50"
                   >
-                    <RotateCcw className="h-3 w-3 mr-1" />
-                    Devolver
+                    {returningTransactionId === transaction.id ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        Devolvendo...
+                      </>
+                    ) : (
+                      <>
+                        <RotateCcw className="h-3 w-3 mr-1" />
+                        Devolver
+                      </>
+                    )}
                   </Button>
                 )}
               </div>

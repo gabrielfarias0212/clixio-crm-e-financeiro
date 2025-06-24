@@ -1,9 +1,10 @@
+
 import React from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { Client, SalesFunnelStage, ClientStatus } from "@/utils/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Send, MessageCircle, FileCheck, Archive } from "lucide-react";
+import { Users, Send, MessageCircle, FileCheck, Archive, XCircle } from "lucide-react";
 import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
 
@@ -58,6 +59,14 @@ const funnelStages: Array<{
     color: "text-gray-600",
     bgColor: "bg-gray-50",
     statusMapping: ["projeto_finalizado"]
+  },
+  {
+    key: "contrato_perdido",
+    label: "Contratos Perdidos",
+    icon: XCircle,
+    color: "text-red-600",
+    bgColor: "bg-red-50",
+    statusMapping: []
   }
 ];
 
@@ -93,6 +102,8 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
         return "fechado";
       case "projeto_finalizado":
         return "projeto_finalizado";
+      case "contrato_perdido":
+        return "primeiro_contato"; // Manter status original para contratos perdidos
       default:
         return "primeiro_contato";
     }
@@ -167,7 +178,11 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
                         {stage.label}
                       </CardTitle>
                       <div className="text-lg font-bold text-gray-900">
-                        {formatCurrency(totalValue)}
+                        {stage.key === "contrato_perdido" ? (
+                          <span className="text-red-600">Perdido: {formatCurrency(totalValue)}</span>
+                        ) : (
+                          formatCurrency(totalValue)
+                        )}
                       </div>
                     </CardHeader>
                     
@@ -194,14 +209,18 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
                                     {...provided.dragHandleProps}
                                     className={`mb-2 p-3 bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-move ${
                                       snapshot.isDragging ? 'shadow-lg rotate-2' : ''
-                                    }`}
+                                    } ${stage.key === "contrato_perdido" ? 'border-red-200 bg-red-50' : ''}`}
                                   >
                                     <div className="space-y-1">
-                                      <h4 className="font-medium text-sm text-gray-900 truncate">
+                                      <h4 className={`font-medium text-sm truncate ${
+                                        stage.key === "contrato_perdido" ? 'text-red-700' : 'text-gray-900'
+                                      }`}>
                                         {client.name}
                                       </h4>
                                       <div className="flex items-center justify-between">
-                                        <span className="text-xs font-semibold text-green-600">
+                                        <span className={`text-xs font-semibold ${
+                                          stage.key === "contrato_perdido" ? 'text-red-600' : 'text-green-600'
+                                        }`}>
                                           {formatCurrency(client.contractValue)}
                                         </span>
                                         <Badge variant="outline" className="text-xs">
@@ -221,7 +240,7 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
                             {provided.placeholder}
                             {clientsInStage.length === 0 && (
                               <div className="text-center text-gray-400 text-sm py-8">
-                                Arraste clientes aqui
+                                {stage.key === "contrato_perdido" ? "Nenhum contrato perdido" : "Arraste clientes aqui"}
                               </div>
                             )}
                           </div>
@@ -242,7 +261,7 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
           <CardTitle className="text-lg">Métricas de Conversão</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
                 {((getClientsInStage("orcamento_enviado").length / Math.max(getClientsInStage("primeiro_contato").length, 1)) * 100).toFixed(1)}%
@@ -266,6 +285,12 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
                 {((getClientsInStage("projeto_finalizado").length / Math.max(getClientsInStage("contrato_fechado").length, 1)) * 100).toFixed(1)}%
               </div>
               <div className="text-sm text-gray-600">Taxa de Finalização</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-600">
+                {((getClientsInStage("contrato_perdido").length / Math.max(clients.length, 1)) * 100).toFixed(1)}%
+              </div>
+              <div className="text-sm text-gray-600">Taxa de Perda</div>
             </div>
           </div>
         </CardContent>

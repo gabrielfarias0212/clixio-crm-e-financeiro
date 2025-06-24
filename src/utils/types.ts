@@ -42,7 +42,8 @@ export type SalesFunnelStage =
   | "orcamento_enviado" 
   | "negociacao" 
   | "contrato_fechado" 
-  | "projeto_finalizado";
+  | "projeto_finalizado"
+  | "contrato_perdido";
 
 export interface Payment {
   id: string;

@@ -22,6 +22,8 @@ const mapStatusToFunnelStage = (status: string): SalesFunnelStage => {
     case 'projeto_finalizado':
     case 'entregue':
       return 'projeto_finalizado';
+    case 'contrato_perdido':
+      return 'contrato_perdido';
     default:
       return 'primeiro_contato';
   }

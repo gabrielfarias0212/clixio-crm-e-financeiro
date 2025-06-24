@@ -17,6 +17,7 @@ import CashFlow from "./pages/CashFlow";
 import PersonalControl from "./pages/PersonalControl";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import LandingPage from "./pages/LandingPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AuthGuard } from "./components/AuthGuard";
 import { ClientsProvider } from "./contexts/ClientsContext";
@@ -36,6 +37,7 @@ function App() {
               <Toaster />
               <Sonner />
               <Routes>
+                <Route path="/landing" element={<LandingPage />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route 
                   path="/" 

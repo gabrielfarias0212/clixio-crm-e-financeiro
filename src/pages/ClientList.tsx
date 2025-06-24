@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo, Suspense } from "react";
 import Layout from "@/components/Layout";
 import { ClientHeader } from "@/components/clients/ClientHeader";
@@ -40,7 +39,7 @@ export default function ClientList() {
   // Callback para reset de página quando filtros mudam
   const handleFiltersChange = useCallback((newSearchTerm: string, newStatusFilter: string) => {
     setSearchTerm(newSearchTerm);
-    setStatusFilter(newSearchFilter as typeof statusFilter);
+    setStatusFilter(newStatusFilter as typeof statusFilter);
     pagination.resetPage();
   }, [pagination]);
 

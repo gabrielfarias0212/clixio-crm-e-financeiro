@@ -66,7 +66,7 @@ const funnelStages: Array<{
     icon: XCircle,
     color: "text-red-600",
     bgColor: "bg-red-50",
-    statusMapping: []
+    statusMapping: ["contrato_perdido"]
   }
 ];
 
@@ -103,7 +103,7 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
       case "projeto_finalizado":
         return "projeto_finalizado";
       case "contrato_perdido":
-        return "primeiro_contato"; // Manter status original para contratos perdidos
+        return "contrato_perdido";
       default:
         return "primeiro_contato";
     }

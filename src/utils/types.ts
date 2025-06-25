@@ -3,7 +3,8 @@ export type ClientStatus =
   | "orçamento enviado" 
   | "negociacao"
   | "fechado"
-  | "projeto_finalizado";
+  | "projeto_finalizado"
+  | "contrato_perdido";
 
 export type NextAction = 
   | "responder" 

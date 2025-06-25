@@ -34,6 +34,11 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       bg: "bg-emerald-50",
       text: "text-emerald-600",
       border: "border-emerald-200"
+    },
+    "contrato_perdido": {
+      bg: "bg-red-50",
+      text: "text-red-600",
+      border: "border-red-200"
     }
   };
 

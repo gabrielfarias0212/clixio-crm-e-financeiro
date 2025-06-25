@@ -1,4 +1,3 @@
-
 import { Control } from "react-hook-form";
 import {
   FormField,
@@ -41,6 +40,7 @@ export function StatusFields({ control }: StatusFieldsProps) {
                 <SelectItem value="negociacao">Negociação</SelectItem>
                 <SelectItem value="fechado">Fechado</SelectItem>
                 <SelectItem value="projeto_finalizado">Projeto Finalizado</SelectItem>
+                <SelectItem value="contrato_perdido">Contrato Perdido</SelectItem>
               </SelectContent>
             </Select>
             <FormMessage />

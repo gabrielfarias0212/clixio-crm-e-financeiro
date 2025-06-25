@@ -10,7 +10,6 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  Legend,
   Tooltip as RechartsTooltip,
   Sector
 } from "recharts";
@@ -28,6 +27,7 @@ const EVENT_COLORS = {
   "Ensaio Estudio": "#EF4444",
   "Ensaio externo": "#3B82F6",
   "Evento Corporativo": "#EC4899",
+  "15 anos": "#6366F1",
 };
 
 // Configuration for the chart
@@ -38,6 +38,7 @@ const chartConfig = {
   "Ensaio Estudio": { color: "#EF4444" },
   "Ensaio externo": { color: "#3B82F6" },
   "Evento Corporativo": { color: "#EC4899" },
+  "15 anos": { color: "#6366F1" },
 };
 
 type TimeRangeOption = "all" | "3" | "6" | "12";
@@ -52,7 +53,7 @@ const timeRangeOptions = [
 // Active shape for the pie chart to show percentage
 const renderActiveShape = (props: any) => {
   const { 
-    cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value 
+    cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent 
   } = props;
 
   return (
@@ -89,22 +90,40 @@ const renderActiveShape = (props: any) => {
   );
 };
 
-const CustomLegend = (props: any) => {
-  const { payload } = props;
-  
+// Modern fixed legend
+const ModernLegend = ({ data }: { data: any[] }) => {
   return (
-    <div className="flex flex-wrap justify-center gap-4 mt-4">
-      {payload.map((entry: any, index: number) => (
-        <div key={`item-${index}`} className="flex items-center gap-2">
-          <div 
-            className="h-3 w-3 rounded-full" 
-            style={{ backgroundColor: entry.color }}
-          />
-          <span className="text-sm text-gray-600">
-            {entry.value} ({entry.payload.percent}%)
-          </span>
-        </div>
-      ))}
+    <div className="mt-6 p-4 bg-gray-50/50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800">
+      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+        Categorias de Eventos
+      </h4>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {Object.entries(EVENT_COLORS).map(([category, color]) => {
+          const categoryData = data.find(item => item.name === category);
+          const percentage = categoryData ? parseFloat(categoryData.percent) : 0;
+          const count = categoryData ? categoryData.value : 0;
+          
+          return (
+            <div 
+              key={category} 
+              className="flex items-center gap-2 p-2 rounded-md hover:bg-white dark:hover:bg-gray-800 transition-colors"
+            >
+              <div 
+                className="h-3 w-3 rounded-full flex-shrink-0 ring-2 ring-white dark:ring-gray-900" 
+                style={{ backgroundColor: color }}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                  {category}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {count > 0 ? `${count} (${percentage.toFixed(1)}%)` : '0 (0%)'}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -144,7 +163,7 @@ export function EventCategoryChart() {
     return Object.entries(categoryCount).map(([name, value]) => ({
       name,
       value,
-      percent: total > 0 ? `${((value / total) * 100).toFixed(1)}` : "0"
+      percent: total > 0 ? ((value / total) * 100).toFixed(1) : "0"
     }));
   }, [clients, timeRange]);
 
@@ -196,7 +215,7 @@ export function EventCategoryChart() {
         </div>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="h-[340px] mt-2">
+        <div className="h-[300px] mt-2">
           {chartData.length > 0 ? (
             <ChartContainer 
               config={chartConfig}
@@ -206,13 +225,13 @@ export function EventCategoryChart() {
                   <Pie
                     data={chartData}
                     cx="50%"
-                    cy="45%"
+                    cy="50%"
                     labelLine={false}
                     activeIndex={activeIndex}
                     activeShape={renderActiveShape}
-                    outerRadius={130}
-                    innerRadius={80}
-                    paddingAngle={2}
+                    outerRadius={100}
+                    innerRadius={60}
+                    paddingAngle={3}
                     dataKey="value"
                     nameKey="name"
                     onMouseEnter={onPieEnter}
@@ -222,34 +241,29 @@ export function EventCategoryChart() {
                       <Cell 
                         key={`cell-${index}`} 
                         fill={EVENT_COLORS[entry.name as EventCategory] || "#000000"}
-                        stroke="rgba(255,255,255,0.5)"
-                        strokeWidth={1}
+                        stroke="rgba(255,255,255,0.8)"
+                        strokeWidth={2}
                       />
                     ))}
                   </Pie>
-                  <Legend 
-                    content={<CustomLegend />} 
-                    verticalAlign="bottom" 
-                    align="center"
-                  />
                   <RechartsTooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
-                        const percentage = ((data.value / totalEvents) * 100).toFixed(1);
+                        const percentage = parseFloat(data.percent);
                         
                         return (
                           <ChartTooltipContent>
-                            <div className="px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg rounded-lg">
+                            <div className="px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg rounded-lg">
                               <div className="text-sm font-medium">{data.name}</div>
-                              <div className="text-xs mt-1 space-y-1">
+                              <div className="text-xs mt-2 space-y-1">
                                 <div className="flex justify-between gap-4">
                                   <span className="text-gray-500">Quantidade:</span>
                                   <span className="font-medium">{data.value}</span>
                                 </div>
                                 <div className="flex justify-between gap-4">
                                   <span className="text-gray-500">Porcentagem:</span>
-                                  <span className="font-medium">{percentage}%</span>
+                                  <span className="font-medium">{percentage.toFixed(1)}%</span>
                                 </div>
                               </div>
                             </div>
@@ -273,6 +287,9 @@ export function EventCategoryChart() {
             </div>
           )}
         </div>
+        
+        {/* Modern fixed legend */}
+        <ModernLegend data={chartData} />
       </CardContent>
     </Card>
   );

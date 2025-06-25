@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -53,23 +54,29 @@ export function DatePicker({
           <Button
             variant="outline"
             className={cn(
-              "w-full pl-3 text-left font-normal",
-              !value && "text-muted-foreground"
+              "w-full h-12 px-4 text-left font-normal border-gray-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-150",
+              !value && "text-gray-500"
             )}
           >
-            {value ? value : <span>{placeholder}</span>}
-            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+            {value ? (
+              <span className="text-gray-900">{value}</span>
+            ) : (
+              <span className="text-gray-500">{placeholder}</span>
+            )}
+            <CalendarIcon className="ml-auto h-5 w-5 text-gray-400" />
           </Button>
         </FormControl>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={dateValue || undefined}
-          onSelect={handleDateChange}
-          initialFocus
-          className="p-3 pointer-events-auto"
-        />
+      <PopoverContent className="w-auto p-0 shadow-lg border-0 rounded-xl" align="start">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+          <Calendar
+            mode="single"
+            selected={dateValue || undefined}
+            onSelect={handleDateChange}
+            initialFocus
+            className="p-4 pointer-events-auto"
+          />
+        </div>
       </PopoverContent>
     </Popover>
   );
@@ -96,14 +103,14 @@ export function FormDatePicker<
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className="flex flex-col">
-          {label && <FormLabel>{label}</FormLabel>}
+        <FormItem className="flex flex-col space-y-2">
+          {label && <FormLabel className="text-sm font-medium text-gray-700">{label}</FormLabel>}
           <DatePicker
             value={field.value}
             onChange={field.onChange}
             placeholder={placeholder}
           />
-          {description && <FormDescription>{description}</FormDescription>}
+          {description && <FormDescription className="text-xs text-gray-500">{description}</FormDescription>}
           <FormMessage />
         </FormItem>
       )}

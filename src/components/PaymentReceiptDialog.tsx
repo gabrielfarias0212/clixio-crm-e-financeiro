@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Printer, Download, X } from "lucide-react";
@@ -19,13 +19,50 @@ export function PaymentReceiptDialog({
   payment, 
   client 
 }: PaymentReceiptDialogProps) {
+  
+  useEffect(() => {
+    if (open) {
+      // Esconder outros elementos quando o modal estiver aberto para impressão
+      const handleBeforePrint = () => {
+        document.body.classList.add('printing');
+        // Esconder todos os elementos exceto o comprovante
+        const allElements = document.querySelectorAll('body > *:not([data-radix-portal])');
+        allElements.forEach(el => {
+          if (!el.contains(document.querySelector('.print-area'))) {
+            (el as HTMLElement).style.visibility = 'hidden';
+          }
+        });
+      };
+
+      const handleAfterPrint = () => {
+        document.body.classList.remove('printing');
+        // Restaurar visibilidade dos elementos
+        const allElements = document.querySelectorAll('body > *');
+        allElements.forEach(el => {
+          (el as HTMLElement).style.visibility = 'visible';
+        });
+      };
+
+      window.addEventListener('beforeprint', handleBeforePrint);
+      window.addEventListener('afterprint', handleAfterPrint);
+
+      return () => {
+        window.removeEventListener('beforeprint', handleBeforePrint);
+        window.removeEventListener('afterprint', handleAfterPrint);
+      };
+    }
+  }, [open]);
+
   const handlePrint = () => {
-    window.print();
+    // Aguardar um momento para garantir que o modal está renderizado
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   const handleDownload = () => {
     // Trigger print dialog which can be saved as PDF
-    window.print();
+    handlePrint();
   };
 
   // Calculate financial summary
@@ -40,7 +77,7 @@ export function PaymentReceiptDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between print:hidden">
+        <DialogHeader className="flex flex-row items-center justify-between print-hidden">
           <DialogTitle>Comprovante de Pagamento</DialogTitle>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handlePrint}>

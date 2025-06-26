@@ -23,28 +23,89 @@ export function PaymentReceiptTemplate({
   const currentDate = new Date().toLocaleDateString('pt-BR');
   
   return (
-    <div className="bg-white p-8 print:p-6 print:shadow-none">
-      <style jsx>{`
-        @media print {
-          body * {
-            visibility: hidden;
+    <>
+      <style>
+        {`
+          @media print {
+            * {
+              -webkit-print-color-adjust: exact !important;
+              color-adjust: exact !important;
+            }
+            
+            body {
+              margin: 0;
+              padding: 0;
+              font-family: system-ui, -apple-system, sans-serif;
+            }
+            
+            .print-area {
+              width: 100% !important;
+              max-width: none !important;
+              margin: 0 !important;
+              padding: 20px !important;
+              box-shadow: none !important;
+              border: none !important;
+            }
+            
+            .print-hidden {
+              display: none !important;
+            }
+            
+            .text-center { text-align: center !important; }
+            .text-left { text-align: left !important; }
+            .font-bold { font-weight: bold !important; }
+            .text-2xl { font-size: 1.5rem !important; }
+            .text-lg { font-size: 1.125rem !important; }
+            .text-sm { font-size: 0.875rem !important; }
+            .text-xs { font-size: 0.75rem !important; }
+            .mb-2 { margin-bottom: 0.5rem !important; }
+            .mb-4 { margin-bottom: 1rem !important; }
+            .mb-6 { margin-bottom: 1.5rem !important; }
+            .mb-8 { margin-bottom: 2rem !important; }
+            .mt-2 { margin-top: 0.5rem !important; }
+            .mt-3 { margin-top: 0.75rem !important; }
+            .pb-2 { padding-bottom: 0.5rem !important; }
+            .pb-6 { padding-bottom: 1.5rem !important; }
+            .pt-6 { padding-top: 1.5rem !important; }
+            .p-4 { padding: 1rem !important; }
+            .p-6 { padding: 1.5rem !important; }
+            .px-2 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+            .py-1 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
+            .rounded { border-radius: 0.25rem !important; }
+            .border { border: 1px solid #d1d5db !important; }
+            .border-b { border-bottom: 1px solid #d1d5db !important; }
+            .border-b-2 { border-bottom: 2px solid #d1d5db !important; }
+            .border-t-2 { border-top: 2px solid #d1d5db !important; }
+            .space-y-2 > * + * { margin-top: 0.5rem !important; }
+            .space-y-3 > * + * { margin-top: 0.75rem !important; }
+            .grid { display: grid !important; }
+            .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+            .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+            .gap-4 { gap: 1rem !important; }
+            .gap-6 { gap: 1.5rem !important; }
+            .bg-gray-50 { background-color: #f9fafb !important; }
+            .bg-white { background-color: #ffffff !important; }
+            .bg-green-100 { background-color: #dcfce7 !important; }
+            .bg-yellow-100 { background-color: #fef3c7 !important; }
+            .text-gray-800 { color: #1f2937 !important; }
+            .text-gray-600 { color: #4b5563 !important; }
+            .text-gray-500 { color: #6b7280 !important; }
+            .text-blue-600 { color: #2563eb !important; }
+            .text-green-600 { color: #16a34a !important; }
+            .text-green-800 { color: #166534 !important; }
+            .text-yellow-800 { color: #92400e !important; }
+            .text-red-600 { color: #dc2626 !important; }
+            .text-orange-600 { color: #ea580c !important; }
+            
+            @page {
+              margin: 1cm;
+              size: A4;
+            }
           }
-          .print-area, .print-area * {
-            visibility: visible;
-          }
-          .print-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-          @page {
-            margin: 1cm;
-          }
-        }
-      `}</style>
+        `}
+      </style>
       
-      <div className="print-area">
+      <div className="bg-white p-8 print-area">
         {/* Cabeçalho */}
         <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-2">
@@ -57,99 +118,103 @@ export function PaymentReceiptTemplate({
         </div>
 
         {/* Informações do Cliente */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
-              Dados do Cliente
-            </h3>
-            <div className="space-y-2 text-sm">
-              <p><span className="font-medium">Nome:</span> {client.name}</p>
-              {client.email && (
-                <p><span className="font-medium">Email:</span> {client.email}</p>
-              )}
-              {client.phone && (
-                <p><span className="font-medium">Telefone:</span> {client.phone}</p>
-              )}
-              {client.eventCategory && (
-                <p><span className="font-medium">Evento:</span> {client.eventCategory}</p>
-              )}
-              {client.weddingDate && (
-                <p><span className="font-medium">Data do Evento:</span> {new Date(client.weddingDate).toLocaleDateString('pt-BR')}</p>
-              )}
-              {client.eventLocation && (
-                <p><span className="font-medium">Local:</span> {client.eventLocation}</p>
-              )}
+        <div className="grid grid-cols-1 gap-6 mb-8">
+          <div className="grid grid-cols-1 gap-6">
+            <div className="space-y-3">
+              <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2">
+                Dados do Cliente
+              </h3>
+              <div className="space-y-2 text-sm">
+                <p><span className="font-bold">Nome:</span> {client.name}</p>
+                {client.email && (
+                  <p><span className="font-bold">Email:</span> {client.email}</p>
+                )}
+                {client.phone && (
+                  <p><span className="font-bold">Telefone:</span> {client.phone}</p>
+                )}
+                {client.eventCategory && (
+                  <p><span className="font-bold">Evento:</span> {client.eventCategory}</p>
+                )}
+                {client.weddingDate && (
+                  <p><span className="font-bold">Data do Evento:</span> {new Date(client.weddingDate).toLocaleDateString('pt-BR')}</p>
+                )}
+                {client.eventLocation && (
+                  <p><span className="font-bold">Local:</span> {client.eventLocation}</p>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
-              Detalhes do Pagamento
-            </h3>
-            <div className="space-y-2 text-sm">
-              <p><span className="font-medium">Data do Pagamento:</span> {payment.date}</p>
-              <p><span className="font-medium">Valor Pago:</span> <span className="text-green-600 font-bold">{formatCurrency(payment.amount)}</span></p>
-              <p><span className="font-medium">Status:</span> 
-                <span className={`ml-2 px-2 py-1 rounded text-xs ${
-                  payment.payment_status === 'pago' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {payment.payment_status === 'pago' ? 'Pago' : 'Pendente'}
-                </span>
-              </p>
-              {payment.due_date && (
-                <p><span className="font-medium">Data de Vencimento:</span> {payment.due_date}</p>
-              )}
-              {payment.notes && (
-                <p><span className="font-medium">Observações:</span> {payment.notes}</p>
-              )}
+            <div className="space-y-3">
+              <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2">
+                Detalhes do Pagamento
+              </h3>
+              <div className="space-y-2 text-sm">
+                <p><span className="font-bold">Data do Pagamento:</span> {payment.date}</p>
+                <p><span className="font-bold">Valor Pago:</span> <span className="text-green-600 font-bold">{formatCurrency(payment.amount)}</span></p>
+                <p><span className="font-bold">Status:</span> 
+                  <span className={`ml-2 px-2 py-1 rounded text-xs ${
+                    payment.payment_status === 'pago' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {payment.payment_status === 'pago' ? 'Pago' : 'Pendente'}
+                  </span>
+                </p>
+                {payment.due_date && (
+                  <p><span className="font-bold">Data de Vencimento:</span> {payment.due_date}</p>
+                )}
+                {payment.notes && (
+                  <p><span className="font-bold">Observações:</span> {payment.notes}</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Resumo Financeiro */}
-        <div className="bg-gray-50 p-6 rounded-lg mb-8">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">
+        <div className="bg-gray-50 p-6 rounded mb-8">
+          <h3 className="text-lg font-bold text-gray-800 mb-4 border-b border-gray-200 pb-2">
             Resumo Financeiro do Contrato
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div className="text-center p-4 bg-white rounded border">
-              <p className="text-gray-600 mb-1">Valor Total do Contrato</p>
-              <p className="text-xl font-bold text-blue-600">{formatCurrency(contractValue)}</p>
-            </div>
-            <div className="text-center p-4 bg-white rounded border">
-              <p className="text-gray-600 mb-1">Total Pago</p>
-              <p className="text-xl font-bold text-green-600">{formatCurrency(totalPaid)}</p>
-            </div>
-            <div className="text-center p-4 bg-white rounded border">
-              <p className="text-gray-600 mb-1">Saldo Devedor</p>
-              <p className={`text-xl font-bold ${remainingBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                {formatCurrency(remainingBalance)}
-              </p>
+          <div className="grid grid-cols-1 gap-4 text-sm">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-white rounded border">
+                <p className="text-gray-600 mb-1 font-bold">Valor Total do Contrato</p>
+                <p className="text-lg font-bold text-blue-600">{formatCurrency(contractValue)}</p>
+              </div>
+              <div className="text-center p-4 bg-white rounded border">
+                <p className="text-gray-600 mb-1 font-bold">Total Pago</p>
+                <p className="text-lg font-bold text-green-600">{formatCurrency(totalPaid)}</p>
+              </div>
+              <div className="text-center p-4 bg-white rounded border">
+                <p className="text-gray-600 mb-1 font-bold">Saldo Devedor</p>
+                <p className={`text-lg font-bold ${remainingBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {formatCurrency(remainingBalance)}
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Rodapé */}
         <div className="border-t-2 border-gray-200 pt-6 text-center text-sm text-gray-600">
-          <p className="mb-2">Comprovante emitido em: {currentDate}</p>
+          <p className="mb-2 font-bold">Comprovante emitido em: {currentDate}</p>
           <p className="text-xs">
             Este comprovante é válido como prova de pagamento. 
             Guarde-o para seus registros financeiros.
           </p>
           {remainingBalance > 0 && (
-            <p className="mt-3 text-orange-600 font-medium">
+            <p className="mt-3 text-orange-600 font-bold">
               ⚠️ Atenção: Ainda há saldo devedor de {formatCurrency(remainingBalance)} para quitação completa do contrato.
             </p>
           )}
           {remainingBalance <= 0 && (
-            <p className="mt-3 text-green-600 font-medium">
+            <p className="mt-3 text-green-600 font-bold">
               ✅ Parabéns! Contrato totalmente quitado.
             </p>
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 }

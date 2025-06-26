@@ -1,9 +1,8 @@
-
 import { Payment } from "@/utils/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Trash2, Edit } from "lucide-react";
+import { AlertCircle, Trash2, Edit, FileText } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,9 +19,11 @@ import { parseDate } from "@/utils/supabase/base";
 import { Badge } from "@/components/ui/badge";
 import { isBefore } from "date-fns";
 import { EditPaymentDialog } from "./EditPaymentDialog";
+import { PaymentReceiptDialog } from "./PaymentReceiptDialog";
 
 interface PaymentHistoryProps {
   payments: Payment[];
+  client?: any; // Adding client prop for receipt generation
   className?: string;
   onDeletePayment?: (paymentId: string) => void;
   onUpdatePayment?: (updatedPayment: Payment) => void;
@@ -32,6 +33,7 @@ interface PaymentHistoryProps {
 
 export function PaymentHistory({ 
   payments, 
+  client,
   className, 
   onDeletePayment, 
   onUpdatePayment,
@@ -40,6 +42,7 @@ export function PaymentHistory({
 }: PaymentHistoryProps) {
   const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
   const [paymentToEdit, setPaymentToEdit] = useState<Payment | null>(null);
+  const [receiptPayment, setReceiptPayment] = useState<Payment | null>(null);
   
   // Sort payments by date (newest first) - using string comparison instead of Date.getTime()
   const sortedPayments = [...payments].sort((a, b) => {
@@ -110,7 +113,7 @@ export function PaymentHistory({
               <TableHead className="hidden md:table-cell">Status</TableHead>
               <TableHead className="hidden sm:table-cell">Vencimento</TableHead>
               <TableHead className="hidden lg:table-cell">Detalhes</TableHead>
-              {(onDeletePayment || onUpdatePayment) && <TableHead className="w-[120px]">Ações</TableHead>}
+              {(onDeletePayment || onUpdatePayment || client) && <TableHead className="w-[160px]">Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -132,9 +135,19 @@ export function PaymentHistory({
                 <TableCell className="hidden lg:table-cell text-muted-foreground">
                   {payment.notes || "-"}
                 </TableCell>
-                {(onDeletePayment || onUpdatePayment) && (
+                {(onDeletePayment || onUpdatePayment || client) && (
                   <TableCell>
                     <div className="flex gap-1">
+                      {client && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => setReceiptPayment(payment)}
+                          title="Gerar Comprovante"
+                        >
+                          <FileText className="h-4 w-4 text-blue-500" />
+                        </Button>
+                      )}
                       {onUpdatePayment && (
                         <Button 
                           variant="ghost" 
@@ -195,6 +208,15 @@ export function PaymentHistory({
           onOpenChange={(open) => !open && setPaymentToEdit(null)}
           onSave={handleUpdatePayment}
           isLoading={isUpdating}
+        />
+      )}
+
+      {receiptPayment && client && (
+        <PaymentReceiptDialog
+          open={!!receiptPayment}
+          onOpenChange={(open) => !open && setReceiptPayment(null)}
+          payment={receiptPayment}
+          client={client}
         />
       )}
     </div>

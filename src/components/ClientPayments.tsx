@@ -237,6 +237,7 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
       
       <PaymentHistory 
         payments={client.payments} 
+        client={client}
         onDeletePayment={handleDeletePayment}
         onUpdatePayment={handleUpdatePayment}
         isDeleting={isSubmitting}

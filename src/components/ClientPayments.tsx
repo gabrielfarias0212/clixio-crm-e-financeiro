@@ -10,6 +10,7 @@ import { createPayment, deletePayment, updatePaymentStatus, updatePaymentDueDate
 import { toast } from "sonner";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { createTransaction, deleteTransaction } from "@/utils/supabase/transactions";
+import { useClients } from "@/contexts/ClientsContext";
 
 export interface ClientPaymentsProps {
   client: Client;
@@ -21,6 +22,7 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
   const [isMarkAsPaidOpen, setIsMarkAsPaidOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { refreshTransactions } = useTransactions();
+  const { refreshClients } = useClients();
   
   // Calculate if contract has pending payments
   const totalPaid = client.payments.reduce((sum, payment) => sum + payment.amount, 0);
@@ -168,47 +170,13 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
     try {
       setIsSubmitting(true);
       
+      console.log('Marking contract as paid for client:', client.id);
+      
       const success = await markContractAsPaid(client.id, createTransaction);
       
       if (success) {
-        // Check if client had no payments before marking as paid
-        const hadNoPayments = client.payments.length === 0;
-        
-        let updatedClient: Client;
-        
-        if (hadNoPayments) {
-          // If client had no payments, add a new payment with the full contract value
-          const newPayment: Payment = {
-            id: `temp-${Date.now()}`, // Temporary ID, will be replaced when data is refreshed
-            amount: client.contractValue,
-            date: new Date().toISOString().split('T')[0],
-            notes: 'Contrato quitado integralmente',
-            payment_status: "pago" as PaymentStatus
-          };
-          
-          updatedClient = {
-            ...client,
-            payments: [newPayment]
-          };
-        } else {
-          // If client had payments, mark all as paid
-          updatedClient = {
-            ...client,
-            payments: client.payments.map(payment => ({
-              ...payment,
-              payment_status: "pago" as PaymentStatus
-            }))
-          };
-        }
-        
-        if (onUpdate) {
-          onUpdate(updatedClient);
-        }
-
-        // Refresh transactions if transaction was created
-        if (createTransaction) {
-          refreshTransactions();
-        }
+        // Refresh the clients data to get the updated payments
+        await refreshClients();
         
         setIsMarkAsPaidOpen(false);
         
@@ -217,6 +185,11 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
           : "Contrato marcado como pago! Nenhuma transação foi criada no fluxo de caixa.";
         
         toast.success(message);
+        
+        // Refresh transactions if transaction was created
+        if (createTransaction) {
+          refreshTransactions();
+        }
       } else {
         toast.error("Erro ao marcar contrato como pago. Tente novamente.");
       }
@@ -238,6 +211,7 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
               size="sm" 
               onClick={() => setIsMarkAsPaidOpen(true)}
               className="bg-green-600 hover:bg-green-700"
+              disabled={isSubmitting}
             >
               <CheckCircleIcon className="h-4 w-4 mr-1" />
               Marcar como Pago
@@ -245,7 +219,7 @@ export function ClientPayments({ client, onUpdate }: ClientPaymentsProps) {
           )}
           <Dialog open={isAddPaymentOpen} onOpenChange={setIsAddPaymentOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="outline" disabled={isSubmitting}>
                 <PlusIcon className="h-4 w-4 mr-1" />
                 Adicionar Pagamento
               </Button>

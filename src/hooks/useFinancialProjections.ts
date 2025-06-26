@@ -79,6 +79,37 @@ export function useFinancialProjections() {
     return null;
   }, []);
 
+  // Função para verificar se um contrato está totalmente quitado
+  const isContractFullyPaid = useCallback((client: Client, clientTransactions: typeof transactionsData) => {
+    // Calcular valor total pago através de transações
+    const totalPaidViaTransactions = clientTransactions
+      .filter(t => t.type === 'entrada')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+    
+    // Calcular valor total pago através de pagamentos marcados como "pago"
+    const totalPaidViaPayments = client.payments
+      .filter(p => p.payment_status === 'pago')
+      .reduce((sum, p) => sum + Number(p.amount), 0);
+    
+    // Usar o maior valor entre transações e pagamentos
+    const totalPaid = Math.max(totalPaidViaTransactions, totalPaidViaPayments);
+    
+    const contractValue = Number(client.contractValue) || 0;
+    const pendingAmount = contractValue - totalPaid;
+    
+    console.log(`Cliente ${client.name}:`, {
+      contractValue,
+      totalPaidViaTransactions,
+      totalPaidViaPayments,
+      totalPaid,
+      pendingAmount,
+      isFullyPaid: pendingAmount <= 0
+    });
+    
+    // Considerar quitado se o valor pendente é <= 0
+    return pendingAmount <= 0;
+  }, []);
+
   // Função otimizada de cálculo de projeções
   const calculateProjections = useCallback(() => {
     console.log("=== Iniciando cálculo otimizado de projeções ===");
@@ -132,13 +163,27 @@ export function useFinancialProjections() {
       });
 
       clientsData.forEach(client => {
-        // Calcular valor pago usando Map otimizado
+        // Verificar se o contrato está totalmente quitado
         const clientTransactions = transactionsByClient.get(client.id) || [];
+        const isFullyPaid = isContractFullyPaid(client, clientTransactions);
+        
+        // Se o contrato está quitado, pular este cliente das projeções
+        if (isFullyPaid) {
+          console.log(`Pulando cliente ${client.name} - contrato quitado`);
+          return;
+        }
+        
+        // Calcular valor pago usando Map otimizado
         const totalPaid = clientTransactions
           .filter(t => t.type === 'entrada')
           .reduce((sum, t) => sum + Number(t.amount), 0);
         
         const pendingAmount = Number(client.contractValue) - totalPaid;
+
+        // Só processar se há valor pendente
+        if (pendingAmount <= 0) {
+          return;
+        }
 
         // Processar pagamentos agendados otimizado
         client.payments.forEach(payment => {
@@ -172,7 +217,6 @@ export function useFinancialProjections() {
               });
 
               if (monthIndex !== -1) {
-                nextS:
                 nextSixMonths[monthIndex].guaranteed += Number(payment.amount);
                 nextSixMonths[monthIndex].events.push(events.guaranteed[events.guaranteed.length - 1]);
               }
@@ -249,7 +293,7 @@ export function useFinancialProjections() {
           }
         }
 
-        // Distribuir valores pendentes otimizado
+        // Distribuir valores pendentes otimizado apenas se não tem data de evento
         if (!client.weddingDate && pendingAmount > 0 && client.status === 'fechado') {
           const monthlyInstallment = pendingAmount / 3;
           for (let i = 0; i < Math.min(3, 6); i++) {
@@ -301,7 +345,7 @@ export function useFinancialProjections() {
     } finally {
       setLoading(false);
     }
-  }, [clientsData, transactionsData, getCachedData]);
+  }, [clientsData, transactionsData, getCachedData, isContractFullyPaid]);
 
   useEffect(() => {
     calculateProjections();

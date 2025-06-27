@@ -21,219 +21,341 @@ export function PaymentReceiptTemplate({
   remainingBalance
 }: PaymentReceiptTemplateProps) {
   const currentDate = new Date().toLocaleDateString('pt-BR');
+  const isContractPaid = remainingBalance <= 0;
   
   return (
     <>
       <style>
         {`
           @media print {
-            * {
-              -webkit-print-color-adjust: exact !important;
-              color-adjust: exact !important;
+            /* Reset everything for print */
+            *, *::before, *::after {
               box-sizing: border-box;
+              margin: 0;
+              padding: 0;
             }
             
-            html, body {
-              margin: 0 !important;
-              padding: 0 !important;
-              width: 100% !important;
-              height: 100% !important;
-              font-family: system-ui, -apple-system, sans-serif !important;
-              background: white !important;
-              visibility: visible !important;
-            }
-            
+            /* Hide everything except the receipt */
             body * {
-              visibility: hidden !important;
+              visibility: hidden;
             }
             
-            .print-area, .print-area * {
+            /* Show only the receipt content */
+            .receipt-content, .receipt-content * {
               visibility: visible !important;
             }
             
-            .print-area {
+            /* Position the receipt to fill the page */
+            .receipt-content {
               position: absolute !important;
               left: 0 !important;
               top: 0 !important;
               width: 100% !important;
-              height: auto !important;
-              margin: 0 !important;
-              padding: 20px !important;
+              height: 100vh !important;
               background: white !important;
-              box-shadow: none !important;
-              border: none !important;
-              transform: none !important;
-              overflow: visible !important;
+              padding: 2cm !important;
+              font-family: Arial, sans-serif !important;
+              font-size: 14px !important;
+              line-height: 1.4 !important;
+              color: #000 !important;
             }
             
-            .print-hidden {
+            /* Hide non-print elements */
+            .no-print {
               display: none !important;
               visibility: hidden !important;
             }
             
-            /* Reset all styling to ensure clean print */
-            .text-center { text-align: center !important; }
-            .text-left { text-align: left !important; }
-            .font-bold { font-weight: bold !important; }
-            .text-2xl { font-size: 1.5rem !important; line-height: 2rem !important; }
-            .text-lg { font-size: 1.125rem !important; line-height: 1.75rem !important; }
-            .text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
-            .text-xs { font-size: 0.75rem !important; line-height: 1rem !important; }
-            .mb-2 { margin-bottom: 0.5rem !important; }
-            .mb-4 { margin-bottom: 1rem !important; }
-            .mb-6 { margin-bottom: 1.5rem !important; }
-            .mb-8 { margin-bottom: 2rem !important; }
-            .mt-2 { margin-top: 0.5rem !important; }
-            .mt-3 { margin-top: 0.75rem !important; }
-            .pb-2 { padding-bottom: 0.5rem !important; }
-            .pb-6 { padding-bottom: 1.5rem !important; }
-            .pt-6 { padding-top: 1.5rem !important; }
-            .p-4 { padding: 1rem !important; }
-            .p-6 { padding: 1.5rem !important; }
-            .p-8 { padding: 2rem !important; }
-            .px-2 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
-            .py-1 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
-            .rounded { border-radius: 0.25rem !important; }
-            .border { border: 1px solid #d1d5db !important; }
-            .border-b { border-bottom: 1px solid #d1d5db !important; }
-            .border-b-2 { border-bottom: 2px solid #d1d5db !important; }
-            .border-t-2 { border-top: 2px solid #d1d5db !important; }
-            .space-y-2 > * + * { margin-top: 0.5rem !important; }
-            .space-y-3 > * + * { margin-top: 0.75rem !important; }
-            .grid { display: grid !important; }
-            .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
-            .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-            .gap-4 { gap: 1rem !important; }
-            .gap-6 { gap: 1.5rem !important; }
-            .bg-gray-50 { background-color: #f9fafb !important; }
-            .bg-white { background-color: #ffffff !important; }
-            .bg-green-100 { background-color: #dcfce7 !important; }
-            .bg-yellow-100 { background-color: #fef3c7 !important; }
-            .text-gray-800 { color: #1f2937 !important; }
-            .text-gray-600 { color: #4b5563 !important; }
-            .text-gray-500 { color: #6b7280 !important; }
-            .text-blue-600 { color: #2563eb !important; }
-            .text-green-600 { color: #16a34a !important; }
-            .text-green-800 { color: #166534 !important; }
-            .text-yellow-800 { color: #92400e !important; }
-            .text-red-600 { color: #dc2626 !important; }
-            .text-orange-600 { color: #ea580c !important; }
+            /* Styling for print */
+            .receipt-header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #000;
+              padding-bottom: 20px;
+            }
+            
+            .receipt-title {
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 10px;
+            }
+            
+            .receipt-subtitle {
+              font-size: 16px;
+              color: #666;
+              margin-bottom: 5px;
+            }
+            
+            .receipt-number {
+              font-size: 12px;
+              color: #888;
+              margin-top: 10px;
+            }
+            
+            .receipt-section {
+              margin-bottom: 25px;
+            }
+            
+            .receipt-section-title {
+              font-size: 16px;
+              font-weight: bold;
+              margin-bottom: 10px;
+              border-bottom: 1px solid #ccc;
+              padding-bottom: 5px;
+            }
+            
+            .receipt-row {
+              margin-bottom: 8px;
+              display: flex;
+              justify-content: space-between;
+            }
+            
+            .receipt-label {
+              font-weight: bold;
+              width: 40%;
+            }
+            
+            .receipt-value {
+              width: 60%;
+            }
+            
+            .receipt-status {
+              display: inline-block;
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: bold;
+            }
+            
+            .receipt-status.paid {
+              background-color: #d4edda;
+              color: #155724;
+              border: 1px solid #c3e6cb;
+            }
+            
+            .receipt-status.pending {
+              background-color: #fff3cd;
+              color: #856404;
+              border: 1px solid #ffeaa7;
+            }
+            
+            .receipt-financial-summary {
+              background-color: #f8f9fa;
+              padding: 20px;
+              border: 1px solid #dee2e6;
+              margin-bottom: 25px;
+            }
+            
+            .receipt-financial-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr 1fr;
+              gap: 20px;
+              margin-top: 15px;
+            }
+            
+            .receipt-financial-item {
+              text-align: center;
+              padding: 15px;
+              background-color: white;
+              border: 1px solid #dee2e6;
+            }
+            
+            .receipt-financial-label {
+              font-size: 12px;
+              color: #666;
+              margin-bottom: 5px;
+              font-weight: bold;
+            }
+            
+            .receipt-financial-value {
+              font-size: 16px;
+              font-weight: bold;
+            }
+            
+            .receipt-financial-value.contract {
+              color: #007bff;
+            }
+            
+            .receipt-financial-value.paid {
+              color: #28a745;
+            }
+            
+            .receipt-financial-value.remaining {
+              color: #dc3545;
+            }
+            
+            .receipt-financial-value.zero {
+              color: #28a745;
+            }
+            
+            .receipt-footer {
+              border-top: 2px solid #000;
+              padding-top: 20px;
+              text-align: center;
+              margin-top: 30px;
+            }
+            
+            .receipt-footer-date {
+              font-weight: bold;
+              margin-bottom: 10px;
+            }
+            
+            .receipt-footer-note {
+              font-size: 12px;
+              color: #666;
+              margin-bottom: 15px;
+            }
+            
+            .receipt-footer-alert {
+              margin-top: 15px;
+              padding: 10px;
+              border-radius: 4px;
+              font-weight: bold;
+            }
+            
+            .receipt-footer-alert.warning {
+              background-color: #fff3cd;
+              color: #856404;
+              border: 1px solid #ffeaa7;
+            }
+            
+            .receipt-footer-alert.success {
+              background-color: #d4edda;
+              color: #155724;
+              border: 1px solid #c3e6cb;
+            }
             
             @page {
-              margin: 1cm !important;
-              size: A4 !important;
+              margin: 0;
+              size: A4;
             }
           }
         `}
       </style>
       
-      <div className="bg-white p-8 print-area">
+      <div className="receipt-content">
         {/* Cabeçalho */}
-        <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+        <div className="receipt-header">
+          <div className="receipt-title">
             COMPROVANTE DE PAGAMENTO
-          </h1>
-          <p className="text-gray-600">Fotografia Profissional</p>
-          <p className="text-sm text-gray-500 mt-2">
+          </div>
+          <div className="receipt-subtitle">Fotografia Profissional</div>
+          <div className="receipt-number">
             Comprovante Nº: {receiptNumber}
-          </p>
-        </div>
-
-        {/* Informações do Cliente */}
-        <div className="grid grid-cols-1 gap-6 mb-8">
-          <div className="grid grid-cols-1 gap-6">
-            <div className="space-y-3">
-              <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2">
-                Dados do Cliente
-              </h3>
-              <div className="space-y-2 text-sm">
-                <p><span className="font-bold">Nome:</span> {client.name}</p>
-                {client.email && (
-                  <p><span className="font-bold">Email:</span> {client.email}</p>
-                )}
-                {client.phone && (
-                  <p><span className="font-bold">Telefone:</span> {client.phone}</p>
-                )}
-                {client.eventCategory && (
-                  <p><span className="font-bold">Evento:</span> {client.eventCategory}</p>
-                )}
-                {client.weddingDate && (
-                  <p><span className="font-bold">Data do Evento:</span> {new Date(client.weddingDate).toLocaleDateString('pt-BR')}</p>
-                )}
-                {client.eventLocation && (
-                  <p><span className="font-bold">Local:</span> {client.eventLocation}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2">
-                Detalhes do Pagamento
-              </h3>
-              <div className="space-y-2 text-sm">
-                <p><span className="font-bold">Data do Pagamento:</span> {payment.date}</p>
-                <p><span className="font-bold">Valor Pago:</span> <span className="text-green-600 font-bold">{formatCurrency(payment.amount)}</span></p>
-                <p><span className="font-bold">Status:</span> 
-                  <span className={`ml-2 px-2 py-1 rounded text-xs ${
-                    payment.payment_status === 'pago' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {payment.payment_status === 'pago' ? 'Pago' : 'Pendente'}
-                  </span>
-                </p>
-                {payment.due_date && (
-                  <p><span className="font-bold">Data de Vencimento:</span> {payment.due_date}</p>
-                )}
-                {payment.notes && (
-                  <p><span className="font-bold">Observações:</span> {payment.notes}</p>
-                )}
-              </div>
-            </div>
           </div>
         </div>
 
+        {/* Informações do Cliente */}
+        <div className="receipt-section">
+          <div className="receipt-section-title">Dados do Cliente</div>
+          <div className="receipt-row">
+            <span className="receipt-label">Nome:</span>
+            <span className="receipt-value">{client.name}</span>
+          </div>
+          {client.email && (
+            <div className="receipt-row">
+              <span className="receipt-label">Email:</span>
+              <span className="receipt-value">{client.email}</span>
+            </div>
+          )}
+          {client.phone && (
+            <div className="receipt-row">
+              <span className="receipt-label">Telefone:</span>
+              <span className="receipt-value">{client.phone}</span>
+            </div>
+          )}
+          {client.eventCategory && (
+            <div className="receipt-row">
+              <span className="receipt-label">Evento:</span>
+              <span className="receipt-value">{client.eventCategory}</span>
+            </div>
+          )}
+          {client.weddingDate && (
+            <div className="receipt-row">
+              <span className="receipt-label">Data do Evento:</span>
+              <span className="receipt-value">{new Date(client.weddingDate).toLocaleDateString('pt-BR')}</span>
+            </div>
+          )}
+          {client.eventLocation && (
+            <div className="receipt-row">
+              <span className="receipt-label">Local:</span>
+              <span className="receipt-value">{client.eventLocation}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Detalhes do Pagamento */}
+        <div className="receipt-section">
+          <div className="receipt-section-title">Detalhes do Pagamento</div>
+          <div className="receipt-row">
+            <span className="receipt-label">Data do Pagamento:</span>
+            <span className="receipt-value">{payment.date}</span>
+          </div>
+          <div className="receipt-row">
+            <span className="receipt-label">Valor Pago:</span>
+            <span className="receipt-value" style={{ fontWeight: 'bold', color: '#28a745' }}>
+              {formatCurrency(payment.amount)}
+            </span>
+          </div>
+          <div className="receipt-row">
+            <span className="receipt-label">Status:</span>
+            <span className="receipt-value">
+              <span className={`receipt-status ${payment.payment_status === 'pago' ? 'paid' : 'pending'}`}>
+                {payment.payment_status === 'pago' ? 'Pago' : 'Pendente'}
+              </span>
+            </span>
+          </div>
+          {payment.due_date && (
+            <div className="receipt-row">
+              <span className="receipt-label">Data de Vencimento:</span>
+              <span className="receipt-value">{payment.due_date}</span>
+            </div>
+          )}
+          {payment.notes && (
+            <div className="receipt-row">
+              <span className="receipt-label">Observações:</span>
+              <span className="receipt-value">{payment.notes}</span>
+            </div>
+          )}
+        </div>
+
         {/* Resumo Financeiro */}
-        <div className="bg-gray-50 p-6 rounded mb-8">
-          <h3 className="text-lg font-bold text-gray-800 mb-4 border-b border-gray-200 pb-2">
-            Resumo Financeiro do Contrato
-          </h3>
-          <div className="grid grid-cols-1 gap-4 text-sm">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-white rounded border">
-                <p className="text-gray-600 mb-1 font-bold">Valor Total do Contrato</p>
-                <p className="text-lg font-bold text-blue-600">{formatCurrency(contractValue)}</p>
-              </div>
-              <div className="text-center p-4 bg-white rounded border">
-                <p className="text-gray-600 mb-1 font-bold">Total Pago</p>
-                <p className="text-lg font-bold text-green-600">{formatCurrency(totalPaid)}</p>
-              </div>
-              <div className="text-center p-4 bg-white rounded border">
-                <p className="text-gray-600 mb-1 font-bold">Saldo Devedor</p>
-                <p className={`text-lg font-bold ${remainingBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                  {formatCurrency(remainingBalance)}
-                </p>
+        <div className="receipt-financial-summary">
+          <div className="receipt-section-title">Resumo Financeiro do Contrato</div>
+          <div className="receipt-financial-grid">
+            <div className="receipt-financial-item">
+              <div className="receipt-financial-label">Valor Total do Contrato</div>
+              <div className="receipt-financial-value contract">{formatCurrency(contractValue)}</div>
+            </div>
+            <div className="receipt-financial-item">
+              <div className="receipt-financial-label">Total Pago</div>
+              <div className="receipt-financial-value paid">{formatCurrency(totalPaid)}</div>
+            </div>
+            <div className="receipt-financial-item">
+              <div className="receipt-financial-label">Saldo Devedor</div>
+              <div className={`receipt-financial-value ${remainingBalance <= 0 ? 'zero' : 'remaining'}`}>
+                {formatCurrency(remainingBalance)}
               </div>
             </div>
           </div>
         </div>
 
         {/* Rodapé */}
-        <div className="border-t-2 border-gray-200 pt-6 text-center text-sm text-gray-600">
-          <p className="mb-2 font-bold">Comprovante emitido em: {currentDate}</p>
-          <p className="text-xs">
+        <div className="receipt-footer">
+          <div className="receipt-footer-date">Comprovante emitido em: {currentDate}</div>
+          <div className="receipt-footer-note">
             Este comprovante é válido como prova de pagamento. 
             Guarde-o para seus registros financeiros.
-          </p>
-          {remainingBalance > 0 && (
-            <p className="mt-3 text-orange-600 font-bold">
-              ⚠️ Atenção: Ainda há saldo devedor de {formatCurrency(remainingBalance)} para quitação completa do contrato.
-            </p>
-          )}
-          {remainingBalance <= 0 && (
-            <p className="mt-3 text-green-600 font-bold">
+          </div>
+          
+          {isContractPaid ? (
+            <div className="receipt-footer-alert success">
               ✅ Parabéns! Contrato totalmente quitado.
-            </p>
+            </div>
+          ) : (
+            <div className="receipt-footer-alert warning">
+              ⚠️ Atenção: Ainda há saldo devedor de {formatCurrency(remainingBalance)} para quitação completa do contrato.
+            </div>
           )}
         </div>
       </div>

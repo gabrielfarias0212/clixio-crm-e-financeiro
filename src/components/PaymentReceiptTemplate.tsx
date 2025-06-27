@@ -2,6 +2,7 @@
 import React from 'react';
 import { Payment, Client } from "@/utils/types";
 import { formatCurrency } from "@/utils/currency";
+import { Camera } from "lucide-react";
 
 interface PaymentReceiptTemplateProps {
   payment: Payment;
@@ -24,341 +25,161 @@ export function PaymentReceiptTemplate({
   const isContractPaid = remainingBalance <= 0;
   
   return (
-    <>
-      <style>
-        {`
-          @media print {
-            /* Reset everything for print */
-            *, *::before, *::after {
-              box-sizing: border-box;
-              margin: 0;
-              padding: 0;
-            }
-            
-            /* Hide everything except the receipt */
-            body * {
-              visibility: hidden;
-            }
-            
-            /* Show only the receipt content */
-            .receipt-content, .receipt-content * {
-              visibility: visible !important;
-            }
-            
-            /* Position the receipt to fill the page */
-            .receipt-content {
-              position: absolute !important;
-              left: 0 !important;
-              top: 0 !important;
-              width: 100% !important;
-              height: 100vh !important;
-              background: white !important;
-              padding: 2cm !important;
-              font-family: Arial, sans-serif !important;
-              font-size: 14px !important;
-              line-height: 1.4 !important;
-              color: #000 !important;
-            }
-            
-            /* Hide non-print elements */
-            .no-print {
-              display: none !important;
-              visibility: hidden !important;
-            }
-            
-            /* Styling for print */
-            .receipt-header {
-              text-align: center;
-              margin-bottom: 30px;
-              border-bottom: 2px solid #000;
-              padding-bottom: 20px;
-            }
-            
-            .receipt-title {
-              font-size: 24px;
-              font-weight: bold;
-              margin-bottom: 10px;
-            }
-            
-            .receipt-subtitle {
-              font-size: 16px;
-              color: #666;
-              margin-bottom: 5px;
-            }
-            
-            .receipt-number {
-              font-size: 12px;
-              color: #888;
-              margin-top: 10px;
-            }
-            
-            .receipt-section {
-              margin-bottom: 25px;
-            }
-            
-            .receipt-section-title {
-              font-size: 16px;
-              font-weight: bold;
-              margin-bottom: 10px;
-              border-bottom: 1px solid #ccc;
-              padding-bottom: 5px;
-            }
-            
-            .receipt-row {
-              margin-bottom: 8px;
-              display: flex;
-              justify-content: space-between;
-            }
-            
-            .receipt-label {
-              font-weight: bold;
-              width: 40%;
-            }
-            
-            .receipt-value {
-              width: 60%;
-            }
-            
-            .receipt-status {
-              display: inline-block;
-              padding: 4px 8px;
-              border-radius: 4px;
-              font-size: 12px;
-              font-weight: bold;
-            }
-            
-            .receipt-status.paid {
-              background-color: #d4edda;
-              color: #155724;
-              border: 1px solid #c3e6cb;
-            }
-            
-            .receipt-status.pending {
-              background-color: #fff3cd;
-              color: #856404;
-              border: 1px solid #ffeaa7;
-            }
-            
-            .receipt-financial-summary {
-              background-color: #f8f9fa;
-              padding: 20px;
-              border: 1px solid #dee2e6;
-              margin-bottom: 25px;
-            }
-            
-            .receipt-financial-grid {
-              display: grid;
-              grid-template-columns: 1fr 1fr 1fr;
-              gap: 20px;
-              margin-top: 15px;
-            }
-            
-            .receipt-financial-item {
-              text-align: center;
-              padding: 15px;
-              background-color: white;
-              border: 1px solid #dee2e6;
-            }
-            
-            .receipt-financial-label {
-              font-size: 12px;
-              color: #666;
-              margin-bottom: 5px;
-              font-weight: bold;
-            }
-            
-            .receipt-financial-value {
-              font-size: 16px;
-              font-weight: bold;
-            }
-            
-            .receipt-financial-value.contract {
-              color: #007bff;
-            }
-            
-            .receipt-financial-value.paid {
-              color: #28a745;
-            }
-            
-            .receipt-financial-value.remaining {
-              color: #dc3545;
-            }
-            
-            .receipt-financial-value.zero {
-              color: #28a745;
-            }
-            
-            .receipt-footer {
-              border-top: 2px solid #000;
-              padding-top: 20px;
-              text-align: center;
-              margin-top: 30px;
-            }
-            
-            .receipt-footer-date {
-              font-weight: bold;
-              margin-bottom: 10px;
-            }
-            
-            .receipt-footer-note {
-              font-size: 12px;
-              color: #666;
-              margin-bottom: 15px;
-            }
-            
-            .receipt-footer-alert {
-              margin-top: 15px;
-              padding: 10px;
-              border-radius: 4px;
-              font-weight: bold;
-            }
-            
-            .receipt-footer-alert.warning {
-              background-color: #fff3cd;
-              color: #856404;
-              border: 1px solid #ffeaa7;
-            }
-            
-            .receipt-footer-alert.success {
-              background-color: #d4edda;
-              color: #155724;
-              border: 1px solid #c3e6cb;
-            }
-            
-            @page {
-              margin: 0;
-              size: A4;
-            }
-          }
-        `}
-      </style>
-      
-      <div className="receipt-content">
-        {/* Cabeçalho */}
-        <div className="receipt-header">
-          <div className="receipt-title">
-            COMPROVANTE DE PAGAMENTO
-          </div>
-          <div className="receipt-subtitle">Fotografia Profissional</div>
-          <div className="receipt-number">
-            Comprovante Nº: {receiptNumber}
-          </div>
+    <div className="max-w-4xl mx-auto bg-white p-8 font-sans">
+      {/* Cabeçalho */}
+      <div className="relative text-center mb-10 pb-6 border-b-2 border-gray-800">
+        <div className="absolute top-0 right-0 text-xs text-gray-600 bg-gray-100 px-3 py-2 rounded">
+          Comprovante Nº: {receiptNumber}
         </div>
+        
+        <div className="flex justify-center mb-3">
+          <Camera size={32} className="text-gray-600" />
+        </div>
+        <h1 className="text-2xl font-bold mb-2 text-gray-800">
+          COMPROVANTE DE PAGAMENTO
+        </h1>
+        <p className="text-lg text-gray-600">Fotografia Profissional</p>
+      </div>
 
-        {/* Informações do Cliente */}
-        <div className="receipt-section">
-          <div className="receipt-section-title">Dados do Cliente</div>
-          <div className="receipt-row">
-            <span className="receipt-label">Nome:</span>
-            <span className="receipt-value">{client.name}</span>
+      {/* Dados do Cliente */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-gray-300 text-gray-700">
+          Dados do Cliente
+        </h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex justify-between py-2">
+            <span className="font-medium text-gray-600">Nome:</span>
+            <span className="text-gray-800">{client.name}</span>
           </div>
           {client.email && (
-            <div className="receipt-row">
-              <span className="receipt-label">Email:</span>
-              <span className="receipt-value">{client.email}</span>
+            <div className="flex justify-between py-2">
+              <span className="font-medium text-gray-600">Email:</span>
+              <span className="text-gray-800">{client.email}</span>
             </div>
           )}
           {client.phone && (
-            <div className="receipt-row">
-              <span className="receipt-label">Telefone:</span>
-              <span className="receipt-value">{client.phone}</span>
+            <div className="flex justify-between py-2">
+              <span className="font-medium text-gray-600">Telefone:</span>
+              <span className="text-gray-800">{client.phone}</span>
             </div>
           )}
           {client.eventCategory && (
-            <div className="receipt-row">
-              <span className="receipt-label">Evento:</span>
-              <span className="receipt-value">{client.eventCategory}</span>
+            <div className="flex justify-between py-2">
+              <span className="font-medium text-gray-600">Evento:</span>
+              <span className="text-gray-800">{client.eventCategory}</span>
             </div>
           )}
           {client.weddingDate && (
-            <div className="receipt-row">
-              <span className="receipt-label">Data do Evento:</span>
-              <span className="receipt-value">{new Date(client.weddingDate).toLocaleDateString('pt-BR')}</span>
+            <div className="flex justify-between py-2">
+              <span className="font-medium text-gray-600">Data do Evento:</span>
+              <span className="text-gray-800">{new Date(client.weddingDate).toLocaleDateString('pt-BR')}</span>
             </div>
           )}
           {client.eventLocation && (
-            <div className="receipt-row">
-              <span className="receipt-label">Local:</span>
-              <span className="receipt-value">{client.eventLocation}</span>
+            <div className="flex justify-between py-2">
+              <span className="font-medium text-gray-600">Local:</span>
+              <span className="text-gray-800">{client.eventLocation}</span>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Detalhes do Pagamento */}
-        <div className="receipt-section">
-          <div className="receipt-section-title">Detalhes do Pagamento</div>
-          <div className="receipt-row">
-            <span className="receipt-label">Data do Pagamento:</span>
-            <span className="receipt-value">{payment.date}</span>
+      {/* Detalhes do Pagamento */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-gray-300 text-gray-700">
+          Detalhes do Pagamento
+        </h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex justify-between py-2">
+            <span className="font-medium text-gray-600">Data do Pagamento:</span>
+            <span className="text-gray-800">{payment.date}</span>
           </div>
-          <div className="receipt-row">
-            <span className="receipt-label">Valor Pago:</span>
-            <span className="receipt-value" style={{ fontWeight: 'bold', color: '#28a745' }}>
+          <div className="flex justify-between py-2">
+            <span className="font-medium text-gray-600">Valor Pago:</span>
+            <span className="text-lg font-bold text-green-600">
               {formatCurrency(payment.amount)}
             </span>
           </div>
-          <div className="receipt-row">
-            <span className="receipt-label">Status:</span>
-            <span className="receipt-value">
-              <span className={`receipt-status ${payment.payment_status === 'pago' ? 'paid' : 'pending'}`}>
+          <div className="flex justify-between py-2">
+            <span className="font-medium text-gray-600">Status:</span>
+            <span>
+              <span className={`inline-block px-3 py-1 rounded text-sm font-medium ${
+                payment.payment_status === 'pago' 
+                  ? 'bg-green-100 text-green-800 border border-green-300' 
+                  : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+              }`}>
                 {payment.payment_status === 'pago' ? 'Pago' : 'Pendente'}
               </span>
             </span>
           </div>
           {payment.due_date && (
-            <div className="receipt-row">
-              <span className="receipt-label">Data de Vencimento:</span>
-              <span className="receipt-value">{payment.due_date}</span>
-            </div>
-          )}
-          {payment.notes && (
-            <div className="receipt-row">
-              <span className="receipt-label">Observações:</span>
-              <span className="receipt-value">{payment.notes}</span>
+            <div className="flex justify-between py-2">
+              <span className="font-medium text-gray-600">Vencimento:</span>
+              <span className="text-gray-800">{payment.due_date}</span>
             </div>
           )}
         </div>
+        {payment.notes && (
+          <div className="flex justify-between py-2 mt-2">
+            <span className="font-medium text-gray-600">Observações:</span>
+            <span className="text-gray-800">{payment.notes}</span>
+          </div>
+        )}
+      </div>
 
-        {/* Resumo Financeiro */}
-        <div className="receipt-financial-summary">
-          <div className="receipt-section-title">Resumo Financeiro do Contrato</div>
-          <div className="receipt-financial-grid">
-            <div className="receipt-financial-item">
-              <div className="receipt-financial-label">Valor Total do Contrato</div>
-              <div className="receipt-financial-value contract">{formatCurrency(contractValue)}</div>
+      {/* Resumo Financeiro */}
+      <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-8">
+        <h2 className="text-lg font-semibold mb-4 text-gray-700">
+          Resumo Financeiro do Contrato
+        </h2>
+        <div className="grid grid-cols-3 gap-6">
+          <div className="text-center p-5 bg-white rounded-lg border border-gray-200">
+            <div className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">
+              Valor Total do Contrato
             </div>
-            <div className="receipt-financial-item">
-              <div className="receipt-financial-label">Total Pago</div>
-              <div className="receipt-financial-value paid">{formatCurrency(totalPaid)}</div>
-            </div>
-            <div className="receipt-financial-item">
-              <div className="receipt-financial-label">Saldo Devedor</div>
-              <div className={`receipt-financial-value ${remainingBalance <= 0 ? 'zero' : 'remaining'}`}>
-                {formatCurrency(remainingBalance)}
-              </div>
+            <div className="text-xl font-bold text-blue-600">
+              {formatCurrency(contractValue)}
             </div>
           </div>
-        </div>
-
-        {/* Rodapé */}
-        <div className="receipt-footer">
-          <div className="receipt-footer-date">Comprovante emitido em: {currentDate}</div>
-          <div className="receipt-footer-note">
-            Este comprovante é válido como prova de pagamento. 
-            Guarde-o para seus registros financeiros.
+          <div className="text-center p-5 bg-white rounded-lg border border-gray-200">
+            <div className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">
+              Total Pago
+            </div>
+            <div className="text-xl font-bold text-green-600">
+              {formatCurrency(totalPaid)}
+            </div>
           </div>
-          
-          {isContractPaid ? (
-            <div className="receipt-footer-alert success">
-              ✅ Parabéns! Contrato totalmente quitado.
+          <div className="text-center p-5 bg-white rounded-lg border border-gray-200">
+            <div className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">
+              Saldo Devedor
             </div>
-          ) : (
-            <div className="receipt-footer-alert warning">
-              ⚠️ Atenção: Ainda há saldo devedor de {formatCurrency(remainingBalance)} para quitação completa do contrato.
+            <div className={`text-xl font-bold ${remainingBalance <= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatCurrency(remainingBalance)}
             </div>
-          )}
+          </div>
         </div>
       </div>
-    </>
+
+      {/* Rodapé */}
+      <div className="border-t-2 border-gray-800 pt-6 text-center">
+        <div className="font-medium mb-3 text-gray-800">
+          Comprovante emitido em: {currentDate}
+        </div>
+        <div className="text-sm text-gray-600 mb-5 leading-relaxed">
+          Este comprovante é válido como prova de pagamento.<br />
+          Guarde-o para seus registros financeiros.
+        </div>
+        
+        {isContractPaid ? (
+          <div className="inline-block bg-green-100 text-green-800 border border-green-300 px-4 py-3 rounded-lg font-medium">
+            ✅ Parabéns! Contrato totalmente quitado.
+          </div>
+        ) : (
+          <div className="inline-block bg-yellow-100 text-yellow-800 border border-yellow-300 px-4 py-3 rounded-lg font-medium">
+            ⚠️ Atenção: Ainda há saldo devedor de {formatCurrency(remainingBalance)} para quitação completa do contrato.
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

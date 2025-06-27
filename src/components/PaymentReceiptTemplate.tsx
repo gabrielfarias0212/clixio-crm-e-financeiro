@@ -30,34 +30,55 @@ export function PaymentReceiptTemplate({
             * {
               -webkit-print-color-adjust: exact !important;
               color-adjust: exact !important;
+              box-sizing: border-box;
             }
             
-            body {
-              margin: 0;
-              padding: 0;
-              font-family: system-ui, -apple-system, sans-serif;
+            html, body {
+              margin: 0 !important;
+              padding: 0 !important;
+              width: 100% !important;
+              height: 100% !important;
+              font-family: system-ui, -apple-system, sans-serif !important;
+              background: white !important;
+              visibility: visible !important;
+            }
+            
+            body * {
+              visibility: hidden !important;
+            }
+            
+            .print-area, .print-area * {
+              visibility: visible !important;
             }
             
             .print-area {
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
               width: 100% !important;
-              max-width: none !important;
+              height: auto !important;
               margin: 0 !important;
               padding: 20px !important;
+              background: white !important;
               box-shadow: none !important;
               border: none !important;
+              transform: none !important;
+              overflow: visible !important;
             }
             
             .print-hidden {
               display: none !important;
+              visibility: hidden !important;
             }
             
+            /* Reset all styling to ensure clean print */
             .text-center { text-align: center !important; }
             .text-left { text-align: left !important; }
             .font-bold { font-weight: bold !important; }
-            .text-2xl { font-size: 1.5rem !important; }
-            .text-lg { font-size: 1.125rem !important; }
-            .text-sm { font-size: 0.875rem !important; }
-            .text-xs { font-size: 0.75rem !important; }
+            .text-2xl { font-size: 1.5rem !important; line-height: 2rem !important; }
+            .text-lg { font-size: 1.125rem !important; line-height: 1.75rem !important; }
+            .text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+            .text-xs { font-size: 0.75rem !important; line-height: 1rem !important; }
             .mb-2 { margin-bottom: 0.5rem !important; }
             .mb-4 { margin-bottom: 1rem !important; }
             .mb-6 { margin-bottom: 1.5rem !important; }
@@ -69,6 +90,7 @@ export function PaymentReceiptTemplate({
             .pt-6 { padding-top: 1.5rem !important; }
             .p-4 { padding: 1rem !important; }
             .p-6 { padding: 1.5rem !important; }
+            .p-8 { padding: 2rem !important; }
             .px-2 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
             .py-1 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
             .rounded { border-radius: 0.25rem !important; }
@@ -98,8 +120,8 @@ export function PaymentReceiptTemplate({
             .text-orange-600 { color: #ea580c !important; }
             
             @page {
-              margin: 1cm;
-              size: A4;
+              margin: 1cm !important;
+              size: A4 !important;
             }
           }
         `}

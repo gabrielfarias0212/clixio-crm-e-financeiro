@@ -22,24 +22,37 @@ export function PaymentReceiptDialog({
   
   useEffect(() => {
     if (open) {
-      // Esconder outros elementos quando o modal estiver aberto para impressão
       const handleBeforePrint = () => {
-        document.body.classList.add('printing');
-        // Esconder todos os elementos exceto o comprovante
-        const allElements = document.querySelectorAll('body > *:not([data-radix-portal])');
-        allElements.forEach(el => {
-          if (!el.contains(document.querySelector('.print-area'))) {
-            (el as HTMLElement).style.visibility = 'hidden';
+        // Esconder completamente todos os elementos exceto o comprovante
+        document.body.style.visibility = 'hidden';
+        const printArea = document.querySelector('.print-area') as HTMLElement;
+        if (printArea) {
+          printArea.style.visibility = 'visible';
+          printArea.style.position = 'static';
+          printArea.style.left = 'auto';
+          printArea.style.top = 'auto';
+          printArea.style.width = '100%';
+          printArea.style.height = 'auto';
+          printArea.style.overflow = 'visible';
+          printArea.style.transform = 'none';
+          printArea.style.margin = '0';
+          printArea.style.padding = '20px';
+          
+          // Garantir que todos os elementos pais também sejam visíveis
+          let parent = printArea.parentElement;
+          while (parent && parent !== document.body) {
+            parent.style.visibility = 'visible';
+            parent = parent.parentElement;
           }
-        });
+        }
       };
 
       const handleAfterPrint = () => {
-        document.body.classList.remove('printing');
-        // Restaurar visibilidade dos elementos
-        const allElements = document.querySelectorAll('body > *');
+        // Restaurar visibilidade normal
+        document.body.style.visibility = 'visible';
+        const allElements = document.querySelectorAll('*');
         allElements.forEach(el => {
-          (el as HTMLElement).style.visibility = 'visible';
+          (el as HTMLElement).style.visibility = '';
         });
       };
 
@@ -75,34 +88,36 @@ export function PaymentReceiptDialog({
   const receiptNumber = `${client.id.slice(0, 8).toUpperCase()}-${payment.id.slice(0, 4).toUpperCase()}`;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between print-hidden">
-          <DialogTitle>Comprovante de Pagamento</DialogTitle>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handlePrint}>
-              <Printer className="h-4 w-4 mr-2" />
-              Imprimir
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleDownload}>
-              <Download className="h-4 w-4 mr-2" />
-              Baixar PDF
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </DialogHeader>
-        
-        <PaymentReceiptTemplate
-          payment={payment}
-          client={client}
-          receiptNumber={receiptNumber}
-          contractValue={contractValue}
-          totalPaid={totalPaid}
-          remainingBalance={remainingBalance}
-        />
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="flex flex-row items-center justify-between print-hidden">
+            <DialogTitle>Comprovante de Pagamento</DialogTitle>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handlePrint}>
+                <Printer className="h-4 w-4 mr-2" />
+                Imprimir
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleDownload}>
+                <Download className="h-4 w-4 mr-2" />
+                Baixar PDF
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+          
+          <PaymentReceiptTemplate
+            payment={payment}
+            client={client}
+            receiptNumber={receiptNumber}
+            contractValue={contractValue}
+            totalPaid={totalPaid}
+            remainingBalance={remainingBalance}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -11,9 +11,6 @@ import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, Download } from "luc
 import { toast } from "sonner";
 import * as XLSX from 'xlsx';
 import { useTransactionImporter } from "./useTransactionImporter";
-import { ImportTable } from "../client-importer/ImportTable";
-import { ImportSummary } from "../client-importer/ImportSummary";
-import { DuplicateDialog } from "../client-importer/DuplicateDialog";
 
 interface TransactionImporterProps {
   onImportComplete?: () => void;
@@ -215,11 +212,43 @@ export function TransactionImporter({ onImportComplete }: TransactionImporterPro
               </div>
 
               {mappedTransactions.length > 0 ? (
-                <ImportTable
-                  data={mappedTransactions.slice(0, 10)}
-                  columns={['date', 'description', 'amount', 'type', 'category']}
-                  maxRows={10}
-                />
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-gray-50 px-4 py-3 border-b">
+                    <h4 className="font-medium">Prévia das Transações (primeiras 10)</h4>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-2 text-left font-medium">Data</th>
+                          <th className="px-4 py-2 text-left font-medium">Descrição</th>
+                          <th className="px-4 py-2 text-left font-medium">Valor</th>
+                          <th className="px-4 py-2 text-left font-medium">Tipo</th>
+                          <th className="px-4 py-2 text-left font-medium">Categoria</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {mappedTransactions.slice(0, 10).map((transaction, index) => (
+                          <tr key={index} className="border-t">
+                            <td className="px-4 py-2">{transaction.date}</td>
+                            <td className="px-4 py-2">{transaction.description}</td>
+                            <td className="px-4 py-2">R$ {transaction.amount.toFixed(2)}</td>
+                            <td className="px-4 py-2">
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                transaction.type === 'entrada' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {transaction.type}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2">{transaction.category}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               ) : (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
@@ -259,7 +288,31 @@ export function TransactionImporter({ onImportComplete }: TransactionImporterPro
                 <h3 className="text-lg font-medium mb-2">Importação Concluída!</h3>
               </div>
 
-              <ImportSummary summary={summary} />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Resumo da Importação</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">{summary.total}</div>
+                      <div className="text-sm text-gray-600">Total processadas</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">{summary.added}</div>
+                      <div className="text-sm text-gray-600">Adicionadas</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-yellow-600">{summary.skipped}</div>
+                      <div className="text-sm text-gray-600">Ignoradas</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-red-600">{summary.errors}</div>
+                      <div className="text-sm text-gray-600">Erros</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
               <div className="flex justify-center">
                 <Button onClick={() => setIsOpen(false)}>
@@ -271,15 +324,52 @@ export function TransactionImporter({ onImportComplete }: TransactionImporterPro
         </DialogContent>
       </Dialog>
 
-      <DuplicateDialog
-        open={showConfirmDialog}
-        onOpenChange={setShowConfirmDialog}
-        duplicateCount={duplicateCount}
-        importOption={importOption}
-        onImportOptionChange={setImportOption}
-        onConfirm={startImport}
-        entityName="transações"
-      />
+      {/* Duplicate Dialog */}
+      {showConfirmDialog && (
+        <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Duplicatas Encontradas</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p>
+                Foram encontradas {duplicateCount} transação(ões) que podem ser duplicatas.
+                Como você gostaria de proceder?
+              </p>
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    name="import-option"
+                    value="skip"
+                    checked={importOption === "skip"}
+                    onChange={(e) => setImportOption(e.target.value as "skip" | "update")}
+                  />
+                  <span>Pular duplicatas</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    name="import-option"
+                    value="update"
+                    checked={importOption === "update"}
+                    onChange={(e) => setImportOption(e.target.value as "skip" | "update")}
+                  />
+                  <span>Atualizar existentes</span>
+                </label>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={startImport}>
+                  Continuar Importação
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }

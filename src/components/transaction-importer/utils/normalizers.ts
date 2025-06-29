@@ -4,13 +4,17 @@ import { parseDate, parseAmount } from './validators';
 
 export const normalizeTransactionData = (rawData: any): TransactionImportData | null => {
   try {
+    console.log('Normalizando dados:', rawData);
+    
     // Extrair dados básicos
-    const description = rawData.descricao || rawData.description || rawData.nome || rawData.name || '';
-    const dateStr = rawData.data || rawData.date || '';
+    const description = String(rawData.descricao || rawData.description || rawData.nome || rawData.name || '').trim();
+    const dateStr = String(rawData.data || rawData.date || '').trim();
     const amountValue = rawData.valor || rawData.amount || rawData.value || 0;
     
+    console.log('Valores extraídos:', { description, dateStr, amountValue });
+    
     // Validar campos obrigatórios
-    if (!description.trim()) {
+    if (!description) {
       console.warn('Descrição vazia encontrada:', rawData);
       return null;
     }
@@ -22,7 +26,7 @@ export const normalizeTransactionData = (rawData: any): TransactionImportData | 
     }
     
     const amount = parseAmount(amountValue);
-    if (isNaN(amount)) {
+    if (isNaN(amount) || amount === 0) {
       console.warn('Valor inválido encontrado:', amountValue);
       return null;
     }
@@ -31,12 +35,14 @@ export const normalizeTransactionData = (rawData: any): TransactionImportData | 
     let type: 'entrada' | 'saída' = amount >= 0 ? 'entrada' : 'saída';
     
     // Se tipo foi especificado na planilha, usar ele
-    const specifiedType = rawData.tipo || rawData.type;
+    const specifiedType = String(rawData.tipo || rawData.type || '').toLowerCase();
     if (specifiedType) {
-      const lowerType = specifiedType.toLowerCase();
-      if (lowerType.includes('entrada') || lowerType.includes('receita') || lowerType.includes('credito')) {
+      if (specifiedType.includes('entrada') || specifiedType.includes('receita') || 
+          specifiedType.includes('credito') || specifiedType.includes('credit')) {
         type = 'entrada';
-      } else if (lowerType.includes('saida') || lowerType.includes('saída') || lowerType.includes('despesa') || lowerType.includes('debito')) {
+      } else if (specifiedType.includes('saida') || specifiedType.includes('saída') || 
+                 specifiedType.includes('despesa') || specifiedType.includes('debito') || 
+                 specifiedType.includes('debit')) {
         type = 'saída';
       }
     }
@@ -45,22 +51,25 @@ export const normalizeTransactionData = (rawData: any): TransactionImportData | 
     let category = type === 'entrada' ? 'outras receitas' : 'outras despesas';
     
     // Se categoria foi especificada na planilha
-    const specifiedCategory = rawData.categoria || rawData.category;
-    if (specifiedCategory && specifiedCategory.trim()) {
-      category = specifiedCategory.trim();
+    const specifiedCategory = String(rawData.categoria || rawData.category || '').trim();
+    if (specifiedCategory) {
+      category = specifiedCategory;
     }
     
     // Nome do cliente (opcional)
-    const clientName = rawData.cliente || rawData.client || rawData.client_name || '';
+    const clientName = String(rawData.cliente || rawData.client || rawData.client_name || '').trim();
     
-    return {
+    const result = {
       date: normalizedDate,
-      description: description.trim(),
+      description: description,
       amount: Math.abs(amount), // Sempre positivo, o tipo determina entrada/saída
       type,
       category,
-      clientName: clientName.trim() || undefined
+      clientName: clientName || undefined
     };
+    
+    console.log('Resultado normalizado:', result);
+    return result;
     
   } catch (error) {
     console.error('Erro ao normalizar dados da transação:', error, rawData);

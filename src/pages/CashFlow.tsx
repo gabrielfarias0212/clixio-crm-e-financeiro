@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, Suspense } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
@@ -16,6 +15,7 @@ import { TransactionSection } from "@/components/financial/TransactionSection";
 import { ProjectionsSection } from "@/components/financial/ProjectionsSection";
 import { OptimizedFinancialSummary } from "@/components/financial/OptimizedFinancialSummary";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TransactionImporter } from "@/components/transaction-importer/TransactionImporter";
 
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
@@ -125,6 +125,13 @@ export default function CashFlow() {
     setSelectedYear(year);
   };
 
+  const handleImportComplete = () => {
+    // Refresh data after import
+    refreshTransactions();
+    refreshClients();
+    toast.success("Dados atualizados após importação!");
+  };
+
   return (
     <Layout>
       <div className="max-w-screen-lg mx-auto px-4 py-8 animate-fade-in">
@@ -139,6 +146,7 @@ export default function CashFlow() {
               <PlusCircle className="h-4 w-4" />
               Nova Transação
             </Button>
+            <TransactionImporter onImportComplete={handleImportComplete} />
             <Button
               variant="outline"
               size="sm"

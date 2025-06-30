@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Edit, Trash2, CheckCircle } from "lucide-react";
+import { Calendar, Clock, Trash2, CheckCircle } from "lucide-react";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { Client, CalendarEvent } from "@/utils/types";
-import { format, isPast, parseISO } from "date-fns";
+import { format, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -31,10 +31,24 @@ export function ClientMeetingsList({ client, refreshTrigger }: ClientMeetingsLis
   const { events, deleteEvent } = useCalendarEvents();
 
   useEffect(() => {
-    // Filter meetings for this specific client
+    console.log("[ClientMeetingsList] Atualizando lista de reuniões");
+    console.log("[ClientMeetingsList] Todos os eventos:", events);
+    console.log("[ClientMeetingsList] Cliente ID:", client.id);
+    
+    // Filter meetings for this specific client - ONLY meetings, not pre-wedding
     const clientMeetings = events.filter(
-      event => event.clientId === client.id && event.type === "meeting"
+      event => {
+        console.log("[ClientMeetingsList] Verificando evento:", {
+          id: event.id,
+          type: event.type,
+          clientId: event.clientId,
+          title: event.title
+        });
+        return event.clientId === client.id && event.type === "meeting";
+      }
     );
+    
+    console.log("[ClientMeetingsList] Reuniões filtradas:", clientMeetings);
     
     // Sort by date and time (most recent first)
     const sortedMeetings = clientMeetings.sort((a, b) => {
@@ -47,10 +61,12 @@ export function ClientMeetingsList({ client, refreshTrigger }: ClientMeetingsLis
   }, [events, client.id, refreshTrigger]);
 
   const getMeetingStatus = (meeting: CalendarEvent) => {
-    const meetingDateTime = new Date(`${meeting.date}T${meeting.startTime}`);
-    const now = new Date();
+    // Create date with noon time to avoid timezone issues
+    const meetingDate = new Date(`${meeting.date}T12:00:00`);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    if (isPast(meetingDateTime)) {
+    if (meetingDate < today) {
       return "realizada";
     } else {
       return "agendada";
@@ -58,6 +74,7 @@ export function ClientMeetingsList({ client, refreshTrigger }: ClientMeetingsLis
   };
 
   const handleDeleteMeeting = async (meetingId: string) => {
+    console.log("[ClientMeetingsList] Cancelando reunião:", meetingId);
     try {
       await deleteEvent(meetingId);
       toast({
@@ -65,7 +82,7 @@ export function ClientMeetingsList({ client, refreshTrigger }: ClientMeetingsLis
         description: "A reunião foi cancelada com sucesso."
       });
     } catch (error) {
-      console.error("Erro ao cancelar reunião:", error);
+      console.error("[ClientMeetingsList] Erro ao cancelar reunião:", error);
       toast({
         title: "Erro ao cancelar",
         description: "Ocorreu um erro ao cancelar a reunião.",
@@ -76,9 +93,11 @@ export function ClientMeetingsList({ client, refreshTrigger }: ClientMeetingsLis
 
   const formatMeetingDate = (date: string) => {
     try {
-      const parsedDate = parseISO(date);
+      // Parse the YYYY-MM-DD date string with noon time to avoid timezone issues
+      const parsedDate = new Date(`${date}T12:00:00`);
       return format(parsedDate, "dd/MM/yyyy", { locale: ptBR });
     } catch (error) {
+      console.error("[ClientMeetingsList] Erro ao formatar data:", date, error);
       return date;
     }
   };

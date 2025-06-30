@@ -31,6 +31,17 @@ export function ClientMeetingScheduler({ client, onMeetingScheduled }: ClientMee
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log("[ClientMeetingScheduler] Iniciando agendamento de reunião");
+    console.log("[ClientMeetingScheduler] Dados do formulário:", {
+      date,
+      startTime,
+      endTime,
+      subject,
+      notes,
+      clientId: client.id,
+      clientName: client.name
+    });
+    
     if (!date || !startTime || !endTime || !subject.trim()) {
       toast({
         title: "Campos obrigatórios",
@@ -50,12 +61,12 @@ export function ClientMeetingScheduler({ client, onMeetingScheduled }: ClientMee
       return;
     }
 
-    // Validate that date is not in the past
-    const selectedDate = new Date(date);
+    // Validate that date is not in the past - using string comparison to avoid timezone issues
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayString = format(today, 'yyyy-MM-dd');
     
-    if (selectedDate < today) {
+    if (date < todayString) {
+      console.log("[ClientMeetingScheduler] Data inválida - passado:", { date, todayString });
       toast({
         title: "Data inválida",
         description: "Não é possível agendar reuniões em datas passadas.",
@@ -67,23 +78,32 @@ export function ClientMeetingScheduler({ client, onMeetingScheduled }: ClientMee
     setLoading(true);
 
     try {
+      // Create the meeting event with proper data
       const meetingEvent: CalendarEvent = {
         id: uuidv4(),
         title: `Reunião - ${client.name}`,
         description: `${subject}${notes ? `\n\nObservações: ${notes}` : ''}`,
-        date: date,
+        date: date, // Keep as YYYY-MM-DD string format
         startTime: startTime,
         endTime: endTime,
-        type: "meeting",
-        color: "blue",
+        type: "meeting", // Explicitly set as meeting type
+        color: "blue", // Blue color for meetings
         clientId: client.id
       };
 
+      console.log("[ClientMeetingScheduler] Evento de reunião criado:", meetingEvent);
+
       await addEvent(meetingEvent);
+
+      console.log("[ClientMeetingScheduler] Reunião salva com sucesso");
+
+      // Parse the date for display purposes only
+      const displayDate = new Date(date + 'T12:00:00'); // Add noon time to avoid timezone issues
+      const formattedDisplayDate = format(displayDate, 'dd/MM/yyyy');
 
       toast({
         title: "Reunião agendada",
-        description: `Reunião com ${client.name} agendada para ${format(new Date(date), 'dd/MM/yyyy')} às ${startTime}.`
+        description: `Reunião com ${client.name} agendada para ${formattedDisplayDate} às ${startTime}.`
       });
 
       // Reset form
@@ -98,7 +118,7 @@ export function ClientMeetingScheduler({ client, onMeetingScheduled }: ClientMee
         onMeetingScheduled();
       }
     } catch (error) {
-      console.error("Erro ao agendar reunião:", error);
+      console.error("[ClientMeetingScheduler] Erro ao agendar reunião:", error);
       toast({
         title: "Erro ao agendar",
         description: "Ocorreu um erro ao agendar a reunião. Tente novamente.",

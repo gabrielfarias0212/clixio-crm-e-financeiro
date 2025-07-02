@@ -11,6 +11,7 @@ import { useProductCatalog } from "@/hooks/useProductCatalog";
 import { formatCurrency } from "@/utils/currency";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { QuickSaleFormData } from "@/utils/types";
 
 export default function ServicesProducts() {
   const { quickTransactions, addQuickSale, updatePaymentStatus } = useQuickSales();
@@ -46,6 +47,10 @@ export default function ServicesProducts() {
     }
   };
 
+  const handleQuickSale = async (data: QuickSaleFormData): Promise<void> => {
+    await addQuickSale(data);
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -68,7 +73,7 @@ export default function ServicesProducts() {
             <Settings className="h-4 w-4" />
             Catálogos
           </Button>
-          <QuickSaleForm onSubmit={addQuickSale} />
+          <QuickSaleForm onSubmit={handleQuickSale} />
         </div>
       </div>
 

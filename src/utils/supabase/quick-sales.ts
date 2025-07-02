@@ -7,7 +7,7 @@ export async function fetchQuickTransactions(): Promise<QuickTransaction[]> {
   console.log('Fetching quick transactions...');
   
   const { data, error } = await supabase
-    .from('quick_transactions')
+    .from('quick_transactions' as any)
     .select(`
       *,
       wedding_clients (
@@ -39,14 +39,14 @@ export async function createQuickSale(saleData: QuickSaleFormData): Promise<Quic
   if (saleData.catalogItemId) {
     if (saleData.type === 'service') {
       const { data: serviceItem } = await supabase
-        .from('service_catalog')
+        .from('service_catalog' as any)
         .select('name')
         .eq('id', saleData.catalogItemId)
         .single();
       itemName = serviceItem?.name || itemName;
     } else {
       const { data: productItem } = await supabase
-        .from('product_catalog')
+        .from('product_catalog' as any)
         .select('name')
         .eq('id', saleData.catalogItemId)
         .single();
@@ -56,7 +56,7 @@ export async function createQuickSale(saleData: QuickSaleFormData): Promise<Quic
 
   // Create quick transaction
   const { data: quickTransaction, error } = await supabase
-    .from('quick_transactions')
+    .from('quick_transactions' as any)
     .insert({
       user_id: userId,
       client_id: saleData.clientId || null,
@@ -105,7 +105,7 @@ export async function updateQuickTransactionPaymentStatus(
   console.log('Updating quick transaction payment status:', id, paymentStatus);
 
   const { data, error } = await supabase
-    .from('quick_transactions')
+    .from('quick_transactions' as any)
     .update({
       payment_status: paymentStatus,
       updated_at: new Date().toISOString()

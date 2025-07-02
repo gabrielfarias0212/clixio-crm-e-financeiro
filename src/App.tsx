@@ -1,16 +1,16 @@
+
 import {
   BrowserRouter,
   Routes,
   Route,
 } from "react-router-dom";
 import { AuthGuard } from "./components/AuthGuard";
-import Clients from "./pages/Clients";
-import Dashboard from "./pages/Dashboard";
+import ClientList from "./pages/ClientList";
+import Index from "./pages/Index";
 import CashFlow from "./pages/CashFlow";
 import Calendar from "./pages/Calendar";
 import PersonalControl from "./pages/PersonalControl";
 import Layout from "./components/Layout";
-import Suppliers from "./pages/Suppliers";
 import Projects from "./pages/Projects";
 import ServicesProducts from "@/pages/ServicesProducts";
 
@@ -23,7 +23,7 @@ function App() {
           element={
             <AuthGuard>
               <Layout>
-                <Dashboard />
+                <Index />
               </Layout>
             </AuthGuard>
           }
@@ -33,17 +33,7 @@ function App() {
           element={
             <AuthGuard>
               <Layout>
-                <Clients />
-              </Layout>
-            </AuthGuard>
-          }
-        />
-        <Route
-          path="/suppliers"
-          element={
-            <AuthGuard>
-              <Layout>
-                <Suppliers />
+                <ClientList />
               </Layout>
             </AuthGuard>
           }

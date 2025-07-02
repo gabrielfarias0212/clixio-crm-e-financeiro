@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Sheet,
@@ -24,18 +25,18 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "@/hooks/useUser";
 
 interface NavbarProps {
-  user: any;
+  user?: any;
 }
 
 const Navbar = ({ user }: NavbarProps) => {
   const [open, setOpen] = useState(false);
-  const { logout } = useAuth();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
-	const { userProfile, loading } = useUser();
+  const { userProfile, loading } = useUser();
 
   const handleLogout = async () => {
-    await logout();
-    navigate("/login");
+    await signOut();
+    navigate("/auth");
   };
 
   const menuItems = [
@@ -61,7 +62,7 @@ const Navbar = ({ user }: NavbarProps) => {
               {userProfile?.name}
             </p>
             <Avatar className="hidden md:block">
-							<AvatarImage src={user?.avatar_url} />
+              <AvatarImage src={user?.avatar_url} />
               <AvatarFallback>{userProfile?.name?.charAt(0)}</AvatarFallback>
             </Avatar>
           </div>

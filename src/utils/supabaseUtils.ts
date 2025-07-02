@@ -64,3 +64,23 @@ export {
 
 // Export types separately to fix isolatedModules issue
 export type { PersonalCategory } from './supabase/personal-categories';
+
+export {
+  fetchServiceCatalog,
+  createServiceCatalogItem,
+  updateServiceCatalogItem,
+  deleteServiceCatalogItem
+} from './supabase/service-catalog';
+
+export {
+  fetchProductCatalog,
+  createProductCatalogItem,
+  updateProductCatalogItem,
+  deleteProductCatalogItem
+} from './supabase/product-catalog';
+
+export {
+  fetchQuickTransactions,
+  createQuickSale,
+  updateQuickTransactionPaymentStatus
+} from './supabase/quick-sales';

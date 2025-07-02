@@ -6,7 +6,7 @@ export async function fetchProductCatalog(): Promise<ProductCatalogItem[]> {
   console.log('Fetching product catalog...');
   
   const { data, error } = await supabase
-    .from('product_catalog' as any)
+    .from('product_catalog')
     .select('*')
     .eq('is_active', true)
     .order('name');
@@ -16,7 +16,7 @@ export async function fetchProductCatalog(): Promise<ProductCatalogItem[]> {
     throw error;
   }
 
-  return data || [];
+  return (data as ProductCatalogItem[]) || [];
 }
 
 export async function createProductCatalogItem(
@@ -25,7 +25,7 @@ export async function createProductCatalogItem(
   console.log('Creating product catalog item:', item);
 
   const { data, error } = await supabase
-    .from('product_catalog' as any)
+    .from('product_catalog')
     .insert({
       ...item,
       user_id: (await supabase.auth.getUser()).data.user?.id
@@ -38,7 +38,7 @@ export async function createProductCatalogItem(
     throw error;
   }
 
-  return data;
+  return data as ProductCatalogItem;
 }
 
 export async function updateProductCatalogItem(
@@ -48,7 +48,7 @@ export async function updateProductCatalogItem(
   console.log('Updating product catalog item:', id, updates);
 
   const { data, error } = await supabase
-    .from('product_catalog' as any)
+    .from('product_catalog')
     .update({
       ...updates,
       updated_at: new Date().toISOString()
@@ -62,14 +62,14 @@ export async function updateProductCatalogItem(
     throw error;
   }
 
-  return data;
+  return data as ProductCatalogItem;
 }
 
 export async function deleteProductCatalogItem(id: string): Promise<void> {
   console.log('Deleting product catalog item:', id);
 
   const { error } = await supabase
-    .from('product_catalog' as any)
+    .from('product_catalog')
     .delete()
     .eq('id', id);
 

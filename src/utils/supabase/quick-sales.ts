@@ -87,7 +87,7 @@ export async function createQuickSale(saleData: QuickSaleFormData): Promise<Quic
       amount: saleData.amount,
       date: saleData.saleDate,
       clientId: saleData.clientId || null,
-      payment_id: null
+      paymentId: null
     });
     console.log('Financial transaction created successfully');
   } catch (financialError) {

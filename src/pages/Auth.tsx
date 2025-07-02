@@ -1,115 +1,120 @@
 
-import { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
+import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2 } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 
 export default function Auth() {
-  const [mode, setMode] = useState<"login" | "register">("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const {
-    signIn,
-    signUp,
-    user
-  } = useAuth();
-  const navigate = useNavigate();
+  const { user, signIn, signUp, loading } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  // If user is already logged in, redirect to dashboard
+  // Se já estiver autenticado, redirecionar para a página inicial
   if (user) {
     return <Navigate to="/" replace />;
   }
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
+    setError('');
+    setIsLoading(true);
+
     try {
-      if (mode === "login") {
-        const {
-          success,
-          error
-        } = await signIn(email, password);
-        if (success) {
-          navigate("/");
-        } else {
-          setError(error || "Falha ao fazer login. Verifique suas credenciais.");
-        }
+      if (isSignUp) {
+        const { error } = await signUp(email, password);
+        if (error) throw error;
       } else {
-        const {
-          success,
-          error
-        } = await signUp(email, password, name);
-        if (success) {
-          setMode("login");
-          setError("Registro bem-sucedido. Por favor, faça login agora.");
-        } else {
-          setError(error || "Falha ao registrar. Tente novamente.");
-        }
+        const { error } = await signIn(email, password);
+        if (error) throw error;
       }
     } catch (err: any) {
-      setError(err.message || "Ocorreu um erro. Tente novamente mais tarde.");
+      setError(err.message || 'Erro na autenticação');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
-  
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-6 py-0 px-0 mx-[128px] my-[2px]">
-            <img src="/lovable-uploads/6b189f38-b0b9-4a2e-8ff2-6635102e14a9.png" alt="GCLIXIO Logo" className="w-[180px] h-auto mb-2" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-center">
-            {mode === "login" ? "Entre na sua conta" : "Crie uma conta"}
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">
+            {isSignUp ? 'Criar Conta' : 'Entrar'}
           </CardTitle>
-          <CardDescription className="text-center">
-            {mode === "login" ? "Digite suas credenciais para acessar o sistema" : "Preencha os dados abaixo para criar sua conta"}
+          <CardDescription>
+            {isSignUp 
+              ? 'Crie sua conta para começar' 
+              : 'Entre com suas credenciais'
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === "register" && (
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome</Label>
-                <Input id="name" placeholder="Seu nome completo" value={name} onChange={e => setName(e.target.value)} required />
-              </div>
+            <div>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Input
+                type="password"
+                placeholder="Senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="exemplo@email.com" value={email} onChange={e => setEmail(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
-            </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" disabled={loading} className="w-full rounded-none bg-green-700 hover:bg-green-600 text-white">
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Aguarde...
-                </>
-              ) : mode === "login" ? "Entrar" : "Registrar"}
+
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              {isSignUp ? 'Criar Conta' : 'Entrar'}
             </Button>
           </form>
+
+          <div className="mt-4 text-center">
+            <Button
+              variant="link"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-sm"
+            >
+              {isSignUp 
+                ? 'Já tem uma conta? Entre aqui' 
+                : 'Não tem conta? Crie uma aqui'
+              }
+            </Button>
+          </div>
         </CardContent>
-        <CardFooter>
-          <Button variant="link" className="w-full" onClick={() => {
-            setMode(mode === "login" ? "register" : "login");
-            setError(null);
-          }}>
-            {mode === "login" ? "Não tem uma conta? Registre-se" : "Já tem uma conta? Entre"}
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   );

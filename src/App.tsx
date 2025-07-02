@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import CashFlow from "./pages/CashFlow";
 import Calendar from "./pages/Calendar";
 import PersonalControl from "./pages/PersonalControl";
+import Auth from "./pages/Auth";
 import Layout from "./components/Layout";
 import ServicesProducts from "@/pages/ServicesProducts";
 
@@ -17,6 +18,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/auth" element={<Auth />} />
         <Route
           path="/"
           element={

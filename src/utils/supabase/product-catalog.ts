@@ -5,7 +5,7 @@ import { ProductCatalogItem } from "@/utils/types";
 export async function fetchProductCatalog(): Promise<ProductCatalogItem[]> {
   console.log('Fetching product catalog...');
   
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('product_catalog')
     .select('*')
     .eq('is_active', true)
@@ -24,7 +24,7 @@ export async function createProductCatalogItem(
 ): Promise<ProductCatalogItem> {
   console.log('Creating product catalog item:', item);
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('product_catalog')
     .insert({
       ...item,
@@ -47,7 +47,7 @@ export async function updateProductCatalogItem(
 ): Promise<ProductCatalogItem> {
   console.log('Updating product catalog item:', id, updates);
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('product_catalog')
     .update({
       ...updates,
@@ -68,7 +68,7 @@ export async function updateProductCatalogItem(
 export async function deleteProductCatalogItem(id: string): Promise<void> {
   console.log('Deleting product catalog item:', id);
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('product_catalog')
     .delete()
     .eq('id', id);

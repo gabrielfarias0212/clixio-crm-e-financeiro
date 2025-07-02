@@ -5,7 +5,7 @@ import { ServiceCatalogItem } from "@/utils/types";
 export async function fetchServiceCatalog(): Promise<ServiceCatalogItem[]> {
   console.log('Fetching service catalog...');
   
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('service_catalog')
     .select('*')
     .eq('is_active', true)
@@ -24,7 +24,7 @@ export async function createServiceCatalogItem(
 ): Promise<ServiceCatalogItem> {
   console.log('Creating service catalog item:', item);
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('service_catalog')
     .insert({
       ...item,
@@ -47,7 +47,7 @@ export async function updateServiceCatalogItem(
 ): Promise<ServiceCatalogItem> {
   console.log('Updating service catalog item:', id, updates);
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('service_catalog')
     .update({
       ...updates,
@@ -68,7 +68,7 @@ export async function updateServiceCatalogItem(
 export async function deleteServiceCatalogItem(id: string): Promise<void> {
   console.log('Deleting service catalog item:', id);
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('service_catalog')
     .delete()
     .eq('id', id);

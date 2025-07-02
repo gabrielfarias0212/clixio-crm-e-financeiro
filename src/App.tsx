@@ -11,7 +11,6 @@ import CashFlow from "./pages/CashFlow";
 import Calendar from "./pages/Calendar";
 import PersonalControl from "./pages/PersonalControl";
 import Layout from "./components/Layout";
-import Projects from "./pages/Projects";
 import ServicesProducts from "@/pages/ServicesProducts";
 
 function App() {
@@ -34,16 +33,6 @@ function App() {
             <AuthGuard>
               <Layout>
                 <ClientList />
-              </Layout>
-            </AuthGuard>
-          }
-        />
-        <Route
-          path="/projects"
-          element={
-            <AuthGuard>
-              <Layout>
-                <Projects />
               </Layout>
             </AuthGuard>
           }

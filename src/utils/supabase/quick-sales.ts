@@ -86,7 +86,7 @@ export async function createQuickSale(saleData: QuickSaleFormData): Promise<Quic
       description: `${itemName}${saleData.clientId ? ' - Cliente vinculado' : ''}`,
       amount: saleData.amount,
       date: saleData.saleDate,
-      client_id: saleData.clientId || null,
+      clientId: saleData.clientId || null,
       payment_id: null
     });
     console.log('Financial transaction created successfully');

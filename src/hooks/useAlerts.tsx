@@ -1,4 +1,3 @@
-
 import { useMemo } from "react";
 import { AlertItem, Client, CalendarEvent } from "@/utils/types";
 import { stringToDate } from "@/utils/dates";
@@ -15,26 +14,90 @@ export function useAlerts(clients: Client[] = []) {
     // Edit tasks (clients with nextAction "editar")
     const editTasks: AlertItem[] = clients
       .filter(client => client.nextAction === "editar")
-      .map(client => ({
-        type: "task" as const,
-        title: `Ação pendente: ${client.nextAction}`,
-        description: `Cliente: ${client.name}`,
-        client,
-        date: now,
-        urgency: "medium" as const
-      }));
+      .map(client => {
+        let description = `Cliente: ${client.name}`;
+        let urgency: "high" | "medium" | "low" = "medium";
+        
+        // Calculate days since wedding if wedding date exists
+        if (client.weddingDate) {
+          const weddingDate = stringToDate(client.weddingDate);
+          if (weddingDate) {
+            const daysSinceWedding = differenceInDays(now, weddingDate);
+            
+            if (daysSinceWedding > 0) {
+              // Wedding already happened
+              description += ` - Casamento foi há ${daysSinceWedding} ${daysSinceWedding === 1 ? 'dia' : 'dias'}`;
+              
+              // Adjust urgency based on days passed
+              if (daysSinceWedding > 30) {
+                urgency = "high";
+              } else if (daysSinceWedding > 15) {
+                urgency = "medium";
+              } else {
+                urgency = "low";
+              }
+            } else {
+              // Wedding in the future
+              const daysUntilWedding = Math.abs(daysSinceWedding);
+              description += ` - Casamento em ${daysUntilWedding} ${daysUntilWedding === 1 ? 'dia' : 'dias'}`;
+              urgency = "low";
+            }
+          }
+        }
+        
+        return {
+          type: "task" as const,
+          title: `Ação pendente: ${client.nextAction}`,
+          description,
+          client,
+          date: now,
+          urgency
+        };
+      });
     
     // Deliver tasks (clients with nextAction "entregar")
     const deliverTasks: AlertItem[] = clients
       .filter(client => client.nextAction === "entregar")
-      .map(client => ({
-        type: "task" as const,
-        title: `Ação pendente: ${client.nextAction}`,
-        description: `Cliente: ${client.name}`,
-        client,
-        date: now,
-        urgency: "medium" as const
-      }));
+      .map(client => {
+        let description = `Cliente: ${client.name}`;
+        let urgency: "high" | "medium" | "low" = "medium";
+        
+        // Calculate days since wedding if wedding date exists
+        if (client.weddingDate) {
+          const weddingDate = stringToDate(client.weddingDate);
+          if (weddingDate) {
+            const daysSinceWedding = differenceInDays(now, weddingDate);
+            
+            if (daysSinceWedding > 0) {
+              // Wedding already happened
+              description += ` - Casamento foi há ${daysSinceWedding} ${daysSinceWedding === 1 ? 'dia' : 'dias'}`;
+              
+              // Adjust urgency based on days passed
+              if (daysSinceWedding > 30) {
+                urgency = "high";
+              } else if (daysSinceWedding > 15) {
+                urgency = "medium";
+              } else {
+                urgency = "low";
+              }
+            } else {
+              // Wedding in the future
+              const daysUntilWedding = Math.abs(daysSinceWedding);
+              description += ` - Casamento em ${daysUntilWedding} ${daysUntilWedding === 1 ? 'dia' : 'dias'}`;
+              urgency = "low";
+            }
+          }
+        }
+        
+        return {
+          type: "task" as const,
+          title: `Ação pendente: ${client.nextAction}`,
+          description,
+          client,
+          date: now,
+          urgency
+        };
+      });
     
     // Payment alerts for upcoming weddings (less than 30 days)
     // Only show if payment is not complete and wedding date is within 30 days

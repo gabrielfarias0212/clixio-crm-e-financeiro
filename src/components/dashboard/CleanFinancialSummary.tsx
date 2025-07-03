@@ -1,10 +1,10 @@
 
-import { useFinancialData } from "@/hooks/useFinancialData";
+import { useOptimizedAnnualData } from "@/hooks/useOptimizedAnnualData";
 import { ArrowUpCircle, ArrowDownCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
 
 export function CleanFinancialSummary() {
-  const { monthlyTotals, chartData } = useFinancialData();
+  const { chartData, yearTotals } = useOptimizedAnnualData();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -23,7 +23,7 @@ export function CleanFinancialSummary() {
           </div>
           <p className="text-sm text-gray-500 mb-1">Entradas</p>
           <p className="text-xl font-semibold text-green-600">
-            {formatCurrency(monthlyTotals.income)}
+            {formatCurrency(yearTotals.income)}
           </p>
         </div>
 
@@ -33,15 +33,15 @@ export function CleanFinancialSummary() {
           </div>
           <p className="text-sm text-gray-500 mb-1">Saídas</p>
           <p className="text-xl font-semibold text-red-600">
-            {formatCurrency(monthlyTotals.expenses)}
+            {formatCurrency(yearTotals.expenses)}
           </p>
         </div>
 
         <div className="text-center">
           <div className={`flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-3 ${
-            monthlyTotals.balance >= 0 ? 'bg-green-50' : 'bg-red-50'
+            yearTotals.balance >= 0 ? 'bg-green-50' : 'bg-red-50'
           }`}>
-            {monthlyTotals.balance >= 0 ? (
+            {yearTotals.balance >= 0 ? (
               <TrendingUp className="h-6 w-6 text-green-600" />
             ) : (
               <TrendingDown className="h-6 w-6 text-red-600" />
@@ -49,9 +49,9 @@ export function CleanFinancialSummary() {
           </div>
           <p className="text-sm text-gray-500 mb-1">Saldo</p>
           <p className={`text-xl font-semibold ${
-            monthlyTotals.balance >= 0 ? 'text-green-600' : 'text-red-600'
+            yearTotals.balance >= 0 ? 'text-green-600' : 'text-red-600'
           }`}>
-            {formatCurrency(monthlyTotals.balance)}
+            {formatCurrency(yearTotals.balance)}
           </p>
         </div>
 
@@ -61,7 +61,7 @@ export function CleanFinancialSummary() {
           </div>
           <p className="text-sm text-gray-500 mb-1">Crescimento</p>
           <p className="text-xl font-semibold text-blue-600">
-            {monthlyTotals.balance > 0 ? '+' : ''}{((monthlyTotals.balance / Math.max(monthlyTotals.expenses, 1)) * 100).toFixed(1)}%
+            {yearTotals.balance > 0 ? '+' : ''}{((yearTotals.balance / Math.max(yearTotals.expenses, 1)) * 100).toFixed(1)}%
           </p>
         </div>
       </div>

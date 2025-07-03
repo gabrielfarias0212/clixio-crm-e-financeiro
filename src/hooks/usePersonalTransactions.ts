@@ -27,6 +27,7 @@ export function usePersonalTransactions() {
       
       // Buscar transações do banco
       const data = await fetchPersonalTransactions();
+      console.log('📋 Transações carregadas:', data);
       setTransactions(data);
     } catch (err) {
       console.error('Erro ao carregar transações:', err);
@@ -55,6 +56,8 @@ export function usePersonalTransactions() {
     }
 
     try {
+      console.log('💾 Criando transação:', { type, amount, description, category, proLaboreWeekKey });
+      
       const newTransaction = await createPersonalTransaction(
         type,
         parseFloat(amount),
@@ -63,7 +66,14 @@ export function usePersonalTransactions() {
         proLaboreWeekKey
       );
 
-      setTransactions(prev => [newTransaction, ...prev]);
+      console.log('✅ Transação criada:', newTransaction);
+
+      // Atualizar estado local imediatamente
+      setTransactions(prev => {
+        const updated = [newTransaction, ...prev];
+        console.log('🔄 Estado atualizado:', updated);
+        return updated;
+      });
       
       const successMessage = type === 'entrada' ? 'Entrada registrada com sucesso!' : 'Saída registrada com sucesso!';
       toast.success(successMessage);
@@ -78,8 +88,17 @@ export function usePersonalTransactions() {
 
   const removeTransaction = async (transactionId: string) => {
     try {
+      console.log('🗑️ Removendo transação:', transactionId);
+      
       await deletePersonalTransaction(transactionId);
-      setTransactions(prev => prev.filter(t => t.id !== transactionId));
+      
+      // Atualizar estado local imediatamente
+      setTransactions(prev => {
+        const updated = prev.filter(t => t.id !== transactionId);
+        console.log('🔄 Estado atualizado após remoção:', updated);
+        return updated;
+      });
+      
       toast.success('Transação removida com sucesso!');
     } catch (err) {
       console.error('Erro ao remover transação:', err);

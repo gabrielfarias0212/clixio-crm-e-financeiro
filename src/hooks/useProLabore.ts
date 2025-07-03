@@ -187,6 +187,8 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
     }
 
     try {
+      console.log('💰 Iniciando retirada de pró-labore:', availableAmount);
+      
       // 1. Criar transação empresarial de saída (débito do fluxo de caixa)
       const businessTransactionData: Omit<Transaction, 'id' | 'createdAt'> = {
         amount: availableAmount,
@@ -197,6 +199,7 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
       };
 
       const businessTransaction = await createTransaction(businessTransactionData);
+      console.log('✅ Transação empresarial criada:', businessTransaction);
       
       if (!businessTransaction) {
         throw new Error('Falha ao criar transação empresarial');
@@ -210,6 +213,7 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
         'pró-labore',
         currentMonthKey
       );
+      console.log('✅ Transação pessoal criada:', personalTransaction);
 
       // 3. Salvar registro local com IDs das duas transações
       const newRecord: ProLaboreRecord = {
@@ -225,7 +229,7 @@ export function useProLabore(currentWeek: WeekInfo, weeklyBalance: number) {
       const updatedRecords = [...proLaboreRecords, newRecord];
       saveRecords(updatedRecords);
 
-      console.log(`Pró-labore de R$ ${availableAmount.toFixed(2)} processado:
+      console.log(`💰 Pró-labore de R$ ${availableAmount.toFixed(2)} processado:
         - Debitado do fluxo empresarial (ID: ${businessTransaction.id})
         - Creditado no controle pessoal (ID: ${personalTransaction.id})`);
       

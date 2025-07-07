@@ -83,7 +83,7 @@ export function useAlerts(clients: Client[] = []) {
           clients.find(client => client.id === event.clientId) : null;
         
         // Criar cliente fictício se não existir associação
-        const eventClient = associatedClient || {
+        const eventClient: Client = associatedClient || {
           id: event.id,
           name: event.title,
           email: '',
@@ -95,6 +95,25 @@ export function useAlerts(clients: Client[] = []) {
           downPayment: 0,
           eventCategory: 'Ensaio externo' as const,
           weddingDate: null,
+          preWeddingDate: null,
+          weddingStartTime: undefined,
+          weddingEndTime: undefined,
+          eventLocation: undefined,
+          preWeddingStartTime: undefined,
+          preWeddingEndTime: undefined,
+          contractLink: undefined,
+          hasPreWedding: undefined,
+          preWeddingScheduled: undefined,
+          preWeddingCompleted: undefined,
+          preWeddingDelivered: undefined,
+          weddingPhotographed: undefined,
+          inEditing: undefined,
+          linkSent: undefined,
+          boxDelivered: undefined,
+          albumDesigned: undefined,
+          albumApprovedDelivered: undefined,
+          isDelivered: undefined,
+          coupleName: undefined,
           salesFunnelStage: 'projeto_finalizado' as const,
           payments: [],
           createdAt: new Date().toISOString(),

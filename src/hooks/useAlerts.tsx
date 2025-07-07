@@ -54,6 +54,96 @@ export function useAlerts(clients: Client[] = []) {
           urgency
         };
       });
+
+    // Calendar Events editing alerts (pré-weddings, ensaios, sessões que já aconteceram)
+    const calendarEditingAlerts: AlertItem[] = events
+      .filter(event => {
+        // Filtrar apenas eventos relevantes para edição
+        const editableEventTypes = ['pre-wedding', 'photoshoot', 'editing', 'custom'];
+        if (!editableEventTypes.includes(event.type)) return false;
+        
+        // Verificar se o evento já aconteceu
+        const eventDate = stringToDate(event.date);
+        if (!eventDate) return false;
+        
+        const daysSinceEvent = differenceInDays(now, eventDate);
+        if (daysSinceEvent <= 0) return false; // Evento ainda não aconteceu
+        
+        // Filtrar eventos já marcados como editados ou entregues
+        if (event.isEdited === true || event.isDelivered === true) return false;
+        
+        return true;
+      })
+      .map(event => {
+        const eventDate = stringToDate(event.date);
+        const daysSinceEvent = eventDate ? differenceInDays(now, eventDate) : 0;
+        
+        // Encontrar cliente associado se existir
+        const associatedClient = event.clientId ? 
+          clients.find(client => client.id === event.clientId) : null;
+        
+        // Criar cliente fictício se não existir associação
+        const eventClient = associatedClient || {
+          id: event.id,
+          name: event.title,
+          email: '',
+          phone: '',
+          notes: event.description || '',
+          status: 'fechado' as const,
+          nextAction: 'editar' as const,
+          contractValue: 0,
+          downPayment: 0,
+          eventCategory: 'Ensaio externo' as const,
+          weddingDate: null,
+          salesFunnelStage: 'projeto_finalizado' as const,
+          payments: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        // Determinar urgência baseada nos dias passados
+        let urgency: "high" | "medium" | "low" = "medium";
+        if (daysSinceEvent > 15) {
+          urgency = "high";
+        } else if (daysSinceEvent > 8) {
+          urgency = "medium";
+        } else {
+          urgency = "low";
+        }
+        
+        // Traduzir tipo de evento
+        const eventTypeNames = {
+          'pre-wedding': 'Pré-wedding',
+          'photoshoot': 'Ensaio',
+          'editing': 'Sessão de edição',
+          'custom': 'Evento personalizado'
+        };
+        
+        const eventTypeName = eventTypeNames[event.type as keyof typeof eventTypeNames] || 'Evento';
+        
+        let description = `${eventTypeName}: ${event.title}`;
+        if (associatedClient) {
+          description += ` - Cliente: ${associatedClient.name}`;
+        }
+        description += ` - Realizado há ${daysSinceEvent} ${daysSinceEvent === 1 ? 'dia' : 'dias'}`;
+        
+        if (event.description) {
+          description += ` - ${event.description}`;
+        }
+        
+        return {
+          type: "calendar_event" as const,
+          title: `Edição pendente: ${eventTypeName}`,
+          description,
+          client: eventClient,
+          event,
+          date: eventDate || now,
+          urgency
+        };
+      });
+    
+    // Combinar alertas de edição de clientes e eventos do calendário
+    const allEditTasks = [...editTasks, ...calendarEditingAlerts];
     
     // Deliver tasks (clients with nextAction "entregar")
     const deliverTasks: AlertItem[] = clients
@@ -301,7 +391,7 @@ export function useAlerts(clients: Client[] = []) {
     });
 
     return { 
-      editTasks, 
+      editTasks: allEditTasks, 
       deliverTasks,
       payments: allPaymentAlerts as AlertItem[],
       preWedding: preWeddingAlerts as AlertItem[]

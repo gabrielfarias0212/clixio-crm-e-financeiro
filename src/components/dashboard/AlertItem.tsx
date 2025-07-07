@@ -12,7 +12,8 @@ import {
   CreditCard,
   CalendarHeart,
   Edit3,
-  Package2
+  Package2,
+  Image
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,9 @@ export function AlertItem({ alert }: AlertItemProps) {
         return alert.title.includes("editar") ? 
           <Edit3 className={`${iconSize} text-amber-600`} /> :
           <Package2 className={`${iconSize} text-blue-600`} />;
+      case "calendar_event":
+        // Ícone específico para eventos do calendário que precisam de edição
+        return <Image className={`${iconSize} text-purple-600`} />;
       case "payment":
       case "due_payment":
         if (isOverdue) {
@@ -74,6 +78,12 @@ export function AlertItem({ alert }: AlertItemProps) {
       return `${baseClasses} border-l-red-500 bg-red-50/50 hover:bg-red-50/70 shadow-sm`;
     }
     
+    if (alert.type === "calendar_event") {
+      if (alert.urgency === "high") return `${baseClasses} border-l-red-500 bg-red-50/30`;
+      if (alert.urgency === "medium") return `${baseClasses} border-l-purple-400 bg-purple-50/30`;
+      return `${baseClasses} border-l-purple-500 bg-purple-50/30`;
+    }
+    
     if (alert.type === "due_payment") {
       if (alert.urgency === "high") return `${baseClasses} border-l-red-500 bg-red-50/30`;
       if (alert.urgency === "medium") return `${baseClasses} border-l-amber-500 bg-amber-50/30`;
@@ -103,6 +113,9 @@ export function AlertItem({ alert }: AlertItemProps) {
 
   const handleAlertClick = () => {
     if (alert.type === "event") {
+      navigate('/calendar');
+    } else if (alert.type === "calendar_event") {
+      // Para eventos do calendário, navegar para o calendário
       navigate('/calendar');
     } else {
       navigate(`/clients/${alert.client.id}`);

@@ -1,3 +1,4 @@
+
 export type ClientStatus = 
   | "primeiro_contato"
   | "orçamento enviado" 
@@ -138,16 +139,20 @@ export interface CalendarEvent {
   type: EventType;
   color: EventColor;
   clientId?: string;
+  // Novos campos para controle de status
+  isEdited?: boolean;
+  isDelivered?: boolean;
 }
 
-// Update the AlertItem type to include the 'pre_wedding' type and 'isOverdue' property
+// Update the AlertItem type to include the 'pre_wedding' and 'calendar_event' types
 export interface AlertItem {
-  type: "task" | "payment" | "due_payment" | "event" | "pre_wedding";
+  type: "task" | "payment" | "due_payment" | "event" | "pre_wedding" | "calendar_event";
   title: string;
   description: string;
   client: Client;
   date: Date;
   payment?: Payment;
+  event?: CalendarEvent; // Adicionado para alertas de eventos do calendário
   urgency?: "high" | "medium" | "low";
-  isOverdue?: boolean;  // Added isOverdue flag for payment alerts
+  isOverdue?: boolean;
 }

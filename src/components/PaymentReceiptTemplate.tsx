@@ -2,7 +2,8 @@
 import React from 'react';
 import { Payment, Client } from "@/utils/types";
 import { formatCurrency } from "@/utils/currency";
-import { Camera } from "lucide-react";
+import { Camera, Globe, Phone, Mail, Facebook, Instagram } from "lucide-react";
+import { PhotographerProfile } from "@/hooks/usePhotographerProfile";
 
 interface PaymentReceiptTemplateProps {
   payment: Payment;
@@ -11,6 +12,7 @@ interface PaymentReceiptTemplateProps {
   contractValue: number;
   totalPaid: number;
   remainingBalance: number;
+  photographerProfile?: PhotographerProfile | null;
 }
 
 export function PaymentReceiptTemplate({
@@ -19,7 +21,8 @@ export function PaymentReceiptTemplate({
   receiptNumber,
   contractValue,
   totalPaid,
-  remainingBalance
+  remainingBalance,
+  photographerProfile
 }: PaymentReceiptTemplateProps) {
   const currentDate = new Date().toLocaleDateString('pt-BR');
   const isContractPaid = remainingBalance <= 0;
@@ -32,13 +35,82 @@ export function PaymentReceiptTemplate({
           Comprovante Nº: {receiptNumber}
         </div>
         
-        <div className="flex justify-center mb-3">
-          <Camera size={32} className="text-gray-600" />
+        <div className="flex flex-col items-center mb-3">
+          {photographerProfile?.logo_url ? (
+            <img 
+              src={photographerProfile.logo_url} 
+              alt="Logo" 
+              className="h-12 w-auto mb-2"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+          ) : null}
+          <Camera size={32} className={`text-gray-600 ${photographerProfile?.logo_url ? 'hidden' : ''}`} />
         </div>
+        
         <h1 className="text-2xl font-bold mb-2 text-gray-800">
           COMPROVANTE DE PAGAMENTO
         </h1>
-        <p className="text-lg text-gray-600">Fotografia Profissional</p>
+        
+        {photographerProfile?.company_name && (
+          <p className="text-lg text-gray-600 font-medium">
+            {photographerProfile.company_name}
+          </p>
+        )}
+        
+        {photographerProfile?.brand_name && photographerProfile.brand_name !== photographerProfile.company_name && (
+          <p className="text-md text-gray-500">
+            {photographerProfile.brand_name}
+          </p>
+        )}
+        
+        {!photographerProfile?.company_name && !photographerProfile?.brand_name && (
+          <p className="text-lg text-gray-600">Fotografia Profissional</p>
+        )}
+
+        {/* Informações de contato */}
+        {photographerProfile && (photographerProfile.whatsapp || photographerProfile.email || photographerProfile.website) && (
+          <div className="flex flex-wrap justify-center gap-4 mt-3 text-sm text-gray-600">
+            {photographerProfile.whatsapp && (
+              <div className="flex items-center gap-1">
+                <Phone size={14} />
+                <span>{photographerProfile.whatsapp}</span>
+              </div>
+            )}
+            {photographerProfile.email && (
+              <div className="flex items-center gap-1">
+                <Mail size={14} />
+                <span>{photographerProfile.email}</span>
+              </div>
+            )}
+            {photographerProfile.website && (
+              <div className="flex items-center gap-1">
+                <Globe size={14} />
+                <span>{photographerProfile.website}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Redes sociais */}
+        {photographerProfile && (photographerProfile.facebook || photographerProfile.instagram) && (
+          <div className="flex justify-center gap-3 mt-2 text-sm text-gray-500">
+            {photographerProfile.facebook && (
+              <div className="flex items-center gap-1">
+                <Facebook size={14} />
+                <span>{photographerProfile.facebook}</span>
+              </div>
+            )}
+            {photographerProfile.instagram && (
+              <div className="flex items-center gap-1">
+                <Instagram size={14} />
+                <span>{photographerProfile.instagram}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Dados do Cliente */}

@@ -9,11 +9,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Settings } from "lucide-react";
+import { ProfileConfigDialog } from "./ProfileConfigDialog";
 
 export function UserMenu() {
   const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   
   if (!user) return null;
   
@@ -24,28 +26,45 @@ export function UserMenu() {
     setIsOpen(false);
     await signOut();
   };
+
+  const handleProfileConfig = () => {
+    setIsOpen(false);
+    setProfileDialogOpen(true);
+  };
   
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex items-center gap-2 px-3">
-          <div className="flex items-center justify-center rounded-full bg-primary h-8 w-8 text-primary-foreground">
-            <span className="text-sm font-medium">{name.charAt(0).toUpperCase()}</span>
+    <>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="flex items-center gap-2 px-3">
+            <div className="flex items-center justify-center rounded-full bg-primary h-8 w-8 text-primary-foreground">
+              <span className="text-sm font-medium">{name.charAt(0).toUpperCase()}</span>
+            </div>
+            <span className="hidden md:inline text-sm font-medium">{name}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <div className="p-2">
+            <div className="font-medium">{name}</div>
+            <div className="text-sm text-muted-foreground truncate">{email}</div>
           </div>
-          <span className="hidden md:inline text-sm font-medium">{name}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <div className="p-2">
-          <div className="font-medium">{name}</div>
-          <div className="text-sm text-muted-foreground truncate">{email}</div>
-        </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Sair</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="cursor-pointer" onClick={handleProfileConfig}>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Configurar Perfil</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Sair</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <ProfileConfigDialog 
+        open={profileDialogOpen} 
+        onOpenChange={setProfileDialogOpen} 
+      />
+    </>
   );
 }

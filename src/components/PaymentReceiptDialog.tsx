@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Printer, Download, X } from "lucide-react";
+import { Printer, Download, X, Globe, Phone, Mail, Facebook, Instagram } from "lucide-react";
 import { Payment, Client } from "@/utils/types";
 import { PaymentReceiptTemplate } from "./PaymentReceiptTemplate";
+import { usePhotographerProfile } from "@/hooks/usePhotographerProfile";
 
 interface PaymentReceiptDialogProps {
   open: boolean;
@@ -19,6 +19,7 @@ export function PaymentReceiptDialog({
   payment, 
   client 
 }: PaymentReceiptDialogProps) {
+  const { profile: photographerProfile } = usePhotographerProfile();
   
   const handlePrint = () => {
     // Create the receipt content
@@ -59,6 +60,65 @@ export function PaymentReceiptDialog({
         style: 'currency',
         currency: 'BRL'
       }).format(value);
+    };
+
+    // Generate company header HTML
+    const generateCompanyHeader = () => {
+      if (!photographerProfile) {
+        return `
+          <div class="camera-icon">📷</div>
+          <div class="receipt-title">COMPROVANTE DE PAGAMENTO</div>
+          <div class="receipt-subtitle">Fotografia Profissional</div>
+        `;
+      }
+
+      let headerHTML = '';
+      
+      // Logo or camera icon
+      if (photographerProfile.logo_url) {
+        headerHTML += `<img src="${photographerProfile.logo_url}" alt="Logo" style="height: 48px; width: auto; margin-bottom: 8px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />`;
+        headerHTML += `<div class="camera-icon" style="display: none;">📷</div>`;
+      } else {
+        headerHTML += `<div class="camera-icon">📷</div>`;
+      }
+
+      headerHTML += `<div class="receipt-title">COMPROVANTE DE PAGAMENTO</div>`;
+
+      // Company name
+      if (photographerProfile.company_name) {
+        headerHTML += `<div class="receipt-subtitle" style="font-size: 18px; font-weight: 600;">${photographerProfile.company_name}</div>`;
+      }
+
+      // Brand name (if different from company name)
+      if (photographerProfile.brand_name && photographerProfile.brand_name !== photographerProfile.company_name) {
+        headerHTML += `<div style="font-size: 14px; color: #888; margin-top: 4px;">${photographerProfile.brand_name}</div>`;
+      }
+
+      // If no company or brand name, show default
+      if (!photographerProfile.company_name && !photographerProfile.brand_name) {
+        headerHTML += `<div class="receipt-subtitle">Fotografia Profissional</div>`;
+      }
+
+      // Contact info
+      const contactInfo = [];
+      if (photographerProfile.whatsapp) contactInfo.push(`📞 ${photographerProfile.whatsapp}`);
+      if (photographerProfile.email) contactInfo.push(`✉️ ${photographerProfile.email}`);
+      if (photographerProfile.website) contactInfo.push(`🌐 ${photographerProfile.website}`);
+
+      if (contactInfo.length > 0) {
+        headerHTML += `<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 12px; font-size: 12px; color: #666;">${contactInfo.join(' • ')}</div>`;
+      }
+
+      // Social media
+      const socialInfo = [];
+      if (photographerProfile.facebook) socialInfo.push(`📘 ${photographerProfile.facebook}`);
+      if (photographerProfile.instagram) socialInfo.push(`📷 ${photographerProfile.instagram}`);
+
+      if (socialInfo.length > 0) {
+        headerHTML += `<div style="display: flex; justify-content: center; gap: 15px; margin-top: 8px; font-size: 12px; color: #888;">${socialInfo.join(' • ')}</div>`;
+      }
+
+      return headerHTML;
     };
 
     return `
@@ -281,9 +341,7 @@ export function PaymentReceiptDialog({
                 Comprovante Nº: ${receiptNumber}
             </div>
             
-            <div class="camera-icon">📷</div>
-            <div class="receipt-title">COMPROVANTE DE PAGAMENTO</div>
-            <div class="receipt-subtitle">Fotografia Profissional</div>
+            ${generateCompanyHeader()}
         </div>
 
         <div class="receipt-section">
@@ -437,6 +495,7 @@ export function PaymentReceiptDialog({
           contractValue={contractValue}
           totalPaid={totalPaid}
           remainingBalance={remainingBalance}
+          photographerProfile={photographerProfile}
         />
       </DialogContent>
     </Dialog>

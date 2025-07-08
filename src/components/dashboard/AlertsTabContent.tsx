@@ -10,6 +10,7 @@ interface AlertsTabContentProps {
   payments: AlertItemType[];
   preWedding: AlertItemType[];
   activeTab: string;
+  onRefresh?: () => void;
 }
 
 export function AlertsTabContent({
@@ -18,6 +19,7 @@ export function AlertsTabContent({
   payments,
   preWedding,
   activeTab,
+  onRefresh,
 }: AlertsTabContentProps) {
   const getActiveAlerts = () => {
     switch (activeTab) {
@@ -50,7 +52,7 @@ export function AlertsTabContent({
         ) : (
           activeAlerts.map((alert, index) => (
             <div key={`${alert.type}-${index}`} className="animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-              <AlertItem alert={alert} />
+              <AlertItem alert={alert} onStatusUpdate={onRefresh} />
             </div>
           ))
         )}

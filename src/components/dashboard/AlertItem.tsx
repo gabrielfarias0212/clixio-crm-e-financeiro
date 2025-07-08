@@ -17,12 +17,14 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { EventStatusActions } from "./EventStatusActions";
 
 interface AlertItemProps {
   alert: AlertItemType;
+  onStatusUpdate?: () => void;
 }
 
-export function AlertItem({ alert }: AlertItemProps) {
+export function AlertItem({ alert, onStatusUpdate }: AlertItemProps) {
   const navigate = useNavigate();
 
   const getAlertIcon = (type: string, urgency: string, isOverdue?: boolean) => {
@@ -111,7 +113,12 @@ export function AlertItem({ alert }: AlertItemProps) {
     return `${baseClasses} border-l-green-500 bg-green-50/30`;
   };
 
-  const handleAlertClick = () => {
+  const handleAlertClick = (e: React.MouseEvent) => {
+    // Não navegar se o clique foi em um botão de ação
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    
     if (alert.type === "event") {
       navigate('/calendar');
     } else if (alert.type === "calendar_event") {
@@ -145,6 +152,14 @@ export function AlertItem({ alert }: AlertItemProps) {
                 <Clock className="h-3 w-3 mr-1" />
                 <span className="font-medium">Requer atenção imediata</span>
               </div>
+            )}
+            
+            {/* Ações para eventos do calendário */}
+            {alert.type === "calendar_event" && alert.event && (
+              <EventStatusActions 
+                event={alert.event} 
+                onStatusUpdate={onStatusUpdate}
+              />
             )}
           </div>
         </div>

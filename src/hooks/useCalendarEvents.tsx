@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState, createContext, useContext, ReactNode, useRef } from "react";
 import { CalendarEvent } from "@/utils/types";
 import { normalizeDate } from "@/utils/dates";
@@ -6,6 +5,7 @@ import {
   fetchCalendarEvents, 
   createCalendarEvent, 
   updateCalendarEvent, 
+  updateCalendarEventStatus,
   deleteCalendarEvent 
 } from "@/utils/supabase/calendar-events";
 
@@ -13,6 +13,7 @@ interface CalendarEventsContextProps {
   events: CalendarEvent[];
   addEvent: (event: CalendarEvent) => void;
   updateEvent: (event: CalendarEvent) => void;
+  updateEventStatus: (eventId: string, updates: { isEdited?: boolean; isDelivered?: boolean }) => void;
   deleteEvent: (eventId: string) => void;
   getEventById: (eventId: string) => CalendarEvent | undefined;
   getEventsByDate: (date: string) => CalendarEvent[];
@@ -24,6 +25,7 @@ const CalendarEventsContext = createContext<CalendarEventsContextProps>({
   events: [],
   addEvent: () => {},
   updateEvent: () => {},
+  updateEventStatus: () => {},
   deleteEvent: () => {},
   getEventById: () => undefined,
   getEventsByDate: () => [],
@@ -110,7 +112,9 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
         const formattedEvent: CalendarEvent = {
           ...event,
           startTime: event.startTime || event.time || "09:00",
-          endTime: event.endTime || (event.time ? incrementTimeByOneHour(event.time) : "10:00")
+          endTime: event.endTime || (event.time ? incrementTimeByOneHour(event.time) : "10:00"),
+          isEdited: false,
+          isDelivered: false
         };
         
         const createdEvent = await createCalendarEvent(formattedEvent);
@@ -204,6 +208,36 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
       );
     }
   }, []);
+
+  const updateEventStatus = useCallback(async (eventId: string, updates: { isEdited?: boolean; isDelivered?: boolean }) => {
+    console.log("[CalendarEvents] Atualizando status do evento:", eventId, updates);
+    
+    try {
+      setError(null);
+      
+      const result = await updateCalendarEventStatus(eventId, updates);
+      
+      if (result) {
+        setEvents(prev => 
+          prev.map(event => 
+            event.id === eventId ? result : event
+          )
+        );
+      } else {
+        throw new Error("Falha ao atualizar status do evento no Supabase");
+      }
+    } catch (updateError) {
+      console.error("[CalendarEvents] Erro ao atualizar status do evento:", updateError);
+      setError("Erro ao atualizar status do evento");
+      
+      // Fallback to local state only
+      setEvents(prev => 
+        prev.map(event => 
+          event.id === eventId ? { ...event, ...updates } : event
+        )
+      );
+    }
+  }, []);
   
   const deleteEvent = useCallback(async (eventId: string) => {
     console.log("[CalendarEvents] Removendo evento:", eventId);
@@ -261,6 +295,7 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
     events,
     addEvent,
     updateEvent,
+    updateEventStatus,
     deleteEvent,
     getEventById,
     getEventsByDate,

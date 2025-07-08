@@ -35,7 +35,9 @@ export const createCalendarEvent = async (eventData: CalendarEvent): Promise<Cal
         end_time: eventData.endTime,
         type: eventData.type,
         color: eventData.color,
-        client_id: eventData.clientId || null
+        client_id: eventData.clientId || null,
+        is_edited: eventData.isEdited || false,
+        is_delivered: eventData.isDelivered || false
       })
       .select()
       .single();
@@ -64,7 +66,9 @@ export const updateCalendarEvent = async (eventData: CalendarEvent): Promise<Cal
         end_time: eventData.endTime,
         type: eventData.type,
         color: eventData.color,
-        client_id: eventData.clientId || null
+        client_id: eventData.clientId || null,
+        is_edited: eventData.isEdited || false,
+        is_delivered: eventData.isDelivered || false
       })
       .eq('id', eventData.id)
       .select()
@@ -78,6 +82,40 @@ export const updateCalendarEvent = async (eventData: CalendarEvent): Promise<Cal
     return data ? parseCalendarEvent(data) : null;
   } catch (error) {
     console.error('Exception updating calendar event:', error);
+    return null;
+  }
+};
+
+export const updateCalendarEventStatus = async (
+  eventId: string, 
+  updates: { isEdited?: boolean; isDelivered?: boolean }
+): Promise<CalendarEvent | null> => {
+  try {
+    const updateData: any = {};
+    
+    if (updates.isEdited !== undefined) {
+      updateData.is_edited = updates.isEdited;
+    }
+    
+    if (updates.isDelivered !== undefined) {
+      updateData.is_delivered = updates.isDelivered;
+    }
+
+    const { data, error } = await supabase
+      .from('calendar_events')
+      .update(updateData)
+      .eq('id', eventId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating calendar event status:', error);
+      return null;
+    }
+
+    return data ? parseCalendarEvent(data) : null;
+  } catch (error) {
+    console.error('Exception updating calendar event status:', error);
     return null;
   }
 };
@@ -112,6 +150,8 @@ const parseCalendarEvent = (data: any): CalendarEvent => {
     endTime: data.end_time,
     type: data.type,
     color: data.color,
-    clientId: data.client_id
+    clientId: data.client_id,
+    isEdited: data.is_edited || false,
+    isDelivered: data.is_delivered || false
   };
 };

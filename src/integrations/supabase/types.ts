@@ -23,6 +23,8 @@ export type Database = {
           description: string | null
           end_time: string
           id: string
+          is_delivered: boolean | null
+          is_edited: boolean | null
           start_time: string
           title: string
           type: string
@@ -35,6 +37,8 @@ export type Database = {
           description?: string | null
           end_time: string
           id?: string
+          is_delivered?: boolean | null
+          is_edited?: boolean | null
           start_time: string
           title: string
           type: string
@@ -47,6 +51,8 @@ export type Database = {
           description?: string | null
           end_time?: string
           id?: string
+          is_delivered?: boolean | null
+          is_edited?: boolean | null
           start_time?: string
           title?: string
           type?: string

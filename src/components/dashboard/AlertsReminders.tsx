@@ -21,7 +21,12 @@ interface AlertsRemindersProps {
 
 export function AlertsReminders({ clients = [] }: AlertsRemindersProps) {
   const [activeTab, setActiveTab] = useState("edit");
+  const [refreshKey, setRefreshKey] = useState(0);
   const alerts = useAlerts(clients);
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   const totalAlerts = alerts.editTasks.length + alerts.deliverTasks.length + alerts.payments.length + alerts.preWedding.length;
 
@@ -57,7 +62,7 @@ export function AlertsReminders({ clients = [] }: AlertsRemindersProps) {
   ];
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden" key={refreshKey}>
       <CardHeader className="pb-4 bg-gradient-to-r from-background to-muted/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -117,6 +122,7 @@ export function AlertsReminders({ clients = [] }: AlertsRemindersProps) {
               payments={alerts.payments}
               preWedding={alerts.preWedding}
               activeTab={activeTab}
+              onRefresh={handleRefresh}
             />
           </div>
         </Tabs>

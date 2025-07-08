@@ -87,6 +87,7 @@ export function ProfileConfigDialog({ open, onOpenChange }: ProfileConfigDialogP
       const { error } = await supabase
         .from('photographer_profiles')
         .upsert({
+          id: user.id,
           user_id: user.id,
           company_name: profileData.company_name,
           avatar_url: profileData.logo_url,

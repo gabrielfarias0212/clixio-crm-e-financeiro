@@ -17,6 +17,7 @@ import CashFlow from "./pages/CashFlow";
 import PersonalControl from "./pages/PersonalControl";
 import Budgets from "./pages/Budgets";
 import CreateBudget from "./pages/CreateBudget";
+import BudgetDetail from "./pages/BudgetDetail";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import LandingPage from "./pages/LandingPage";
@@ -168,6 +169,14 @@ function App() {
                   element={
                     <AuthGuard>
                       <CreateBudget />
+                    </AuthGuard>
+                  } 
+                />
+                <Route 
+                  path="/budgets/:id" 
+                  element={
+                    <AuthGuard>
+                      <BudgetDetail />
                     </AuthGuard>
                   } 
                 />

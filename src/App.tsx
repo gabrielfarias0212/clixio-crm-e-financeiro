@@ -15,6 +15,8 @@ import ImportClients from "./pages/ImportClients";
 import Calendar from "./pages/Calendar";
 import CashFlow from "./pages/CashFlow";
 import PersonalControl from "./pages/PersonalControl";
+import Budgets from "./pages/Budgets";
+import CreateBudget from "./pages/CreateBudget";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import LandingPage from "./pages/LandingPage";
@@ -150,6 +152,22 @@ function App() {
                       <TransactionsProvider>
                         <PersonalControl />
                       </TransactionsProvider>
+                    </AuthGuard>
+                  } 
+                />
+                <Route 
+                  path="/budgets" 
+                  element={
+                    <AuthGuard>
+                      <Budgets />
+                    </AuthGuard>
+                  } 
+                />
+                <Route 
+                  path="/budgets/new" 
+                  element={
+                    <AuthGuard>
+                      <CreateBudget />
                     </AuthGuard>
                   } 
                 />

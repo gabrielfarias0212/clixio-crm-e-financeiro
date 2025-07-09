@@ -14,6 +14,101 @@ export type Database = {
   }
   public: {
     Tables: {
+      budget_items: {
+        Row: {
+          budget_id: string
+          created_at: string
+          description: string | null
+          id: string
+          quantity: number
+          service_name: string
+          subtotal: number
+          unit_price: number
+        }
+        Insert: {
+          budget_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          quantity?: number
+          service_name: string
+          subtotal?: number
+          unit_price: number
+        }
+        Update: {
+          budget_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          quantity?: number
+          service_name?: string
+          subtotal?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_items_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          budget_title: string
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string
+          event_date: string | null
+          general_notes: string | null
+          id: string
+          payment_conditions: string | null
+          payment_method: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string
+          validity_days: number
+        }
+        Insert: {
+          budget_title: string
+          client_email?: string | null
+          client_name: string
+          client_phone?: string | null
+          created_at?: string
+          event_date?: string | null
+          general_notes?: string | null
+          id?: string
+          payment_conditions?: string | null
+          payment_method?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id: string
+          validity_days?: number
+        }
+        Update: {
+          budget_title?: string
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          event_date?: string | null
+          general_notes?: string | null
+          id?: string
+          payment_conditions?: string | null
+          payment_method?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+          validity_days?: number
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           client_id: string | null

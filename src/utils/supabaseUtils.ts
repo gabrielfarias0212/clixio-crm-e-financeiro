@@ -62,5 +62,16 @@ export {
   DEFAULT_EXPENSE_CATEGORIES
 } from './supabase/personal-categories';
 
+export {
+  fetchBudgets,
+  fetchBudgetWithItems,
+  createBudget,
+  updateBudget,
+  deleteBudget,
+  addBudgetItem,
+  updateBudgetItem,
+  deleteBudgetItem
+} from './supabase/budgets';
+
 // Export types separately to fix isolatedModules issue
 export type { PersonalCategory } from './supabase/personal-categories';

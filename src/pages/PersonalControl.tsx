@@ -8,8 +8,10 @@ import { PersonalTransactionForm } from "@/components/personal/PersonalTransacti
 import { PersonalTransactionsList } from "@/components/personal/PersonalTransactionsList";
 import { PersonalControlCards } from "@/components/personal/PersonalControlCards";
 import { CategoryManager } from "@/components/personal/CategoryManager";
+import { PersonalFixedExpensesList } from "@/components/personal/PersonalFixedExpensesList";
 import { usePersonalTransactions } from "@/hooks/usePersonalTransactions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function PersonalControl() {
   const [showEntryForm, setShowEntryForm] = useState(false);
@@ -93,58 +95,77 @@ export default function PersonalControl() {
           balance={balance}
         />
 
-        <div className="flex gap-4">
-          <Button 
-            onClick={() => setShowEntryForm(!showEntryForm)}
-            className="gap-2 bg-green-600 hover:bg-green-700"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Lançar Entrada
-          </Button>
-          <Button 
-            onClick={() => setShowExpenseForm(!showExpenseForm)}
-            variant="destructive"
-            className="gap-2"
-          >
-            <MinusCircle className="h-4 w-4" />
-            Lançar Saída
-          </Button>
-        </div>
+        <Tabs defaultValue="transactions" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="transactions">Transações</TabsTrigger>
+            <TabsTrigger value="fixed-expenses">Contas Fixas</TabsTrigger>
+            <TabsTrigger value="categories">Categorias</TabsTrigger>
+            <TabsTrigger value="cards">Cartões</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="transactions" className="space-y-6">
+            <div className="flex gap-4">
+              <Button 
+                onClick={() => setShowEntryForm(!showEntryForm)}
+                className="gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <PlusCircle className="h-4 w-4" />
+                Lançar Entrada
+              </Button>
+              <Button 
+                onClick={() => setShowExpenseForm(!showExpenseForm)}
+                variant="destructive"
+                className="gap-2"
+              >
+                <MinusCircle className="h-4 w-4" />
+                Lançar Saída
+              </Button>
+            </div>
 
-        <PersonalTransactionForm
-          type="entry"
-          show={showEntryForm}
-          amount={entryAmount}
-          description={entryDescription}
-          category={entryCategory}
-          onAmountChange={setEntryAmount}
-          onDescriptionChange={setEntryDescription}
-          onCategoryChange={setEntryCategory}
-          onSubmit={handleAddEntry}
-          onCancel={() => setShowEntryForm(false)}
-        />
+            <PersonalTransactionForm
+              type="entry"
+              show={showEntryForm}
+              amount={entryAmount}
+              description={entryDescription}
+              category={entryCategory}
+              onAmountChange={setEntryAmount}
+              onDescriptionChange={setEntryDescription}
+              onCategoryChange={setEntryCategory}
+              onSubmit={handleAddEntry}
+              onCancel={() => setShowEntryForm(false)}
+            />
 
-        <PersonalTransactionForm
-          type="expense"
-          show={showExpenseForm}
-          amount={expenseAmount}
-          description={expenseDescription}
-          category={expenseCategory}
-          onAmountChange={setExpenseAmount}
-          onDescriptionChange={setExpenseDescription}
-          onCategoryChange={setExpenseCategory}
-          onSubmit={handleAddExpense}
-          onCancel={() => setShowExpenseForm(false)}
-        />
+            <PersonalTransactionForm
+              type="expense"
+              show={showExpenseForm}
+              amount={expenseAmount}
+              description={expenseDescription}
+              category={expenseCategory}
+              onAmountChange={setExpenseAmount}
+              onDescriptionChange={setExpenseDescription}
+              onCategoryChange={setExpenseCategory}
+              onSubmit={handleAddExpense}
+              onCancel={() => setShowExpenseForm(false)}
+            />
 
-        <PersonalTransactionsList 
-          transactions={transactions} 
-          onTransactionRemoved={handleTransactionRemoved}
-        />
-
-        <CategoryManager />
-
-        <PersonalControlCards />
+            <PersonalTransactionsList 
+              transactions={transactions} 
+              onTransactionRemoved={handleTransactionRemoved}
+            />
+          </TabsContent>
+          
+          <TabsContent value="fixed-expenses">
+            <PersonalFixedExpensesList />
+          </TabsContent>
+          
+          <TabsContent value="categories">
+            <CategoryManager />
+          </TabsContent>
+          
+          <TabsContent value="cards">
+            <PersonalControlCards />
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );

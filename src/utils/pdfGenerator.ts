@@ -23,6 +23,8 @@ interface CompanyInfo {
 }
 
 export function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: CompanyInfo) {
+  console.log('Gerando PDF com dados:', { budget, companyInfo });
+  
   const doc = new jsPDF();
   let yPosition = 20;
 
@@ -96,42 +98,47 @@ export function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: Company
   yPosition += 15;
 
   // Items table
-  const tableData = budget.budget_items.map(item => [
-    item.service_name,
-    item.description || '-',
-    item.quantity.toString(),
-    formatCurrency(item.unit_price),
-    formatCurrency(item.subtotal)
-  ]);
+  if (budget.budget_items && budget.budget_items.length > 0) {
+    const tableData = budget.budget_items.map(item => [
+      item.service_name || '',
+      item.description || '-',
+      item.quantity?.toString() || '1',
+      formatCurrency(item.unit_price || 0),
+      formatCurrency(item.subtotal || 0)
+    ]);
 
-  doc.autoTable({
-    startY: yPosition,
-    head: [['Serviço', 'Descrição', 'Quantidade', 'Preço Unitário', 'Subtotal']],
-    body: tableData,
-    theme: 'grid',
-    styles: {
-      fontSize: 10,
-      cellPadding: 5,
-    },
-    headStyles: {
-      fillColor: [33, 37, 41],
-      textColor: 255,
-      fontSize: 11,
-      fontStyle: 'bold',
-    },
-    columnStyles: {
-      2: { halign: 'center' },
-      3: { halign: 'right' },
-      4: { halign: 'right' },
-    },
-  });
+    doc.autoTable({
+      startY: yPosition,
+      head: [['Serviço', 'Descrição', 'Quantidade', 'Preço Unitário', 'Subtotal']],
+      body: tableData,
+      theme: 'grid',
+      styles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      headStyles: {
+        fillColor: [33, 37, 41],
+        textColor: 255,
+        fontSize: 11,
+        fontStyle: 'bold',
+      },
+      columnStyles: {
+        2: { halign: 'center' },
+        3: { halign: 'right' },
+        4: { halign: 'right' },
+      },
+    });
 
-  yPosition = (doc as any).lastAutoTable.finalY + 15;
+    yPosition = (doc as any).lastAutoTable.finalY + 15;
+  } else {
+    doc.text('Nenhum item encontrado neste orçamento.', 20, yPosition);
+    yPosition += 15;
+  }
 
   // Total
   doc.setFontSize(14);
   doc.setFont(undefined, 'bold');
-  doc.text(`TOTAL: ${formatCurrency(budget.total_amount)}`, 20, yPosition);
+  doc.text(`TOTAL: ${formatCurrency(budget.total_amount || 0)}`, 20, yPosition);
   yPosition += 15;
 
   // Payment conditions
@@ -180,16 +187,27 @@ export function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: Company
     );
   }
 
+  console.log('PDF gerado com sucesso');
   return doc;
 }
 
-export function downloadBudgetPDF(budget: BudgetWithItems, companyInfo?: CompanyInfo) {
+export async function downloadBudgetPDF(budget: BudgetWithItems, companyInfo?: CompanyInfo) {
   try {
+    console.log('Iniciando geração do PDF...');
+    
+    if (!budget) {
+      throw new Error('Dados do orçamento não fornecidos');
+    }
+
     const doc = generateBudgetPDF(budget, companyInfo);
     const fileName = `orcamento-${budget.budget_title.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+    
+    console.log('Salvando arquivo:', fileName);
     doc.save(fileName);
+    
+    console.log('Download do PDF concluído');
   } catch (error) {
-    console.error('Error generating PDF:', error);
-    throw new Error('Erro ao gerar PDF');
+    console.error('Erro ao gerar PDF:', error);
+    throw new Error('Erro ao gerar PDF: ' + (error instanceof Error ? error.message : 'Erro desconhecido'));
   }
 }

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Download, Edit, Trash2, Eye } from 'lucide-react';
@@ -45,19 +46,37 @@ export default function BudgetDetail() {
   const { profile } = usePhotographerProfile();
   const deleteBudget = useDeleteBudget();
 
-  const handleDownload = () => {
-    if (budget) {
-      const companyInfo = profile ? {
-        company_name: profile.company_name,
-        name: profile.brand_name,
-        email: profile.email,
-        phone: profile.whatsapp,
-        website: profile.website,
-        avatar_url: profile.logo_url,
-      } : undefined;
+  const handleDownload = async () => {
+    if (!budget) {
+      toast.error('Orçamento não encontrado');
+      return;
+    }
+
+    try {
+      console.log('Iniciando download do PDF...');
+      console.log('Budget data:', budget);
+      console.log('Profile data:', profile);
       
-      downloadBudgetPDF(budget, companyInfo);
+      toast.info('Preparando download do PDF...');
+      
+      // Preparar informações da empresa se disponível
+      const companyInfo = profile ? {
+        company_name: profile.company_name || '',
+        name: profile.brand_name || '',
+        email: profile.email || '',
+        phone: profile.whatsapp || '',
+        website: profile.website || '',
+        avatar_url: profile.logo_url || '',
+      } : undefined;
+
+      console.log('Company info:', companyInfo);
+      
+      // Gerar e baixar o PDF
+      await downloadBudgetPDF(budget, companyInfo);
       toast.success('PDF baixado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao baixar orçamento:', error);
+      toast.error('Erro ao baixar orçamento. Tente novamente.');
     }
   };
 

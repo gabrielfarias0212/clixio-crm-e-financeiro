@@ -5,9 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BudgetList } from '@/components/budget/BudgetList';
 import { useBudgets, useDeleteBudget } from '@/hooks/useBudgets';
+import { usePhotographerProfile } from '@/hooks/usePhotographerProfile';
 import { useNavigate } from 'react-router-dom';
 import { Budget } from '@/types/budget';
 import { toast } from 'sonner';
+import { fetchBudgetWithItems } from '@/utils/supabase/budgets';
+import { downloadBudgetPDF } from '@/utils/pdfGenerator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +25,7 @@ import {
 export default function Budgets() {
   const navigate = useNavigate();
   const { data: budgets = [], isLoading } = useBudgets();
+  const { profile } = usePhotographerProfile();
   const deleteBudget = useDeleteBudget();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,13 +61,29 @@ export default function Budgets() {
 
   const handleDownload = async (budget: Budget) => {
     try {
-      // Import PDF generation dynamically to avoid loading it unnecessarily
-      const { downloadBudgetPDF } = await import('@/utils/pdfGenerator');
-      const { useBudget } = await import('@/hooks/useBudgets');
+      toast.info('Preparando download do PDF...');
       
-      // For now, we'll just show a toast. In a real implementation,
-      // we'd fetch the budget with items and company info first
-      toast.info('Funcionalidade de download será implementada em breve');
+      // Buscar os dados completos do orçamento com itens
+      const budgetWithItems = await fetchBudgetWithItems(budget.id);
+      
+      if (!budgetWithItems) {
+        toast.error('Orçamento não encontrado');
+        return;
+      }
+
+      // Preparar informações da empresa se disponível
+      const companyInfo = profile ? {
+        company_name: profile.company_name,
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+        website: profile.website,
+        avatar_url: profile.avatar_url,
+      } : undefined;
+
+      // Gerar e baixar o PDF
+      downloadBudgetPDF(budgetWithItems, companyInfo);
+      toast.success('PDF baixado com sucesso!');
     } catch (error) {
       console.error('Error downloading budget:', error);
       toast.error('Erro ao baixar orçamento');

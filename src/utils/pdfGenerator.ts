@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { BudgetWithItems } from '@/types/budget';
@@ -28,7 +29,8 @@ export function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: Company
   // Header with company info
   doc.setFontSize(20);
   doc.setFont(undefined, 'bold');
-  doc.text(companyInfo?.company_name || companyInfo?.name || 'Estúdio Fotográfico', 20, yPosition);
+  const companyName = companyInfo?.company_name || companyInfo?.name || 'Estúdio Fotográfico';
+  doc.text(companyName, 20, yPosition);
   
   yPosition += 10;
   doc.setFontSize(12);
@@ -182,7 +184,12 @@ export function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: Company
 }
 
 export function downloadBudgetPDF(budget: BudgetWithItems, companyInfo?: CompanyInfo) {
-  const doc = generateBudgetPDF(budget, companyInfo);
-  const fileName = `orcamento-${budget.budget_title.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
-  doc.save(fileName);
+  try {
+    const doc = generateBudgetPDF(budget, companyInfo);
+    const fileName = `orcamento-${budget.budget_title.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+    doc.save(fileName);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    throw new Error('Erro ao gerar PDF');
+  }
 }

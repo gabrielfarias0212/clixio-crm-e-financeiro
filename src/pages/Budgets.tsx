@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -74,11 +75,11 @@ export default function Budgets() {
       // Preparar informações da empresa se disponível
       const companyInfo = profile ? {
         company_name: profile.company_name,
-        name: profile.name,
+        name: profile.brand_name,
         email: profile.email,
-        phone: profile.phone,
+        phone: profile.whatsapp,
         website: profile.website,
-        avatar_url: profile.avatar_url,
+        avatar_url: profile.logo_url,
       } : undefined;
 
       // Gerar e baixar o PDF

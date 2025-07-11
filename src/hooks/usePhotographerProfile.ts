@@ -30,6 +30,8 @@ export function usePhotographerProfile() {
 
     try {
       setLoading(true);
+      console.log('Loading photographer profile for user:', user.id);
+      
       const { data, error } = await supabase
         .from('photographer_profiles')
         .select('*')
@@ -41,8 +43,10 @@ export function usePhotographerProfile() {
         return;
       }
 
+      console.log('Raw profile data from DB:', data);
+
       if (data) {
-        setProfile({
+        const mappedProfile = {
           company_name: data.company_name || '',
           logo_url: data.avatar_url || '',
           brand_name: data.name || '',
@@ -51,10 +55,17 @@ export function usePhotographerProfile() {
           website: data.website || '',
           facebook: '',
           instagram: ''
-        });
+        };
+        
+        console.log('Mapped profile data:', mappedProfile);
+        setProfile(mappedProfile);
+      } else {
+        console.log('No profile data found');
+        setProfile(null);
       }
     } catch (error) {
       console.error('Exception loading profile:', error);
+      setProfile(null);
     } finally {
       setLoading(false);
     }

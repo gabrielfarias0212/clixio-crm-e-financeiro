@@ -61,16 +61,25 @@ export default function Budgets() {
   };
 
   const handleDownload = async (budget: Budget) => {
+    console.log('=== STARTING PDF DOWNLOAD ===');
+    console.log('Budget to download:', budget);
+    console.log('Current profile:', profile);
+    
     try {
       toast.info('Preparando download do PDF...');
       
+      console.log('Fetching budget with items for ID:', budget.id);
       // Buscar os dados completos do orçamento com itens
       const budgetWithItems = await fetchBudgetWithItems(budget.id);
+      console.log('Budget with items:', budgetWithItems);
       
       if (!budgetWithItems) {
+        console.error('Budget with items not found');
         toast.error('Orçamento não encontrado');
         return;
       }
+
+      console.log('Budget items count:', budgetWithItems.budget_items?.length || 0);
 
       // Preparar informações da empresa se disponível
       const companyInfo = profile ? {
@@ -82,12 +91,21 @@ export default function Budgets() {
         avatar_url: profile.logo_url,
       } : undefined;
 
+      console.log('Company info for PDF:', companyInfo);
+      
       // Gerar e baixar o PDF
-      downloadBudgetPDF(budgetWithItems, companyInfo);
+      console.log('Calling downloadBudgetPDF...');
+      await downloadBudgetPDF(budgetWithItems, companyInfo);
+      
+      console.log('PDF download completed successfully');
       toast.success('PDF baixado com sucesso!');
     } catch (error) {
-      console.error('Error downloading budget:', error);
-      toast.error('Erro ao baixar orçamento');
+      console.error('=== PDF DOWNLOAD ERROR ===');
+      console.error('Error details:', error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      
+      toast.error(`Erro ao baixar orçamento: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   };
 

@@ -48,15 +48,16 @@ export default function BudgetDetail() {
 
   const handleDownload = async () => {
     if (!budget) {
+      console.error('No budget data available for download');
       toast.error('Orçamento não encontrado');
       return;
     }
 
+    console.log('=== BUDGET DETAIL PDF DOWNLOAD ===');
+    console.log('Budget data:', budget);
+    console.log('Profile data:', profile);
+
     try {
-      console.log('Iniciando download do PDF...');
-      console.log('Budget data:', budget);
-      console.log('Profile data:', profile);
-      
       toast.info('Preparando download do PDF...');
       
       // Preparar informações da empresa se disponível
@@ -69,14 +70,22 @@ export default function BudgetDetail() {
         avatar_url: profile.logo_url || '',
       } : undefined;
 
-      console.log('Company info:', companyInfo);
+      console.log('Company info for PDF:', companyInfo);
+      console.log('Budget items count:', budget.budget_items?.length || 0);
       
       // Gerar e baixar o PDF
+      console.log('Starting PDF generation...');
       await downloadBudgetPDF(budget, companyInfo);
+      
+      console.log('PDF download completed successfully');
       toast.success('PDF baixado com sucesso!');
     } catch (error) {
-      console.error('Erro ao baixar orçamento:', error);
-      toast.error('Erro ao baixar orçamento. Tente novamente.');
+      console.error('=== BUDGET DETAIL PDF ERROR ===');
+      console.error('Error details:', error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      
+      toast.error(`Erro ao baixar orçamento: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   };
 
@@ -245,23 +254,27 @@ export default function BudgetDetail() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {budget.budget_items.map((item, index) => (
-                  <div key={item.id} className="flex justify-between items-start p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{item.service_name}</h4>
-                      {item.description && (
-                        <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
-                      )}
-                      <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                        <span>Quantidade: {item.quantity}</span>
-                        <span>Preço unitário: {formatCurrency(item.unit_price)}</span>
+                {budget.budget_items && budget.budget_items.length > 0 ? (
+                  budget.budget_items.map((item, index) => (
+                    <div key={item.id} className="flex justify-between items-start p-4 border rounded-lg">
+                      <div className="flex-1">
+                        <h4 className="font-medium">{item.service_name}</h4>
+                        {item.description && (
+                          <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+                        )}
+                        <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                          <span>Quantidade: {item.quantity}</span>
+                          <span>Preço unitário: {formatCurrency(item.unit_price)}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{formatCurrency(item.subtotal)}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">{formatCurrency(item.subtotal)}</p>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">Nenhum item adicionado a este orçamento.</p>
+                )}
                 
                 <Separator />
                 

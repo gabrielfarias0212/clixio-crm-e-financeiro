@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BudgetList } from '@/components/budget/BudgetList';
+import { BudgetReceiptDialog } from '@/components/BudgetReceiptDialog';
 import { useBudgets, useDeleteBudget } from '@/hooks/useBudgets';
 import { usePhotographerProfile } from '@/hooks/usePhotographerProfile';
 import { useNavigate } from 'react-router-dom';
 import { Budget } from '@/types/budget';
 import { toast } from 'sonner';
 import { fetchBudgetWithItems } from '@/utils/supabase/budgets';
-import { downloadBudgetPDF } from '@/utils/pdfGenerator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +31,7 @@ export default function Budgets() {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
+  const [budgetForPrint, setBudgetForPrint] = useState<any>(null);
 
   const filteredBudgets = budgets.filter(budget => 
     budget.budget_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -61,15 +62,13 @@ export default function Budgets() {
   };
 
   const handleDownload = async (budget: Budget) => {
-    console.log('=== STARTING PDF DOWNLOAD ===');
-    console.log('Budget to download:', budget);
-    console.log('Current profile:', profile);
+    console.log('=== STARTING BUDGET PRINT ===');
+    console.log('Budget to print:', budget);
     
     try {
-      toast.info('Preparando download do PDF...');
+      toast.info('Carregando orçamento...');
       
       console.log('Fetching budget with items for ID:', budget.id);
-      // Buscar os dados completos do orçamento com itens
       const budgetWithItems = await fetchBudgetWithItems(budget.id);
       console.log('Budget with items:', budgetWithItems);
       
@@ -80,32 +79,16 @@ export default function Budgets() {
       }
 
       console.log('Budget items count:', budgetWithItems.budget_items?.length || 0);
-
-      // Preparar informações da empresa se disponível
-      const companyInfo = profile ? {
-        company_name: profile.company_name,
-        name: profile.brand_name,
-        email: profile.email,
-        phone: profile.whatsapp,
-        website: profile.website,
-        avatar_url: profile.logo_url,
-      } : undefined;
-
-      console.log('Company info for PDF:', companyInfo);
+      console.log('Opening budget print dialog...');
       
-      // Gerar e baixar o PDF
-      console.log('Calling downloadBudgetPDF...');
-      await downloadBudgetPDF(budgetWithItems, companyInfo);
-      
-      console.log('PDF download completed successfully');
-      toast.success('PDF baixado com sucesso!');
+      setBudgetForPrint(budgetWithItems);
+      toast.success('Orçamento carregado! Clique em "Baixar PDF" para visualizar.');
     } catch (error) {
-      console.error('=== PDF DOWNLOAD ERROR ===');
+      console.error('=== BUDGET PRINT ERROR ===');
       console.error('Error details:', error);
       console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
-      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       
-      toast.error(`Erro ao baixar orçamento: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      toast.error(`Erro ao carregar orçamento: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   };
 
@@ -178,6 +161,21 @@ export default function Budgets() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {budgetForPrint && (
+        <BudgetReceiptDialog
+          budget={budgetForPrint}
+          photographerProfile={profile}
+        >
+          <Button 
+            variant="outline"
+            onClick={() => setBudgetForPrint(null)}
+            className="hidden"
+          >
+            Baixar PDF
+          </Button>
+        </BudgetReceiptDialog>
+      )}
     </div>
   );
 }

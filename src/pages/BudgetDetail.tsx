@@ -1,17 +1,16 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Edit, Trash2, Eye } from 'lucide-react';
+import { ArrowLeft, Download, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { BudgetReceiptDialog } from '@/components/BudgetReceiptDialog';
 import { useBudget, useDeleteBudget } from '@/hooks/useBudgets';
 import { usePhotographerProfile } from '@/hooks/usePhotographerProfile';
 import { formatCurrency } from '@/utils/currency';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { downloadBudgetPDF } from '@/utils/pdfGenerator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,48 +44,21 @@ export default function BudgetDetail() {
   const { data: budget, isLoading } = useBudget(id!);
   const { profile } = usePhotographerProfile();
   const deleteBudget = useDeleteBudget();
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (!budget) {
       console.error('No budget data available for download');
       toast.error('Orçamento não encontrado');
       return;
     }
 
-    console.log('=== BUDGET DETAIL PDF DOWNLOAD ===');
+    console.log('=== BUDGET DETAIL PRINT ===');
     console.log('Budget data:', budget);
     console.log('Profile data:', profile);
 
-    try {
-      toast.info('Preparando download do PDF...');
-      
-      // Preparar informações da empresa se disponível
-      const companyInfo = profile ? {
-        company_name: profile.company_name || '',
-        name: profile.brand_name || '',
-        email: profile.email || '',
-        phone: profile.whatsapp || '',
-        website: profile.website || '',
-        avatar_url: profile.logo_url || '',
-      } : undefined;
-
-      console.log('Company info for PDF:', companyInfo);
-      console.log('Budget items count:', budget.budget_items?.length || 0);
-      
-      // Gerar e baixar o PDF
-      console.log('Starting PDF generation...');
-      await downloadBudgetPDF(budget, companyInfo);
-      
-      console.log('PDF download completed successfully');
-      toast.success('PDF baixado com sucesso!');
-    } catch (error) {
-      console.error('=== BUDGET DETAIL PDF ERROR ===');
-      console.error('Error details:', error);
-      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
-      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-      
-      toast.error(`Erro ao baixar orçamento: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-    }
+    toast.success('Abrindo visualização do orçamento...');
+    setShowPrintDialog(true);
   };
 
   const handleDelete = async () => {
@@ -167,10 +139,22 @@ export default function BudgetDetail() {
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDownload}>
-            <Download className="h-4 w-4 mr-2" />
-            Baixar PDF
-          </Button>
+          {showPrintDialog ? (
+            <BudgetReceiptDialog
+              budget={budget}
+              photographerProfile={profile}
+            >
+              <Button variant="outline" onClick={handleDownload}>
+                <Download className="h-4 w-4 mr-2" />
+                Baixar PDF
+              </Button>
+            </BudgetReceiptDialog>
+          ) : (
+            <Button variant="outline" onClick={handleDownload}>
+              <Download className="h-4 w-4 mr-2" />
+              Baixar PDF
+            </Button>
+          )}
           <Button variant="outline" onClick={() => navigate(`/budgets/${budget.id}/edit`)}>
             <Edit className="h-4 w-4 mr-2" />
             Editar

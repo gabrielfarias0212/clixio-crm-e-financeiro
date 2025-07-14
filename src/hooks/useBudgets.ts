@@ -28,13 +28,29 @@ export function useCreateBudget() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (budgetData: CreateBudgetData) => createBudget(budgetData),
-    onSuccess: () => {
+    mutationFn: async (budgetData: CreateBudgetData) => {
+      console.log('useCreateBudget - starting mutation with data:', {
+        client_name: budgetData.client_name,
+        budget_title: budgetData.budget_title,
+        items_count: budgetData.items.length
+      });
+      
+      try {
+        const result = await createBudget(budgetData);
+        console.log('useCreateBudget - mutation successful:', result);
+        return result;
+      } catch (error) {
+        console.error('useCreateBudget - mutation failed:', error);
+        throw error;
+      }
+    },
+    onSuccess: (budgetId) => {
+      console.log('useCreateBudget - onSuccess called with budgetId:', budgetId);
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       toast.success('Orçamento criado com sucesso!');
     },
     onError: (error) => {
-      console.error('Error creating budget:', error);
+      console.error('useCreateBudget - onError called:', error);
       toast.error('Erro ao criar orçamento');
     },
   });

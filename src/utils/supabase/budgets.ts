@@ -45,16 +45,27 @@ export async function fetchBudgetWithItems(budgetId: string): Promise<BudgetWith
 }
 
 export async function createBudget(budgetData: CreateBudgetData): Promise<string> {
-  const { data: user } = await supabase.auth.getUser();
-  if (!user.user?.id) {
+  console.log('Creating budget - checking authentication...');
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+  if (authError) {
+    console.error('Auth error:', authError);
+    throw new Error('Authentication error');
+  }
+  
+  if (!user?.id) {
+    console.error('No user found in auth response');
     throw new Error('User not authenticated');
   }
+
+  console.log('User authenticated:', user.id);
 
   // Create the budget
   const { data: budget, error: budgetError } = await supabase
     .from('budgets')
     .insert({
-      user_id: user.user.id,
+      user_id: user.id,
       client_name: budgetData.client_name,
       client_email: budgetData.client_email,
       client_phone: budgetData.client_phone,
@@ -72,6 +83,8 @@ export async function createBudget(budgetData: CreateBudgetData): Promise<string
     console.error('Error creating budget:', budgetError);
     throw budgetError;
   }
+
+  console.log('Budget created successfully:', budget.id);
 
   // Create budget items
   if (budgetData.items.length > 0) {
@@ -91,6 +104,8 @@ export async function createBudget(budgetData: CreateBudgetData): Promise<string
       console.error('Error creating budget items:', itemsError);
       throw itemsError;
     }
+
+    console.log('Budget items created successfully');
   }
 
   return budget.id;

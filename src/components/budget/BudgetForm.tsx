@@ -61,12 +61,23 @@ export function BudgetForm({ onSuccess }: BudgetFormProps) {
   }, 0);
 
   const onSubmit = async (data: BudgetFormData) => {
+    console.log('BudgetForm - onSubmit called with data:', {
+      client_name: data.client_name,
+      budget_title: data.budget_title,
+      items_count: data.items.length,
+      total_amount: totalAmount
+    });
+
     try {
       setIsSubmitting(true);
+      console.log('BudgetForm - calling createBudget mutation...');
+      
       const budgetId = await createBudget.mutateAsync(data as any);
+      
+      console.log('BudgetForm - budget created successfully, calling onSuccess...');
       onSuccess?.(budgetId);
     } catch (error) {
-      console.error('Error submitting budget:', error);
+      console.error('BudgetForm - error submitting budget:', error);
     } finally {
       setIsSubmitting(false);
     }

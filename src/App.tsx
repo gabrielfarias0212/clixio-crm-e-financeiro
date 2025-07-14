@@ -30,21 +30,25 @@ function App() {
           <Route path="/auth" element={<Auth />} />
           
           {/* Protected routes */}
-          <Route element={<AuthGuard />}>
-            <Route path="/dashboard" element={<Index />} />
-            <Route path="/clients" element={<ClientList />} />
-            <Route path="/clients/add" element={<AddClient />} />
-            <Route path="/clients/import" element={<ImportClients />} />
-            <Route path="/clients/:id" element={<ClientDetail />} />
-            <Route path="/clients/:id/edit" element={<EditClient />} />
-            <Route path="/budgets" element={<Budgets />} />
-            <Route path="/budgets/create" element={<CreateBudget />} />
-            <Route path="/budgets/:id" element={<BudgetDetail />} />
-            <Route path="/budgets/:id/edit" element={<EditBudget />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/cash-flow" element={<CashFlow />} />
-            <Route path="/personal-control" element={<PersonalControl />} />
-          </Route>
+          <Route path="/*" element={
+            <AuthGuard>
+              <Routes>
+                <Route path="/dashboard" element={<Index />} />
+                <Route path="/clients" element={<ClientList />} />
+                <Route path="/clients/add" element={<AddClient />} />
+                <Route path="/clients/import" element={<ImportClients />} />
+                <Route path="/clients/:id" element={<ClientDetail />} />
+                <Route path="/clients/:id/edit" element={<EditClient />} />
+                <Route path="/budgets" element={<Budgets />} />
+                <Route path="/budgets/create" element={<CreateBudget />} />
+                <Route path="/budgets/:id" element={<BudgetDetail />} />
+                <Route path="/budgets/:id/edit" element={<EditBudget />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/cash-flow" element={<CashFlow />} />
+                <Route path="/personal-control" element={<PersonalControl />} />
+              </Routes>
+            </AuthGuard>
+          } />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

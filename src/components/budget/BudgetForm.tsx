@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,9 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useCreateBudget } from '@/hooks/useBudgets';
 import { formatCurrency } from '@/utils/currency';
+import { BudgetWithItems } from '@/types/budget';
 
 const budgetSchema = z.object({
   client_name: z.string().min(1, 'Nome do cliente é obrigatório'),
@@ -27,26 +30,59 @@ const budgetSchema = z.object({
     description: z.string().optional(),
     quantity: z.number().min(1, 'Quantidade deve ser maior que 0'),
     unit_price: z.number().min(0, 'Preço deve ser maior ou igual a 0'),
+    unit_type: z.string().optional(),
   })).min(1, 'Adicione pelo menos um item'),
 });
 
 type BudgetFormData = z.infer<typeof budgetSchema>;
 
 interface BudgetFormProps {
+  budget?: BudgetWithItems;
+  onSubmit?: (data: BudgetFormData) => Promise<void>;
   onSuccess?: (budgetId: string) => void;
+  isEditing?: boolean;
 }
 
-export function BudgetForm({ onSuccess }: BudgetFormProps) {
+const unitTypeOptions = [
+  { value: 'unitario', label: 'Preço Unitário' },
+  { value: 'por_pessoa', label: 'Preço por Pessoa' },
+  { value: 'por_pagina', label: 'Preço por Página' },
+  { value: 'por_hora', label: 'Preço por Hora' },
+  { value: 'por_evento', label: 'Preço por Evento' },
+  { value: 'por_foto', label: 'Preço por Foto' },
+  { value: 'por_album', label: 'Preço por Álbum' },
+  { value: 'taxa_fixa', label: 'Taxa Fixa' },
+];
+
+export function BudgetForm({ budget, onSubmit, onSuccess, isEditing = false }: BudgetFormProps) {
   const createBudget = useCreateBudget();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [itemUnitTypes, setItemUnitTypes] = useState<string[]>([]);
 
   const form = useForm<BudgetFormData>({
     resolver: zodResolver(budgetSchema),
-    defaultValues: {
+    defaultValues: budget ? {
+      client_name: budget.client_name,
+      client_email: budget.client_email || '',
+      client_phone: budget.client_phone || '',
+      event_date: budget.event_date || '',
+      budget_title: budget.budget_title,
+      validity_days: budget.validity_days,
+      payment_method: budget.payment_method || '',
+      payment_conditions: budget.payment_conditions || '',
+      general_notes: budget.general_notes || '',
+      items: budget.budget_items?.map(item => ({
+        service_name: item.service_name,
+        description: item.description || '',
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        unit_type: 'unitario'
+      })) || [{ service_name: '', description: '', quantity: 1, unit_price: 0, unit_type: 'unitario' }],
+    } : {
       client_name: '',
       budget_title: '',
       validity_days: 15,
-      items: [{ service_name: '', description: '', quantity: 1, unit_price: 0 }],
+      items: [{ service_name: '', description: '', quantity: 1, unit_price: 0, unit_type: 'unitario' }],
     },
   });
 
@@ -55,27 +91,44 @@ export function BudgetForm({ onSuccess }: BudgetFormProps) {
     name: 'items',
   });
 
+  // Initialize unit types
+  useEffect(() => {
+    if (fields.length > 0 && itemUnitTypes.length === 0) {
+      setItemUnitTypes(fields.map(() => 'unitario'));
+    }
+  }, [fields.length, itemUnitTypes.length]);
+
   const watchedItems = form.watch('items');
   const totalAmount = watchedItems.reduce((total, item) => {
     return total + (item.quantity * item.unit_price);
   }, 0);
 
-  const onSubmit = async (data: BudgetFormData) => {
+  const handleItemUnitTypeChange = (index: number, unitType: string) => {
+    const newUnitTypes = [...itemUnitTypes];
+    newUnitTypes[index] = unitType;
+    setItemUnitTypes(newUnitTypes);
+  };
+
+  const handleFormSubmit = async (data: BudgetFormData) => {
     console.log('BudgetForm - onSubmit called with data:', {
       client_name: data.client_name,
       budget_title: data.budget_title,
       items_count: data.items.length,
-      total_amount: totalAmount
+      total_amount: totalAmount,
+      isEditing
     });
 
+    setIsSubmitting(true);
+    
     try {
-      setIsSubmitting(true);
-      console.log('BudgetForm - calling createBudget mutation...');
-      
-      const budgetId = await createBudget.mutateAsync(data as any);
-      
-      console.log('BudgetForm - budget created successfully, calling onSuccess...');
-      onSuccess?.(budgetId);
+      if (isEditing && onSubmit) {
+        await onSubmit(data);
+      } else {
+        console.log('BudgetForm - calling createBudget mutation...');
+        const budgetId = await createBudget.mutateAsync(data as any);
+        console.log('BudgetForm - budget created successfully, calling onSuccess...');
+        onSuccess?.(budgetId);
+      }
     } catch (error) {
       console.error('BudgetForm - error submitting budget:', error);
     } finally {
@@ -83,9 +136,21 @@ export function BudgetForm({ onSuccess }: BudgetFormProps) {
     }
   };
 
+  const addNewItem = () => {
+    append({ service_name: '', description: '', quantity: 1, unit_price: 0, unit_type: 'unitario' });
+    setItemUnitTypes([...itemUnitTypes, 'unitario']);
+  };
+
+  const removeItem = (index: number) => {
+    remove(index);
+    const newUnitTypes = [...itemUnitTypes];
+    newUnitTypes.splice(index, 1);
+    setItemUnitTypes(newUnitTypes);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         {/* Client Information */}
         <Card>
           <CardHeader>
@@ -223,7 +288,7 @@ export function BudgetForm({ onSuccess }: BudgetFormProps) {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => remove(index)}
+                      onClick={() => removeItem(index)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -280,25 +345,44 @@ export function BudgetForm({ onSuccess }: BudgetFormProps) {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name={`items.${index}.unit_price`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Preço Unitário</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            type="number" 
-                            min="0"
-                            step="0.01"
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <FormItem>
+                    <FormLabel>
+                      {unitTypeOptions.find(opt => opt.value === (itemUnitTypes[index] || 'unitario'))?.label || 'Preço Unitário'}
+                    </FormLabel>
+                    <div className="flex gap-2">
+                      <Select
+                        value={itemUnitTypes[index] || 'unitario'}
+                        onValueChange={(value) => handleItemUnitTypeChange(index, value)}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {unitTypeOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormField
+                        control={form.control}
+                        name={`items.${index}.unit_price`}
+                        render={({ field }) => (
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              type="number" 
+                              min="0"
+                              step="0.01"
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              className="flex-1"
+                            />
+                          </FormControl>
+                        )}
+                      />
+                    </div>
+                  </FormItem>
 
                   <div className="flex items-end">
                     <div className="w-full">
@@ -315,7 +399,7 @@ export function BudgetForm({ onSuccess }: BudgetFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => append({ service_name: '', description: '', quantity: 1, unit_price: 0 })}
+              onClick={addNewItem}
               className="w-full"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -409,7 +493,7 @@ export function BudgetForm({ onSuccess }: BudgetFormProps) {
             disabled={isSubmitting}
             className="flex-1"
           >
-            {isSubmitting ? 'Criando...' : 'Criar Orçamento'}
+            {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar Orçamento' : 'Criar Orçamento'}
           </Button>
         </div>
       </form>

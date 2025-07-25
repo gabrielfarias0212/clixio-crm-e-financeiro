@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Contract, ContractTemplate, ContractFormData } from "@/types/contract";
 
@@ -38,19 +37,38 @@ export const createContract = async (contractData: ContractFormData): Promise<Co
     throw new Error('User not authenticated');
   }
 
+  // Split the couple names to get bride and groom names
+  const coupleNamesArray = contractData.coupleNames.split(' e ').map(name => name.trim());
+  const brideName = coupleNamesArray[0] || '';
+  const groomName = coupleNamesArray[1] || '';
+
+  // Split the RG fields to get bride and groom RGs
+  const brideRg = contractData.brideRg || '';
+  const groomRg = contractData.groomRg || '';
+
   const contractToInsert = {
     user_id: user.id,
     contractor_name: contractData.contractorName,
     couple_names: contractData.coupleNames,
+    nome_noiva: brideName,
+    nome_noivo: groomName,
     data_evento: contractData.eventDate,
-    bride_rg: contractData.brideRg,
-    groom_rg: contractData.groomRg,
+    bride_rg: brideRg,
+    groom_rg: groomRg,
+    rg_noiva: brideRg,
+    rg_noivo: groomRg,
+    cpf_noiva: contractData.cpf || '',
+    cpf_noivo: contractData.cpf || '',
     contractor_address: contractData.contractorAddress,
     contractor_city: contractData.contractorCity,
+    endereco: contractData.contractorAddress,
     event_city: contractData.eventCity,
+    cidade_evento: contractData.eventCity,
     event_address: contractData.eventAddress,
+    local_cerimonia: contractData.eventAddress,
     horario_cerimonia: contractData.eventTime,
     guest_count: contractData.guestCount,
+    qtd_convidados: contractData.guestCount,
     package_name: contractData.packageName,
     included_items: contractData.includedItems,
     payment_method: contractData.paymentMethod,
@@ -58,7 +76,9 @@ export const createContract = async (contractData: ContractFormData): Promise<Co
     contract_type: contractData.eventType,
     status: 'draft',
     contractor_email: contractData.email,
-    contractor_phone: contractData.phone
+    contractor_phone: contractData.phone,
+    email_contato: contractData.email,
+    telefone_contato: contractData.phone
   };
 
   const { data, error } = await supabase
@@ -130,18 +150,51 @@ export const updateContract = async (id: string, contractData: Partial<ContractF
   const mappedData: any = {};
   
   if (contractData.contractorName) mappedData.contractor_name = contractData.contractorName;
-  if (contractData.coupleNames) mappedData.couple_names = contractData.coupleNames;
+  if (contractData.coupleNames) {
+    mappedData.couple_names = contractData.coupleNames;
+    const coupleNamesArray = contractData.coupleNames.split(' e ').map(name => name.trim());
+    mappedData.nome_noiva = coupleNamesArray[0] || '';
+    mappedData.nome_noivo = coupleNamesArray[1] || '';
+  }
   if (contractData.eventDate) mappedData.data_evento = contractData.eventDate;
-  if (contractData.brideRg) mappedData.bride_rg = contractData.brideRg;
-  if (contractData.groomRg) mappedData.groom_rg = contractData.groomRg;
-  if (contractData.email) mappedData.contractor_email = contractData.email;
-  if (contractData.phone) mappedData.contractor_phone = contractData.phone;
-  if (contractData.contractorAddress) mappedData.contractor_address = contractData.contractorAddress;
+  if (contractData.brideRg) {
+    mappedData.bride_rg = contractData.brideRg;
+    mappedData.rg_noiva = contractData.brideRg;
+  }
+  if (contractData.groomRg) {
+    mappedData.groom_rg = contractData.groomRg;
+    mappedData.rg_noivo = contractData.groomRg;
+  }
+  if (contractData.cpf) {
+    mappedData.cpf_noiva = contractData.cpf;
+    mappedData.cpf_noivo = contractData.cpf;
+  }
+  if (contractData.email) {
+    mappedData.contractor_email = contractData.email;
+    mappedData.email_contato = contractData.email;
+  }
+  if (contractData.phone) {
+    mappedData.contractor_phone = contractData.phone;
+    mappedData.telefone_contato = contractData.phone;
+  }
+  if (contractData.contractorAddress) {
+    mappedData.contractor_address = contractData.contractorAddress;
+    mappedData.endereco = contractData.contractorAddress;
+  }
   if (contractData.contractorCity) mappedData.contractor_city = contractData.contractorCity;
-  if (contractData.eventCity) mappedData.event_city = contractData.eventCity;
-  if (contractData.eventAddress) mappedData.event_address = contractData.eventAddress;
+  if (contractData.eventCity) {
+    mappedData.event_city = contractData.eventCity;
+    mappedData.cidade_evento = contractData.eventCity;
+  }
+  if (contractData.eventAddress) {
+    mappedData.event_address = contractData.eventAddress;
+    mappedData.local_cerimonia = contractData.eventAddress;
+  }
   if (contractData.eventTime) mappedData.horario_cerimonia = contractData.eventTime;
-  if (contractData.guestCount) mappedData.guest_count = contractData.guestCount;
+  if (contractData.guestCount) {
+    mappedData.guest_count = contractData.guestCount;
+    mappedData.qtd_convidados = contractData.guestCount;
+  }
   if (contractData.packageName) mappedData.package_name = contractData.packageName;
   if (contractData.includedItems) mappedData.included_items = contractData.includedItems;
   if (contractData.paymentMethod) mappedData.payment_method = contractData.paymentMethod;

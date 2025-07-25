@@ -2,7 +2,7 @@
 import jsPDF from 'jspdf';
 import { ContractFormData, ContractPlaceholders } from '@/types/contract';
 
-export const generateContractPlaceholders = (formData: ContractFormData): ContractPlaceholders => {
+export const generateContractPlaceholders = (formData: ContractFormData, contractNumber?: number): ContractPlaceholders => {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -14,11 +14,23 @@ export const generateContractPlaceholders = (formData: ContractFormData): Contra
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
+  const formatEventType = (type: string) => {
+    const typeMap: { [key: string]: string } = {
+      'wedding': 'Casamento',
+      'graduation': 'Formatura',
+      'birthday': 'Aniversário',
+      'corporate': 'Corporativo',
+      'other': 'Outro'
+    };
+    return typeMap[type] || type;
+  };
+
   return {
+    numeroContrato: contractNumber ? contractNumber.toString().padStart(4, '0') : '0001',
     nomeContratante: formData.contractorName,
     nomeCasal: formData.coupleNames,
     dataEvento: formatDate(formData.eventDate),
-    rg: `${formData.brideRg} / ${formData.groomRg}`,
+    rg: formData.rg,
     cpf: formData.cpf,
     telefone: formData.phone,
     email: formData.email,
@@ -28,11 +40,12 @@ export const generateContractPlaceholders = (formData: ContractFormData): Contra
     enderecoEvento: formData.eventAddress,
     horarioEvento: formData.eventTime,
     numeroConvidados: formData.guestCount.toString(),
+    equipeCerimonial: formData.ceremonialTeam || 'Não informado',
     pacoteEscolhido: formData.packageName,
     itensInclusos: formData.includedItems,
     formaPagamento: formData.paymentMethod,
     precoTotal: formatCurrency(formData.totalPrice),
-    tipoEvento: formData.eventType,
+    tipoEvento: formatEventType(formData.eventType),
     dataAtual: formatDate(new Date().toISOString())
   };
 };
@@ -57,7 +70,7 @@ export const generateContractPDF = (contractContent: string, fileName: string = 
   
   // Adicionar título
   doc.setFontSize(16);
-  doc.text('CONTRATO DE PRESTAÇÃO DE SERVIÇOS', 20, 20);
+  doc.text('CONTRATO DE PRESTAÇÃO DE SERVIÇOS FOTOGRÁFICOS', 20, 20);
   
   // Adicionar conteúdo
   doc.setFontSize(12);

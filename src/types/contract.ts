@@ -4,6 +4,7 @@ export interface Contract {
   user_id: string;
   template_id?: string;
   contract_type: string;
+  contract_number: number;
   contractor_name: string;
   contractor_email: string;
   contractor_phone: string;
@@ -19,8 +20,9 @@ export interface Contract {
   included_items: string;
   payment_method: string;
   amount: number;
-  bride_rg: string;
-  groom_rg: string;
+  rg: string;
+  cpf: string;
+  ceremonial_team?: string;
   contract_content?: string;
   status: string;
   created_at: string;
@@ -37,12 +39,22 @@ export interface ContractTemplate {
   updated_at: string;
 }
 
+export interface ContractClause {
+  id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  clause_order: number;
+  is_required: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ContractFormData {
   contractorName: string;
   coupleNames: string;
   eventDate: string;
-  brideRg: string;
-  groomRg: string;
+  rg: string;
   cpf: string;
   phone: string;
   email: string;
@@ -57,9 +69,11 @@ export interface ContractFormData {
   paymentMethod: string;
   totalPrice: number;
   eventType: string;
+  ceremonialTeam?: string;
 }
 
 export interface ContractPlaceholders {
+  numeroContrato: string;
   nomeContratante: string;
   nomeCasal: string;
   dataEvento: string;
@@ -73,6 +87,7 @@ export interface ContractPlaceholders {
   enderecoEvento: string;
   horarioEvento: string;
   numeroConvidados: string;
+  equipeCerimonial: string;
   pacoteEscolhido: string;
   itensInclusos: string;
   formaPagamento: string;

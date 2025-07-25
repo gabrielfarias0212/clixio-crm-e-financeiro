@@ -154,6 +154,12 @@ export function ContractPreview({ formData, onBack, onConfirm, isLoading }: Cont
                   }).format(formData.totalPrice)}
                 </div>
               </div>
+              {formData.ceremonialTeam && (
+                <div className="text-sm">
+                  <div className="font-medium">Equipe Cerimonial:</div>
+                  <div className="text-gray-600">{formData.ceremonialTeam}</div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

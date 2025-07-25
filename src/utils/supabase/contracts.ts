@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { Contract, ContractTemplate, ContractFormData } from "@/types/contract";
+import { Contract, ContractTemplate, ContractFormData, ContractClause } from "@/types/contract";
 
 export const fetchContracts = async (): Promise<Contract[]> => {
   const { data, error } = await supabase
@@ -42,10 +43,6 @@ export const createContract = async (contractData: ContractFormData): Promise<Co
   const brideName = coupleNamesArray[0] || '';
   const groomName = coupleNamesArray[1] || '';
 
-  // Split the RG fields to get bride and groom RGs
-  const brideRg = contractData.brideRg || '';
-  const groomRg = contractData.groomRg || '';
-
   const contractToInsert = {
     user_id: user.id,
     contractor_name: contractData.contractorName,
@@ -53,10 +50,7 @@ export const createContract = async (contractData: ContractFormData): Promise<Co
     nome_noiva: brideName,
     nome_noivo: groomName,
     data_evento: contractData.eventDate,
-    bride_rg: brideRg,
-    groom_rg: groomRg,
-    rg_noiva: brideRg,
-    rg_noivo: groomRg,
+    rg: contractData.rg,
     cpf_noiva: contractData.cpf || '',
     cpf_noivo: contractData.cpf || '',
     contractor_address: contractData.contractorAddress,
@@ -78,7 +72,8 @@ export const createContract = async (contractData: ContractFormData): Promise<Co
     contractor_email: contractData.email,
     contractor_phone: contractData.phone,
     email_contato: contractData.email,
-    telefone_contato: contractData.phone
+    telefone_contato: contractData.phone,
+    ceremonial_team: contractData.ceremonialTeam || null
   };
 
   const { data, error } = await supabase
@@ -157,14 +152,7 @@ export const updateContract = async (id: string, contractData: Partial<ContractF
     mappedData.nome_noivo = coupleNamesArray[1] || '';
   }
   if (contractData.eventDate) mappedData.data_evento = contractData.eventDate;
-  if (contractData.brideRg) {
-    mappedData.bride_rg = contractData.brideRg;
-    mappedData.rg_noiva = contractData.brideRg;
-  }
-  if (contractData.groomRg) {
-    mappedData.groom_rg = contractData.groomRg;
-    mappedData.rg_noivo = contractData.groomRg;
-  }
+  if (contractData.rg) mappedData.rg = contractData.rg;
   if (contractData.cpf) {
     mappedData.cpf_noiva = contractData.cpf;
     mappedData.cpf_noivo = contractData.cpf;
@@ -200,6 +188,7 @@ export const updateContract = async (id: string, contractData: Partial<ContractF
   if (contractData.paymentMethod) mappedData.payment_method = contractData.paymentMethod;
   if (contractData.totalPrice) mappedData.amount = contractData.totalPrice;
   if (contractData.eventType) mappedData.contract_type = contractData.eventType;
+  if (contractData.ceremonialTeam !== undefined) mappedData.ceremonial_team = contractData.ceremonialTeam;
 
   const { data, error } = await supabase
     .from('contracts')
@@ -294,5 +283,108 @@ export const deleteContractTemplate = async (id: string): Promise<void> => {
   if (error) {
     console.error('Error deleting contract template:', error);
     throw error;
+  }
+};
+
+// Funções para gerenciar cláusulas de contrato
+export const fetchContractClauses = async (): Promise<ContractClause[]> => {
+  const { data, error } = await supabase
+    .from('contract_clauses')
+    .select('*')
+    .order('clause_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching contract clauses:', error);
+    throw error;
+  }
+
+  return data || [];
+};
+
+export const createContractClause = async (
+  title: string, 
+  content: string, 
+  clauseOrder: number, 
+  isRequired: boolean = false
+): Promise<ContractClause> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const { data, error } = await supabase
+    .from('contract_clauses')
+    .insert([{
+      user_id: user.id,
+      title,
+      content,
+      clause_order: clauseOrder,
+      is_required: isRequired
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating contract clause:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const updateContractClause = async (
+  id: string, 
+  title: string, 
+  content: string, 
+  clauseOrder: number, 
+  isRequired: boolean
+): Promise<ContractClause> => {
+  const { data, error } = await supabase
+    .from('contract_clauses')
+    .update({ 
+      title, 
+      content, 
+      clause_order: clauseOrder, 
+      is_required: isRequired 
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating contract clause:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const deleteContractClause = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('contract_clauses')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting contract clause:', error);
+    throw error;
+  }
+};
+
+export const reorderContractClauses = async (clauses: { id: string; order: number }[]): Promise<void> => {
+  const updates = clauses.map(clause => 
+    supabase
+      .from('contract_clauses')
+      .update({ clause_order: clause.order })
+      .eq('id', clause.id)
+  );
+
+  const results = await Promise.all(updates);
+  
+  const errors = results.filter(result => result.error);
+  if (errors.length > 0) {
+    console.error('Error reordering contract clauses:', errors);
+    throw new Error('Failed to reorder clauses');
   }
 };

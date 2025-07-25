@@ -2,15 +2,17 @@
 import { useState } from "react";
 import { useContracts } from "@/hooks/useContracts";
 import { Button } from "@/components/ui/button";
-import { Plus, FileText } from "lucide-react";
+import { Plus, FileText, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ContractList } from "@/components/contract/ContractList";
 import { ContractTemplatesDialog } from "@/components/contract/ContractTemplatesDialog";
+import { ContractClausesManager } from "@/components/contract/ContractClausesManager";
 
 export default function Contracts() {
   const { data: contracts, isLoading } = useContracts();
   const navigate = useNavigate();
   const [templatesDialogOpen, setTemplatesDialogOpen] = useState(false);
+  const [clausesDialogOpen, setClausesDialogOpen] = useState(false);
 
   return (
     <div className="container mx-auto p-6">
@@ -22,9 +24,16 @@ export default function Contracts() {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
+            onClick={() => setClausesDialogOpen(true)}
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Cláusulas
+          </Button>
+          <Button 
+            variant="outline" 
             onClick={() => setTemplatesDialogOpen(true)}
           >
-            Gerenciar Templates
+            Templates
           </Button>
           <Button onClick={() => navigate('/contracts/new')}>
             <Plus className="h-4 w-4 mr-2" />
@@ -38,6 +47,11 @@ export default function Contracts() {
       <ContractTemplatesDialog 
         open={templatesDialogOpen}
         onOpenChange={setTemplatesDialogOpen}
+      />
+
+      <ContractClausesManager 
+        open={clausesDialogOpen}
+        onOpenChange={setClausesDialogOpen}
       />
     </div>
   );

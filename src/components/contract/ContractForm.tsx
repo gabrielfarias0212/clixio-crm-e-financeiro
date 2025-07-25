@@ -15,8 +15,7 @@ const contractFormSchema = z.object({
   contractorName: z.string().min(1, "Nome é obrigatório"),
   coupleNames: z.string().min(1, "Nome do casal é obrigatório"),
   eventDate: z.string().min(1, "Data do evento é obrigatória"),
-  brideRg: z.string().min(1, "RG da noiva é obrigatório"),
-  groomRg: z.string().min(1, "RG do noivo é obrigatório"),
+  rg: z.string().min(1, "RG é obrigatório"),
   cpf: z.string().min(11, "CPF é obrigatório"),
   phone: z.string().min(10, "Telefone é obrigatório"),
   email: z.string().email("E-mail inválido"),
@@ -31,6 +30,7 @@ const contractFormSchema = z.object({
   paymentMethod: z.string().min(1, "Forma de pagamento é obrigatória"),
   totalPrice: z.number().min(1, "Preço total é obrigatório"),
   eventType: z.string().min(1, "Tipo de evento é obrigatório"),
+  ceremonialTeam: z.string().optional(),
 });
 
 interface ContractFormProps {
@@ -45,8 +45,7 @@ export function ContractForm({ onSubmit, initialData }: ContractFormProps) {
       contractorName: "",
       coupleNames: "",
       eventDate: "",
-      brideRg: "",
-      groomRg: "",
+      rg: "",
       cpf: "",
       phone: "",
       email: "",
@@ -61,6 +60,7 @@ export function ContractForm({ onSubmit, initialData }: ContractFormProps) {
       paymentMethod: "",
       totalPrice: 0,
       eventType: "",
+      ceremonialTeam: "",
     },
   });
 
@@ -119,24 +119,10 @@ export function ContractForm({ onSubmit, initialData }: ContractFormProps) {
 
               <FormField
                 control={form.control}
-                name="brideRg"
+                name="rg"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>RG da Noiva *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="000.000.000-0" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="groomRg"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>RG do Noivo *</FormLabel>
+                    <FormLabel>RG *</FormLabel>
                     <FormControl>
                       <Input placeholder="000.000.000-0" {...field} />
                     </FormControl>
@@ -305,6 +291,20 @@ export function ContractForm({ onSubmit, initialData }: ContractFormProps) {
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="ceremonialTeam"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Equipe Cerimonial</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome da equipe (opcional)" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -8,7 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ClientsProvider } from "@/contexts/ClientsContext";
 import { TransactionsProvider } from "@/contexts/TransactionsContext";
 import { AuthGuard } from "@/components/AuthGuard";
-import { Layout } from "@/components/Layout";
+import Layout from "@/components/Layout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ClientList from "./pages/ClientList";

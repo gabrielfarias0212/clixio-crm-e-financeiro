@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Settings, FileText, FileContract } from "lucide-react";
+import { LogOut, User, Settings, FileText } from "lucide-react";
 import { ProfileConfigDialog } from "./ProfileConfigDialog";
 import { useNavigate } from "react-router-dom";
 
@@ -70,7 +70,7 @@ export function UserMenu() {
             <span>Gerador de Orçamentos</span>
           </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer" onClick={handleContracts}>
-            <FileContract className="mr-2 h-4 w-4" />
+            <FileText className="mr-2 h-4 w-4" />
             <span>Gerador de Contratos</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />

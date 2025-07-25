@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useContracts } from "@/hooks/useContracts";
 import { Button } from "@/components/ui/button";
-import { Plus, FileContract } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ContractList } from "@/components/contract/ContractList";
 import { ContractTemplatesDialog } from "@/components/contract/ContractTemplatesDialog";
@@ -16,7 +16,7 @@ export default function Contracts() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
-          <FileContract className="h-6 w-6" />
+          <FileText className="h-6 w-6" />
           <h1 className="text-2xl font-bold">Gerador de Contratos</h1>
         </div>
         <div className="flex gap-2">

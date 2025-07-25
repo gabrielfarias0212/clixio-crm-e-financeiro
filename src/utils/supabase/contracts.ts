@@ -45,9 +45,6 @@ export const createContract = async (contractData: ContractFormData): Promise<Co
     data_evento: contractData.eventDate,
     bride_rg: contractData.brideRg,
     groom_rg: contractData.groomRg,
-    cpf_noiva: contractData.cpf,
-    telefone_contato: contractData.phone,
-    email_contato: contractData.email,
     contractor_address: contractData.contractorAddress,
     contractor_city: contractData.contractorCity,
     event_city: contractData.eventCity,
@@ -66,7 +63,7 @@ export const createContract = async (contractData: ContractFormData): Promise<Co
 
   const { data, error } = await supabase
     .from('contracts')
-    .insert([contractToInsert])
+    .insert(contractToInsert)
     .select()
     .single();
 
@@ -129,9 +126,31 @@ export const createClientFromContract = async (contractData: ContractFormData) =
 };
 
 export const updateContract = async (id: string, contractData: Partial<ContractFormData>): Promise<Contract> => {
+  // Mapear os campos do ContractFormData para os campos do banco
+  const mappedData: any = {};
+  
+  if (contractData.contractorName) mappedData.contractor_name = contractData.contractorName;
+  if (contractData.coupleNames) mappedData.couple_names = contractData.coupleNames;
+  if (contractData.eventDate) mappedData.data_evento = contractData.eventDate;
+  if (contractData.brideRg) mappedData.bride_rg = contractData.brideRg;
+  if (contractData.groomRg) mappedData.groom_rg = contractData.groomRg;
+  if (contractData.email) mappedData.contractor_email = contractData.email;
+  if (contractData.phone) mappedData.contractor_phone = contractData.phone;
+  if (contractData.contractorAddress) mappedData.contractor_address = contractData.contractorAddress;
+  if (contractData.contractorCity) mappedData.contractor_city = contractData.contractorCity;
+  if (contractData.eventCity) mappedData.event_city = contractData.eventCity;
+  if (contractData.eventAddress) mappedData.event_address = contractData.eventAddress;
+  if (contractData.eventTime) mappedData.horario_cerimonia = contractData.eventTime;
+  if (contractData.guestCount) mappedData.guest_count = contractData.guestCount;
+  if (contractData.packageName) mappedData.package_name = contractData.packageName;
+  if (contractData.includedItems) mappedData.included_items = contractData.includedItems;
+  if (contractData.paymentMethod) mappedData.payment_method = contractData.paymentMethod;
+  if (contractData.totalPrice) mappedData.amount = contractData.totalPrice;
+  if (contractData.eventType) mappedData.contract_type = contractData.eventType;
+
   const { data, error } = await supabase
     .from('contracts')
-    .update(contractData)
+    .update(mappedData)
     .eq('id', id)
     .select()
     .single();

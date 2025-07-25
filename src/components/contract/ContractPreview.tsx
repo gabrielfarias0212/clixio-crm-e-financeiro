@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ContractFormData } from "@/types/contract";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,12 +45,12 @@ export function ContractPreview({ formData, onBack, onConfirm, isLoading }: Cont
   };
 
   // Selecionar template padrão automaticamente
-  useState(() => {
+  useEffect(() => {
     if (templates && templates.length > 0 && !selectedTemplateId) {
       const defaultTemplate = templates.find(t => t.is_default) || templates[0];
       handleTemplateChange(defaultTemplate.id);
     }
-  }, [templates]);
+  }, [templates, selectedTemplateId]);
 
   return (
     <div className="space-y-6">

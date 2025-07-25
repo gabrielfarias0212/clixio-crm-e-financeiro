@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, FileContract } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ContractForm } from "@/components/contract/ContractForm";
 import { ContractPreview } from "@/components/contract/ContractPreview";
@@ -34,7 +34,7 @@ export default function CreateContract() {
           Voltar
         </Button>
         <div className="flex items-center gap-2">
-          <FileContract className="h-6 w-6" />
+          <FileText className="h-6 w-6" />
           <h1 className="text-2xl font-bold">Novo Contrato</h1>
         </div>
       </div>

@@ -2,7 +2,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useContract } from "@/hooks/useContracts";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileContract, Download, Copy } from "lucide-react";
+import { ArrowLeft, FileText, Download, Copy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { generateContractPDF, copyContractToClipboard } from "@/utils/contractGenerator";
@@ -55,7 +55,7 @@ export default function ContractDetail() {
           Voltar
         </Button>
         <div className="flex items-center gap-2">
-          <FileContract className="h-6 w-6" />
+          <FileText className="h-6 w-6" />
           <h1 className="text-2xl font-bold">Detalhes do Contrato</h1>
         </div>
       </div>

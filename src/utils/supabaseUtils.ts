@@ -1,4 +1,3 @@
-
 // This file re-exports all Supabase utility functions from the modular files
 // to maintain backwards compatibility with existing code
 
@@ -82,6 +81,19 @@ export {
   getTotalFixedExpenses
 } from './supabase/personal-fixed-expenses';
 
+export {
+  fetchContracts,
+  fetchContract,
+  createContract,
+  updateContract,
+  deleteContract,
+  fetchContractTemplates,
+  createContractTemplate,
+  updateContractTemplate,
+  deleteContractTemplate,
+  createClientFromContract
+} from './supabase/contracts';
+
 // Export types separately to fix isolatedModules issue
 export type { PersonalCategory } from './supabase/personal-categories';
 export type { 
@@ -89,3 +101,4 @@ export type {
   CreatePersonalFixedExpenseData, 
   UpdatePersonalFixedExpenseData 
 } from './supabase/personal-fixed-expenses';
+export type { Contract, ContractTemplate, ContractFormData } from '../types/contract';

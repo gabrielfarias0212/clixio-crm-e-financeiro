@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Contract, ContractTemplate, ContractFormData, ContractClause } from "@/types/contract";
 import { createClientFromContract } from "./client-from-contract";
@@ -371,3 +370,6 @@ export const reorderContractClauses = async (clauses: { id: string; order: numbe
   // Mock implementation
   console.log('Reordering clauses:', clauses);
 };
+
+// Export createClientFromContract function
+export { createClientFromContract };

@@ -90,7 +90,7 @@ export function ContractTemplatesDialog({ open, onOpenChange }: ContractTemplate
           {!isEditing && (
             <div className="flex justify-between items-center">
               <p className="text-sm text-gray-600">
-                Gerencie seus templates de contrato. Use variáveis como {{"{"}nomeContratante{"}"}} para dados dinâmicos.
+                Gerencie seus templates de contrato. Use variáveis como {`{{nomeContratante}}`} para dados dinâmicos.
               </p>
               <Button onClick={handleCreate}>
                 <Plus className="h-4 w-4 mr-2" />

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Contract, ContractTemplate, ContractFormData, ContractClause } from "@/types/contract";
 import { createClientFromContract } from "./client-from-contract";
@@ -16,8 +17,8 @@ export const fetchContracts = async (): Promise<Contract[]> => {
   // Mapear os dados do banco para a interface Contract
   const mappedData: Contract[] = (data || []).map(contract => ({
     ...contract,
-    contract_number: contract.contract_number || 0,
-    rg: contract.rg || contract.bride_rg || '',
+    contract_number: 0, // Default value since it doesn't exist in DB
+    rg: contract.rg_noiva || contract.rg_noivo || '',
     cpf: contract.cpf_noiva || contract.cpf_noivo || ''
   }));
 
@@ -41,8 +42,8 @@ export const fetchContract = async (id: string): Promise<Contract | null> => {
   // Mapear os dados do banco para a interface Contract
   const mappedData: Contract = {
     ...data,
-    contract_number: data.contract_number || 0,
-    rg: data.rg || data.bride_rg || '',
+    contract_number: 0, // Default value since it doesn't exist in DB
+    rg: data.rg_noiva || data.rg_noivo || '',
     cpf: data.cpf_noiva || data.cpf_noivo || ''
   };
 
@@ -68,7 +69,6 @@ export const createContract = async (contractData: ContractFormData): Promise<Co
     nome_noiva: brideName,
     nome_noivo: groomName,
     data_evento: contractData.eventDate,
-    rg: contractData.rg,
     rg_noiva: contractData.rg,
     rg_noivo: contractData.rg,
     cpf_noiva: contractData.cpf || '',
@@ -113,8 +113,8 @@ export const createContract = async (contractData: ContractFormData): Promise<Co
   // Mapear os dados retornados para a interface Contract
   const mappedData: Contract = {
     ...data,
-    contract_number: data.contract_number || 0,
-    rg: data.rg || data.bride_rg || '',
+    contract_number: 0, // Default value since it doesn't exist in DB
+    rg: data.rg_noiva || data.rg_noivo || '',
     cpf: data.cpf_noiva || data.cpf_noivo || ''
   };
 
@@ -134,7 +134,6 @@ export const updateContract = async (id: string, contractData: Partial<ContractF
   }
   if (contractData.eventDate) mappedData.data_evento = contractData.eventDate;
   if (contractData.rg) {
-    mappedData.rg = contractData.rg;
     mappedData.rg_noiva = contractData.rg;
     mappedData.rg_noivo = contractData.rg;
   }
@@ -190,8 +189,8 @@ export const updateContract = async (id: string, contractData: Partial<ContractF
   // Mapear os dados retornados para a interface Contract
   const mappedResponse: Contract = {
     ...data,
-    contract_number: data.contract_number || 0,
-    rg: data.rg || data.bride_rg || '',
+    contract_number: 0, // Default value since it doesn't exist in DB
+    rg: data.rg_noiva || data.rg_noivo || '',
     cpf: data.cpf_noiva || data.cpf_noivo || ''
   };
 

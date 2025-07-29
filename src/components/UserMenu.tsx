@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Settings, FileText } from "lucide-react";
+import { LogOut, Settings, FileText } from "lucide-react";
 import { ProfileConfigDialog } from "./ProfileConfigDialog";
 import { useNavigate } from "react-router-dom";
 

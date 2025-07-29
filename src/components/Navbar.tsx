@@ -11,14 +11,12 @@ import {
   Users, 
   Calendar, 
   DollarSign, 
-  FileText, 
-  PieChart,
-  Calculator
+  PieChart
 } from 'lucide-react';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
 
   const navigation = [
@@ -27,8 +25,6 @@ export function Navbar() {
     { name: 'Calendário', href: '/calendar', icon: Calendar },
     { name: 'Financeiro', href: '/cash-flow', icon: DollarSign },
     { name: 'Pessoal', href: '/personal', icon: PieChart },
-    { name: 'Contratos', href: '/contracts', icon: FileText },
-    { name: 'Orçamentos', href: '/budgets', icon: Calculator },
   ];
 
   const isActive = (path: string) => {
@@ -69,7 +65,7 @@ export function Navbar() {
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
-            <UserMenu user={user} onLogout={logout} />
+            <UserMenu />
           </div>
           <div className="-mr-2 flex items-center sm:hidden">
             <Button
@@ -113,7 +109,7 @@ export function Navbar() {
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="px-4">
-              <UserMenu user={user} onLogout={logout} />
+              <UserMenu />
             </div>
           </div>
         </div>

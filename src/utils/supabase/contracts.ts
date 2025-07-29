@@ -17,8 +17,8 @@ export const fetchContracts = async (): Promise<Contract[]> => {
   // Mapear os dados do banco para a interface Contract
   const mappedData: Contract[] = (data || []).map(contract => ({
     ...contract,
-    contract_number: contract.contract_number || 0,
-    rg: contract.rg || contract.rg_noiva || contract.rg_noivo || '',
+    contract_number: (contract as any).contract_number || 0,
+    rg: (contract as any).rg || contract.rg_noiva || contract.rg_noivo || '',
     cpf: contract.cpf_noiva || contract.cpf_noivo || ''
   }));
 
@@ -42,8 +42,8 @@ export const fetchContract = async (id: string): Promise<Contract | null> => {
   // Mapear os dados do banco para a interface Contract
   const mappedData: Contract = {
     ...data,
-    contract_number: data.contract_number || 0,
-    rg: data.rg || data.rg_noiva || data.rg_noivo || '',
+    contract_number: (data as any).contract_number || 0,
+    rg: (data as any).rg || data.rg_noiva || data.rg_noivo || '',
     cpf: data.cpf_noiva || data.cpf_noivo || ''
   };
 
@@ -123,8 +123,8 @@ export const createContract = async (contractData: ContractFormData): Promise<Co
   // Mapear os dados retornados para a interface Contract
   const mappedData: Contract = {
     ...data,
-    contract_number: data.contract_number || 0,
-    rg: data.rg || data.rg_noiva || data.rg_noivo || '',
+    contract_number: (data as any).contract_number || 0,
+    rg: (data as any).rg || data.rg_noiva || data.rg_noivo || '',
     cpf: data.cpf_noiva || data.cpf_noivo || ''
   };
 
@@ -200,8 +200,8 @@ export const updateContract = async (id: string, contractData: Partial<ContractF
   // Mapear os dados retornados para a interface Contract
   const mappedResponse: Contract = {
     ...data,
-    contract_number: data.contract_number || 0,
-    rg: data.rg || data.rg_noiva || data.rg_noivo || '',
+    contract_number: (data as any).contract_number || 0,
+    rg: (data as any).rg || data.rg_noiva || data.rg_noivo || '',
     cpf: data.cpf_noiva || data.cpf_noivo || ''
   };
 
@@ -289,9 +289,9 @@ export const deleteContractTemplate = async (id: string): Promise<void> => {
   }
 };
 
-// Funções para cláusulas de contrato
+// Funções temporárias para cláusulas de contrato (usando any até os tipos serem atualizados)
 export const fetchContractClauses = async (): Promise<ContractClause[]> => {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('contract_clauses')
     .select('*')
     .order('clause_order', { ascending: true });
@@ -316,7 +316,7 @@ export const createContractClause = async (
     throw new Error('User not authenticated');
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('contract_clauses')
     .insert([{
       user_id: user.id,
@@ -343,7 +343,7 @@ export const updateContractClause = async (
   clauseOrder: number, 
   isRequired: boolean
 ): Promise<ContractClause> => {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('contract_clauses')
     .update({
       title,
@@ -364,7 +364,7 @@ export const updateContractClause = async (
 };
 
 export const deleteContractClause = async (id: string): Promise<void> => {
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('contract_clauses')
     .delete()
     .eq('id', id);
@@ -377,7 +377,7 @@ export const deleteContractClause = async (id: string): Promise<void> => {
 
 export const reorderContractClauses = async (clauses: { id: string; order: number }[]): Promise<void> => {
   const promises = clauses.map(({ id, order }) => 
-    supabase
+    (supabase as any)
       .from('contract_clauses')
       .update({ clause_order: order })
       .eq('id', id)

@@ -1,0 +1,295 @@
+
+import { useCallback, useEffect, useState, createContext, useContext, ReactNode, useRef } from "react";
+import { CalendarEvent } from "@/utils/types";
+import { normalizeDate } from "@/utils/dates";
+import { 
+  fetchCalendarEvents, 
+  createCalendarEvent, 
+  updateCalendarEvent, 
+  updateCalendarEventStatus,
+  deleteCalendarEvent 
+} from "@/utils/supabase/calendar-events";
+
+interface CalendarEventsContextProps {
+  events: CalendarEvent[];
+  addEvent: (event: CalendarEvent) => void;
+  updateEvent: (event: CalendarEvent) => void;
+  updateEventStatus: (eventId: string, updates: { isEdited?: boolean; isDelivered?: boolean }) => void;
+  deleteEvent: (eventId: string) => void;
+  getEventById: (eventId: string) => CalendarEvent | undefined;
+  getEventsByDate: (date: string) => CalendarEvent[];
+  loading: boolean;
+  error: string | null;
+}
+
+const CalendarEventsContext = createContext<CalendarEventsContextProps>({
+  events: [],
+  addEvent: () => {},
+  updateEvent: () => {},
+  updateEventStatus: () => {},
+  deleteEvent: () => {},
+  getEventById: () => undefined,
+  getEventsByDate: () => [],
+  loading: false,
+  error: null
+});
+
+export function CalendarEventsProvider({ children }: { children: ReactNode }) {
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const isInitialized = useRef(false);
+  
+  // Load events from Supabase on component mount
+  useEffect(() => {
+    const loadEvents = async () => {
+      if (isInitialized.current) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const supabaseEvents = await fetchCalendarEvents();
+        
+        if (supabaseEvents.length > 0) {
+          setEvents(supabaseEvents);
+        } else {
+          // Fallback to localStorage if no events in Supabase
+          const storedEvents = localStorage.getItem("calendarEvents");
+          if (storedEvents) {
+            try {
+              const parsedEvents = JSON.parse(storedEvents);
+              
+              // Migrate localStorage events to Supabase
+              const migratedEvents = await migrateLocalStorageEvents(parsedEvents);
+              setEvents(migratedEvents);
+              
+              // Clear localStorage after successful migration
+              localStorage.removeItem("calendarEvents");
+            } catch (parseError) {
+              console.error("Erro ao parsear eventos do localStorage:", parseError);
+              setEvents([]);
+            }
+          } else {
+            setEvents([]);
+          }
+        }
+        
+        isInitialized.current = true;
+      } catch (loadError) {
+        console.error("Erro ao carregar eventos:", loadError);
+        setError("Erro ao carregar eventos");
+        
+        // Fallback to localStorage on error
+        try {
+          const storedEvents = localStorage.getItem("calendarEvents");
+          if (storedEvents) {
+            const parsedEvents = JSON.parse(storedEvents);
+            setEvents(parsedEvents);
+          }
+        } catch (fallbackError) {
+          setEvents([]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEvents();
+  }, []);
+  
+  // Migration helper function
+  const migrateLocalStorageEvents = async (localEvents: any[]): Promise<CalendarEvent[]> => {
+    const migratedEvents: CalendarEvent[] = [];
+    
+    for (const event of localEvents) {
+      try {
+        const formattedEvent: CalendarEvent = {
+          ...event,
+          startTime: event.startTime || event.time || "09:00",
+          endTime: event.endTime || (event.time ? incrementTimeByOneHour(event.time) : "10:00"),
+          isEdited: false,
+          isDelivered: false
+        };
+        
+        const createdEvent = await createCalendarEvent(formattedEvent);
+        if (createdEvent) {
+          migratedEvents.push(createdEvent);
+        }
+      } catch (error) {
+        console.error("Erro ao migrar evento:", event.id, error);
+      }
+    }
+    
+    return migratedEvents;
+  };
+  
+  // Helper to increment time by one hour for legacy events
+  const incrementTimeByOneHour = (time: string): string => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const newHours = (hours + 1) % 24;
+    return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
+  
+  const addEvent = useCallback(async (event: CalendarEvent) => {
+    try {
+      setError(null);
+      
+      const createdEvent = await createCalendarEvent(event);
+      
+      if (createdEvent) {
+        setEvents(prev => {
+          const existingIndex = prev.findIndex(e => e.id === createdEvent.id);
+          if (existingIndex !== -1) {
+            const newEvents = [...prev];
+            newEvents[existingIndex] = createdEvent;
+            return newEvents;
+          }
+          
+          return [...prev, createdEvent];
+        });
+      } else {
+        throw new Error("Falha ao criar evento no Supabase");
+      }
+    } catch (createError) {
+      setError("Erro ao salvar evento");
+      
+      // Fallback to local state only
+      setEvents(prev => {
+        const existingIndex = prev.findIndex(e => e.id === event.id);
+        if (existingIndex !== -1) {
+          const newEvents = [...prev];
+          newEvents[existingIndex] = event;
+          return newEvents;
+        }
+        return [...prev, event];
+      });
+    }
+  }, []);
+  
+  const updateEvent = useCallback(async (updatedEvent: CalendarEvent) => {
+    try {
+      setError(null);
+      
+      const result = await updateCalendarEvent(updatedEvent);
+      
+      if (result) {
+        setEvents(prev => 
+          prev.map(event => 
+            event.id === updatedEvent.id ? result : event
+          )
+        );
+      } else {
+        throw new Error("Falha ao atualizar evento no Supabase");
+      }
+    } catch (updateError) {
+      setError("Erro ao atualizar evento");
+      
+      // Fallback to local state only
+      setEvents(prev => 
+        prev.map(event => 
+          event.id === updatedEvent.id ? updatedEvent : event
+        )
+      );
+    }
+  }, []);
+
+  const updateEventStatus = useCallback(async (eventId: string, updates: { isEdited?: boolean; isDelivered?: boolean }) => {
+    try {
+      setError(null);
+      
+      const result = await updateCalendarEventStatus(eventId, updates);
+      
+      if (result) {
+        setEvents(prev => 
+          prev.map(event => 
+            event.id === eventId ? result : event
+          )
+        );
+      } else {
+        throw new Error("Falha ao atualizar status do evento no Supabase");
+      }
+    } catch (updateError) {
+      setError("Erro ao atualizar status do evento");
+      
+      // Fallback to local state only
+      setEvents(prev => 
+        prev.map(event => 
+          event.id === eventId ? { ...event, ...updates } : event
+        )
+      );
+    }
+  }, []);
+  
+  const deleteEvent = useCallback(async (eventId: string) => {
+    try {
+      setError(null);
+      
+      const success = await deleteCalendarEvent(eventId);
+      
+      if (success) {
+        setEvents(prev => {
+          const filtered = prev.filter(event => event.id !== eventId);
+          return filtered;
+        });
+      } else {
+        throw new Error("Falha ao deletar evento no Supabase");
+      }
+    } catch (deleteError) {
+      setError("Erro ao remover evento");
+      
+      // Fallback to local state only
+      setEvents(prev => {
+        const filtered = prev.filter(event => event.id !== eventId);
+        return filtered;
+      });
+    }
+  }, []);
+  
+  const getEventById = useCallback(
+    (eventId: string) => {
+      const event = events.find(event => event.id === eventId);
+      return event;
+    },
+    [events]
+  );
+  
+  const getEventsByDate = useCallback(
+    (date: string) => {
+      // Normalize the date to YYYY-MM-DD format for comparison
+      const dateKey = normalizeDate(date);
+      const filtered = events.filter(event => {
+        const eventDateKey = normalizeDate(event.date);
+        return eventDateKey === dateKey;
+      });
+      return filtered;
+    },
+    [events]
+  );
+  
+  const value = {
+    events,
+    addEvent,
+    updateEvent,
+    updateEventStatus,
+    deleteEvent,
+    getEventById,
+    getEventsByDate,
+    loading,
+    error
+  };
+  
+  return (
+    <CalendarEventsContext.Provider value={value}>
+      {children}
+    </CalendarEventsContext.Provider>
+  );
+}
+
+export function useCalendarEvents() {
+  const context = useContext(CalendarEventsContext);
+  if (context === undefined) {
+    throw new Error("useCalendarEvents must be used within a CalendarEventsProvider");
+  }
+  return context;
+}

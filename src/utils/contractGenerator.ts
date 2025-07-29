@@ -53,9 +53,42 @@ export const generateContractPlaceholders = (formData: ContractFormData, contrac
 export const parseContractTemplate = (template: string, placeholders: ContractPlaceholders): string => {
   let parsedTemplate = template;
 
+  // Suporte para ambos os formatos: {{variavel}} e [VARIAVEL]
   Object.entries(placeholders).forEach(([key, value]) => {
-    const regex = new RegExp(`{{${key}}}`, 'g');
-    parsedTemplate = parsedTemplate.replace(regex, value);
+    // Formato {{variavel}}
+    const regexBraces = new RegExp(`{{${key}}}`, 'g');
+    parsedTemplate = parsedTemplate.replace(regexBraces, value);
+    
+    // Formato [VARIAVEL] (maiúsculo)
+    const upperKey = key.toUpperCase();
+    const regexBrackets = new RegExp(`\\[${upperKey}\\]`, 'g');
+    parsedTemplate = parsedTemplate.replace(regexBrackets, value);
+    
+    // Mapeamento específico para alguns campos
+    const keyMappings: { [key: string]: string } = {
+      'nomeContratante': 'NOME_CONTRATANTE',
+      'nomeCasal': 'NOME_CASAL',
+      'dataEvento': 'DATA_EVENTO',
+      'enderecoContratante': 'ENDERECO_CONTRATANTE',
+      'cidadeContratante': 'CIDADE_CONTRATANTE',
+      'cidadeEvento': 'CIDADE_EVENTO',
+      'enderecoEvento': 'ENDERECO_EVENTO',
+      'horarioEvento': 'HORARIO_EVENTO',
+      'numeroConvidados': 'NUMERO_CONVIDADOS',
+      'equipeCerimonial': 'EQUIPE_CERIMONIAL',
+      'pacoteEscolhido': 'PACOTE_ESCOLHIDO',
+      'itensInclusos': 'ITENS_INCLUSOS',
+      'formaPagamento': 'FORMA_PAGAMENTO',
+      'precoTotal': 'PRECO_TOTAL',
+      'tipoEvento': 'TIPO_EVENTO',
+      'dataAtual': 'DATA_ATUAL'
+    };
+    
+    const mappedKey = keyMappings[key];
+    if (mappedKey) {
+      const regexMapped = new RegExp(`\\[${mappedKey}\\]`, 'g');
+      parsedTemplate = parsedTemplate.replace(regexMapped, value);
+    }
   });
 
   return parsedTemplate;

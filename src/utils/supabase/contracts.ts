@@ -17,8 +17,8 @@ export const fetchContracts = async (): Promise<Contract[]> => {
   // Mapear os dados do banco para a interface Contract
   const mappedData: Contract[] = (data || []).map(contract => ({
     ...contract,
-    contract_number: 0, // Default value since it doesn't exist in DB
-    rg: contract.rg_noiva || contract.rg_noivo || '',
+    contract_number: contract.contract_number || 0,
+    rg: contract.rg || contract.rg_noiva || contract.rg_noivo || '',
     cpf: contract.cpf_noiva || contract.cpf_noivo || ''
   }));
 
@@ -42,8 +42,8 @@ export const fetchContract = async (id: string): Promise<Contract | null> => {
   // Mapear os dados do banco para a interface Contract
   const mappedData: Contract = {
     ...data,
-    contract_number: 0, // Default value since it doesn't exist in DB
-    rg: data.rg_noiva || data.rg_noivo || '',
+    contract_number: data.contract_number || 0,
+    rg: data.rg || data.rg_noiva || data.rg_noivo || '',
     cpf: data.cpf_noiva || data.cpf_noivo || ''
   };
 
@@ -62,6 +62,14 @@ export const createContract = async (contractData: ContractFormData): Promise<Co
   const brideName = coupleNamesArray[0] || '';
   const groomName = coupleNamesArray[1] || '';
 
+  // Generate contract number
+  const { data: contractsCount } = await supabase
+    .from('contracts')
+    .select('id', { count: 'exact' })
+    .eq('user_id', user.id);
+
+  const contractNumber = (contractsCount?.length || 0) + 1;
+
   const contractToInsert = {
     user_id: user.id,
     contractor_name: contractData.contractorName,
@@ -69,6 +77,7 @@ export const createContract = async (contractData: ContractFormData): Promise<Co
     nome_noiva: brideName,
     nome_noivo: groomName,
     data_evento: contractData.eventDate,
+    rg: contractData.rg,
     rg_noiva: contractData.rg,
     rg_noivo: contractData.rg,
     cpf_noiva: contractData.cpf || '',
@@ -93,7 +102,8 @@ export const createContract = async (contractData: ContractFormData): Promise<Co
     contractor_phone: contractData.phone,
     email_contato: contractData.email,
     telefone_contato: contractData.phone,
-    ceremonial_team: contractData.ceremonialTeam || null
+    ceremonial_team: contractData.ceremonialTeam || null,
+    contract_number: contractNumber
   };
 
   const { data, error } = await supabase
@@ -113,8 +123,8 @@ export const createContract = async (contractData: ContractFormData): Promise<Co
   // Mapear os dados retornados para a interface Contract
   const mappedData: Contract = {
     ...data,
-    contract_number: 0, // Default value since it doesn't exist in DB
-    rg: data.rg_noiva || data.rg_noivo || '',
+    contract_number: data.contract_number || 0,
+    rg: data.rg || data.rg_noiva || data.rg_noivo || '',
     cpf: data.cpf_noiva || data.cpf_noivo || ''
   };
 
@@ -134,6 +144,7 @@ export const updateContract = async (id: string, contractData: Partial<ContractF
   }
   if (contractData.eventDate) mappedData.data_evento = contractData.eventDate;
   if (contractData.rg) {
+    mappedData.rg = contractData.rg;
     mappedData.rg_noiva = contractData.rg;
     mappedData.rg_noivo = contractData.rg;
   }
@@ -189,8 +200,8 @@ export const updateContract = async (id: string, contractData: Partial<ContractF
   // Mapear os dados retornados para a interface Contract
   const mappedResponse: Contract = {
     ...data,
-    contract_number: 0, // Default value since it doesn't exist in DB
-    rg: data.rg_noiva || data.rg_noivo || '',
+    contract_number: data.contract_number || 0,
+    rg: data.rg || data.rg_noiva || data.rg_noivo || '',
     cpf: data.cpf_noiva || data.cpf_noivo || ''
   };
 
@@ -278,43 +289,19 @@ export const deleteContractTemplate = async (id: string): Promise<void> => {
   }
 };
 
-// Funções temporárias para cláusulas de contrato - usando mock data até a tabela ser criada no Supabase
+// Funções para cláusulas de contrato
 export const fetchContractClauses = async (): Promise<ContractClause[]> => {
-  // Mock data até a tabela contract_clauses ser reconhecida pelo Supabase
-  const mockClauses: ContractClause[] = [
-    {
-      id: '1',
-      user_id: 'temp',
-      title: 'OBJETO DO CONTRATO',
-      content: 'A CONTRATADA prestará ao CONTRATANTE os serviços de cobertura fotográfica para o evento acima descrito, respeitando os padrões técnicos e artísticos da empresa.',
-      clause_order: 1,
-      is_required: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: '2',
-      user_id: 'temp',
-      title: 'EXCLUSIVIDADE',
-      content: 'A equipe da Gabriel Farias Fotografias será a única responsável pela cobertura do evento. A contratação de outro profissional sem consentimento resultará na rescisão do contrato e retenção de 30% do valor.',
-      clause_order: 2,
-      is_required: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: '3',
-      user_id: 'temp',
-      title: 'VALOR E FORMA DE PAGAMENTO',
-      content: 'Valor total: {{precoTotal}}\nForma de pagamento: {{formaPagamento}}\n*A hora extra, se houver, será cobrada à parte no valor de R$ 600,00 por hora ou fração superior a 30 minutos.*',
-      clause_order: 3,
-      is_required: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-  ];
+  const { data, error } = await supabase
+    .from('contract_clauses')
+    .select('*')
+    .order('clause_order', { ascending: true });
 
-  return mockClauses;
+  if (error) {
+    console.error('Error fetching contract clauses:', error);
+    throw error;
+  }
+
+  return data || [];
 };
 
 export const createContractClause = async (
@@ -323,19 +310,30 @@ export const createContractClause = async (
   clauseOrder: number, 
   isRequired: boolean = false
 ): Promise<ContractClause> => {
-  // Mock implementation
-  const mockClause: ContractClause = {
-    id: Date.now().toString(),
-    user_id: 'temp',
-    title,
-    content,
-    clause_order: clauseOrder,
-    is_required: isRequired,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
 
-  return mockClause;
+  const { data, error } = await supabase
+    .from('contract_clauses')
+    .insert([{
+      user_id: user.id,
+      title,
+      content,
+      clause_order: clauseOrder,
+      is_required: isRequired
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating contract clause:', error);
+    throw error;
+  }
+
+  return data;
 };
 
 export const updateContractClause = async (
@@ -345,29 +343,54 @@ export const updateContractClause = async (
   clauseOrder: number, 
   isRequired: boolean
 ): Promise<ContractClause> => {
-  // Mock implementation
-  const mockClause: ContractClause = {
-    id,
-    user_id: 'temp',
-    title,
-    content,
-    clause_order: clauseOrder,
-    is_required: isRequired,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
+  const { data, error } = await supabase
+    .from('contract_clauses')
+    .update({
+      title,
+      content,
+      clause_order: clauseOrder,
+      is_required: isRequired
+    })
+    .eq('id', id)
+    .select()
+    .single();
 
-  return mockClause;
+  if (error) {
+    console.error('Error updating contract clause:', error);
+    throw error;
+  }
+
+  return data;
 };
 
 export const deleteContractClause = async (id: string): Promise<void> => {
-  // Mock implementation
-  console.log('Deleting clause:', id);
+  const { error } = await supabase
+    .from('contract_clauses')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting contract clause:', error);
+    throw error;
+  }
 };
 
 export const reorderContractClauses = async (clauses: { id: string; order: number }[]): Promise<void> => {
-  // Mock implementation
-  console.log('Reordering clauses:', clauses);
+  const promises = clauses.map(({ id, order }) => 
+    supabase
+      .from('contract_clauses')
+      .update({ clause_order: order })
+      .eq('id', id)
+  );
+
+  const results = await Promise.all(promises);
+  
+  for (const result of results) {
+    if (result.error) {
+      console.error('Error reordering clauses:', result.error);
+      throw result.error;
+    }
+  }
 };
 
 // Export createClientFromContract function

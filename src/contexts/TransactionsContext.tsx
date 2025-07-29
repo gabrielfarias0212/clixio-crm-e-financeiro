@@ -31,12 +31,14 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
   const refreshTransactions = useCallback(async () => {
     // Prevenir múltiplas chamadas simultâneas
     if (isRefreshing.current) {
+      console.log("Refresh já em andamento, ignorando");
       return;
     }
 
     // Implementar cooldown para evitar spam de requests
     const now = Date.now();
     if (now - lastRefreshTime.current < REFRESH_COOLDOWN) {
+      console.log("Refresh em cooldown, ignorando");
       return;
     }
     
@@ -47,12 +49,16 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
       setLoading(true);
       setError(null);
       
+      console.log("Buscando transações do banco...");
       const data = await fetchTransactions();
+      console.log(`${data.length} transações carregadas`);
+      
       setTransactions(data);
       lastRefreshTime.current = now;
       refreshCount.current++;
       
     } catch (err) {
+      console.error('Erro ao buscar transações:', err);
       setError('Falha ao carregar as transações. Tente novamente.');
       toast.error('Falha ao carregar as transações');
     } finally {
@@ -83,6 +89,7 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
       }
       return null;
     } catch (err) {
+      console.error('Erro ao adicionar transação:', err);
       toast.error('Falha ao adicionar transação');
       return null;
     }
@@ -103,6 +110,7 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
             lastRefreshTime.current = 0;
           })
           .catch((err) => {
+            console.error('Erro ao excluir transação:', err);
             // Reverter update otimístico em caso de erro
             setTransactions(originalTransactions);
             toast.error('Falha ao excluir transação');
@@ -112,6 +120,7 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
       });
       
     } catch (err) {
+      console.error('Erro ao excluir transação:', err);
       toast.error('Falha ao excluir transação');
     }
   }, []);

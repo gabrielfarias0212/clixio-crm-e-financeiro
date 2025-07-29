@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 
 type AuthContextType = {
   user: User | null;
@@ -25,18 +25,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
+        console.log('Auth state change event:', event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
         if (event === 'SIGNED_IN') {
-          toast.success("Login realizado com sucesso");
+          toast({
+            title: "Login realizado com sucesso",
+            description: `Bem-vindo de volta!`,
+          });
         } else if (event === 'SIGNED_OUT') {
-          toast.success("Logout realizado");
+          toast({
+            title: "Logout realizado",
+            description: "Você foi desconectado com sucesso",
+          });
         }
       }
     );
@@ -59,7 +67,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [toast]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -69,11 +77,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) {
+        console.error('Login error:', error);
         return { success: false, error: error.message };
       }
 
       return { success: true };
     } catch (error: any) {
+      console.error('Exception during login:', error);
       return { success: false, error: error.message };
     }
   };
@@ -91,11 +101,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) {
+        console.error('Register error:', error);
         return { success: false, error: error.message };
       }
 
       return { success: true };
     } catch (error: any) {
+      console.error('Exception during registration:', error);
       return { success: false, error: error.message };
     }
   };

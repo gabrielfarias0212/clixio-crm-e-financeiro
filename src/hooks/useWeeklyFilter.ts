@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { getCurrentWeekInfo, getNextWeek, getPreviousWeek, WeekInfo } from "@/utils/dates/weekUtils";
 
@@ -8,7 +7,6 @@ export type { WeekInfo };
 export function useWeeklyFilter() {
   const [periodType, setPeriodType] = useState<PeriodType>("monthly");
   const [currentWeek, setCurrentWeek] = useState<WeekInfo>(getCurrentWeekInfo());
-  const [weeklyBalance, setWeeklyBalance] = useState<number>(0);
 
   const togglePeriod = useCallback(() => {
     setPeriodType(prev => prev === "monthly" ? "weekly" : "monthly");
@@ -33,8 +31,6 @@ export function useWeeklyFilter() {
   return {
     periodType,
     currentWeek,
-    weeklyBalance,
-    setWeeklyBalance,
     togglePeriod,
     goToNextWeek,
     goToPreviousWeek,

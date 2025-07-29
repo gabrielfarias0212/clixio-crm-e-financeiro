@@ -1,6 +1,5 @@
 
 import { ReactNode } from "react";
-import { useLocation } from "react-router-dom";
 import { Navbar } from "./Navbar";
 import { cn } from "@/lib/utils";
 
@@ -10,15 +9,10 @@ interface LayoutProps {
 }
 
 export default function Layout({ children, className }: LayoutProps) {
-  const location = useLocation();
-  
-  // Don't show navbar on landing and auth pages
-  const hideNavbar = location.pathname === "/landing" || location.pathname === "/auth";
-
   return (
     <div className="min-h-screen flex flex-col">
-      {!hideNavbar && <Navbar />}
-      <main className={cn("flex-1 pb-12", className, hideNavbar && "pt-0")}>
+      <Navbar />
+      <main className={cn("flex-1 pb-12", className)}>
         {children}
       </main>
       <footer className="py-4 border-t text-center text-sm text-gray-500">

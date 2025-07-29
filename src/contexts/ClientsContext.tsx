@@ -27,9 +27,14 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       
+      const startTime = performance.now();
       const data = await fetchClients();
+      const endTime = performance.now();
+      
+      console.log(`Clients loaded in ${Math.round(endTime - startTime)}ms`);
       setClients(data);
     } catch (err) {
+      console.error('Error fetching clients:', err);
       setError('Falha ao carregar os clientes. Por favor, tente novamente.');
       toast.error('Falha ao carregar os clientes');
     } finally {
@@ -39,19 +44,25 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
 
   const addClient = async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>) => {
     try {
+      console.log('Adding client via context:', clientData);
+      
       const newClient = await createClient(clientData);
       
       if (newClient) {
+        console.log('Client created successfully:', newClient);
+        
         // Invalidar cache e atualizar estado
         invalidateClientsCache();
         setClients(prev => [newClient, ...prev]);
         
         return newClient;
       } else {
+        console.error('Failed to add client, no client returned from API');
         toast.error('Falha ao adicionar cliente. Verifique os dados e tente novamente.');
         return null;
       }
     } catch (err) {
+      console.error('Error adding client:', err);
       toast.error('Falha ao adicionar cliente');
       return null;
     }
@@ -59,8 +70,12 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
 
   const updateClientData = async (id: string, updates: Partial<Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>>) => {
     try {
+      console.log('Updating client via context:', id, updates);
+      
       const updatedClient = await updateClient(id, updates);
       if (updatedClient) {
+        console.log('Client updated successfully:', updatedClient);
+        
         // Invalidar cache e atualizar estado local
         invalidateClientsCache();
         setClients(prev => 
@@ -72,6 +87,7 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
       }
       return null;
     } catch (err) {
+      console.error('Error updating client:', err);
       toast.error('Falha ao atualizar cliente');
       return null;
     }
@@ -92,6 +108,7 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
     } catch (err) {
+      console.error('Error deleting client:', err);
       toast.error('Falha ao excluir cliente');
       return false;
     }

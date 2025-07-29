@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { useClients } from "@/contexts/ClientsContext";
@@ -70,6 +69,11 @@ export default function CashFlowPage() {
     setSelectedYear(year);
   };
 
+  // Wrapper para addTransaction para compatibilidade de tipos
+  const handleAddTransaction = async (transaction: Omit<Transaction, 'id' | 'createdAt'>) => {
+    await addTransaction(transaction);
+  };
+
   useEffect(() => {
     document.title = "Financeiro | Wedding CRM";
   }, []);
@@ -116,7 +120,7 @@ export default function CashFlowPage() {
             onToggleAddTransaction={setShowAddTransaction}
             clients={clients}
             financialCategories={financialCategories}
-            onAddTransaction={addTransaction}
+            onAddTransaction={handleAddTransaction}
             filteredTransactions={filteredTransactions}
             onDeleteTransaction={deleteTransaction}
             allTransactions={transactions}

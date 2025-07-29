@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { UserMenu } from '@/components/UserMenu';
 import { 
@@ -16,7 +15,6 @@ import {
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useAuth();
   const location = useLocation();
 
   const navigation = [
@@ -24,7 +22,7 @@ export function Navbar() {
     { name: 'Clientes', href: '/clients', icon: Users },
     { name: 'Calendário', href: '/calendar', icon: Calendar },
     { name: 'Financeiro', href: '/cash-flow', icon: DollarSign },
-    { name: 'Pessoal', href: '/personal', icon: PieChart },
+    { name: 'Pessoal', href: '/personal-control', icon: PieChart },
   ];
 
   const isActive = (path: string) => {
@@ -35,7 +33,7 @@ export function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b">
+    <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">

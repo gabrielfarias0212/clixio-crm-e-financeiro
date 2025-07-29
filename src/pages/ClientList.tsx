@@ -85,101 +85,105 @@ export default function ClientList() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Erro ao carregar clientes</h2>
-          <p className="text-gray-600">{error}</p>
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Erro ao carregar clientes</h2>
+            <p className="text-gray-600">{error}</p>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      <Suspense fallback={<div className="h-16 bg-gray-100 rounded animate-pulse" />}>
-        <ClientHeader 
-          clients={allClientsFromContext}
-          deliveredWorksCount={stats.delivered}
-          onClearData={handleClearData}
-          clearingData={clearingData}
-        />
-      </Suspense>
+    <Layout>
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        <Suspense fallback={<div className="h-16 bg-gray-100 rounded animate-pulse" />}>
+          <ClientHeader 
+            clients={allClientsFromContext}
+            deliveredWorksCount={stats.delivered}
+            onClearData={handleClearData}
+            clearingData={clearingData}
+          />
+        </Suspense>
 
-      <Suspense fallback={<div className="h-12 bg-gray-100 rounded animate-pulse" />}>
-        <DeliveryAlert 
-          showAlert={stats.delivered > 0}
-          deliveredCount={stats.delivered}
-        />
-      </Suspense>
+        <Suspense fallback={<div className="h-12 bg-gray-100 rounded animate-pulse" />}>
+          <DeliveryAlert 
+            showAlert={stats.delivered > 0}
+            deliveredCount={stats.delivered}
+          />
+        </Suspense>
 
-      <Tabs defaultValue="list" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="list">Lista de Clientes</TabsTrigger>
-          <TabsTrigger value="funnel">Funil de Vendas</TabsTrigger>
-          <TabsTrigger value="kanban">Kanban</TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="list" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="list">Lista de Clientes</TabsTrigger>
+            <TabsTrigger value="funnel">Funil de Vendas</TabsTrigger>
+            <TabsTrigger value="kanban">Kanban</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="list" className="space-y-8">
-          <Suspense fallback={<div className="h-20 bg-gray-100 rounded animate-pulse" />}>
-            <ClientFilters
-              searchQuery={searchTerm}
-              setSearchQuery={(term) => handleFiltersChange(term, statusFilter)}
-              statusFilter={statusFilter}
-              setStatusFilter={(status) => handleFiltersChange(searchTerm, status)}
-              viewMode={viewMode === "cards" ? "card" : "list"}
-              setViewMode={(mode) => setViewMode(mode === "card" ? "cards" : "table")}
-              clearFilters={clearFilters}
-              hasActiveFilters={hasActiveFilters}
-            />
-          </Suspense>
-
-          {loading ? (
-            <ClientListSkeleton count={12} variant={viewMode} />
-          ) : allClients.length === 0 ? (
-            <EmptyClientState hasFilters={hasActiveFilters} />
-          ) : clients.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Nenhum cliente encontrado com os filtros aplicados.</p>
-            </div>
-          ) : (
-            <>
-              {viewMode === "cards" ? (
-                <OptimizedClientCards 
-                  clients={clients} 
-                  onDeleteSuccess={handleDeleteSuccess}
-                />
-              ) : (
-                <ClientTable clients={clients} />
-              )}
-              
-              <ClientPagination
-                currentPage={pagination.currentPage}
-                totalPages={pagination.totalPages}
-                totalItems={pagination.totalItems}
-                startIndex={pagination.startIndex}
-                endIndex={pagination.endIndex}
-                hasNextPage={pagination.hasNextPage}
-                hasPrevPage={pagination.hasPrevPage}
-                onPageChange={pagination.goToPage}
-                onNextPage={pagination.nextPage}
-                onPrevPage={pagination.prevPage}
+          <TabsContent value="list" className="space-y-8">
+            <Suspense fallback={<div className="h-20 bg-gray-100 rounded animate-pulse" />}>
+              <ClientFilters
+                searchQuery={searchTerm}
+                setSearchQuery={(term) => handleFiltersChange(term, statusFilter)}
+                statusFilter={statusFilter}
+                setStatusFilter={(status) => handleFiltersChange(searchTerm, status)}
+                viewMode={viewMode === "cards" ? "card" : "list"}
+                setViewMode={(mode) => setViewMode(mode === "card" ? "cards" : "table")}
+                clearFilters={clearFilters}
+                hasActiveFilters={hasActiveFilters}
               />
-            </>
-          )}
-        </TabsContent>
+            </Suspense>
 
-        <TabsContent value="funnel">
-          <Suspense fallback={<div className="h-64 bg-gray-100 rounded animate-pulse" />}>
-            <SalesFunnel clients={allClientsFromContext} />
-          </Suspense>
-        </TabsContent>
+            {loading ? (
+              <ClientListSkeleton count={12} variant={viewMode} />
+            ) : allClients.length === 0 ? (
+              <EmptyClientState hasFilters={hasActiveFilters} />
+            ) : clients.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500">Nenhum cliente encontrado com os filtros aplicados.</p>
+              </div>
+            ) : (
+              <>
+                {viewMode === "cards" ? (
+                  <OptimizedClientCards 
+                    clients={clients} 
+                    onDeleteSuccess={handleDeleteSuccess}
+                  />
+                ) : (
+                  <ClientTable clients={clients} />
+                )}
+                
+                <ClientPagination
+                  currentPage={pagination.currentPage}
+                  totalPages={pagination.totalPages}
+                  totalItems={pagination.totalItems}
+                  startIndex={pagination.startIndex}
+                  endIndex={pagination.endIndex}
+                  hasNextPage={pagination.hasNextPage}
+                  hasPrevPage={pagination.hasPrevPage}
+                  onPageChange={pagination.goToPage}
+                  onNextPage={pagination.nextPage}
+                  onPrevPage={pagination.prevPage}
+                />
+              </>
+            )}
+          </TabsContent>
 
-        <TabsContent value="kanban">
-          <Suspense fallback={<div className="h-64 bg-gray-100 rounded animate-pulse" />}>
-            <KanbanBoard clients={allClientsFromContext} />
-          </Suspense>
-        </TabsContent>
-      </Tabs>
-    </div>
+          <TabsContent value="funnel">
+            <Suspense fallback={<div className="h-64 bg-gray-100 rounded animate-pulse" />}>
+              <SalesFunnel clients={allClientsFromContext} />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="kanban">
+            <Suspense fallback={<div className="h-64 bg-gray-100 rounded animate-pulse" />}>
+              <KanbanBoard clients={allClientsFromContext} />
+            </Suspense>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </Layout>
   );
 }

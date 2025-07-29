@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,6 @@ import { Printer, Download, X, Globe, Phone, Mail, Facebook, Instagram } from "l
 import { Payment, Client } from "@/utils/types";
 import { PaymentReceiptTemplate } from "./PaymentReceiptTemplate";
 import { usePhotographerProfile } from "@/hooks/usePhotographerProfile";
-import { formatDate } from "@/utils/dates/formatters";
 
 interface PaymentReceiptDialogProps {
   open: boolean;
@@ -374,7 +372,7 @@ export function PaymentReceiptDialog({
                 ${client.weddingDate ? `
                 <div class="info-item">
                     <span class="info-label">Data do Evento:</span>
-                    <span class="info-value">${formatDate(client.weddingDate)}</span>
+                    <span class="info-value">${new Date(client.weddingDate).toLocaleDateString('pt-BR')}</span>
                 </div>
                 ` : ''}
                 ${client.eventLocation ? `

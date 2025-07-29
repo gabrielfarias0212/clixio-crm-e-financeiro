@@ -1,159 +1,192 @@
 
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ClientsProvider } from "@/contexts/ClientsContext";
-import { TransactionsProvider } from "@/contexts/TransactionsContext";
-import { AuthGuard } from "@/components/AuthGuard";
-import Layout from "@/components/Layout";
+
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
 import ClientList from "./pages/ClientList";
+import ClientDetail from "./pages/ClientDetail";
 import AddClient from "./pages/AddClient";
 import EditClient from "./pages/EditClient";
-import ClientDetail from "./pages/ClientDetail";
 import ImportClients from "./pages/ImportClients";
-import CashFlow from "./pages/CashFlow";
 import Calendar from "./pages/Calendar";
+import CashFlow from "./pages/CashFlow";
 import PersonalControl from "./pages/PersonalControl";
 import Budgets from "./pages/Budgets";
 import CreateBudget from "./pages/CreateBudget";
 import BudgetDetail from "./pages/BudgetDetail";
-import Contracts from "./pages/Contracts";
-import CreateContract from "./pages/CreateContract";
-import ContractDetail from "./pages/ContractDetail";
 import NotFound from "./pages/NotFound";
+import Auth from "./pages/Auth";
+import LandingPage from "./pages/LandingPage";
+import { AuthProvider } from "./contexts/AuthContext";
+import { AuthGuard } from "./components/AuthGuard";
+import { ClientsProvider } from "./contexts/ClientsContext";
+import { TransactionsProvider } from "./contexts/TransactionsContext";
+import { CalendarEventsProvider } from "./hooks/useCalendarEvents";
 
+// Create a client
 const queryClient = new QueryClient();
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
           <AuthProvider>
-            <ClientsProvider>
-              <TransactionsProvider>
-                <Routes>
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/" element={
+            <BrowserRouter>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                <Route path="/landing" element={<LandingPage />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route 
+                  path="/" 
+                  element={
                     <AuthGuard>
-                      <Layout>
-                        <Index />
-                      </Layout>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <CalendarEventsProvider>
+                            <Index />
+                          </CalendarEventsProvider>
+                        </TransactionsProvider>
+                      </ClientsProvider>
                     </AuthGuard>
-                  } />
-                  <Route path="/clients" element={
+                  } 
+                />
+                <Route 
+                  path="/clients" 
+                  element={
                     <AuthGuard>
-                      <Layout>
-                        <ClientList />
-                      </Layout>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <ClientList />
+                        </TransactionsProvider>
+                      </ClientsProvider>
                     </AuthGuard>
-                  } />
-                  <Route path="/clients/add" element={
+                  } 
+                />
+                <Route 
+                  path="/clients/:id" 
+                  element={
                     <AuthGuard>
-                      <Layout>
-                        <AddClient />
-                      </Layout>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <ClientDetail />
+                        </TransactionsProvider>
+                      </ClientsProvider>
                     </AuthGuard>
-                  } />
-                  <Route path="/clients/:id/edit" element={
+                  } 
+                />
+                <Route 
+                  path="/clients/add" 
+                  element={
                     <AuthGuard>
-                      <Layout>
-                        <EditClient />
-                      </Layout>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <CalendarEventsProvider>
+                            <AddClient />
+                          </CalendarEventsProvider>
+                        </TransactionsProvider>
+                      </ClientsProvider>
                     </AuthGuard>
-                  } />
-                  <Route path="/clients/:id" element={
+                  } 
+                />
+                <Route 
+                  path="/clients/import" 
+                  element={
                     <AuthGuard>
-                      <Layout>
-                        <ClientDetail />
-                      </Layout>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <ImportClients />
+                        </TransactionsProvider>
+                      </ClientsProvider>
                     </AuthGuard>
-                  } />
-                  <Route path="/clients/import" element={
+                  } 
+                />
+                <Route 
+                  path="/clients/:id/edit" 
+                  element={
                     <AuthGuard>
-                      <Layout>
-                        <ImportClients />
-                      </Layout>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <CalendarEventsProvider>
+                            <EditClient />
+                          </CalendarEventsProvider>
+                        </TransactionsProvider>
+                      </ClientsProvider>
                     </AuthGuard>
-                  } />
-                  <Route path="/cash-flow" element={
+                  } 
+                />
+                <Route 
+                  path="/calendar" 
+                  element={
                     <AuthGuard>
-                      <Layout>
-                        <CashFlow />
-                      </Layout>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <CalendarEventsProvider>
+                            <Calendar />
+                          </CalendarEventsProvider>
+                        </TransactionsProvider>
+                      </ClientsProvider>
                     </AuthGuard>
-                  } />
-                  <Route path="/calendar" element={
+                  } 
+                />
+                <Route 
+                  path="/cashflow" 
+                  element={
                     <AuthGuard>
-                      <Layout>
-                        <Calendar />
-                      </Layout>
+                      <ClientsProvider>
+                        <TransactionsProvider>
+                          <CashFlow />
+                        </TransactionsProvider>
+                      </ClientsProvider>
                     </AuthGuard>
-                  } />
-                  <Route path="/personal-control" element={
+                  } 
+                />
+                <Route 
+                  path="/personal-control" 
+                  element={
                     <AuthGuard>
-                      <Layout>
+                      <TransactionsProvider>
                         <PersonalControl />
-                      </Layout>
+                      </TransactionsProvider>
                     </AuthGuard>
-                  } />
-                  <Route path="/budgets" element={
+                  } 
+                />
+                <Route 
+                  path="/budgets" 
+                  element={
                     <AuthGuard>
-                      <Layout>
-                        <Budgets />
-                      </Layout>
+                      <Budgets />
                     </AuthGuard>
-                  } />
-                  <Route path="/budgets/new" element={
+                  } 
+                />
+                <Route 
+                  path="/budgets/new" 
+                  element={
                     <AuthGuard>
-                      <Layout>
-                        <CreateBudget />
-                      </Layout>
+                      <CreateBudget />
                     </AuthGuard>
-                  } />
-                  <Route path="/budgets/:id" element={
+                  } 
+                />
+                <Route 
+                  path="/budgets/:id" 
+                  element={
                     <AuthGuard>
-                      <Layout>
-                        <BudgetDetail />
-                      </Layout>
+                      <BudgetDetail />
                     </AuthGuard>
-                  } />
-                  <Route path="/contracts" element={
-                    <AuthGuard>
-                      <Layout>
-                        <Contracts />
-                      </Layout>
-                    </AuthGuard>
-                  } />
-                  <Route path="/contracts/new" element={
-                    <AuthGuard>
-                      <Layout>
-                        <CreateContract />
-                      </Layout>
-                    </AuthGuard>
-                  } />
-                  <Route path="/contracts/:id" element={
-                    <AuthGuard>
-                      <Layout>
-                        <ContractDetail />
-                      </Layout>
-                    </AuthGuard>
-                  } />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </TransactionsProvider>
-            </ClientsProvider>
+                  } 
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
           </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
   );
 }
 

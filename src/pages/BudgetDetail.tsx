@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Download, Edit, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { BudgetReceiptDialog } from '@/components/BudgetReceiptDialog';
 import { useBudget, useDeleteBudget } from '@/hooks/useBudgets';
 import { usePhotographerProfile } from '@/hooks/usePhotographerProfile';
 import { formatCurrency } from '@/utils/currency';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { downloadBudgetPDF } from '@/utils/pdfGenerator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,21 +44,21 @@ export default function BudgetDetail() {
   const { data: budget, isLoading } = useBudget(id!);
   const { profile } = usePhotographerProfile();
   const deleteBudget = useDeleteBudget();
-  const [showPrintDialog, setShowPrintDialog] = useState(false);
 
   const handleDownload = () => {
-    if (!budget) {
-      console.error('No budget data available for download');
-      toast.error('Orçamento não encontrado');
-      return;
+    if (budget) {
+      const companyInfo = profile ? {
+        company_name: profile.company_name,
+        name: profile.brand_name,
+        email: profile.email,
+        phone: profile.whatsapp,
+        website: profile.website,
+        avatar_url: profile.logo_url,
+      } : undefined;
+      
+      downloadBudgetPDF(budget, companyInfo);
+      toast.success('PDF baixado com sucesso!');
     }
-
-    console.log('=== BUDGET DETAIL PRINT ===');
-    console.log('Budget data:', budget);
-    console.log('Profile data:', profile);
-
-    toast.success('Abrindo visualização do orçamento...');
-    setShowPrintDialog(true);
   };
 
   const handleDelete = async () => {
@@ -139,22 +139,10 @@ export default function BudgetDetail() {
         </div>
         
         <div className="flex gap-2">
-          {showPrintDialog ? (
-            <BudgetReceiptDialog
-              budget={budget}
-              photographerProfile={profile}
-            >
-              <Button variant="outline" onClick={handleDownload}>
-                <Download className="h-4 w-4 mr-2" />
-                Baixar PDF
-              </Button>
-            </BudgetReceiptDialog>
-          ) : (
-            <Button variant="outline" onClick={handleDownload}>
-              <Download className="h-4 w-4 mr-2" />
-              Baixar PDF
-            </Button>
-          )}
+          <Button variant="outline" onClick={handleDownload}>
+            <Download className="h-4 w-4 mr-2" />
+            Baixar PDF
+          </Button>
           <Button variant="outline" onClick={() => navigate(`/budgets/${budget.id}/edit`)}>
             <Edit className="h-4 w-4 mr-2" />
             Editar
@@ -238,27 +226,23 @@ export default function BudgetDetail() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {budget.budget_items && budget.budget_items.length > 0 ? (
-                  budget.budget_items.map((item, index) => (
-                    <div key={item.id} className="flex justify-between items-start p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <h4 className="font-medium">{item.service_name}</h4>
-                        {item.description && (
-                          <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
-                        )}
-                        <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                          <span>Quantidade: {item.quantity}</span>
-                          <span>Preço unitário: {formatCurrency(item.unit_price)}</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">{formatCurrency(item.subtotal)}</p>
+                {budget.budget_items.map((item, index) => (
+                  <div key={item.id} className="flex justify-between items-start p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{item.service_name}</h4>
+                      {item.description && (
+                        <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+                      )}
+                      <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                        <span>Quantidade: {item.quantity}</span>
+                        <span>Preço unitário: {formatCurrency(item.unit_price)}</span>
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground">Nenhum item adicionado a este orçamento.</p>
-                )}
+                    <div className="text-right">
+                      <p className="font-medium">{formatCurrency(item.subtotal)}</p>
+                    </div>
+                  </div>
+                ))}
                 
                 <Separator />
                 

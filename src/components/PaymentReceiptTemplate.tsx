@@ -4,7 +4,6 @@ import { Payment, Client } from "@/utils/types";
 import { formatCurrency } from "@/utils/currency";
 import { Camera, Globe, Phone, Mail, Facebook, Instagram } from "lucide-react";
 import { PhotographerProfile } from "@/hooks/usePhotographerProfile";
-import { formatDate } from "@/utils/dates/formatters";
 
 interface PaymentReceiptTemplateProps {
   payment: Payment;
@@ -145,7 +144,7 @@ export function PaymentReceiptTemplate({
           {client.weddingDate && (
             <div className="flex justify-between py-2">
               <span className="font-medium text-gray-600">Data do Evento:</span>
-              <span className="text-gray-800">{formatDate(client.weddingDate)}</span>
+              <span className="text-gray-800">{new Date(client.weddingDate).toLocaleDateString('pt-BR')}</span>
             </div>
           )}
           {client.eventLocation && (

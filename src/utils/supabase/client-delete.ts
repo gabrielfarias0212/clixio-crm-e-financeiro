@@ -6,7 +6,18 @@ import { supabase } from '@/integrations/supabase/client';
  */
 export const deleteClient = async (id: string): Promise<boolean> => {
   try {
-    // First, delete the payments related to this client
+    // First, delete the calendar events related to this client
+    const { error: calendarEventsError } = await supabase
+      .from('calendar_events')
+      .delete()
+      .eq('client_id', id);
+
+    if (calendarEventsError) {
+      console.error('Error deleting client calendar events:', calendarEventsError);
+      return false;
+    }
+
+    // Delete the payments related to this client
     const { error: paymentsError } = await supabase
       .from('wedding_payments')
       .delete()
@@ -39,6 +50,7 @@ export const deleteClient = async (id: string): Promise<boolean> => {
       return false;
     }
 
+    console.log('Client deleted successfully:', id);
     return true;
   } catch (error) {
     console.error('Exception deleting client:', error);

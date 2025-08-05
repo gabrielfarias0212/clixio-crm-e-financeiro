@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useProfile } from "@/hooks/useProfile";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -74,7 +74,6 @@ const Navbar = () => {
                   <Skeleton className="w-8 h-8 rounded-full" />
                 ) : (
                   <Avatar className="w-8 h-8">
-                    <AvatarImage src={profile?.avatar_url} />
                     <AvatarFallback>{profile?.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                 )}

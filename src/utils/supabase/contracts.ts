@@ -15,7 +15,7 @@ export const fetchContractClauses = async (): Promise<ContractClause[]> => {
     throw error;
   }
 
-  return data || [];
+  return (data || []) as ContractClause[];
 };
 
 export const createContractClause = async (clause: Omit<ContractClause, 'id' | 'created_at' | 'updated_at'>): Promise<ContractClause> => {
@@ -30,7 +30,7 @@ export const createContractClause = async (clause: Omit<ContractClause, 'id' | '
     throw error;
   }
 
-  return data;
+  return data as ContractClause;
 };
 
 export const updateContractClause = async (id: string, updates: Partial<ContractClause>): Promise<ContractClause> => {
@@ -46,7 +46,7 @@ export const updateContractClause = async (id: string, updates: Partial<Contract
     throw error;
   }
 
-  return data;
+  return data as ContractClause;
 };
 
 export const deleteContractClause = async (id: string): Promise<void> => {
@@ -73,7 +73,12 @@ export const fetchContractTemplates = async (): Promise<ContractTemplate[]> => {
     throw error;
   }
 
-  return data || [];
+  return (data || []).map(template => ({
+    ...template,
+    category: template.category || 'custom',
+    clauses_order: template.clauses_order || [],
+    description: template.description || ''
+  })) as ContractTemplate[];
 };
 
 export const fetchContractTemplate = async (id: string): Promise<ContractTemplate | null> => {
@@ -88,7 +93,12 @@ export const fetchContractTemplate = async (id: string): Promise<ContractTemplat
     return null;
   }
 
-  return data;
+  return {
+    ...data,
+    category: data.category || 'custom',
+    clauses_order: data.clauses_order || [],
+    description: data.description || ''
+  } as ContractTemplate;
 };
 
 export const createContractTemplate = async (template: Omit<ContractTemplate, 'id' | 'created_at' | 'updated_at'>): Promise<ContractTemplate> => {
@@ -103,7 +113,12 @@ export const createContractTemplate = async (template: Omit<ContractTemplate, 'i
     throw error;
   }
 
-  return data;
+  return {
+    ...data,
+    category: data.category || 'custom',
+    clauses_order: data.clauses_order || [],
+    description: data.description || ''
+  } as ContractTemplate;
 };
 
 export const updateContractTemplate = async (id: string, updates: Partial<ContractTemplate>): Promise<ContractTemplate> => {
@@ -119,7 +134,12 @@ export const updateContractTemplate = async (id: string, updates: Partial<Contra
     throw error;
   }
 
-  return data;
+  return {
+    ...data,
+    category: data.category || 'custom',
+    clauses_order: data.clauses_order || [],
+    description: data.description || ''
+  } as ContractTemplate;
 };
 
 export const deleteContractTemplate = async (id: string): Promise<void> => {
@@ -147,7 +167,7 @@ export const fetchContractFields = async (templateId: string): Promise<ContractF
     throw error;
   }
 
-  return data || [];
+  return (data || []) as ContractField[];
 };
 
 export const createContractField = async (field: Omit<ContractField, 'id' | 'created_at'>): Promise<ContractField> => {
@@ -162,7 +182,7 @@ export const createContractField = async (field: Omit<ContractField, 'id' | 'cre
     throw error;
   }
 
-  return data;
+  return data as ContractField;
 };
 
 export const updateContractField = async (id: string, updates: Partial<ContractField>): Promise<ContractField> => {
@@ -178,7 +198,7 @@ export const updateContractField = async (id: string, updates: Partial<ContractF
     throw error;
   }
 
-  return data;
+  return data as ContractField;
 };
 
 export const deleteContractField = async (id: string): Promise<void> => {
@@ -205,7 +225,7 @@ export const fetchGeneratedContracts = async (): Promise<GeneratedContract[]> =>
     throw error;
   }
 
-  return data || [];
+  return (data || []) as GeneratedContract[];
 };
 
 export const createGeneratedContract = async (contract: Omit<GeneratedContract, 'id' | 'created_at' | 'updated_at'>): Promise<GeneratedContract> => {
@@ -220,7 +240,7 @@ export const createGeneratedContract = async (contract: Omit<GeneratedContract, 
     throw error;
   }
 
-  return data;
+  return data as GeneratedContract;
 };
 
 export const updateGeneratedContract = async (id: string, updates: Partial<GeneratedContract>): Promise<GeneratedContract> => {
@@ -236,7 +256,7 @@ export const updateGeneratedContract = async (id: string, updates: Partial<Gener
     throw error;
   }
 
-  return data;
+  return data as GeneratedContract;
 };
 
 // Contract Versions
@@ -252,7 +272,7 @@ export const createContractVersion = async (version: Omit<ContractVersion, 'id' 
     throw error;
   }
 
-  return data;
+  return data as ContractVersion;
 };
 
 export const fetchContractVersions = async (templateId: string): Promise<ContractVersion[]> => {
@@ -267,5 +287,5 @@ export const fetchContractVersions = async (templateId: string): Promise<Contrac
     throw error;
   }
 
-  return data || [];
+  return (data || []) as ContractVersion[];
 };

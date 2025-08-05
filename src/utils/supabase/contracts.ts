@@ -5,7 +5,7 @@ import { ContractClause, ContractTemplate, ContractField, ContractVersion, Gener
 // Contract Clauses
 export const fetchContractClauses = async (): Promise<ContractClause[]> => {
   const { data, error } = await supabase
-    .from('contract_clauses')
+    .from('contract_clauses' as any)
     .select('*')
     .order('category', { ascending: true })
     .order('title', { ascending: true });
@@ -20,7 +20,7 @@ export const fetchContractClauses = async (): Promise<ContractClause[]> => {
 
 export const createContractClause = async (clause: Omit<ContractClause, 'id' | 'created_at' | 'updated_at'>): Promise<ContractClause> => {
   const { data, error } = await supabase
-    .from('contract_clauses')
+    .from('contract_clauses' as any)
     .insert([clause])
     .select()
     .single();
@@ -35,7 +35,7 @@ export const createContractClause = async (clause: Omit<ContractClause, 'id' | '
 
 export const updateContractClause = async (id: string, updates: Partial<ContractClause>): Promise<ContractClause> => {
   const { data, error } = await supabase
-    .from('contract_clauses')
+    .from('contract_clauses' as any)
     .update(updates)
     .eq('id', id)
     .select()
@@ -51,7 +51,7 @@ export const updateContractClause = async (id: string, updates: Partial<Contract
 
 export const deleteContractClause = async (id: string): Promise<void> => {
   const { error } = await supabase
-    .from('contract_clauses')
+    .from('contract_clauses' as any)
     .delete()
     .eq('id', id);
 
@@ -137,7 +137,7 @@ export const deleteContractTemplate = async (id: string): Promise<void> => {
 // Contract Fields
 export const fetchContractFields = async (templateId: string): Promise<ContractField[]> => {
   const { data, error } = await supabase
-    .from('contract_fields')
+    .from('contract_fields' as any)
     .select('*')
     .eq('template_id', templateId)
     .order('order_position', { ascending: true });
@@ -152,7 +152,7 @@ export const fetchContractFields = async (templateId: string): Promise<ContractF
 
 export const createContractField = async (field: Omit<ContractField, 'id' | 'created_at'>): Promise<ContractField> => {
   const { data, error } = await supabase
-    .from('contract_fields')
+    .from('contract_fields' as any)
     .insert([field])
     .select()
     .single();
@@ -167,7 +167,7 @@ export const createContractField = async (field: Omit<ContractField, 'id' | 'cre
 
 export const updateContractField = async (id: string, updates: Partial<ContractField>): Promise<ContractField> => {
   const { data, error } = await supabase
-    .from('contract_fields')
+    .from('contract_fields' as any)
     .update(updates)
     .eq('id', id)
     .select()
@@ -183,7 +183,7 @@ export const updateContractField = async (id: string, updates: Partial<ContractF
 
 export const deleteContractField = async (id: string): Promise<void> => {
   const { error } = await supabase
-    .from('contract_fields')
+    .from('contract_fields' as any)
     .delete()
     .eq('id', id);
 
@@ -196,7 +196,7 @@ export const deleteContractField = async (id: string): Promise<void> => {
 // Generated Contracts
 export const fetchGeneratedContracts = async (): Promise<GeneratedContract[]> => {
   const { data, error } = await supabase
-    .from('generated_contracts')
+    .from('generated_contracts' as any)
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -210,7 +210,7 @@ export const fetchGeneratedContracts = async (): Promise<GeneratedContract[]> =>
 
 export const createGeneratedContract = async (contract: Omit<GeneratedContract, 'id' | 'created_at' | 'updated_at'>): Promise<GeneratedContract> => {
   const { data, error } = await supabase
-    .from('generated_contracts')
+    .from('generated_contracts' as any)
     .insert([contract])
     .select()
     .single();
@@ -225,7 +225,7 @@ export const createGeneratedContract = async (contract: Omit<GeneratedContract, 
 
 export const updateGeneratedContract = async (id: string, updates: Partial<GeneratedContract>): Promise<GeneratedContract> => {
   const { data, error } = await supabase
-    .from('generated_contracts')
+    .from('generated_contracts' as any)
     .update(updates)
     .eq('id', id)
     .select()
@@ -242,7 +242,7 @@ export const updateGeneratedContract = async (id: string, updates: Partial<Gener
 // Contract Versions
 export const createContractVersion = async (version: Omit<ContractVersion, 'id' | 'created_at'>): Promise<ContractVersion> => {
   const { data, error } = await supabase
-    .from('contract_versions')
+    .from('contract_versions' as any)
     .insert([version])
     .select()
     .single();
@@ -257,7 +257,7 @@ export const createContractVersion = async (version: Omit<ContractVersion, 'id' 
 
 export const fetchContractVersions = async (templateId: string): Promise<ContractVersion[]> => {
   const { data, error } = await supabase
-    .from('contract_versions')
+    .from('contract_versions' as any)
     .select('*')
     .eq('template_id', templateId)
     .order('version_number', { ascending: false });

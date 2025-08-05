@@ -1,30 +1,29 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ClientsProvider } from './contexts/ClientsContext';
 import { TransactionsProvider } from './contexts/TransactionsContext';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
-import AuthGuard from './components/AuthGuard';
+import { AuthGuard } from './components/AuthGuard';
 import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import Clients from './pages/Clients';
-import ClientDetails from './pages/ClientDetails';
-import Transactions from './pages/Transactions';
-import FinancialControl from './pages/FinancialControl';
+import Index from './pages/Index';
+import ClientList from './pages/ClientList';
+import ClientDetail from './pages/ClientDetail';
+import CashFlow from './pages/CashFlow';
 import PersonalControl from './pages/PersonalControl';
 import Budgets from './pages/Budgets';
 import Calendar from './pages/Calendar';
-import Suppliers from './pages/Suppliers';
-import Products from './pages/Products';
-import Settings from './pages/Settings';
-import ContractEditor from './pages/ContractEditor';
 import Contracts from './pages/Contracts';
+import ContractEditor from './pages/ContractEditor';
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
     <Router>
-      <QueryClient>
+      <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ClientsProvider>
             <TransactionsProvider>
@@ -33,35 +32,28 @@ function App() {
                 <Route path="/" element={
                   <AuthGuard>
                     <Layout>
-                      <Dashboard />
+                      <Index />
                     </Layout>
                   </AuthGuard>
                 } />
                 <Route path="/clients" element={
                   <AuthGuard>
                     <Layout>
-                      <Clients />
+                      <ClientList />
                     </Layout>
                   </AuthGuard>
                 } />
                 <Route path="/clients/:id" element={
                   <AuthGuard>
                     <Layout>
-                      <ClientDetails />
-                    </Layout>
-                  </AuthGuard>
-                } />
-                <Route path="/transactions" element={
-                  <AuthGuard>
-                    <Layout>
-                      <Transactions />
+                      <ClientDetail />
                     </Layout>
                   </AuthGuard>
                 } />
                 <Route path="/cash-flow" element={
                   <AuthGuard>
                     <Layout>
-                      <FinancialControl />
+                      <CashFlow />
                     </Layout>
                   </AuthGuard>
                 } />
@@ -86,27 +78,6 @@ function App() {
                     </Layout>
                   </AuthGuard>
                 } />
-                <Route path="/suppliers" element={
-                  <AuthGuard>
-                    <Layout>
-                      <Suppliers />
-                    </Layout>
-                  </AuthGuard>
-                } />
-                <Route path="/products" element={
-                  <AuthGuard>
-                    <Layout>
-                      <Products />
-                    </Layout>
-                  </AuthGuard>
-                } />
-                <Route path="/settings" element={
-                  <AuthGuard>
-                    <Layout>
-                      <Settings />
-                    </Layout>
-                  </AuthGuard>
-                } />
                 <Route path="/contracts" element={
                   <AuthGuard>
                     <Layout>
@@ -125,7 +96,7 @@ function App() {
             </TransactionsProvider>
           </ClientsProvider>
         </AuthProvider>
-      </QueryClient>
+      </QueryClientProvider>
     </Router>
   );
 }

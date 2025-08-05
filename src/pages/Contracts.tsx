@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Plus, FileText, Template, History } from 'lucide-react';
+import { Plus, FileText, BookOpen, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,7 +32,7 @@ export default function Contracts() {
           <Dialog open={clauseLibraryOpen} onOpenChange={setClauseLibraryOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
-                <Template className="w-4 h-4 mr-2" />
+                <BookOpen className="w-4 h-4 mr-2" />
                 Biblioteca de Cláusulas
               </Button>
             </DialogTrigger>
@@ -64,7 +64,7 @@ export default function Contracts() {
       <Tabs defaultValue="templates" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="templates" className="flex items-center gap-2">
-            <Template className="w-4 h-4" />
+            <BookOpen className="w-4 h-4" />
             Templates
           </TabsTrigger>
           <TabsTrigger value="contracts" className="flex items-center gap-2">

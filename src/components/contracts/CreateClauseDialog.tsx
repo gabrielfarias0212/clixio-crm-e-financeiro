@@ -155,7 +155,7 @@ export function CreateClauseDialog({ clause, onClose }: CreateClauseDialogProps)
           <p className="text-sm text-red-600">{errors.content.message}</p>
         )}
         <p className="text-xs text-gray-500">
-          Dica: Use {{nome_da_variavel}} para campos que serão preenchidos dinamicamente
+          Dica: Use duas chaves para campos que serão preenchidos dinamicamente, como: nome_da_variavel
         </p>
       </div>
 

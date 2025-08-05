@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Home,
@@ -23,14 +24,14 @@ import { useProfile } from "@/hooks/useProfile";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Navbar = () => {
-  const { logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { profile, isLoading } = useProfile();
+  const { data: profile, isLoading } = useProfile();
 
   const handleLogout = async () => {
-    await logout();
-    navigate("/login");
+    // Simple logout implementation
+    navigate("/auth");
   };
 
   const navigationItems = [
@@ -39,7 +40,7 @@ const Navbar = () => {
     { href: "/cash-flow", label: "Financeiro", icon: DollarSign },
     { href: "/personal-control", label: "Controle Pessoal", icon: Wallet },
     { href: "/budgets", label: "Orçamentos", icon: Calculator },
-    { href: "/contracts", label: "Contratos", icon: FileText }, // Nova entrada
+    { href: "/contracts", label: "Contratos", icon: FileText },
     { href: "/calendar", label: "Calendário", icon: Calendar },
   ];
 

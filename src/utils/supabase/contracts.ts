@@ -1,65 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ContractClause, ContractTemplate, ContractField, ContractVersion, GeneratedContract } from '@/types/contract';
-
-// Contract Clauses
-export const fetchContractClauses = async (): Promise<ContractClause[]> => {
-  const { data, error } = await supabase
-    .from('contract_clauses' as any)
-    .select('*')
-    .order('category', { ascending: true })
-    .order('title', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching contract clauses:', error);
-    throw error;
-  }
-
-  return (data || []) as ContractClause[];
-};
-
-export const createContractClause = async (clause: Omit<ContractClause, 'id' | 'created_at' | 'updated_at'>): Promise<ContractClause> => {
-  const { data, error } = await supabase
-    .from('contract_clauses' as any)
-    .insert([clause])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error creating contract clause:', error);
-    throw error;
-  }
-
-  return data as ContractClause;
-};
-
-export const updateContractClause = async (id: string, updates: Partial<ContractClause>): Promise<ContractClause> => {
-  const { data, error } = await supabase
-    .from('contract_clauses' as any)
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error updating contract clause:', error);
-    throw error;
-  }
-
-  return data as ContractClause;
-};
-
-export const deleteContractClause = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from('contract_clauses' as any)
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    console.error('Error deleting contract clause:', error);
-    throw error;
-  }
-};
+import { ContractTemplate, GeneratedContract } from '@/types/contract';
 
 // Contract Templates
 export const fetchContractTemplates = async (): Promise<ContractTemplate[]> => {
@@ -75,9 +16,9 @@ export const fetchContractTemplates = async (): Promise<ContractTemplate[]> => {
 
   return (data || []).map(template => ({
     ...template,
-    category: template.category || 'custom',
-    clauses_order: template.clauses_order || [],
-    description: template.description || ''
+    category: 'custom', // Default category since it doesn't exist in DB
+    clauses_order: [], // Default empty array since it doesn't exist in DB
+    description: template.name // Use name as description fallback
   })) as ContractTemplate[];
 };
 
@@ -95,16 +36,24 @@ export const fetchContractTemplate = async (id: string): Promise<ContractTemplat
 
   return {
     ...data,
-    category: data.category || 'custom',
-    clauses_order: data.clauses_order || [],
-    description: data.description || ''
+    category: 'custom', // Default category since it doesn't exist in DB
+    clauses_order: [], // Default empty array since it doesn't exist in DB
+    description: data.name // Use name as description fallback
   } as ContractTemplate;
 };
 
 export const createContractTemplate = async (template: Omit<ContractTemplate, 'id' | 'created_at' | 'updated_at'>): Promise<ContractTemplate> => {
+  // Only include fields that exist in the actual database schema
+  const templateData = {
+    user_id: template.user_id,
+    name: template.name,
+    content: template.content,
+    is_default: template.is_default
+  };
+
   const { data, error } = await supabase
     .from('contract_templates')
-    .insert([template])
+    .insert([templateData])
     .select()
     .single();
 
@@ -115,16 +64,22 @@ export const createContractTemplate = async (template: Omit<ContractTemplate, 'i
 
   return {
     ...data,
-    category: data.category || 'custom',
-    clauses_order: data.clauses_order || [],
-    description: data.description || ''
+    category: 'custom', // Default category
+    clauses_order: [], // Default empty array
+    description: data.name // Use name as description
   } as ContractTemplate;
 };
 
 export const updateContractTemplate = async (id: string, updates: Partial<ContractTemplate>): Promise<ContractTemplate> => {
+  // Only include fields that exist in the actual database schema
+  const allowedUpdates: any = {};
+  if (updates.name !== undefined) allowedUpdates.name = updates.name;
+  if (updates.content !== undefined) allowedUpdates.content = updates.content;
+  if (updates.is_default !== undefined) allowedUpdates.is_default = updates.is_default;
+
   const { data, error } = await supabase
     .from('contract_templates')
-    .update(updates)
+    .update(allowedUpdates)
     .eq('id', id)
     .select()
     .single();
@@ -136,9 +91,9 @@ export const updateContractTemplate = async (id: string, updates: Partial<Contra
 
   return {
     ...data,
-    category: data.category || 'custom',
-    clauses_order: data.clauses_order || [],
-    description: data.description || ''
+    category: 'custom', // Default category
+    clauses_order: [], // Default empty array
+    description: data.name // Use name as description
   } as ContractTemplate;
 };
 
@@ -154,69 +109,10 @@ export const deleteContractTemplate = async (id: string): Promise<void> => {
   }
 };
 
-// Contract Fields
-export const fetchContractFields = async (templateId: string): Promise<ContractField[]> => {
-  const { data, error } = await supabase
-    .from('contract_fields' as any)
-    .select('*')
-    .eq('template_id', templateId)
-    .order('order_position', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching contract fields:', error);
-    throw error;
-  }
-
-  return (data || []) as ContractField[];
-};
-
-export const createContractField = async (field: Omit<ContractField, 'id' | 'created_at'>): Promise<ContractField> => {
-  const { data, error } = await supabase
-    .from('contract_fields' as any)
-    .insert([field])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error creating contract field:', error);
-    throw error;
-  }
-
-  return data as ContractField;
-};
-
-export const updateContractField = async (id: string, updates: Partial<ContractField>): Promise<ContractField> => {
-  const { data, error } = await supabase
-    .from('contract_fields' as any)
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error updating contract field:', error);
-    throw error;
-  }
-
-  return data as ContractField;
-};
-
-export const deleteContractField = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from('contract_fields' as any)
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    console.error('Error deleting contract field:', error);
-    throw error;
-  }
-};
-
-// Generated Contracts
+// Generated Contracts - using contracts table that exists
 export const fetchGeneratedContracts = async (): Promise<GeneratedContract[]> => {
   const { data, error } = await supabase
-    .from('generated_contracts' as any)
+    .from('contracts')
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -225,13 +121,45 @@ export const fetchGeneratedContracts = async (): Promise<GeneratedContract[]> =>
     throw error;
   }
 
-  return (data || []) as GeneratedContract[];
+  // Transform contracts table data to match GeneratedContract interface
+  return (data || []).map(contract => ({
+    id: contract.id,
+    user_id: contract.user_id || '',
+    template_id: contract.template_id || '',
+    client_id: contract.client_id || '',
+    title: contract.title || contract.contract_type || 'Untitled Contract',
+    filled_data: {
+      bride_name: contract.nome_noiva,
+      groom_name: contract.nome_noivo,
+      event_date: contract.data_evento,
+      amount: contract.amount
+    },
+    pdf_url: contract.pdf_url,
+    status: contract.status as 'draft' | 'completed' | 'sent' | 'signed' || 'draft',
+    created_at: contract.created_at || new Date().toISOString(),
+    updated_at: contract.created_at || new Date().toISOString()
+  })) as GeneratedContract[];
 };
 
 export const createGeneratedContract = async (contract: Omit<GeneratedContract, 'id' | 'created_at' | 'updated_at'>): Promise<GeneratedContract> => {
+  // Transform GeneratedContract data to contracts table format
+  const contractData = {
+    user_id: contract.user_id,
+    template_id: contract.template_id,
+    client_id: contract.client_id,
+    title: contract.title,
+    status: contract.status,
+    pdf_url: contract.pdf_url,
+    contract_type: 'wedding',
+    amount: contract.filled_data.amount || 0,
+    nome_noiva: contract.filled_data.bride_name || '',
+    nome_noivo: contract.filled_data.groom_name || '',
+    data_evento: contract.filled_data.event_date || new Date().toISOString().split('T')[0]
+  };
+
   const { data, error } = await supabase
-    .from('generated_contracts' as any)
-    .insert([contract])
+    .from('contracts')
+    .insert([contractData])
     .select()
     .single();
 
@@ -240,13 +168,42 @@ export const createGeneratedContract = async (contract: Omit<GeneratedContract, 
     throw error;
   }
 
-  return data as GeneratedContract;
+  // Transform back to GeneratedContract format
+  return {
+    id: data.id,
+    user_id: data.user_id || '',
+    template_id: data.template_id || '',
+    client_id: data.client_id || '',
+    title: data.title || 'Untitled Contract',
+    filled_data: {
+      bride_name: data.nome_noiva,
+      groom_name: data.nome_noivo,
+      event_date: data.data_evento,
+      amount: data.amount
+    },
+    pdf_url: data.pdf_url,
+    status: data.status as 'draft' | 'completed' | 'sent' | 'signed' || 'draft',
+    created_at: data.created_at || new Date().toISOString(),
+    updated_at: data.created_at || new Date().toISOString()
+  } as GeneratedContract;
 };
 
 export const updateGeneratedContract = async (id: string, updates: Partial<GeneratedContract>): Promise<GeneratedContract> => {
+  // Transform updates to contracts table format
+  const contractUpdates: any = {};
+  if (updates.title !== undefined) contractUpdates.title = updates.title;
+  if (updates.status !== undefined) contractUpdates.status = updates.status;
+  if (updates.pdf_url !== undefined) contractUpdates.pdf_url = updates.pdf_url;
+  if (updates.filled_data) {
+    if (updates.filled_data.bride_name !== undefined) contractUpdates.nome_noiva = updates.filled_data.bride_name;
+    if (updates.filled_data.groom_name !== undefined) contractUpdates.nome_noivo = updates.filled_data.groom_name;
+    if (updates.filled_data.event_date !== undefined) contractUpdates.data_evento = updates.filled_data.event_date;
+    if (updates.filled_data.amount !== undefined) contractUpdates.amount = updates.filled_data.amount;
+  }
+
   const { data, error } = await supabase
-    .from('generated_contracts' as any)
-    .update(updates)
+    .from('contracts')
+    .update(contractUpdates)
     .eq('id', id)
     .select()
     .single();
@@ -256,36 +213,73 @@ export const updateGeneratedContract = async (id: string, updates: Partial<Gener
     throw error;
   }
 
-  return data as GeneratedContract;
+  // Transform back to GeneratedContract format
+  return {
+    id: data.id,
+    user_id: data.user_id || '',
+    template_id: data.template_id || '',
+    client_id: data.client_id || '',
+    title: data.title || 'Untitled Contract',
+    filled_data: {
+      bride_name: data.nome_noiva,
+      groom_name: data.nome_noivo,
+      event_date: data.data_evento,
+      amount: data.amount
+    },
+    pdf_url: data.pdf_url,
+    status: data.status as 'draft' | 'completed' | 'sent' | 'signed' || 'draft',
+    created_at: data.created_at || new Date().toISOString(),
+    updated_at: data.created_at || new Date().toISOString()
+  } as GeneratedContract;
 };
 
-// Contract Versions
-export const createContractVersion = async (version: Omit<ContractVersion, 'id' | 'created_at'>): Promise<ContractVersion> => {
-  const { data, error } = await supabase
-    .from('contract_versions' as any)
-    .insert([version])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error creating contract version:', error);
-    throw error;
-  }
-
-  return data as ContractVersion;
+// Placeholder functions for non-existing tables - these will return empty arrays/null
+export const fetchContractClauses = async () => {
+  console.warn('Contract clauses table does not exist in database');
+  return [];
 };
 
-export const fetchContractVersions = async (templateId: string): Promise<ContractVersion[]> => {
-  const { data, error } = await supabase
-    .from('contract_versions' as any)
-    .select('*')
-    .eq('template_id', templateId)
-    .order('version_number', { ascending: false });
+export const createContractClause = async (clause: any) => {
+  console.warn('Contract clauses table does not exist in database');
+  throw new Error('Contract clauses feature not available');
+};
 
-  if (error) {
-    console.error('Error fetching contract versions:', error);
-    throw error;
-  }
+export const updateContractClause = async (id: string, updates: any) => {
+  console.warn('Contract clauses table does not exist in database');
+  throw new Error('Contract clauses feature not available');
+};
 
-  return (data || []) as ContractVersion[];
+export const deleteContractClause = async (id: string) => {
+  console.warn('Contract clauses table does not exist in database');
+  throw new Error('Contract clauses feature not available');
+};
+
+export const fetchContractFields = async (templateId: string) => {
+  console.warn('Contract fields table does not exist in database');
+  return [];
+};
+
+export const createContractField = async (field: any) => {
+  console.warn('Contract fields table does not exist in database');
+  throw new Error('Contract fields feature not available');
+};
+
+export const updateContractField = async (id: string, updates: any) => {
+  console.warn('Contract fields table does not exist in database');
+  throw new Error('Contract fields feature not available');
+};
+
+export const deleteContractField = async (id: string) => {
+  console.warn('Contract fields table does not exist in database');
+  throw new Error('Contract fields feature not available');
+};
+
+export const createContractVersion = async (version: any) => {
+  console.warn('Contract versions table does not exist in database');
+  throw new Error('Contract versions feature not available');
+};
+
+export const fetchContractVersions = async (templateId: string) => {
+  console.warn('Contract versions table does not exist in database');
+  return [];
 };

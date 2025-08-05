@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateContractTemplate } from '@/hooks/useContracts';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CreateTemplateDialogProps {
   onClose: () => void;
@@ -21,12 +22,18 @@ interface FormData {
 
 export function CreateTemplateDialog({ onClose }: CreateTemplateDialogProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const createTemplate = useCreateContractTemplate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>();
 
   const onSubmit = async (data: FormData) => {
+    if (!user?.id) {
+      console.error('User not authenticated');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const template = await createTemplate.mutateAsync({
@@ -36,7 +43,7 @@ export function CreateTemplateDialog({ onClose }: CreateTemplateDialogProps) {
         content: '',
         is_default: false,
         clauses_order: [],
-        user_id: '', // Will be set by RLS
+        user_id: user.id,
       });
       
       onClose();

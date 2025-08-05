@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 import { useCreateContractClause, useUpdateContractClause } from '@/hooks/useContracts';
 import { ContractClause } from '@/types/contract';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CreateClauseDialogProps {
   clause?: ContractClause;
@@ -25,6 +26,7 @@ interface FormData {
 }
 
 export function CreateClauseDialog({ clause, onClose }: CreateClauseDialogProps) {
+  const { user } = useAuth();
   const [variables, setVariables] = useState<string[]>(clause?.variables || []);
   const [newVariable, setNewVariable] = useState('');
 
@@ -69,6 +71,11 @@ export function CreateClauseDialog({ clause, onClose }: CreateClauseDialogProps)
   };
 
   const onSubmit = async (data: FormData) => {
+    if (!user?.id) {
+      console.error('User not authenticated');
+      return;
+    }
+
     try {
       const clauseData = {
         title: data.title,
@@ -77,10 +84,10 @@ export function CreateClauseDialog({ clause, onClose }: CreateClauseDialogProps)
         variables,
         is_required: data.is_required,
         is_default: false,
-        user_id: '', // Will be set by RLS
+        user_id: user.id,
       };
 
-      if (isEditing) {
+      if (isEditing && clause) {
         await updateClause.mutateAsync({
           id: clause.id,
           updates: clauseData,

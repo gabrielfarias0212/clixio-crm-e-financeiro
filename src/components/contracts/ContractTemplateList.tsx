@@ -46,12 +46,6 @@ export function ContractTemplateList({ templates, loading }: ContractTemplateLis
         <p className="mt-1 text-sm text-gray-500">
           Comece criando seu primeiro template de contrato.
         </p>
-        <div className="mt-6">
-          <Button onClick={() => navigate('/contracts/new')}>
-            <FileText className="w-4 h-4 mr-2" />
-            Criar Template
-          </Button>
-        </div>
       </div>
     );
   }
@@ -94,14 +88,6 @@ export function ContractTemplateList({ templates, loading }: ContractTemplateLis
                 >
                   <Edit className="w-4 h-4 mr-1" />
                   Editar
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(`/contracts/preview/${template.id}`)}
-                >
-                  <Eye className="w-4 h-4" />
                 </Button>
                 
                 <Button

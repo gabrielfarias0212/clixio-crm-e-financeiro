@@ -142,7 +142,7 @@ export const fetchGeneratedContracts = async (): Promise<GeneratedContract[]> =>
 };
 
 export const createGeneratedContract = async (contract: Omit<GeneratedContract, 'id' | 'created_at' | 'updated_at'>): Promise<GeneratedContract> => {
-  // Transform GeneratedContract data to contracts table format
+  // Transform GeneratedContract data to contracts table format with all required fields
   const contractData = {
     user_id: contract.user_id,
     template_id: contract.template_id,
@@ -154,7 +154,19 @@ export const createGeneratedContract = async (contract: Omit<GeneratedContract, 
     amount: contract.filled_data.amount || 0,
     nome_noiva: contract.filled_data.bride_name || '',
     nome_noivo: contract.filled_data.groom_name || '',
-    data_evento: contract.filled_data.event_date || new Date().toISOString().split('T')[0]
+    data_evento: contract.filled_data.event_date || new Date().toISOString().split('T')[0],
+    // Required fields with default values
+    cidade_evento: 'A definir',
+    local_cerimonia: 'A definir',
+    endereco: 'A definir',
+    cpf_noiva: '000.000.000-00',
+    cpf_noivo: '000.000.000-00',
+    rg_noiva: '00.000.000-0',
+    rg_noivo: '00.000.000-0',
+    qtd_convidados: 100,
+    horario_cerimonia: '18:00:00',
+    telefone_contato: '(00) 00000-0000',
+    email_contato: 'contato@email.com'
   };
 
   const { data, error } = await supabase

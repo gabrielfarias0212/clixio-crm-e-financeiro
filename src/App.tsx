@@ -17,6 +17,7 @@ import Budgets from './pages/Budgets';
 import Calendar from './pages/Calendar';
 import Contracts from './pages/Contracts';
 import ContractEditor from './pages/ContractEditor';
+import Auth from './pages/Auth';
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ function App() {
             <TransactionsProvider>
               <Toaster />
               <Routes>
+                <Route path="/auth" element={<Auth />} />
                 <Route path="/" element={
                   <AuthGuard>
                     <Layout>

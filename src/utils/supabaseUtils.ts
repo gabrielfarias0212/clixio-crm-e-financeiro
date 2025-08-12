@@ -75,24 +75,3 @@ export {
 
 // Export types separately to fix isolatedModules issue
 export type { PersonalCategory } from './supabase/personal-categories';
-
-export {
-  fetchContractClauses,
-  createContractClause,
-  updateContractClause,
-  deleteContractClause,
-  fetchContractTemplates,
-  fetchContractTemplate,
-  createContractTemplate,
-  updateContractTemplate,
-  deleteContractTemplate,
-  fetchContractFields,
-  createContractField,
-  updateContractField,
-  deleteContractField,
-  fetchGeneratedContracts,
-  createGeneratedContract,
-  updateGeneratedContract,
-  createContractVersion,
-  fetchContractVersions
-} from './supabase/contracts';

@@ -346,50 +346,11 @@ export type Database = {
           },
         ]
       }
-      contract_templates: {
-        Row: {
-          content: string
-          created_at: string | null
-          id: string
-          is_default: boolean | null
-          name: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          content: string
-          created_at?: string | null
-          id?: string
-          is_default?: boolean | null
-          name: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          content?: string
-          created_at?: string | null
-          id?: string
-          is_default?: boolean | null
-          name?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       contracts: {
         Row: {
           amount: number | null
-          bride_rg: string | null
           cidade_evento: string
           client_id: string | null
-          contract_content: string | null
-          contract_type: string | null
-          contractor_address: string | null
-          contractor_city: string | null
-          contractor_email: string | null
-          contractor_name: string | null
-          contractor_phone: string | null
-          couple_names: string | null
           cpf_noiva: string
           cpf_noivo: string
           created_at: string | null
@@ -397,19 +358,12 @@ export type Database = {
           description: string | null
           email_contato: string
           endereco: string
-          event_address: string | null
-          event_city: string | null
-          groom_rg: string | null
-          guest_count: number | null
           horario_cerimonia: string
           id: string
-          included_items: string | null
           local_cerimonia: string
           nome_noiva: string
           nome_noivo: string
           package_id: string | null
-          package_name: string | null
-          payment_method: string | null
           pdf_url: string | null
           photographer_id: string | null
           qtd_convidados: number
@@ -419,24 +373,13 @@ export type Database = {
           signed_date: string | null
           status: string | null
           telefone_contato: string
-          template_id: string | null
           terms_and_conditions: string | null
           title: string | null
-          user_id: string | null
         }
         Insert: {
           amount?: number | null
-          bride_rg?: string | null
           cidade_evento: string
           client_id?: string | null
-          contract_content?: string | null
-          contract_type?: string | null
-          contractor_address?: string | null
-          contractor_city?: string | null
-          contractor_email?: string | null
-          contractor_name?: string | null
-          contractor_phone?: string | null
-          couple_names?: string | null
           cpf_noiva: string
           cpf_noivo: string
           created_at?: string | null
@@ -444,19 +387,12 @@ export type Database = {
           description?: string | null
           email_contato: string
           endereco: string
-          event_address?: string | null
-          event_city?: string | null
-          groom_rg?: string | null
-          guest_count?: number | null
           horario_cerimonia: string
           id?: string
-          included_items?: string | null
           local_cerimonia: string
           nome_noiva: string
           nome_noivo: string
           package_id?: string | null
-          package_name?: string | null
-          payment_method?: string | null
           pdf_url?: string | null
           photographer_id?: string | null
           qtd_convidados: number
@@ -466,24 +402,13 @@ export type Database = {
           signed_date?: string | null
           status?: string | null
           telefone_contato: string
-          template_id?: string | null
           terms_and_conditions?: string | null
           title?: string | null
-          user_id?: string | null
         }
         Update: {
           amount?: number | null
-          bride_rg?: string | null
           cidade_evento?: string
           client_id?: string | null
-          contract_content?: string | null
-          contract_type?: string | null
-          contractor_address?: string | null
-          contractor_city?: string | null
-          contractor_email?: string | null
-          contractor_name?: string | null
-          contractor_phone?: string | null
-          couple_names?: string | null
           cpf_noiva?: string
           cpf_noivo?: string
           created_at?: string | null
@@ -491,19 +416,12 @@ export type Database = {
           description?: string | null
           email_contato?: string
           endereco?: string
-          event_address?: string | null
-          event_city?: string | null
-          groom_rg?: string | null
-          guest_count?: number | null
           horario_cerimonia?: string
           id?: string
-          included_items?: string | null
           local_cerimonia?: string
           nome_noiva?: string
           nome_noivo?: string
           package_id?: string | null
-          package_name?: string | null
-          payment_method?: string | null
           pdf_url?: string | null
           photographer_id?: string | null
           qtd_convidados?: number
@@ -513,10 +431,8 @@ export type Database = {
           signed_date?: string | null
           status?: string | null
           telefone_contato?: string
-          template_id?: string | null
           terms_and_conditions?: string | null
           title?: string | null
-          user_id?: string | null
         }
         Relationships: [
           {
@@ -538,13 +454,6 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contracts_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "contract_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -680,39 +589,6 @@ export type Database = {
           id?: string
           name?: string
           type?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      personal_fixed_expenses: {
-        Row: {
-          amount: number
-          created_at: string
-          description: string
-          due_date: number | null
-          id: string
-          is_active: boolean
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          description: string
-          due_date?: number | null
-          id?: string
-          is_active?: boolean
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          description?: string
-          due_date?: number | null
-          id?: string
-          is_active?: boolean
-          updated_at?: string
           user_id?: string
         }
         Relationships: []

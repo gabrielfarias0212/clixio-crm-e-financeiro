@@ -1,100 +1,107 @@
 
-import React from "react";
-import {
-  Home,
-  Users,
-  Calendar,
-  DollarSign,
-  Wallet,
-  Calculator,
-  FileText,
-} from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useProfile } from "@/hooks/useProfile";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { BarChart, CalendarDays, Menu, Users, X, DollarSign, User, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { UserMenu } from "./UserMenu";
 
-const Navbar = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+export function Navbar() {
+  const isMobile = useIsMobile();
+  const [open, setOpen] = useState(false);
   const location = useLocation();
-  const { data: profile, isLoading } = useProfile();
 
-  const handleLogout = async () => {
-    // Simple logout implementation
-    navigate("/auth");
+  // Close mobile menu when location changes
+  useEffect(() => {
+    if (open) setOpen(false);
+  }, [location.pathname]);
+
+  // Close mobile menu when escape key is pressed
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, []);
+
+  const isActive = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
-  const navigationItems = [
-    { href: "/", label: "Dashboard", icon: Home },
-    { href: "/clients", label: "Clientes", icon: Users },
-    { href: "/cash-flow", label: "Financeiro", icon: DollarSign },
-    { href: "/personal-control", label: "Controle Pessoal", icon: Wallet },
-    { href: "/budgets", label: "Orçamentos", icon: Calculator },
-    { href: "/contracts", label: "Contratos", icon: FileText },
-    { href: "/calendar", label: "Calendário", icon: Calendar },
-  ];
+  const handleToggle = () => {
+    setOpen(!open);
+  };
 
-  return (
-    <div className="bg-white border-b shadow-sm">
-      <div className="container mx-auto py-4 px-6 flex items-center justify-between">
-        <Link to="/" className="text-2xl font-semibold text-gray-800">
-          EasyLancer
-        </Link>
+  const closeMenu = () => {
+    setOpen(false);
+  };
 
-        <div className="flex items-center space-x-4">
-          <nav className="hidden md:flex items-center space-x-4">
-            {navigationItems.map((item) => (
-              <Link
-                key={item.label}
-                to={item.href}
-                className={`text-gray-600 hover:text-gray-800 transition-colors duration-200 flex items-center space-x-2 ${
-                  location.pathname === item.href ? "font-semibold" : ""
-                }`}
-              >
-                <item.icon className="w-4 h-4" />
-                <span>{item.label}</span>
-              </Link>
-            ))}
-          </nav>
+  // List of nav items
+  const navItems = [{
+    name: "Dashboard",
+    path: "/",
+    icon: <BarChart className="h-5 w-5" />
+  }, {
+    name: "Clientes",
+    path: "/clients",
+    icon: <Users className="h-5 w-5" />
+  }, {
+    name: "Calendário",
+    path: "/calendar",
+    icon: <CalendarDays className="h-5 w-5" />
+  }, {
+    name: "Financeiro",
+    path: "/cashflow",
+    icon: <DollarSign className="h-5 w-5" />
+  }, {
+    name: "Orçamentos",
+    path: "/budgets",
+    icon: <FileText className="h-5 w-5" />
+  }, {
+    name: "Controle Pessoal",
+    path: "/personal-control",
+    icon: <User className="h-5 w-5" />
+  }];
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="outline-none focus:outline-none rounded-full overflow-hidden border-2 border-transparent hover:border-gray-300 transition-border duration-200">
-                {isLoading ? (
-                  <Skeleton className="w-8 h-8 rounded-full" />
-                ) : (
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback>{profile?.name?.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                )}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 mr-2">
-              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => navigate("/profile")}>
-                Meu Perfil
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/company")}>
-                Empresa
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>Sair</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+  return <header className="sticky top-0 z-30 bg-white shadow-sm">
+      <div className="container mx-auto px-4 flex h-16 items-center justify-between">
+        <div className="flex items-center">
+          <Link to="/" className="flex items-center">
+            <img 
+              src="/lovable-uploads/6b189f38-b0b9-4a2e-8ff2-6635102e14a9.png" 
+              alt="GCLIXIO Logo" 
+              className="h-auto w-[180px]"
+            />
+          </Link>
         </div>
-      </div>
-    </div>
-  );
-};
 
-export default Navbar;
+        {/* Desktop nav */}
+        {!isMobile && <nav className="ml-10 flex gap-6">
+            {navItems.map(item => <Link key={item.path} to={item.path} className={cn("flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary", isActive(item.path) ? "text-primary" : "text-gray-600")}>
+                {item.icon}
+                {item.name}
+              </Link>)}
+          </nav>}
+
+        {/* User Menu */}
+        <UserMenu />
+
+        {/* Mobile menu button */}
+        {isMobile && <Button variant="ghost" className="flex items-center gap-1.5 text-sm font-medium" onClick={handleToggle}>
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>}
+      </div>
+
+      {/* Mobile navigation */}
+      {isMobile && open && <div className="fixed inset-0 top-16 z-20 bg-white">
+          <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
+            {navItems.map(item => <Link key={item.path} to={item.path} className={cn("flex items-center gap-2 px-3 py-4 text-base rounded-md font-medium transition-colors hover:bg-gray-100", isActive(item.path) ? "bg-gray-100 text-primary" : "text-gray-600")} onClick={closeMenu}>
+                {item.icon}
+                {item.name}
+              </Link>)}
+          </nav>
+        </div>}
+    </header>;
+}

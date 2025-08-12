@@ -84,8 +84,13 @@ export function EditTransactionDialog({
   };
 
   // Get available categories based on transaction type
+  // Fixed the type comparison - map transaction types to financial category types
+  const getFinancialCategoryType = (transactionType: TransactionType) => {
+    return transactionType === "entrada" ? "receita" : "despesa";
+  };
+
   const availableCategories = financialCategories.filter(cat => 
-    cat.type === (formData.type === "entrada" ? "receita" : "despesa")
+    cat.type === getFinancialCategoryType(formData.type)
   );
 
   // Check if this is a pro-labore transaction
@@ -201,7 +206,7 @@ export function EditTransactionDialog({
                     <SelectValue placeholder="Selecione um cliente (opcional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum cliente</SelectItem>
+                    <SelectItem value="no-client">Nenhum cliente</SelectItem>
                     {clients.map((client) => (
                       <SelectItem key={client.id} value={client.id}>
                         {client.name}

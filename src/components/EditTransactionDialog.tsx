@@ -84,14 +84,14 @@ export function EditTransactionDialog({
   };
 
   // Get available categories based on transaction type
-  // Fixed the type comparison - map transaction types to financial category types
-  const getFinancialCategoryType = (transactionType: TransactionType) => {
-    return transactionType === "entrada" ? "receita" : "despesa";
-  };
-
-  const availableCategories = financialCategories.filter(cat => 
-    cat.type === getFinancialCategoryType(formData.type)
-  );
+  // Map transaction types to financial category types correctly
+  const availableCategories = financialCategories.filter(cat => {
+    if (formData.type === "entrada") {
+      return cat.type === "entrada";
+    } else {
+      return cat.type === "saída";
+    }
+  });
 
   // Check if this is a pro-labore transaction
   const isProLaboreTransaction = transaction?.category === 'pró-labore';

@@ -34,75 +34,117 @@ function App() {
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <ClientsProvider>
-              <TransactionsProvider>
-                <Routes>
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/dashboard" element={
-                    <AuthGuard>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/dashboard" element={
+                <AuthGuard>
+                  <ClientsProvider>
+                    <TransactionsProvider>
                       <Index />
-                    </AuthGuard>
-                  } />
-                  <Route path="/clients" element={
-                    <AuthGuard>
+                    </TransactionsProvider>
+                  </ClientsProvider>
+                </AuthGuard>
+              } />
+              <Route path="/clients" element={
+                <AuthGuard>
+                  <ClientsProvider>
+                    <TransactionsProvider>
                       <ClientList />
-                    </AuthGuard>
-                  } />
-                  <Route path="/clients/add" element={
-                    <AuthGuard>
+                    </TransactionsProvider>
+                  </ClientsProvider>
+                </AuthGuard>
+              } />
+              <Route path="/clients/add" element={
+                <AuthGuard>
+                  <ClientsProvider>
+                    <TransactionsProvider>
                       <AddClient />
-                    </AuthGuard>
-                  } />
-                  <Route path="/clients/import" element={
-                    <AuthGuard>
+                    </TransactionsProvider>
+                  </ClientsProvider>
+                </AuthGuard>
+              } />
+              <Route path="/clients/import" element={
+                <AuthGuard>
+                  <ClientsProvider>
+                    <TransactionsProvider>
                       <ImportClients />
-                    </AuthGuard>
-                  } />
-                  <Route path="/clients/:id" element={
-                    <AuthGuard>
+                    </TransactionsProvider>
+                  </ClientsProvider>
+                </AuthGuard>
+              } />
+              <Route path="/clients/:id" element={
+                <AuthGuard>
+                  <ClientsProvider>
+                    <TransactionsProvider>
                       <ClientDetail />
-                    </AuthGuard>
-                  } />
-                  <Route path="/clients/:id/edit" element={
-                    <AuthGuard>
+                    </TransactionsProvider>
+                  </ClientsProvider>
+                </AuthGuard>
+              } />
+              <Route path="/clients/:id/edit" element={
+                <AuthGuard>
+                  <ClientsProvider>
+                    <TransactionsProvider>
                       <EditClient />
-                    </AuthGuard>
-                  } />
-                  <Route path="/cashflow" element={
-                    <AuthGuard>
+                    </TransactionsProvider>
+                  </ClientsProvider>
+                </AuthGuard>
+              } />
+              <Route path="/cashflow" element={
+                <AuthGuard>
+                  <ClientsProvider>
+                    <TransactionsProvider>
                       <CashFlow />
-                    </AuthGuard>
-                  } />
-                  <Route path="/calendar" element={
-                    <AuthGuard>
+                    </TransactionsProvider>
+                  </ClientsProvider>
+                </AuthGuard>
+              } />
+              <Route path="/calendar" element={
+                <AuthGuard>
+                  <ClientsProvider>
+                    <TransactionsProvider>
                       <Calendar />
-                    </AuthGuard>
-                  } />
-                  <Route path="/budgets" element={
-                    <AuthGuard>
+                    </TransactionsProvider>
+                  </ClientsProvider>
+                </AuthGuard>
+              } />
+              <Route path="/budgets" element={
+                <AuthGuard>
+                  <ClientsProvider>
+                    <TransactionsProvider>
                       <Budgets />
-                    </AuthGuard>
-                  } />
-                  <Route path="/budgets/create" element={
-                    <AuthGuard>
+                    </TransactionsProvider>
+                  </ClientsProvider>
+                </AuthGuard>
+              } />
+              <Route path="/budgets/create" element={
+                <AuthGuard>
+                  <ClientsProvider>
+                    <TransactionsProvider>
                       <CreateBudget />
-                    </AuthGuard>
-                  } />
-                  <Route path="/budgets/:id" element={
-                    <AuthGuard>
+                    </TransactionsProvider>
+                  </ClientsProvider>
+                </AuthGuard>
+              } />
+              <Route path="/budgets/:id" element={
+                <AuthGuard>
+                  <ClientsProvider>
+                    <TransactionsProvider>
                       <BudgetDetail />
-                    </AuthGuard>
-                  } />
-                  <Route path="/personal" element={
-                    <AuthGuard>
-                      <PersonalControl />
-                    </AuthGuard>
-                  } />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </TransactionsProvider>
-            </ClientsProvider>
+                    </TransactionsProvider>
+                  </ClientsProvider>
+                </AuthGuard>
+              } />
+              <Route path="/personal" element={
+                <AuthGuard>
+                  <TransactionsProvider>
+                    <PersonalControl />
+                  </TransactionsProvider>
+                </AuthGuard>
+              } />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ClientsProvider } from "@/contexts/ClientsContext";
 import { TransactionsProvider } from "@/contexts/TransactionsContext";
+import { CalendarEventsProvider } from "@/hooks/useCalendarEvents";
 import { AuthGuard } from "@/components/AuthGuard";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -41,7 +42,9 @@ function App() {
                 <AuthGuard>
                   <ClientsProvider>
                     <TransactionsProvider>
-                      <Index />
+                      <CalendarEventsProvider>
+                        <Index />
+                      </CalendarEventsProvider>
                     </TransactionsProvider>
                   </ClientsProvider>
                 </AuthGuard>
@@ -50,7 +53,9 @@ function App() {
                 <AuthGuard>
                   <ClientsProvider>
                     <TransactionsProvider>
-                      <ClientList />
+                      <CalendarEventsProvider>
+                        <ClientList />
+                      </CalendarEventsProvider>
                     </TransactionsProvider>
                   </ClientsProvider>
                 </AuthGuard>
@@ -59,7 +64,9 @@ function App() {
                 <AuthGuard>
                   <ClientsProvider>
                     <TransactionsProvider>
-                      <AddClient />
+                      <CalendarEventsProvider>
+                        <AddClient />
+                      </CalendarEventsProvider>
                     </TransactionsProvider>
                   </ClientsProvider>
                 </AuthGuard>
@@ -68,7 +75,9 @@ function App() {
                 <AuthGuard>
                   <ClientsProvider>
                     <TransactionsProvider>
-                      <ImportClients />
+                      <CalendarEventsProvider>
+                        <ImportClients />
+                      </CalendarEventsProvider>
                     </TransactionsProvider>
                   </ClientsProvider>
                 </AuthGuard>
@@ -77,7 +86,9 @@ function App() {
                 <AuthGuard>
                   <ClientsProvider>
                     <TransactionsProvider>
-                      <ClientDetail />
+                      <CalendarEventsProvider>
+                        <ClientDetail />
+                      </CalendarEventsProvider>
                     </TransactionsProvider>
                   </ClientsProvider>
                 </AuthGuard>
@@ -86,7 +97,9 @@ function App() {
                 <AuthGuard>
                   <ClientsProvider>
                     <TransactionsProvider>
-                      <EditClient />
+                      <CalendarEventsProvider>
+                        <EditClient />
+                      </CalendarEventsProvider>
                     </TransactionsProvider>
                   </ClientsProvider>
                 </AuthGuard>
@@ -95,7 +108,9 @@ function App() {
                 <AuthGuard>
                   <ClientsProvider>
                     <TransactionsProvider>
-                      <CashFlow />
+                      <CalendarEventsProvider>
+                        <CashFlow />
+                      </CalendarEventsProvider>
                     </TransactionsProvider>
                   </ClientsProvider>
                 </AuthGuard>
@@ -104,7 +119,9 @@ function App() {
                 <AuthGuard>
                   <ClientsProvider>
                     <TransactionsProvider>
-                      <Calendar />
+                      <CalendarEventsProvider>
+                        <Calendar />
+                      </CalendarEventsProvider>
                     </TransactionsProvider>
                   </ClientsProvider>
                 </AuthGuard>
@@ -113,7 +130,9 @@ function App() {
                 <AuthGuard>
                   <ClientsProvider>
                     <TransactionsProvider>
-                      <Budgets />
+                      <CalendarEventsProvider>
+                        <Budgets />
+                      </CalendarEventsProvider>
                     </TransactionsProvider>
                   </ClientsProvider>
                 </AuthGuard>
@@ -122,7 +141,9 @@ function App() {
                 <AuthGuard>
                   <ClientsProvider>
                     <TransactionsProvider>
-                      <CreateBudget />
+                      <CalendarEventsProvider>
+                        <CreateBudget />
+                      </CalendarEventsProvider>
                     </TransactionsProvider>
                   </ClientsProvider>
                 </AuthGuard>
@@ -131,7 +152,9 @@ function App() {
                 <AuthGuard>
                   <ClientsProvider>
                     <TransactionsProvider>
-                      <BudgetDetail />
+                      <CalendarEventsProvider>
+                        <BudgetDetail />
+                      </CalendarEventsProvider>
                     </TransactionsProvider>
                   </ClientsProvider>
                 </AuthGuard>

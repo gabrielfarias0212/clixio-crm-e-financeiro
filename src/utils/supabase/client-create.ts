@@ -50,7 +50,7 @@ export const createClient = async (clientData: Omit<Client, 'id' | 'createdAt' |
         pre_wedding_scheduled: !!clientData.preWeddingDate,
         contract_link: clientData.contractLink,
         has_pre_wedding: clientData.hasPreWedding,
-        sales_funnel_stage: salesFunnelStage, // New field
+        sales_funnel_stage: salesFunnelStage,
         notes: clientData.notes,
       })
       .select()
@@ -62,6 +62,14 @@ export const createClient = async (clientData: Omit<Client, 'id' | 'createdAt' |
     }
 
     const newClient = parseClient(data);
+
+    // Get current user for calendar events
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.error('No authenticated user found');
+      return newClient; // Return client even if calendar events fail
+    }
 
     // Create calendar event for wedding if date is provided
     if (newClient.weddingDate && newClient.eventCategory) {

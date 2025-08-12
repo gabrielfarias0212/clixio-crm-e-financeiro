@@ -37,7 +37,8 @@ export const createCalendarEvent = async (eventData: CalendarEvent): Promise<Cal
         color: eventData.color,
         client_id: eventData.clientId || null,
         is_edited: eventData.isEdited || false,
-        is_delivered: eventData.isDelivered || false
+        is_delivered: eventData.isDelivered || false,
+        user_id: (await supabase.auth.getUser()).data.user?.id // Add user_id for RLS
       })
       .select()
       .single();
@@ -69,6 +70,7 @@ export const updateCalendarEvent = async (eventData: CalendarEvent): Promise<Cal
         client_id: eventData.clientId || null,
         is_edited: eventData.isEdited || false,
         is_delivered: eventData.isDelivered || false
+        // Note: user_id should not be updated, only set on creation
       })
       .eq('id', eventData.id)
       .select()

@@ -72,6 +72,71 @@ export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'c
   }
 };
 
+export const updateTransaction = async (
+  id: string, 
+  updates: Partial<Omit<Transaction, 'id' | 'createdAt'>>
+): Promise<Transaction | null> => {
+  try {
+    // First, fetch the current transaction to check if it's a pro-labore transaction
+    const { data: currentTransaction, error: fetchError } = await supabase
+      .from('wedding_transactions')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching transaction for update:', fetchError);
+      return null;
+    }
+
+    // Prevent editing pro-labore transactions
+    if (currentTransaction.category === 'pró-labore') {
+      console.error('Cannot edit pro-labore transactions');
+      return null;
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+    if (updates.amount !== undefined) updateData.amount = updates.amount;
+    if (updates.date !== undefined) updateData.date = formatDateForSupabase(updates.date);
+    if (updates.type !== undefined) updateData.type = updates.type;
+    if (updates.category !== undefined) updateData.category = updates.category;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.clientId !== undefined) updateData.client_id = updates.clientId;
+    if (updates.paymentId !== undefined) updateData.payment_id = updates.paymentId;
+
+    // Update the transaction
+    const { data, error } = await supabase
+      .from('wedding_transactions')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating transaction:', error);
+      return null;
+    }
+
+    // If this transaction is linked to a payment, update the payment record too
+    if (currentTransaction.payment_id && (updates.amount !== undefined || updates.date !== undefined)) {
+      await supabase
+        .from('wedding_payments')
+        .update({
+          amount: updates.amount || currentTransaction.amount,
+          date: updates.date ? formatDateForSupabase(updates.date) : currentTransaction.date,
+          notes: updates.description || currentTransaction.description
+        })
+        .eq('id', currentTransaction.payment_id);
+    }
+
+    return data ? parseTransaction(data) : null;
+  } catch (error) {
+    console.error('Exception updating transaction:', error);
+    return null;
+  }
+};
+
 export const deleteTransaction = async (id: string): Promise<void> => {
   const { error } = await supabase
     .from('wedding_transactions')

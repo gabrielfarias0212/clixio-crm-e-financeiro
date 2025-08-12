@@ -5,6 +5,7 @@ import { AddTransactionForm } from "@/components/AddTransactionForm";
 import { TransactionList } from "@/components/TransactionList";
 import { TransactionCategoryCharts } from "@/components/TransactionCategoryCharts";
 import { TransactionFilters } from "@/components/financial/TransactionFilters";
+import { EditTransactionDialog } from "@/components/EditTransactionDialog";
 import { PeriodType, WeekInfo } from "@/hooks/useWeeklyFilter";
 
 interface TransactionSectionProps {
@@ -13,6 +14,7 @@ interface TransactionSectionProps {
   clients: Client[];
   financialCategories: FinancialCategory[];
   onAddTransaction: (transaction: Omit<Transaction, "id" | "createdAt">) => Promise<void>;
+  onUpdateTransaction: (id: string, updates: Partial<Omit<Transaction, "id" | "createdAt">>) => Promise<Transaction | null>;
   filteredTransactions: Transaction[];
   onDeleteTransaction: (transactionId: string) => Promise<void>;
   allTransactions: Transaction[];
@@ -33,6 +35,7 @@ export function TransactionSection({
   clients,
   financialCategories,
   onAddTransaction,
+  onUpdateTransaction,
   filteredTransactions,
   onDeleteTransaction,
   allTransactions,
@@ -46,6 +49,16 @@ export function TransactionSection({
   selectedYear,
   onMonthChange
 }: TransactionSectionProps) {
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+
+  const handleEditTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditingTransaction(null);
+  };
+
   return (
     <div className="space-y-6">
       {showAddTransaction && (
@@ -75,6 +88,17 @@ export function TransactionSection({
         transactions={filteredTransactions} 
         clients={clients} 
         onDeleteTransaction={onDeleteTransaction}
+        onEditTransaction={handleEditTransaction}
+      />
+
+      {/* Dialog de edição */}
+      <EditTransactionDialog
+        transaction={editingTransaction}
+        isOpen={!!editingTransaction}
+        onClose={handleCloseEditDialog}
+        onUpdate={onUpdateTransaction}
+        clients={clients}
+        financialCategories={financialCategories}
       />
 
       {/* Gráficos de categorias sincronizados com o período principal */}

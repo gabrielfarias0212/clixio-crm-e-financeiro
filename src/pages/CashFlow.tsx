@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo, Suspense } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
@@ -20,7 +21,7 @@ import { TransactionImporter } from "@/components/transaction-importer/Transacti
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const { clients, refreshClients } = useClients();
-  const { transactions, addTransaction, deleteTransaction, refreshTransactions } = useTransactions();
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, refreshTransactions } = useTransactions();
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
   const [weeklyBalance, setWeeklyBalance] = useState(0);
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
@@ -110,6 +111,22 @@ export default function CashFlow() {
     }
   };
 
+  const handleUpdateTransaction = async (id: string, updates: Partial<Omit<Transaction, "id" | "createdAt">>) => {
+    const result = await updateTransaction(id, updates);
+    
+    if (result) {
+      // If this transaction is linked to a client, refresh clients data
+      if (result.clientId) {
+        refreshClients();
+      }
+      
+      // Refresh transactions to update all views
+      refreshTransactions();
+    }
+    
+    return result;
+  };
+
   const handleDeleteTransaction = async (transactionId: string) => {
     await deleteTransaction(transactionId);
     
@@ -196,6 +213,7 @@ export default function CashFlow() {
                 clients={clients}
                 financialCategories={categories}
                 onAddTransaction={handleAddTransaction}
+                onUpdateTransaction={handleUpdateTransaction}
                 filteredTransactions={filteredTransactions}
                 onDeleteTransaction={handleDeleteTransaction}
                 allTransactions={transactions}

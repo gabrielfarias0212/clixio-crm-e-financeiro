@@ -1,3 +1,4 @@
+
 // This file re-exports all Supabase utility functions from the modular files
 // to maintain backwards compatibility with existing code
 
@@ -32,6 +33,7 @@ export {
   parseTransaction, 
   fetchTransactions, 
   createTransaction, 
+  updateTransaction,
   deleteTransaction 
 } from './supabase/transactions';
 

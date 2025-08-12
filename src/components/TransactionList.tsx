@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { ArrowDownCircle, ArrowUpCircle, ExternalLink, Trash2, Wallet } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ExternalLink, Trash2, Wallet, Edit } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,9 +24,10 @@ interface TransactionListProps {
   transactions: Transaction[];
   clients: Client[];
   onDeleteTransaction?: (transactionId: string) => Promise<void>;
+  onEditTransaction?: (transaction: Transaction) => void;
 }
 
-export function TransactionList({ transactions, clients, onDeleteTransaction }: TransactionListProps) {
+export function TransactionList({ transactions, clients, onDeleteTransaction, onEditTransaction }: TransactionListProps) {
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -95,7 +96,7 @@ export function TransactionList({ transactions, clients, onDeleteTransaction }: 
                   <TableHead>Categoria</TableHead>
                   <TableHead className="hidden sm:table-cell">Cliente</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
-                  <TableHead className="w-[50px]">Ações</TableHead>
+                  <TableHead className="w-[100px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -155,22 +156,38 @@ export function TransactionList({ transactions, clients, onDeleteTransaction }: 
                       }).format(transaction.amount)}
                     </TableCell>
                     <TableCell>
-                      {/* Não permitir exclusão manual de transações de pró-labore */}
-                      {!isProLaboreTransaction(transaction) && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-gray-500 hover:text-red-600"
-                          onClick={() => setTransactionToDelete(transaction.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {isProLaboreTransaction(transaction) && (
-                        <div className="h-8 w-8 flex items-center justify-center">
-                          <Wallet className="h-3 w-3 text-gray-400" />
-                        </div>
-                      )}
+                      <div className="flex gap-1">
+                        {/* Botão de edição - não mostrar para transações de pró-labore */}
+                        {!isProLaboreTransaction(transaction) && onEditTransaction && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-500 hover:text-blue-600"
+                            onClick={() => onEditTransaction(transaction)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
+                        {/* Botão de exclusão - não mostrar para transações de pró-labore */}
+                        {!isProLaboreTransaction(transaction) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-500 hover:text-red-600"
+                            onClick={() => setTransactionToDelete(transaction.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
+                        {/* Ícone para transações de pró-labore */}
+                        {isProLaboreTransaction(transaction) && (
+                          <div className="h-8 w-8 flex items-center justify-center">
+                            <Wallet className="h-3 w-3 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

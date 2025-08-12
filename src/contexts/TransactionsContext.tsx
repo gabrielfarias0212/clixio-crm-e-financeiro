@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Transaction } from '@/utils/types';
-import { fetchTransactions, createTransaction, deleteTransaction as removeTransactionFromDB } from '@/utils/supabaseUtils';
+import { fetchTransactions, createTransaction, updateTransaction, deleteTransaction as removeTransactionFromDB } from '@/utils/supabaseUtils';
 import { toast } from 'sonner';
 
 type TransactionsContextType = {
@@ -10,6 +10,7 @@ type TransactionsContextType = {
   error: string | null;
   refreshTransactions: () => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt'>) => Promise<Transaction | null>;
+  updateTransaction: (id: string, updates: Partial<Omit<Transaction, 'id' | 'createdAt'>>) => Promise<Transaction | null>;
   deleteTransaction: (transactionId: string) => Promise<void>;
 };
 
@@ -95,6 +96,32 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
+  const updateTransactionLocal = useCallback(async (
+    id: string, 
+    updates: Partial<Omit<Transaction, 'id' | 'createdAt'>>
+  ) => {
+    try {
+      const updatedTransaction = await updateTransaction(id, updates);
+      if (updatedTransaction) {
+        // Update otimístico - atualizar imediatamente na lista local
+        setTransactions(prev => 
+          prev.map(t => t.id === id ? updatedTransaction : t)
+        );
+        toast.success('Transação atualizada com sucesso!');
+        
+        // Invalidar cache de outros hooks
+        lastRefreshTime.current = 0;
+        
+        return updatedTransaction;
+      }
+      return null;
+    } catch (err) {
+      console.error('Erro ao atualizar transação:', err);
+      toast.error('Falha ao atualizar transação');
+      return null;
+    }
+  }, []);
+
   const deleteTransaction = useCallback(async (transactionId: string) => {
     try {
       // Capturar estado atual antes do update otimístico
@@ -139,6 +166,7 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
         error,
         refreshTransactions,
         addTransaction,
+        updateTransaction: updateTransactionLocal,
         deleteTransaction
       }}
     >

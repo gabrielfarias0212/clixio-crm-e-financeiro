@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Camera, Save, X } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarUploader } from "./profile/AvatarUploader";
 
 interface ProfileData {
   company_name: string;
@@ -124,6 +126,8 @@ export function ProfileConfigDialog({ open, onOpenChange }: ProfileConfigDialogP
     setProfileData(prev => ({ ...prev, [field]: value }));
   };
 
+  const initial = (profileData.brand_name || profileData.company_name || 'U').slice(0,1).toUpperCase();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -137,102 +141,124 @@ export function ProfileConfigDialog({ open, onOpenChange }: ProfileConfigDialogP
           </Button>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="company_name">Nome da Empresa</Label>
-              <Input
-                id="company_name"
-                value={profileData.company_name}
-                onChange={(e) => handleInputChange('company_name', e.target.value)}
-                placeholder="Digite o nome da sua empresa"
-              />
+        <div className="space-y-6 py-2">
+          {/* Foto de perfil */}
+          {user && (
+            <div className="rounded-md border p-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={profileData.logo_url || undefined} alt="Foto de perfil" />
+                  <AvatarFallback>{initial}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <AvatarUploader
+                    userId={user.id}
+                    value={profileData.logo_url}
+                    onChange={(url) => handleInputChange('logo_url', url)}
+                    label="Foto de perfil"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-6 py-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="company_name">Nome da Empresa</Label>
+                <Input
+                  id="company_name"
+                  value={profileData.company_name}
+                  onChange={(e) => handleInputChange('company_name', e.target.value)}
+                  placeholder="Digite o nome da sua empresa"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="brand_name">Nome/Marca</Label>
+                <Input
+                  id="brand_name"
+                  value={profileData.brand_name}
+                  onChange={(e) => handleInputChange('brand_name', e.target.value)}
+                  placeholder="Nome da marca ou profissional"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="brand_name">Nome/Marca</Label>
+              <Label htmlFor="logo_url">URL da Logo/Foto</Label>
               <Input
-                id="brand_name"
-                value={profileData.brand_name}
-                onChange={(e) => handleInputChange('brand_name', e.target.value)}
-                placeholder="Nome da marca ou profissional"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="logo_url">URL da Logo/Foto</Label>
-            <Input
-              id="logo_url"
-              value={profileData.logo_url}
-              onChange={(e) => handleInputChange('logo_url', e.target.value)}
-              placeholder="https://exemplo.com/logo.png"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="whatsapp">WhatsApp</Label>
-              <Input
-                id="whatsapp"
-                value={profileData.whatsapp}
-                onChange={(e) => handleInputChange('whatsapp', e.target.value)}
-                placeholder="(11) 99999-9999"
+                id="logo_url"
+                value={profileData.logo_url}
+                onChange={(e) => handleInputChange('logo_url', e.target.value)}
+                placeholder="https://exemplo.com/logo.png"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                value={profileData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="contato@empresa.com"
-              />
-            </div>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp">WhatsApp</Label>
+                <Input
+                  id="whatsapp"
+                  value={profileData.whatsapp}
+                  onChange={(e) => handleInputChange('whatsapp', e.target.value)}
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="website">Website</Label>
-            <Input
-              id="website"
-              value={profileData.website}
-              onChange={(e) => handleInputChange('website', e.target.value)}
-              placeholder="https://www.meusite.com"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="facebook">Facebook</Label>
-              <Input
-                id="facebook"
-                value={profileData.facebook}
-                onChange={(e) => handleInputChange('facebook', e.target.value)}
-                placeholder="@meuperfil"
-              />
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={profileData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="contato@empresa.com"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="instagram">Instagram</Label>
+              <Label htmlFor="website">Website</Label>
               <Input
-                id="instagram"
-                value={profileData.instagram}
-                onChange={(e) => handleInputChange('instagram', e.target.value)}
-                placeholder="@meuperfil"
+                id="website"
+                value={profileData.website}
+                onChange={(e) => handleInputChange('website', e.target.value)}
+                placeholder="https://www.meusite.com"
               />
             </div>
-          </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={loading}>
-              <Save className="h-4 w-4 mr-2" />
-              {loading ? 'Salvando...' : 'Salvar Perfil'}
-            </Button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="facebook">Facebook</Label>
+                <Input
+                  id="facebook"
+                  value={profileData.facebook}
+                  onChange={(e) => handleInputChange('facebook', e.target.value)}
+                  placeholder="@meuperfil"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="instagram">Instagram</Label>
+                <Input
+                  id="instagram"
+                  value={profileData.instagram}
+                  onChange={(e) => handleInputChange('instagram', e.target.value)}
+                  placeholder="@meuperfil"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSave} disabled={loading}>
+                <Save className="h-4 w-4 mr-2" />
+                {loading ? 'Salvando...' : 'Salvar Perfil'}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

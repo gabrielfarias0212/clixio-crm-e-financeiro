@@ -9,14 +9,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Settings, IdCard } from "lucide-react";
+import { LogOut, User, Settings, IdCard, FileText } from "lucide-react";
 import { ProfileConfigDialog } from "./ProfileConfigDialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileViewDialog } from "./profile/ProfileViewDialog";
 import { usePhotographerProfile } from "@/hooks/usePhotographerProfile";
+import { useNavigate } from "react-router-dom";
 
 export function UserMenu() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [profileViewOpen, setProfileViewOpen] = useState(false);
@@ -47,6 +49,11 @@ export function UserMenu() {
   const handleProfileView = () => {
     setIsOpen(false);
     setProfileViewOpen(true);
+  };
+
+  const handleBudgets = () => {
+    setIsOpen(false);
+    navigate('/budgets');
   };
   
   return (
@@ -80,6 +87,11 @@ export function UserMenu() {
           <DropdownMenuItem className="cursor-pointer" onClick={handleProfileConfig}>
             <Settings className="mr-2 h-4 w-4" />
             <span>Configurar Perfil</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="cursor-pointer" onClick={handleBudgets}>
+            <FileText className="mr-2 h-4 w-4" />
+            <span>Gerador de Orçamento</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut}>

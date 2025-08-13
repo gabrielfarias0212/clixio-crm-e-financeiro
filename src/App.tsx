@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ClientsProvider } from "@/contexts/ClientsContext";
-import { TransactionsProvider } from "@/contexts/TransactionsContext";
+import { TransactionsProvider } from "@/contexts/TransactionsProvider";
 import { CalendarEventsProvider } from "@/hooks/useCalendarEvents";
 import { AuthGuard } from "@/components/AuthGuard";
 import Index from "./pages/Index";
@@ -23,7 +23,6 @@ import BudgetDetail from "./pages/BudgetDetail";
 import PersonalControl from "./pages/PersonalControl";
 import ImportClients from "./pages/ImportClients";
 import NotFound from "./pages/NotFound";
-import LandingPage from "./pages/LandingPage";
 
 const queryClient = new QueryClient();
 
@@ -36,7 +35,17 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <Routes>
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={
+                <AuthGuard>
+                  <ClientsProvider>
+                    <TransactionsProvider>
+                      <CalendarEventsProvider>
+                        <Index />
+                      </CalendarEventsProvider>
+                    </TransactionsProvider>
+                  </ClientsProvider>
+                </AuthGuard>
+              } />
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={
                 <AuthGuard>

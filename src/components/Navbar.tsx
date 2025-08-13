@@ -27,6 +27,10 @@ export function Navbar() {
   }, []);
 
   const isActive = (path: string) => {
+    // Dashboard is active for both "/" and "/dashboard" routes
+    if (path === "/dashboard") {
+      return location.pathname === "/" || location.pathname === "/dashboard";
+    }
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
@@ -41,7 +45,7 @@ export function Navbar() {
   // List of nav items
   const navItems = [{
     name: "Dashboard",
-    path: "/",
+    path: "/dashboard",
     icon: <BarChart className="h-5 w-5" />
   }, {
     name: "Clientes",
@@ -61,14 +65,14 @@ export function Navbar() {
     icon: <FileText className="h-5 w-5" />
   }, {
     name: "Controle Pessoal",
-    path: "/personal-control",
+    path: "/personal",
     icon: <User className="h-5 w-5" />
   }];
 
   return <header className="sticky top-0 z-30 bg-white shadow-sm">
       <div className="container mx-auto px-4 flex h-16 items-center justify-between">
         <div className="flex items-center">
-          <Link to="/" className="flex items-center">
+          <Link to="/dashboard" className="flex items-center">
             <img 
               src="/lovable-uploads/6b189f38-b0b9-4a2e-8ff2-6635102e14a9.png" 
               alt="GCLIXIO Logo" 

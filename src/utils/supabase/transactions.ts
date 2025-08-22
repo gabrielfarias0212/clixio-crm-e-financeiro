@@ -130,6 +130,51 @@ export const updateTransaction = async (
         .eq('id', currentTransaction.payment_id);
     }
 
+    // New logic: If a client is being associated with an income transaction that doesn't have a payment
+    if (updates.clientId && 
+        (updates.type === 'entrada' || currentTransaction.type === 'entrada') && 
+        !currentTransaction.payment_id && 
+        !updates.paymentId) {
+      
+      console.log('Creating payment for transaction associated with client');
+      
+      // Check if a payment with the same amount, date and client already exists to avoid duplicates
+      const { data: existingPayment } = await supabase
+        .from('wedding_payments')
+        .select('id')
+        .eq('client_id', updates.clientId)
+        .eq('amount', updates.amount || currentTransaction.amount)
+        .eq('date', updates.date ? formatDateForSupabase(updates.date) : currentTransaction.date)
+        .maybeSingle();
+
+      if (!existingPayment) {
+        // Create a corresponding payment
+        const { data: newPayment, error: paymentError } = await supabase
+          .from('wedding_payments')
+          .insert({
+            client_id: updates.clientId,
+            amount: updates.amount || currentTransaction.amount,
+            date: updates.date ? formatDateForSupabase(updates.date) : currentTransaction.date,
+            notes: (updates.description || currentTransaction.description) + ' (Criado automaticamente)',
+            payment_status: 'pago'
+          })
+          .select()
+          .single();
+
+        if (!paymentError && newPayment) {
+          // Update the transaction to link it to the new payment
+          await supabase
+            .from('wedding_transactions')
+            .update({ payment_id: newPayment.id })
+            .eq('id', id);
+          
+          console.log('Payment created and linked to transaction');
+        }
+      } else {
+        console.log('Payment already exists, skipping creation');
+      }
+    }
+
     return data ? parseTransaction(data) : null;
   } catch (error) {
     console.error('Exception updating transaction:', error);

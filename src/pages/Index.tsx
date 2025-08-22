@@ -5,7 +5,6 @@ import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { useTransactions } from "@/contexts/TransactionsContext";
 import { useClients } from "@/contexts/ClientsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
@@ -22,15 +21,14 @@ export default function Index() {
 }
 
 function AuthenticatedDashboard() {
-  const { refreshTransactions, loading: transactionsLoading } = useTransactions();
   const { refreshClients, loading: clientsLoading } = useClients();
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [dataLoadError, setDataLoadError] = useState<string | null>(null);
   
   // Loading otimizado - permitir carregamento parcial
   const isLoading = useMemo(() => 
-    !initialDataLoaded && (transactionsLoading || clientsLoading),
-    [transactionsLoading, clientsLoading, initialDataLoaded]
+    !initialDataLoaded && clientsLoading,
+    [clientsLoading, initialDataLoaded]
   );
 
   // Função otimizada para carregar dados com priorização
@@ -43,26 +41,20 @@ function AuthenticatedDashboard() {
       
       const startTime = performance.now();
       
-      // Carregar dados críticos primeiro, não críticos em background
-      const clientsPromise = refreshClients();
+      // Carregar dados críticos primeiro
+      await refreshClients();
       
-      // Aguardar apenas dados críticos
-      await clientsPromise;
-      
-      // Marcar como carregado mesmo que transações ainda estejam carregando
+      // Marcar como carregado
       setInitialDataLoaded(true);
       
-      // Carregar transações em background
-      refreshTransactions().then(() => {
-        const endTime = performance.now();
-        console.log(`Dashboard: Carregamento completo em ${Math.round(endTime - startTime)}ms`);
-      });
+      const endTime = performance.now();
+      console.log(`Dashboard: Carregamento completo em ${Math.round(endTime - startTime)}ms`);
       
     } catch (error) {
       console.error("Erro ao carregar dados do dashboard:", error);
       setDataLoadError("Erro ao carregar dados. Tente recarregar a página.");
     }
-  }, [initialDataLoaded, refreshTransactions, refreshClients]);
+  }, [initialDataLoaded, refreshClients]);
   
   useEffect(() => {
     document.title = "Dashboard | Wedding CRM";

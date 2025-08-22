@@ -119,7 +119,8 @@ export const updateTransaction = async (
     }
 
     // If this transaction is linked to a payment, update the payment record too
-    if (currentTransaction.payment_id && (updates.amount !== undefined || updates.date !== undefined)) {
+    if (currentTransaction.payment_id && (updates.amount !== undefined || updates.date !== undefined || updates.description !== undefined)) {
+      console.log('Updating linked payment record');
       await supabase
         .from('wedding_payments')
         .update({
@@ -130,25 +131,31 @@ export const updateTransaction = async (
         .eq('id', currentTransaction.payment_id);
     }
 
-    // New logic: If a client is being associated with an income transaction that doesn't have a payment
+    // Enhanced logic: If a client is being associated with an income transaction
     if (updates.clientId && 
-        (updates.type === 'entrada' || currentTransaction.type === 'entrada') && 
-        !currentTransaction.payment_id && 
-        !updates.paymentId) {
+        (updates.type === 'entrada' || currentTransaction.type === 'entrada')) {
       
-      console.log('Creating payment for transaction associated with client');
+      console.log('Processing client association for income transaction');
       
-      // Check if a payment with the same amount, date and client already exists to avoid duplicates
-      const { data: existingPayment } = await supabase
+      // Check if there's already a matching payment for this client
+      const { data: existingPayments } = await supabase
         .from('wedding_payments')
         .select('id')
         .eq('client_id', updates.clientId)
         .eq('amount', updates.amount || currentTransaction.amount)
-        .eq('date', updates.date ? formatDateForSupabase(updates.date) : currentTransaction.date)
-        .maybeSingle();
+        .eq('date', updates.date ? formatDateForSupabase(updates.date) : currentTransaction.date);
 
-      if (!existingPayment) {
-        // Create a corresponding payment
+      if (existingPayments && existingPayments.length > 0 && !currentTransaction.payment_id) {
+        // Link to existing payment
+        console.log('Linking transaction to existing payment:', existingPayments[0].id);
+        await supabase
+          .from('wedding_transactions')
+          .update({ payment_id: existingPayments[0].id })
+          .eq('id', id);
+      } else if (!currentTransaction.payment_id && (!existingPayments || existingPayments.length === 0)) {
+        // Create new payment only if no existing payment and no current payment link
+        console.log('Creating new payment for transaction associated with client');
+        
         const { data: newPayment, error: paymentError } = await supabase
           .from('wedding_payments')
           .insert({
@@ -170,8 +177,6 @@ export const updateTransaction = async (
           
           console.log('Payment created and linked to transaction');
         }
-      } else {
-        console.log('Payment already exists, skipping creation');
       }
     }
 

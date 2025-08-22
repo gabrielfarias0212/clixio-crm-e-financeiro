@@ -18,30 +18,70 @@ export function FinancialInfo({ client }: FinancialInfoProps) {
     }).format(value);
   };
 
-  // Calculate financial totals considering both payments and transactions
+  // Calculate financial totals with improved logic to avoid double counting
   const financialTotals = useMemo(() => {
-    // Calculate total from payments
-    const totalFromPayments = client.payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
+    console.log(`=== Calculando totais para cliente ${client.name} ===`);
     
-    // Calculate total from transactions related to this client (entrada only)
-    // Exclude transactions that already have a payment_id to avoid double counting
+    // Get all client transactions (entrada only)
     const clientTransactions = transactions.filter(transaction => 
       transaction.clientId === client.id && 
-      transaction.type === 'entrada' && 
-      !transaction.paymentId
+      transaction.type === 'entrada'
     );
     
-    const totalFromTransactions = clientTransactions.reduce((sum, transaction) => 
+    console.log(`Transações do cliente encontradas:`, clientTransactions.length);
+    clientTransactions.forEach(t => console.log(`- ID: ${t.id}, Valor: ${t.amount}, PaymentID: ${t.paymentId || 'null'}`));
+    
+    // Get payments
+    console.log(`Pagamentos do cliente:`, client.payments.length);
+    client.payments.forEach(p => console.log(`- ID: ${p.id}, Valor: ${p.amount}`));
+    
+    // Strategy: Use a hybrid approach to avoid double counting
+    let totalPayments = 0;
+    let transactionPayments = 0;
+    let orphanedTransactions = 0;
+    
+    // First, sum all payments from the payments table
+    const paymentsTotal = client.payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
+    console.log(`Total de pagamentos diretos: ${paymentsTotal}`);
+    
+    // Then, find transactions that don't have a corresponding payment
+    const orphanedTransactionsList = clientTransactions.filter(transaction => {
+      // If transaction has a paymentId, it's already linked to a payment
+      if (transaction.paymentId) {
+        return false;
+      }
+      
+      // Check if there's a payment with the same amount and similar date
+      const hasMatchingPayment = client.payments.some(payment => {
+        const paymentAmount = Number(payment.amount);
+        const transactionAmount = Number(transaction.amount);
+        const paymentDate = new Date(payment.date).toDateString();
+        const transactionDate = new Date(transaction.date).toDateString();
+        
+        // Consider it a match if amounts are equal and dates are the same
+        return paymentAmount === transactionAmount && paymentDate === transactionDate;
+      });
+      
+      return !hasMatchingPayment;
+    });
+    
+    orphanedTransactions = orphanedTransactionsList.reduce((sum, transaction) => 
       sum + Number(transaction.amount), 0
     );
     
-    const totalPayments = totalFromPayments + totalFromTransactions;
+    console.log(`Transações órfãs (sem pagamento correspondente):`, orphanedTransactionsList.length);
+    orphanedTransactionsList.forEach(t => console.log(`- ID: ${t.id}, Valor: ${t.amount}, Data: ${t.date}`));
+    console.log(`Total de transações órfãs: ${orphanedTransactions}`);
+    
+    // Total payments = payments from table + orphaned transactions
+    totalPayments = paymentsTotal + orphanedTransactions;
+    
     const remainingValue = client.contractValue - totalPayments;
     
-    console.log(`Cliente ${client.name}:`, {
+    console.log(`Resumo do cálculo:`, {
       contractValue: client.contractValue,
-      totalFromPayments,
-      totalFromTransactions,
+      paymentsFromTable: paymentsTotal,
+      orphanedTransactions: orphanedTransactions,
       totalPayments,
       remainingValue
     });
@@ -49,7 +89,9 @@ export function FinancialInfo({ client }: FinancialInfoProps) {
     return {
       totalPayments,
       remainingValue,
-      hasTransactionPayments: totalFromTransactions > 0
+      hasOrphanedTransactions: orphanedTransactions > 0,
+      paymentsFromTable: paymentsTotal,
+      orphanedTransactionsAmount: orphanedTransactions
     };
   }, [client, transactions]);
 
@@ -67,11 +109,21 @@ export function FinancialInfo({ client }: FinancialInfoProps) {
             {formatCurrency(financialTotals.totalPayments)}
           </span>
         </div>
-        {financialTotals.hasTransactionPayments && (
-          <div className="text-xs text-gray-500 ml-4">
-            * Inclui transações financeiras relacionadas ao cliente
+        
+        {/* Show breakdown if there are orphaned transactions */}
+        {financialTotals.hasOrphanedTransactions && (
+          <div className="ml-4 space-y-1 text-sm text-gray-600">
+            <div className="flex justify-between">
+              <span>• Pagamentos registrados:</span>
+              <span>{formatCurrency(financialTotals.paymentsFromTable)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>• Transações sem pagamento:</span>
+              <span>{formatCurrency(financialTotals.orphanedTransactionsAmount)}</span>
+            </div>
           </div>
         )}
+        
         <div className="flex justify-between">
           <span className="text-gray-700">Valor Restante:</span>
           <span className={`font-medium ${financialTotals.remainingValue > 0 ? 'text-red-600' : 'text-green-600'}`}>

@@ -1,5 +1,4 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 import { BudgetWithItems } from '@/types/budget';
 import { formatCurrency } from '@/utils/currency';
 import { format } from 'date-fns';
@@ -86,38 +85,83 @@ export function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: Company
   doc.text(`Válido até: ${validityFormatted}`, 20, yPosition);
   yPosition += 15;
 
-  // Items table
-  const tableData = budget.budget_items.map(item => [
-    item.service_name,
-    item.description || '-',
-    item.quantity.toString(),
-    formatCurrency(item.unit_price),
-    formatCurrency(item.subtotal)
-  ]);
+  // Items table - manual implementation
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.text('ITENS DO ORÇAMENTO:', 20, yPosition);
+  yPosition += 10;
 
-  (doc as any).autoTable({
-    startY: yPosition,
-    head: [['Serviço', 'Descrição', 'Quantidade', 'Preço Unitário', 'Subtotal']],
-    body: tableData,
-    theme: 'grid',
-    styles: {
-      fontSize: 10,
-      cellPadding: 5,
-    },
-    headStyles: {
-      fillColor: [33, 37, 41],
-      textColor: 255,
-      fontSize: 11,
-      fontStyle: 'bold',
-    },
-    columnStyles: {
-      2: { halign: 'center' },
-      3: { halign: 'right' },
-      4: { halign: 'right' },
-    },
+  // Table headers
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'bold');
+  
+  const headers = ['Serviço', 'Descrição', 'Qtd', 'Preço Unit.', 'Subtotal'];
+  const colWidths = [40, 60, 20, 30, 30];
+  const colPositions = [20, 60, 120, 140, 170];
+  
+  // Draw header background
+  doc.setFillColor(33, 37, 41);
+  doc.rect(20, yPosition - 3, 180, 8, 'F');
+  
+  // Draw header text
+  doc.setTextColor(255, 255, 255);
+  headers.forEach((header, index) => {
+    doc.text(header, colPositions[index], yPosition + 3);
+  });
+  
+  yPosition += 10;
+  doc.setTextColor(0, 0, 0);
+  doc.setFont(undefined, 'normal');
+
+  // Draw table rows
+  budget.budget_items.forEach((item, index) => {
+    const rowData = [
+      item.service_name,
+      item.description || '-',
+      item.quantity.toString(),
+      formatCurrency(item.unit_price),
+      formatCurrency(item.subtotal)
+    ];
+
+    // Alternate row background
+    if (index % 2 === 0) {
+      doc.setFillColor(248, 249, 250);
+      doc.rect(20, yPosition - 3, 180, 8, 'F');
+    }
+
+    // Draw row data
+    rowData.forEach((data, colIndex) => {
+      const text = doc.splitTextToSize(data, colWidths[colIndex] - 5);
+      const align = colIndex >= 2 ? 'right' : 'left';
+      const xPos = align === 'right' ? colPositions[colIndex] + colWidths[colIndex] - 5 : colPositions[colIndex];
+      
+      doc.text(text, xPos, yPosition + 3, { align });
+    });
+
+    yPosition += 8;
+    
+    // Add new page if needed
+    if (yPosition > 270) {
+      doc.addPage();
+      yPosition = 20;
+    }
   });
 
-  yPosition = (doc as any).lastAutoTable.finalY + 15;
+  // Draw table border
+  doc.setDrawColor(0, 0, 0);
+  doc.rect(20, yPosition - (budget.budget_items.length * 8) - 8, 180, (budget.budget_items.length * 8) + 8);
+  
+  // Draw column separators
+  for (let i = 1; i < colPositions.length; i++) {
+    doc.line(
+      colPositions[i], 
+      yPosition - (budget.budget_items.length * 8) - 8, 
+      colPositions[i], 
+      yPosition
+    );
+  }
+
+  yPosition += 15;
 
   // Total
   doc.setFontSize(14);

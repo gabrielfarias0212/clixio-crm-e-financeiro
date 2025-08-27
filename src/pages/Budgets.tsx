@@ -77,11 +77,11 @@ export default function Budgets() {
       // Prepare company info from profile
       const companyInfo = profile ? {
         company_name: profile.company_name,
-        name: profile.brand_name,
+        logo_url: profile.logo_url,
+        brand_name: profile.brand_name,
+        whatsapp: profile.whatsapp,
         email: profile.email,
-        phone: profile.whatsapp,
         website: profile.website,
-        avatar_url: profile.logo_url,
       } : undefined;
       
       // Generate and download PDF

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BarChart, CalendarDays, Menu, Users, X, DollarSign, User } from "lucide-react";
+import { BarChart, CalendarDays, Menu, Users, X, DollarSign, User, Workflow } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -47,6 +47,10 @@ export function Navbar() {
     name: "Clientes",
     path: "/clients",
     icon: <Users className="h-5 w-5" />
+  }, {
+    name: "CRM",
+    path: "/crm",
+    icon: <Workflow className="h-5 w-5" />
   }, {
     name: "Calendário",
     path: "/calendar",

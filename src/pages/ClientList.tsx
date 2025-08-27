@@ -118,8 +118,6 @@ export default function ClientList() {
         <Tabs defaultValue="list" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="list">Lista de Clientes</TabsTrigger>
-            <TabsTrigger value="funnel">Funil de Vendas</TabsTrigger>
-            <TabsTrigger value="kanban">Kanban</TabsTrigger>
           </TabsList>
 
           <TabsContent value="list" className="space-y-8">
@@ -171,17 +169,6 @@ export default function ClientList() {
             )}
           </TabsContent>
 
-          <TabsContent value="funnel">
-            <Suspense fallback={<div className="h-64 bg-gray-100 rounded animate-pulse" />}>
-              <SalesFunnel clients={allClientsFromContext} />
-            </Suspense>
-          </TabsContent>
-
-          <TabsContent value="kanban">
-            <Suspense fallback={<div className="h-64 bg-gray-100 rounded animate-pulse" />}>
-              <KanbanBoard clients={allClientsFromContext} />
-            </Suspense>
-          </TabsContent>
         </Tabs>
       </div>
     </Layout>

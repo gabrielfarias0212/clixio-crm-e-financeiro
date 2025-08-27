@@ -22,6 +22,7 @@ import Budgets from "./pages/Budgets";
 import CreateBudget from "./pages/CreateBudget";
 import EditBudget from "./pages/EditBudget";
 import BudgetDetail from "./pages/BudgetDetail";
+import CRM from "./pages/CRM";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -55,6 +56,7 @@ const App = () => (
                         <Route path="/clients/:id/edit" element={<EditClient />} />
                         <Route path="/clients/:id" element={<ClientDetail />} />
                         <Route path="/clients/import" element={<ImportClients />} />
+                        <Route path="/crm" element={<CRM />} />
                         <Route path="/cash-flow" element={<CashFlow />} />
                         <Route path="/personal" element={<PersonalControl />} />
                         <Route path="/calendar" element={<Calendar />} />

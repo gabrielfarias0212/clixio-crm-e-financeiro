@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Settings, IdCard, FileText } from "lucide-react";
+import { LogOut, User, Settings, IdCard, FileText, Wallet } from "lucide-react";
 import { ProfileConfigDialog } from "./ProfileConfigDialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileViewDialog } from "./profile/ProfileViewDialog";
@@ -55,6 +55,11 @@ export function UserMenu() {
     setIsOpen(false);
     navigate('/budgets');
   };
+
+  const handlePersonal = () => {
+    setIsOpen(false);
+    navigate('/personal');
+  };
   
   return (
     <>
@@ -92,6 +97,10 @@ export function UserMenu() {
           <DropdownMenuItem className="cursor-pointer" onClick={handleBudgets}>
             <FileText className="mr-2 h-4 w-4" />
             <span>Gerador de Orçamento</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem className="cursor-pointer" onClick={handlePersonal}>
+            <Wallet className="mr-2 h-4 w-4" />
+            <span>Controle Pessoal</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut}>

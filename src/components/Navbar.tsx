@@ -55,14 +55,6 @@ export function Navbar() {
     name: "Financeiro",
     path: "/cash-flow",
     icon: <DollarSign className="h-5 w-5" />
-  }, {
-    name: "Controle Pessoal",
-    path: "/personal",
-    icon: <User className="h-5 w-5" />
-  }, {
-    name: "Orçamentos",
-    path: "/budgets",
-    icon: <BarChart className="h-5 w-5" />
   }];
 
   return <header className="sticky top-0 z-30 bg-white shadow-sm">

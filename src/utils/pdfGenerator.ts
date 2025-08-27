@@ -39,12 +39,15 @@ export async function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: C
   doc.setFillColor(248, 250, 252);
   doc.rect(0, 0, 210, 50, 'F');
   
-  // Add logo if available
+  // Add logo if available with proper aspect ratio
   if (companyInfo?.logo_url) {
     try {
       const imageData = await loadImageAsBase64(companyInfo.logo_url);
       if (imageData) {
-        doc.addImage(imageData, 'JPEG', 20, 15, 25, 25);
+        // Fixed proportional logo size
+        const logoHeight = 20;
+        const logoWidth = 30; // Maintain reasonable proportions
+        doc.addImage(imageData, 'JPEG', 20, 15, logoWidth, logoHeight, undefined, 'FAST');
       }
     } catch (error) {
       console.log('Could not load logo image');
@@ -53,7 +56,7 @@ export async function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: C
 
   // Company info with modern typography
   const hasLogo = companyInfo?.logo_url;
-  const textStartX = hasLogo ? 55 : 20;
+  const textStartX = hasLogo ? 60 : 20;
   
   doc.setFontSize(22);
   doc.setFont(undefined, 'bold');
@@ -156,11 +159,11 @@ export async function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: C
   const colWidths = [45, 65, 20, 30, 30];
   const colPositions = [20, 65, 130, 150, 180];
   const tableWidth = 170;
-  const rowHeight = 12;
+  const baseRowHeight = 10;
   
   // Table header with gradient
   doc.setFillColor(15, 23, 42);
-  doc.rect(20, yPosition - 5, tableWidth, rowHeight, 'F');
+  doc.rect(20, yPosition - 5, tableWidth, baseRowHeight, 'F');
   
   doc.setFontSize(10);
   doc.setFont(undefined, 'bold');
@@ -171,65 +174,73 @@ export async function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: C
     doc.text(header, xPos, yPosition + 3);
   });
   
-  yPosition += rowHeight;
+  yPosition += baseRowHeight;
 
-  // Table rows with proper spacing
+  // Table rows with dynamic height calculation
   doc.setFont(undefined, 'normal');
   doc.setTextColor(51, 65, 85);
   
+  let totalRowsHeight = 0;
+  
   budget.budget_items.forEach((item, index) => {
+    // Calculate required height for this row based on text content
+    const serviceName = doc.splitTextToSize(item.service_name, colWidths[0] - 6);
+    const description = doc.splitTextToSize(item.description || '-', colWidths[1] - 6);
+    const maxLines = Math.max(serviceName.length, description.length);
+    const currentRowHeight = Math.max(baseRowHeight, maxLines * 6 + 6);
+    
     // Check if we need a new page
-    if (yPosition > 250) {
+    if (yPosition + currentRowHeight > 270) {
       doc.addPage();
       yPosition = 30;
+      totalRowsHeight = 0;
       
       // Repeat header on new page
       doc.setFillColor(15, 23, 42);
-      doc.rect(20, yPosition - 5, tableWidth, rowHeight, 'F');
+      doc.rect(20, yPosition - 5, tableWidth, baseRowHeight, 'F');
       doc.setFont(undefined, 'bold');
       doc.setTextColor(255, 255, 255);
       headers.forEach((header, i) => {
         doc.text(header, colPositions[i] + 3, yPosition + 3);
       });
-      yPosition += rowHeight;
+      yPosition += baseRowHeight;
       doc.setFont(undefined, 'normal');
       doc.setTextColor(51, 65, 85);
     }
 
-    // Alternate row background
+    // Alternate row background with proper height
     if (index % 2 === 0) {
       doc.setFillColor(248, 250, 252);
-      doc.rect(20, yPosition - 5, tableWidth, rowHeight, 'F');
+      doc.rect(20, yPosition - 3, tableWidth, currentRowHeight, 'F');
     }
 
     // Service name (with text wrapping)
-    const serviceName = doc.splitTextToSize(item.service_name, colWidths[0] - 6);
-    doc.text(serviceName, colPositions[0] + 3, yPosition + 3);
+    doc.text(serviceName, colPositions[0] + 3, yPosition + 5);
 
     // Description (with text wrapping)
-    const description = doc.splitTextToSize(item.description || '-', colWidths[1] - 6);
-    doc.text(description, colPositions[1] + 3, yPosition + 3);
+    doc.text(description, colPositions[1] + 3, yPosition + 5);
 
     // Quantity (centered)
-    doc.text(item.quantity.toString(), colPositions[2] + colWidths[2]/2, yPosition + 3, { align: 'center' });
+    doc.text(item.quantity.toString(), colPositions[2] + colWidths[2]/2, yPosition + 5, { align: 'center' });
 
     // Unit price (right aligned)
-    doc.text(formatCurrency(item.unit_price), colPositions[3] + colWidths[3] - 3, yPosition + 3, { align: 'right' });
+    doc.text(formatCurrency(item.unit_price), colPositions[3] + colWidths[3] - 3, yPosition + 5, { align: 'right' });
 
     // Subtotal (right aligned)
-    doc.text(formatCurrency(item.subtotal), colPositions[4] + colWidths[4] - 3, yPosition + 3, { align: 'right' });
+    doc.text(formatCurrency(item.subtotal), colPositions[4] + colWidths[4] - 3, yPosition + 5, { align: 'right' });
 
-    yPosition += rowHeight;
+    yPosition += currentRowHeight;
+    totalRowsHeight += currentRowHeight;
   });
 
   // Table border
   doc.setDrawColor(203, 213, 225);
   doc.setLineWidth(0.5);
-  doc.rect(20, yPosition - (budget.budget_items.length * rowHeight) - rowHeight, tableWidth, (budget.budget_items.length * rowHeight) + rowHeight);
+  doc.rect(20, yPosition - totalRowsHeight - baseRowHeight, tableWidth, totalRowsHeight + baseRowHeight);
   
   // Column separators
   colPositions.slice(1).forEach(pos => {
-    doc.line(pos, yPosition - (budget.budget_items.length * rowHeight) - rowHeight, pos, yPosition);
+    doc.line(pos, yPosition - totalRowsHeight - baseRowHeight, pos, yPosition);
   });
 
   yPosition += 15;

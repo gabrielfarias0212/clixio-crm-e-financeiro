@@ -33,66 +33,63 @@ async function loadImageAsBase64(url: string): Promise<string | null> {
 
 export async function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: CompanyInfo) {
   const doc = new jsPDF();
-  let yPosition = 25;
+  let yPosition = 30;
   const currentDate = new Date().toLocaleDateString('pt-BR');
-
-  // Header with thick bottom border (matching PaymentReceiptTemplate)
-  doc.setDrawColor(30, 41, 59); // Dark gray
-  doc.setLineWidth(2);
-  doc.line(20, 75, 190, 75);
+  const pageMargin = 20;
+  const pageWidth = 170; // 210 - 40 (margins)
 
   // Budget number in top right corner
   const budgetNumber = `Orçamento Nº: ${budget.id.slice(-6).toUpperCase()}`;
   doc.setFontSize(10);
   doc.setFont(undefined, 'normal');
-  doc.setTextColor(100, 116, 139); // Gray-500
-  doc.setFillColor(248, 250, 252); // Gray-50
+  doc.setTextColor(100, 116, 139);
+  doc.setFillColor(248, 250, 252);
   const textWidth = doc.getTextWidth(budgetNumber);
-  doc.rect(190 - textWidth - 6, 15, textWidth + 6, 12, 'F');
-  doc.text(budgetNumber, 190 - 3, 24, { align: 'right' });
+  doc.rect(190 - textWidth - 8, 15, textWidth + 8, 14, 'F');
+  doc.text(budgetNumber, 190 - 4, 25, { align: 'right' });
 
-  // Logo and title centered
-  yPosition = 35;
+  // Logo and title section with better spacing
+  yPosition = 40;
   if (companyInfo?.logo_url) {
     try {
       const imageData = await loadImageAsBase64(companyInfo.logo_url);
       if (imageData) {
-        // Center logo with proper aspect ratio
-        doc.addImage(imageData, 'JPEG', 95, 25, 20, 15, undefined, 'FAST');
-        yPosition = 45;
+        doc.addImage(imageData, 'JPEG', 90, 30, 30, 22, undefined, 'FAST');
+        yPosition = 58;
       }
     } catch (error) {
       console.log('Could not load logo image');
+      yPosition = 45;
     }
   }
 
-  // Main title centered
-  doc.setFontSize(24);
+  // Main title with better spacing
+  doc.setFontSize(26);
   doc.setFont(undefined, 'bold');
-  doc.setTextColor(30, 41, 59); // Gray-800
+  doc.setTextColor(30, 41, 59);
   doc.text('ORÇAMENTO', 105, yPosition, { align: 'center' });
+  yPosition += 12;
 
-  // Company name centered
-  yPosition += 10;
+  // Company information with proper spacing
   if (companyInfo?.company_name) {
-    doc.setFontSize(18);
+    doc.setFontSize(16);
     doc.setFont(undefined, 'normal');
-    doc.setTextColor(100, 116, 139); // Gray-500
+    doc.setTextColor(100, 116, 139);
     doc.text(companyInfo.company_name, 105, yPosition, { align: 'center' });
     yPosition += 8;
   }
 
   if (companyInfo?.brand_name && companyInfo.brand_name !== companyInfo.company_name) {
-    doc.setFontSize(14);
-    doc.setTextColor(156, 163, 175); // Gray-400
+    doc.setFontSize(12);
+    doc.setTextColor(156, 163, 175);
     doc.text(companyInfo.brand_name, 105, yPosition, { align: 'center' });
-    yPosition += 6;
+    yPosition += 8;
   }
 
-  // Contact info centered
+  // Contact info with better layout
   if (companyInfo && (companyInfo.whatsapp || companyInfo.email || companyInfo.website)) {
-    yPosition += 3;
-    doc.setFontSize(10);
+    yPosition += 2;
+    doc.setFontSize(9);
     doc.setTextColor(100, 116, 139);
     
     const contacts = [];
@@ -102,39 +99,47 @@ export async function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: C
     
     const contactText = contacts.join(' • ');
     doc.text(contactText, 105, yPosition, { align: 'center' });
+    yPosition += 8;
   }
 
+  // Header separator with proper spacing
+  yPosition += 8;
+  doc.setDrawColor(30, 41, 59);
+  doc.setLineWidth(2);
+  doc.line(pageMargin, yPosition, 190, yPosition);
+  yPosition += 15;
+
   // Client Data Section
-  yPosition = 90;
-  doc.setFontSize(18);
+  doc.setFontSize(16);
   doc.setFont(undefined, 'bold');
-  doc.setTextColor(71, 85, 105); // Gray-600
-  doc.text('Dados do Cliente', 20, yPosition);
+  doc.setTextColor(71, 85, 105);
+  doc.text('Dados do Cliente', pageMargin, yPosition);
   
   // Section underline
-  doc.setDrawColor(203, 213, 225); // Gray-300
+  doc.setDrawColor(203, 213, 225);
   doc.setLineWidth(1);
-  doc.line(20, yPosition + 2, 190, yPosition + 2);
+  doc.line(pageMargin, yPosition + 3, 190, yPosition + 3);
   
-  yPosition += 12;
-  doc.setFontSize(12);
+  yPosition += 15;
+  doc.setFontSize(11);
   doc.setFont(undefined, 'normal');
-  doc.setTextColor(51, 65, 85); // Gray-700
+  doc.setTextColor(51, 65, 85);
 
-  // Client info grid (2 columns)
+  // Client info with better spacing and layout
   const leftCol = 25;
-  const rightCol = 115;
+  const rightCol = 120;
   let leftY = yPosition;
   let rightY = yPosition;
 
-  // Left column
+  // Left column with consistent spacing
   doc.setFont(undefined, 'bold');
-  doc.setTextColor(100, 116, 139); // Gray-500
+  doc.setTextColor(100, 116, 139);
   doc.text('Nome:', leftCol, leftY);
   doc.setFont(undefined, 'normal');
-  doc.setTextColor(30, 41, 59); // Gray-800
-  doc.text(budget.client_name, leftCol + 15, leftY);
-  leftY += 8;
+  doc.setTextColor(30, 41, 59);
+  const clientName = doc.splitTextToSize(budget.client_name, 80);
+  doc.text(clientName, leftCol + 18, leftY);
+  leftY += Math.max(8, clientName.length * 4 + 4);
 
   if (budget.client_email) {
     doc.setFont(undefined, 'bold');
@@ -142,8 +147,9 @@ export async function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: C
     doc.text('Email:', leftCol, leftY);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(30, 41, 59);
-    doc.text(budget.client_email, leftCol + 15, leftY);
-    leftY += 8;
+    const email = doc.splitTextToSize(budget.client_email, 80);
+    doc.text(email, leftCol + 18, leftY);
+    leftY += Math.max(8, email.length * 4 + 4);
   }
 
   if (budget.client_phone) {
@@ -152,11 +158,11 @@ export async function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: C
     doc.text('Telefone:', leftCol, leftY);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(30, 41, 59);
-    doc.text(budget.client_phone, leftCol + 20, leftY);
+    doc.text(budget.client_phone, leftCol + 24, leftY);
     leftY += 8;
   }
 
-  // Right column
+  // Right column with proper alignment
   if (budget.event_date) {
     const eventDate = format(new Date(budget.event_date), 'dd/MM/yyyy', { locale: ptBR });
     doc.setFont(undefined, 'bold');
@@ -164,7 +170,7 @@ export async function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: C
     doc.text('Data do Evento:', rightCol, rightY);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(30, 41, 59);
-    doc.text(eventDate, rightCol + 30, rightY);
+    doc.text(eventDate, rightCol + 32, rightY);
     rightY += 8;
   }
 
@@ -174,7 +180,7 @@ export async function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: C
   doc.text('Data de Criação:', rightCol, rightY);
   doc.setFont(undefined, 'normal');
   doc.setTextColor(30, 41, 59);
-  doc.text(createdDate, rightCol + 32, rightY);
+  doc.text(createdDate, rightCol + 35, rightY);
   rightY += 8;
 
   const validityDate = new Date(budget.created_at);
@@ -185,171 +191,231 @@ export async function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: C
   doc.text('Válido até:', rightCol, rightY);
   doc.setFont(undefined, 'normal');
   doc.setTextColor(30, 41, 59);
-  doc.text(validityFormatted, rightCol + 25, rightY);
+  doc.text(validityFormatted, rightCol + 26, rightY);
 
-  // Service Details Section
-  yPosition = Math.max(leftY, rightY) + 15;
-  doc.setFontSize(18);
+  // Service Details Section with better spacing
+  yPosition = Math.max(leftY, rightY) + 20;
+  doc.setFontSize(16);
   doc.setFont(undefined, 'bold');
   doc.setTextColor(71, 85, 105);
-  doc.text('Detalhes dos Serviços', 20, yPosition);
+  doc.text('Detalhes dos Serviços', pageMargin, yPosition);
   
   // Section underline
   doc.setDrawColor(203, 213, 225);
   doc.setLineWidth(1);
-  doc.line(20, yPosition + 2, 190, yPosition + 2);
+  doc.line(pageMargin, yPosition + 3, 190, yPosition + 3);
+  
+  yPosition += 18;
+
+  // Table headers
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(100, 116, 139);
+  doc.setFillColor(248, 250, 252);
+  doc.rect(pageMargin, yPosition - 3, pageWidth, 12, 'F');
+  doc.text('Serviço', pageMargin + 3, yPosition + 3);
+  doc.text('Descrição', pageMargin + 75, yPosition + 3);
+  doc.text('Valor', 185, yPosition + 3, { align: 'right' });
+  
+  // Header border
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.5);
+  doc.line(pageMargin, yPosition + 8, 190, yPosition + 8);
   
   yPosition += 15;
 
-  // Services table
+  // Services table with improved spacing
   budget.budget_items.forEach((item, index) => {
-    const serviceName = doc.splitTextToSize(item.service_name, 70);
-    const description = doc.splitTextToSize(item.description || '-', 60);
-    const maxLines = Math.max(serviceName.length, description.length);
-    const rowHeight = Math.max(12, maxLines * 5 + 6);
+    const serviceNameWidth = 70;
+    const descriptionWidth = 65;
     
-    // Check for page break
-    if (yPosition + rowHeight > 240) {
+    const serviceName = doc.splitTextToSize(item.service_name, serviceNameWidth);
+    const description = doc.splitTextToSize(item.description || 'Não informado', descriptionWidth);
+    
+    const maxLines = Math.max(serviceName.length, description.length);
+    const lineHeight = 5;
+    const padding = 8;
+    const rowHeight = Math.max(16, maxLines * lineHeight + padding);
+    
+    // Check for page break with better margin
+    if (yPosition + rowHeight > 250) {
       doc.addPage();
-      yPosition = 30;
+      yPosition = 40;
       
-      // Repeat header
-      doc.setFontSize(18);
+      // Repeat section header on new page
+      doc.setFontSize(16);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(71, 85, 105);
-      doc.text('Detalhes dos Serviços (continuação)', 20, yPosition);
+      doc.text('Detalhes dos Serviços (continuação)', pageMargin, yPosition);
       doc.setDrawColor(203, 213, 225);
       doc.setLineWidth(1);
-      doc.line(20, yPosition + 2, 190, yPosition + 2);
+      doc.line(pageMargin, yPosition + 3, 190, yPosition + 3);
+      yPosition += 18;
+      
+      // Repeat table headers
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(100, 116, 139);
+      doc.setFillColor(248, 250, 252);
+      doc.rect(pageMargin, yPosition - 3, pageWidth, 12, 'F');
+      doc.text('Serviço', pageMargin + 3, yPosition + 3);
+      doc.text('Descrição', pageMargin + 75, yPosition + 3);
+      doc.text('Valor', 185, yPosition + 3, { align: 'right' });
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.5);
+      doc.line(pageMargin, yPosition + 8, 190, yPosition + 8);
       yPosition += 15;
     }
 
-    // Alternate row background (matching template style)
+    // Row background with alternating colors
     if (index % 2 === 0) {
-      doc.setFillColor(248, 250, 252); // Gray-50
-      doc.rect(20, yPosition - 2, 170, rowHeight, 'F');
+      doc.setFillColor(252, 252, 252); // Very light gray
+      doc.rect(pageMargin, yPosition - 2, pageWidth, rowHeight, 'F');
     }
 
-    // Service content
-    doc.setFontSize(12);
+    // Service content with proper positioning
+    const contentY = yPosition + 4;
+    
+    // Service name column
+    doc.setFontSize(11);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(30, 41, 59);
-    doc.text(serviceName, 25, yPosition + 4);
+    doc.text(serviceName, pageMargin + 3, contentY);
     
+    // Description column  
     doc.setFont(undefined, 'normal');
-    doc.setTextColor(100, 116, 139);
-    doc.text(description, 105, yPosition + 4);
+    doc.setTextColor(75, 85, 99);
+    doc.text(description, pageMargin + 75, contentY);
     
+    // Price column
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(30, 41, 59);
-    doc.text(formatCurrency(item.subtotal), 185, yPosition + 4, { align: 'right' });
+    doc.setTextColor(16, 185, 129); // Green for price
+    doc.text(formatCurrency(item.subtotal), 185, contentY, { align: 'right' });
 
-    // Bottom border
-    doc.setDrawColor(226, 232, 240); // Gray-200
-    doc.setLineWidth(0.5);
-    doc.line(20, yPosition + rowHeight - 1, 190, yPosition + rowHeight - 1);
+    // Row border
+    doc.setDrawColor(229, 231, 235);
+    doc.setLineWidth(0.3);
+    doc.line(pageMargin, yPosition + rowHeight - 1, 190, yPosition + rowHeight - 1);
 
     yPosition += rowHeight;
   });
 
-  // Financial Summary (matching PaymentReceiptTemplate cards style)
-  yPosition += 10;
-  doc.setFillColor(248, 250, 252); // Gray-50
-  doc.setDrawColor(226, 232, 240); // Gray-200
+  yPosition += 8;
+
+  // Financial Summary with dynamic positioning
+  if (yPosition > 220) {
+    doc.addPage();
+    yPosition = 40;
+  }
+  
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(1);
-  doc.rect(20, yPosition, 170, 35, 'FD');
-  
-  doc.setFontSize(18);
-  doc.setFont(undefined, 'bold');
-  doc.setTextColor(71, 85, 105);
-  doc.text('Resumo Financeiro', 25, yPosition + 12);
-  
-  // Total amount card style
-  doc.setFillColor(255, 255, 255); // White
-  doc.rect(130, yPosition + 5, 55, 25, 'FD');
-  
-  doc.setFontSize(10);
-  doc.setFont(undefined, 'bold');
-  doc.setTextColor(100, 116, 139);
-  doc.text('VALOR TOTAL', 157.5, yPosition + 12, { align: 'center' });
+  doc.rect(pageMargin, yPosition, pageWidth, 40, 'FD');
   
   doc.setFontSize(16);
   doc.setFont(undefined, 'bold');
-  doc.setTextColor(59, 130, 246); // Blue-500
-  doc.text(formatCurrency(budget.total_amount), 157.5, yPosition + 22, { align: 'center' });
+  doc.setTextColor(71, 85, 105);
+  doc.text('Resumo Financeiro', pageMargin + 5, yPosition + 15);
+  
+  // Total amount card with better positioning
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(59, 130, 246);
+  doc.setLineWidth(2);
+  doc.rect(125, yPosition + 8, 60, 24, 'FD');
+  
+  doc.setFontSize(9);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(100, 116, 139);
+  doc.text('VALOR TOTAL', 155, yPosition + 16, { align: 'center' });
+  
+  doc.setFontSize(14);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(16, 185, 129);
+  doc.text(formatCurrency(budget.total_amount), 155, yPosition + 26, { align: 'center' });
 
-  yPosition += 50;
+  yPosition += 55;
 
-  // Payment method section
+  // Payment method section with consistent margins
   if (budget.payment_method || budget.payment_conditions) {
+    // Check for page space
+    if (yPosition > 230) {
+      doc.addPage();
+      yPosition = 40;
+    }
+    
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(71, 85, 105);
-    doc.text('Condições de Pagamento', 20, yPosition);
-    yPosition += 8;
+    doc.text('Condições de Pagamento', pageMargin, yPosition);
+    yPosition += 10;
     
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(100, 116, 139);
     
     if (budget.payment_method) {
-      doc.text(budget.payment_method, 20, yPosition);
-      yPosition += 6;
+      doc.text(budget.payment_method, pageMargin + 5, yPosition);
+      yPosition += 7;
     }
     
     if (budget.payment_conditions) {
-      const lines = doc.splitTextToSize(budget.payment_conditions, 150);
-      doc.text(lines, 20, yPosition);
-      yPosition += lines.length * 5 + 10;
+      const lines = doc.splitTextToSize(budget.payment_conditions, 160);
+      doc.text(lines, pageMargin + 5, yPosition);
+      yPosition += lines.length * 5 + 12;
     }
   }
 
-  // Terms section
+  // Terms section with consistent margins
   if (budget.general_notes) {
-    yPosition += 5;
+    // Check for page space
+    if (yPosition > 230) {
+      doc.addPage();
+      yPosition = 40;
+    }
+    
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(71, 85, 105);
-    doc.text('Observações', 20, yPosition);
-    yPosition += 8;
+    doc.text('Observações', pageMargin, yPosition);
+    yPosition += 10;
     
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(100, 116, 139);
-    const notesLines = doc.splitTextToSize(budget.general_notes, 150);
-    doc.text(notesLines, 20, yPosition);
-    yPosition += notesLines.length * 5;
+    const notesLines = doc.splitTextToSize(budget.general_notes, 160);
+    doc.text(notesLines, pageMargin + 5, yPosition);
+    yPosition += notesLines.length * 5 + 15;
   }
 
-  // Footer with thick top border (matching template)
-  const footerY = 270;
-  doc.setDrawColor(30, 41, 59);
-  doc.setLineWidth(2);
-  doc.line(20, footerY, 190, footerY);
-  
-  doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
-  doc.setTextColor(30, 41, 59);
-  doc.text(`Orçamento emitido em: ${currentDate}`, 105, footerY + 8, { align: 'center' });
-  
-  doc.setFontSize(10);
-  doc.setFont(undefined, 'normal');
-  doc.setTextColor(100, 116, 139);
-  const validityText = `Este orçamento é válido por ${budget.validity_days} dias.`;
-  doc.text(validityText, 105, footerY + 18, { align: 'center' });
-
-  // Page numbers
+  // Dynamic footer positioning
   const pageCount = (doc as any).internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
+  
+  for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+    doc.setPage(pageNum);
+    
+    // Footer separator
+    const footerY = pageNum === pageCount ? Math.max(yPosition + 10, 260) : 270;
+    doc.setDrawColor(30, 41, 59);
+    doc.setLineWidth(1.5);
+    doc.line(pageMargin, footerY, 190, footerY);
+    
+    // Footer content
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(30, 41, 59);
+    doc.text(`Orçamento emitido em: ${currentDate}`, 105, footerY + 10, { align: 'center' });
+    
     doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(100, 116, 139);
+    const validityText = `Este orçamento é válido por ${budget.validity_days} dias.`;
+    doc.text(validityText, 105, footerY + 18, { align: 'center' });
+
+    // Page numbers
+    doc.setFontSize(7);
     doc.setTextColor(156, 163, 175);
-    doc.text(
-      `Página ${i} de ${pageCount}`,
-      105,
-      290,
-      { align: 'center' }
-    );
+    doc.text(`Página ${pageNum} de ${pageCount}`, 105, 290, { align: 'center' });
   }
 
   return doc;

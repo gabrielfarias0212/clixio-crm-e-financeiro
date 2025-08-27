@@ -64,7 +64,7 @@ export default function CRM() {
 
   // Filter clients based on time filter
   const filteredClients = useMemo(() => {
-    if (timeFilter === "all") return clients;
+    if (!clients || timeFilter === "all") return clients || [];
     
     const currentYear = new Date().getFullYear();
     const filterYear = timeFilter === "2025" ? 2025 : currentYear;

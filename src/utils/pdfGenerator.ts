@@ -31,207 +31,266 @@ async function loadImageAsBase64(url: string): Promise<string | null> {
   }
 }
 
-// Draw curved decorative elements inspired by the reference image
-function drawDecorativeElements(doc: jsPDF) {
-  // Top curved element
-  doc.setFillColor(147, 51, 234, 0.1); // Light purple inspired by primary color
-  doc.ellipse(210, -20, 60, 40, 'F');
-  
-  // Bottom curved element
-  doc.setFillColor(59, 130, 246, 0.1); // Light blue accent
-  doc.ellipse(-20, 280, 50, 35, 'F');
-}
-
 export async function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: CompanyInfo) {
   const doc = new jsPDF();
   let yPosition = 25;
+  const currentDate = new Date().toLocaleDateString('pt-BR');
 
-  // Draw decorative background elements
-  drawDecorativeElements(doc);
+  // Header with thick bottom border (matching PaymentReceiptTemplate)
+  doc.setDrawColor(30, 41, 59); // Dark gray
+  doc.setLineWidth(2);
+  doc.line(20, 75, 190, 75);
 
-  // Header section with company info (top right, inspired by reference)
+  // Budget number in top right corner
+  const budgetNumber = `Orçamento Nº: ${budget.id.slice(-6).toUpperCase()}`;
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'normal');
+  doc.setTextColor(100, 116, 139); // Gray-500
+  doc.setFillColor(248, 250, 252); // Gray-50
+  const textWidth = doc.getTextWidth(budgetNumber);
+  doc.rect(190 - textWidth - 6, 15, textWidth + 6, 12, 'F');
+  doc.text(budgetNumber, 190 - 3, 24, { align: 'right' });
+
+  // Logo and title centered
+  yPosition = 35;
   if (companyInfo?.logo_url) {
     try {
       const imageData = await loadImageAsBase64(companyInfo.logo_url);
       if (imageData) {
-        // Logo positioned at top right
-        doc.addImage(imageData, 'JPEG', 150, 15, 30, 20, undefined, 'FAST');
+        // Center logo with proper aspect ratio
+        doc.addImage(imageData, 'JPEG', 95, 25, 20, 15, undefined, 'FAST');
+        yPosition = 45;
       }
     } catch (error) {
       console.log('Could not load logo image');
     }
   }
 
-  // Company name (top right)
-  doc.setFontSize(16);
-  doc.setFont(undefined, 'bold');
-  doc.setTextColor(59, 130, 246); // Primary blue
-  const companyName = companyInfo?.company_name || companyInfo?.brand_name || 'ESTÚDIO FOTOGRÁFICO';
-  doc.text(companyName, 210, 25, { align: 'right' });
-
-  // Budget title and number (left side, large)
-  yPosition = 50;
-  doc.setFontSize(32);
-  doc.setFont(undefined, 'bold');
-  doc.setTextColor(30, 41, 59); // Dark gray
-  doc.text('ORÇAMENTO', 20, yPosition);
-  
-  yPosition += 12;
+  // Main title centered
   doc.setFontSize(24);
-  doc.setTextColor(147, 51, 234); // Purple accent
-  const budgetNumber = `#${budget.id.slice(-6).toUpperCase()}`;
-  doc.text(budgetNumber, 20, yPosition);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(30, 41, 59); // Gray-800
+  doc.text('ORÇAMENTO', 105, yPosition, { align: 'center' });
 
-  // Client info section with "A/C:" header
-  yPosition += 25;
+  // Company name centered
+  yPosition += 10;
+  if (companyInfo?.company_name) {
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(100, 116, 139); // Gray-500
+    doc.text(companyInfo.company_name, 105, yPosition, { align: 'center' });
+    yPosition += 8;
+  }
+
+  if (companyInfo?.brand_name && companyInfo.brand_name !== companyInfo.company_name) {
+    doc.setFontSize(14);
+    doc.setTextColor(156, 163, 175); // Gray-400
+    doc.text(companyInfo.brand_name, 105, yPosition, { align: 'center' });
+    yPosition += 6;
+  }
+
+  // Contact info centered
+  if (companyInfo && (companyInfo.whatsapp || companyInfo.email || companyInfo.website)) {
+    yPosition += 3;
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    
+    const contacts = [];
+    if (companyInfo.whatsapp) contacts.push(`Tel: ${companyInfo.whatsapp}`);
+    if (companyInfo.email) contacts.push(`Email: ${companyInfo.email}`);
+    if (companyInfo.website) contacts.push(`Site: ${companyInfo.website}`);
+    
+    const contactText = contacts.join(' • ');
+    doc.text(contactText, 105, yPosition, { align: 'center' });
+  }
+
+  // Client Data Section
+  yPosition = 90;
   doc.setFontSize(18);
   doc.setFont(undefined, 'bold');
-  doc.setTextColor(30, 41, 59);
-  doc.text('A/C:', 20, yPosition);
-
-  yPosition += 10;
+  doc.setTextColor(71, 85, 105); // Gray-600
+  doc.text('Dados do Cliente', 20, yPosition);
+  
+  // Section underline
+  doc.setDrawColor(203, 213, 225); // Gray-300
+  doc.setLineWidth(1);
+  doc.line(20, yPosition + 2, 190, yPosition + 2);
+  
+  yPosition += 12;
   doc.setFontSize(12);
   doc.setFont(undefined, 'normal');
-  doc.setTextColor(51, 65, 85);
+  doc.setTextColor(51, 65, 85); // Gray-700
 
-  // Client details
-  doc.text(budget.client_name, 20, yPosition);
-  yPosition += 6;
-  
-  if (budget.client_phone) {
-    doc.text(budget.client_phone, 20, yPosition);
-    yPosition += 6;
-  }
-  
+  // Client info grid (2 columns)
+  const leftCol = 25;
+  const rightCol = 115;
+  let leftY = yPosition;
+  let rightY = yPosition;
+
+  // Left column
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(100, 116, 139); // Gray-500
+  doc.text('Nome:', leftCol, leftY);
+  doc.setFont(undefined, 'normal');
+  doc.setTextColor(30, 41, 59); // Gray-800
+  doc.text(budget.client_name, leftCol + 15, leftY);
+  leftY += 8;
+
   if (budget.client_email) {
-    doc.text(budget.client_email, 20, yPosition);
-    yPosition += 6;
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Email:', leftCol, leftY);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(30, 41, 59);
+    doc.text(budget.client_email, leftCol + 15, leftY);
+    leftY += 8;
   }
 
-  // Budget info in right column
-  let rightY = yPosition - 18;
-  const rightX = 120;
-  
-  doc.setFontSize(10);
-  doc.setTextColor(100, 116, 139);
-  
+  if (budget.client_phone) {
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Telefone:', leftCol, leftY);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(30, 41, 59);
+    doc.text(budget.client_phone, leftCol + 20, leftY);
+    leftY += 8;
+  }
+
+  // Right column
   if (budget.event_date) {
     const eventDate = format(new Date(budget.event_date), 'dd/MM/yyyy', { locale: ptBR });
-    doc.text(`Data do Evento: ${eventDate}`, rightX, rightY);
-    rightY += 5;
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Data do Evento:', rightCol, rightY);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(30, 41, 59);
+    doc.text(eventDate, rightCol + 30, rightY);
+    rightY += 8;
   }
-  
+
   const createdDate = format(new Date(budget.created_at), 'dd/MM/yyyy', { locale: ptBR });
-  doc.text(`Data de Criação: ${createdDate}`, rightX, rightY);
-  rightY += 5;
-  
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(100, 116, 139);
+  doc.text('Data de Criação:', rightCol, rightY);
+  doc.setFont(undefined, 'normal');
+  doc.setTextColor(30, 41, 59);
+  doc.text(createdDate, rightCol + 32, rightY);
+  rightY += 8;
+
   const validityDate = new Date(budget.created_at);
   validityDate.setDate(validityDate.getDate() + budget.validity_days);
   const validityFormatted = format(validityDate, 'dd/MM/yyyy', { locale: ptBR });
-  doc.text(`Válido até: ${validityFormatted}`, rightX, rightY);
-
-  // Services table (inspired by reference design)
-  yPosition += 20;
-  
-  // Table header with gradient background
-  doc.setFillColor(147, 51, 234); // Purple primary
-  doc.rect(20, yPosition - 5, 170, 12, 'F');
-  
-  doc.setFontSize(12);
   doc.setFont(undefined, 'bold');
-  doc.setTextColor(255, 255, 255);
-  
-  // Header columns
-  doc.text('SERVIÇO', 25, yPosition + 3);
-  doc.text('DESCRIÇÃO', 80, yPosition + 3);
-  doc.text('VALOR', 160, yPosition + 3);
-  
-  yPosition += 12;
-
-  // Table rows
+  doc.setTextColor(100, 116, 139);
+  doc.text('Válido até:', rightCol, rightY);
   doc.setFont(undefined, 'normal');
-  doc.setTextColor(51, 65, 85);
+  doc.setTextColor(30, 41, 59);
+  doc.text(validityFormatted, rightCol + 25, rightY);
+
+  // Service Details Section
+  yPosition = Math.max(leftY, rightY) + 15;
+  doc.setFontSize(18);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(71, 85, 105);
+  doc.text('Detalhes dos Serviços', 20, yPosition);
   
-  let totalRowHeight = 0;
+  // Section underline
+  doc.setDrawColor(203, 213, 225);
+  doc.setLineWidth(1);
+  doc.line(20, yPosition + 2, 190, yPosition + 2);
   
+  yPosition += 15;
+
+  // Services table
   budget.budget_items.forEach((item, index) => {
-    const serviceName = doc.splitTextToSize(item.service_name, 50);
-    const description = doc.splitTextToSize(item.description || '-', 75);
+    const serviceName = doc.splitTextToSize(item.service_name, 70);
+    const description = doc.splitTextToSize(item.description || '-', 60);
     const maxLines = Math.max(serviceName.length, description.length);
-    const rowHeight = Math.max(15, maxLines * 6 + 8);
+    const rowHeight = Math.max(12, maxLines * 5 + 6);
     
     // Check for page break
-    if (yPosition + rowHeight > 260) {
+    if (yPosition + rowHeight > 240) {
       doc.addPage();
-      drawDecorativeElements(doc);
       yPosition = 30;
       
       // Repeat header
-      doc.setFillColor(147, 51, 234);
-      doc.rect(20, yPosition - 5, 170, 12, 'F');
+      doc.setFontSize(18);
       doc.setFont(undefined, 'bold');
-      doc.setTextColor(255, 255, 255);
-      doc.text('SERVIÇO', 25, yPosition + 3);
-      doc.text('DESCRIÇÃO', 80, yPosition + 3);
-      doc.text('VALOR', 160, yPosition + 3);
-      yPosition += 12;
-      doc.setFont(undefined, 'normal');
-      doc.setTextColor(51, 65, 85);
+      doc.setTextColor(71, 85, 105);
+      doc.text('Detalhes dos Serviços (continuação)', 20, yPosition);
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(1);
+      doc.line(20, yPosition + 2, 190, yPosition + 2);
+      yPosition += 15;
     }
 
-    // Alternate row background
+    // Alternate row background (matching template style)
     if (index % 2 === 0) {
-      doc.setFillColor(248, 250, 252);
-      doc.rect(20, yPosition - 3, 170, rowHeight, 'F');
+      doc.setFillColor(248, 250, 252); // Gray-50
+      doc.rect(20, yPosition - 2, 170, rowHeight, 'F');
     }
 
-    // Row content
-    doc.text(serviceName, 25, yPosition + 5);
-    doc.text(description, 80, yPosition + 5);
-    doc.text(formatCurrency(item.subtotal), 185, yPosition + 5, { align: 'right' });
+    // Service content
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(30, 41, 59);
+    doc.text(serviceName, 25, yPosition + 4);
+    
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text(description, 105, yPosition + 4);
+    
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(30, 41, 59);
+    doc.text(formatCurrency(item.subtotal), 185, yPosition + 4, { align: 'right' });
 
-    // Add borders
-    doc.setDrawColor(226, 232, 240);
+    // Bottom border
+    doc.setDrawColor(226, 232, 240); // Gray-200
     doc.setLineWidth(0.5);
-    doc.line(20, yPosition + rowHeight - 3, 190, yPosition + rowHeight - 3);
+    doc.line(20, yPosition + rowHeight - 1, 190, yPosition + rowHeight - 1);
 
     yPosition += rowHeight;
-    totalRowHeight += rowHeight;
   });
 
-  // Table border
-  doc.setDrawColor(147, 51, 234);
+  // Financial Summary (matching PaymentReceiptTemplate cards style)
+  yPosition += 10;
+  doc.setFillColor(248, 250, 252); // Gray-50
+  doc.setDrawColor(226, 232, 240); // Gray-200
   doc.setLineWidth(1);
-  doc.rect(20, yPosition - totalRowHeight - 12, 170, totalRowHeight + 12);
+  doc.rect(20, yPosition, 170, 35, 'FD');
   
-  // Column separators
-  doc.line(75, yPosition - totalRowHeight - 12, 75, yPosition);
-  doc.line(155, yPosition - totalRowHeight - 12, 155, yPosition);
-
-  // Total section (styled like the reference)
-  yPosition += 15;
-  doc.setFillColor(147, 51, 234);
-  doc.rect(110, yPosition - 5, 80, 18, 'F');
+  doc.setFontSize(18);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(71, 85, 105);
+  doc.text('Resumo Financeiro', 25, yPosition + 12);
+  
+  // Total amount card style
+  doc.setFillColor(255, 255, 255); // White
+  doc.rect(130, yPosition + 5, 55, 25, 'FD');
+  
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(100, 116, 139);
+  doc.text('VALOR TOTAL', 157.5, yPosition + 12, { align: 'center' });
   
   doc.setFontSize(16);
   doc.setFont(undefined, 'bold');
-  doc.setTextColor(255, 255, 255);
-  doc.text('TOTAL:', 115, yPosition + 6);
-  doc.text(formatCurrency(budget.total_amount), 185, yPosition + 6, { align: 'right' });
+  doc.setTextColor(59, 130, 246); // Blue-500
+  doc.text(formatCurrency(budget.total_amount), 157.5, yPosition + 22, { align: 'center' });
 
-  yPosition += 30;
+  yPosition += 50;
 
   // Payment method section
   if (budget.payment_method || budget.payment_conditions) {
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(30, 41, 59);
-    doc.text('FORMA DE PAGAMENTO', 20, yPosition);
+    doc.setTextColor(71, 85, 105);
+    doc.text('Condições de Pagamento', 20, yPosition);
     yPosition += 8;
     
     doc.setFontSize(11);
     doc.setFont(undefined, 'normal');
-    doc.setTextColor(71, 85, 105);
+    doc.setTextColor(100, 116, 139);
     
     if (budget.payment_method) {
       doc.text(budget.payment_method, 20, yPosition);
@@ -245,45 +304,41 @@ export async function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: C
     }
   }
 
-  // Terms and conditions section
-  yPosition += 10;
-  doc.setFontSize(14);
-  doc.setFont(undefined, 'bold');
-  doc.setTextColor(30, 41, 59);
-  doc.text('TERMOS E CONDIÇÕES', 20, yPosition);
-  yPosition += 8;
-  
-  doc.setFontSize(11);
-  doc.setFont(undefined, 'normal');
-  doc.setTextColor(71, 85, 105);
-  
-  const validityText = `Este orçamento é válido por ${budget.validity_days} dias.`;
-  doc.text(validityText, 20, yPosition);
-  
+  // Terms section
   if (budget.general_notes) {
-    yPosition += 6;
+    yPosition += 5;
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(71, 85, 105);
+    doc.text('Observações', 20, yPosition);
+    yPosition += 8;
+    
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(100, 116, 139);
     const notesLines = doc.splitTextToSize(budget.general_notes, 150);
     doc.text(notesLines, 20, yPosition);
+    yPosition += notesLines.length * 5;
   }
 
-  // Contact info in bottom right (inspired by reference)
-  const bottomY = 260;
+  // Footer with thick top border (matching template)
+  const footerY = 270;
+  doc.setDrawColor(30, 41, 59);
+  doc.setLineWidth(2);
+  doc.line(20, footerY, 190, footerY);
+  
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(30, 41, 59);
+  doc.text(`Orçamento emitido em: ${currentDate}`, 105, footerY + 8, { align: 'center' });
+  
   doc.setFontSize(10);
-  doc.setTextColor(71, 85, 105);
-  
-  if (companyInfo?.whatsapp) {
-    doc.text(companyInfo.whatsapp, 190, bottomY, { align: 'right' });
-  }
-  
-  if (companyInfo?.website) {
-    doc.text(companyInfo.website, 190, bottomY + 5, { align: 'right' });
-  }
-  
-  if (companyInfo?.email) {
-    doc.text(companyInfo.email, 190, bottomY + 10, { align: 'right' });
-  }
+  doc.setFont(undefined, 'normal');
+  doc.setTextColor(100, 116, 139);
+  const validityText = `Este orçamento é válido por ${budget.validity_days} dias.`;
+  doc.text(validityText, 105, footerY + 18, { align: 'center' });
 
-  // Footer with page numbers
+  // Page numbers
   const pageCount = (doc as any).internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);

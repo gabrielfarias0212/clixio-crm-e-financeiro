@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { CRMHeader } from "@/components/crm/CRMHeader";
@@ -6,18 +6,20 @@ import { LeadOrigins } from "@/components/crm/LeadOrigins";
 import { CRMKanban } from "@/components/crm/CRMKanban";
 import { QuickLeadForm } from "@/components/client-form/QuickLeadForm";
 import { Button } from "@/components/ui/button";
-import { Plus, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Plus, X, Filter } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { QuickLeadValues } from "@/components/client-form/quickLeadTypes";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { EventCategory } from "@/utils/types";
 
 export default function CRM() {
   const navigate = useNavigate();
-  const { addClient } = useClients();
+  const { clients, loading, addClient } = useClients();
   const [showQuickForm, setShowQuickForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [timeFilter, setTimeFilter] = useState("all");
 
   useEffect(() => {
     document.title = "CRM | Wedding CRM";
@@ -38,7 +40,7 @@ export default function CRM() {
         downPayment: 0,
         status: "primeiro_contato",
         nextAction: "enviar proposta",
-        eventCategory: data.eventCategory,
+        eventCategory: data.eventCategory as EventCategory,
         eventLocation: "",
         preWeddingDate: null,
         preWeddingStartTime: "",

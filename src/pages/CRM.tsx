@@ -3,6 +3,7 @@ import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { CRMHeader } from "@/components/crm/CRMHeader";
 import { LeadOrigins } from "@/components/crm/LeadOrigins";
+import { LeadsVsContractsChart } from "@/components/crm/LeadsVsContractsChart";
 import { CRMKanban } from "@/components/crm/CRMKanban";
 import { QuickLeadForm } from "@/components/client-form/QuickLeadForm";
 import { Button } from "@/components/ui/button";
@@ -142,6 +143,9 @@ export default function CRM() {
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
+            {/* Gráfico Leads vs Contratos */}
+            <LeadsVsContractsChart clients={filteredClients} />
+            
             {/* Lead Origins */}
             <LeadOrigins clients={filteredClients} />
           </TabsContent>

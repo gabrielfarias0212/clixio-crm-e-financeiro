@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Budget } from '@/types/budget';
 import { BudgetCard } from './BudgetCard';
@@ -11,6 +12,7 @@ interface BudgetListProps {
   onEdit?: (budget: Budget) => void;
   onDelete?: (budget: Budget) => void;
   onDownload?: (budget: Budget) => void;
+  downloadingId?: string | null;
 }
 
 export function BudgetList({ 
@@ -19,7 +21,8 @@ export function BudgetList({
   onView, 
   onEdit, 
   onDelete, 
-  onDownload 
+  onDownload,
+  downloadingId 
 }: BudgetListProps) {
   if (isLoading) {
     return (
@@ -64,6 +67,7 @@ export function BudgetList({
           onEdit={onEdit}
           onDelete={onDelete}
           onDownload={onDownload}
+          isDownloading={downloadingId === budget.id}
         />
       ))}
     </div>

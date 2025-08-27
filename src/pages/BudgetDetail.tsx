@@ -63,6 +63,12 @@ export default function BudgetDetail() {
     }
   };
 
+  const handleEdit = () => {
+    if (budget) {
+      navigate(`/budgets/${budget.id}/edit`);
+    }
+  };
+
   const handleDelete = async () => {
     if (budget) {
       try {
@@ -146,6 +152,10 @@ export default function BudgetDetail() {
           </div>
           
           <div className="flex gap-2">
+            <Button variant="outline" onClick={handleEdit}>
+              <Edit className="h-4 w-4 mr-2" />
+              Editar
+            </Button>
             <Button variant="outline" onClick={handleDownload}>
               <Download className="h-4 w-4 mr-2" />
               Baixar PDF

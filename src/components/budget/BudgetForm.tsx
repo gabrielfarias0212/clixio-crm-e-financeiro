@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,8 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
-import { useCreateBudget } from '@/hooks/useBudgets';
+import { useCreateBudget, useUpdateBudget } from '@/hooks/useBudgets';
 import { formatCurrency } from '@/utils/currency';
+import { BudgetWithItems } from '@/types/budget';
 
 const budgetSchema = z.object({
   client_name: z.string().min(1, 'Nome do cliente é obrigatório'),
@@ -23,6 +25,7 @@ const budgetSchema = z.object({
   payment_conditions: z.string().optional(),
   general_notes: z.string().optional(),
   items: z.array(z.object({
+    id: z.string().optional(),
     service_name: z.string().min(1, 'Nome do serviço é obrigatório'),
     description: z.string().optional(),
     quantity: z.number().min(1, 'Quantidade deve ser maior que 0'),
@@ -34,26 +37,66 @@ type BudgetFormData = z.infer<typeof budgetSchema>;
 
 interface BudgetFormProps {
   onSuccess?: (budgetId: string) => void;
+  initialData?: BudgetWithItems;
+  isEditing?: boolean;
 }
 
-export function BudgetForm({ onSuccess }: BudgetFormProps) {
+export function BudgetForm({ onSuccess, initialData, isEditing = false }: BudgetFormProps) {
   const createBudget = useCreateBudget();
+  const updateBudget = useUpdateBudget();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const defaultValues = {
+    client_name: '',
+    client_email: '',
+    client_phone: '',
+    event_date: '',
+    budget_title: '',
+    validity_days: 15,
+    payment_method: '',
+    payment_conditions: '',
+    general_notes: '',
+    items: [{ service_name: '', description: '', quantity: 1, unit_price: 0 }],
+  };
 
   const form = useForm<BudgetFormData>({
     resolver: zodResolver(budgetSchema),
-    defaultValues: {
-      client_name: '',
-      budget_title: '',
-      validity_days: 15,
-      items: [{ service_name: '', description: '', quantity: 1, unit_price: 0 }],
-    },
+    defaultValues,
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'items',
   });
+
+  // Populate form with initial data when editing
+  useEffect(() => {
+    if (isEditing && initialData) {
+      const formattedDate = initialData.event_date ? 
+        new Date(initialData.event_date).toISOString().split('T')[0] : '';
+      
+      form.reset({
+        client_name: initialData.client_name || '',
+        client_email: initialData.client_email || '',
+        client_phone: initialData.client_phone || '',
+        event_date: formattedDate,
+        budget_title: initialData.budget_title || '',
+        validity_days: initialData.validity_days || 15,
+        payment_method: initialData.payment_method || '',
+        payment_conditions: initialData.payment_conditions || '',
+        general_notes: initialData.general_notes || '',
+        items: initialData.budget_items?.length > 0 
+          ? initialData.budget_items.map(item => ({
+              id: item.id,
+              service_name: item.service_name,
+              description: item.description || '',
+              quantity: item.quantity,
+              unit_price: Number(item.unit_price),
+            }))
+          : [{ service_name: '', description: '', quantity: 1, unit_price: 0 }],
+      });
+    }
+  }, [isEditing, initialData, form]);
 
   const watchedItems = form.watch('items');
   const totalAmount = watchedItems.reduce((total, item) => {
@@ -63,8 +106,28 @@ export function BudgetForm({ onSuccess }: BudgetFormProps) {
   const onSubmit = async (data: BudgetFormData) => {
     try {
       setIsSubmitting(true);
-      const budgetId = await createBudget.mutateAsync(data as any);
-      onSuccess?.(budgetId);
+      
+      if (isEditing && initialData) {
+        await updateBudget.mutateAsync({
+          budgetId: initialData.id,
+          updates: {
+            client_name: data.client_name,
+            client_email: data.client_email || null,
+            client_phone: data.client_phone || null,
+            event_date: data.event_date || null,
+            budget_title: data.budget_title,
+            validity_days: data.validity_days,
+            payment_method: data.payment_method || null,
+            payment_conditions: data.payment_conditions || null,
+            general_notes: data.general_notes || null,
+            total_amount: totalAmount,
+          }
+        });
+        onSuccess?.(initialData.id);
+      } else {
+        const budgetId = await createBudget.mutateAsync(data as any);
+        onSuccess?.(budgetId);
+      }
     } catch (error) {
       console.error('Error submitting budget:', error);
     } finally {
@@ -398,7 +461,10 @@ export function BudgetForm({ onSuccess }: BudgetFormProps) {
             disabled={isSubmitting}
             className="flex-1"
           >
-            {isSubmitting ? 'Criando...' : 'Criar Orçamento'}
+            {isSubmitting 
+              ? (isEditing ? 'Atualizando...' : 'Criando...')
+              : (isEditing ? 'Atualizar Orçamento' : 'Criar Orçamento')
+            }
           </Button>
         </div>
       </form>

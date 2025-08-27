@@ -6,9 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BudgetList } from '@/components/budget/BudgetList';
 import { useBudgets, useDeleteBudget } from '@/hooks/useBudgets';
+import { usePhotographerProfile } from '@/hooks/usePhotographerProfile';
 import { useNavigate } from 'react-router-dom';
 import { Budget } from '@/types/budget';
 import { toast } from 'sonner';
+import { fetchBudgetWithItems } from '@/utils/supabase/budgets';
+import { downloadBudgetPDF } from '@/utils/pdfGenerator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,10 +27,12 @@ import Layout from '@/components/Layout';
 export default function Budgets() {
   const navigate = useNavigate();
   const { data: budgets = [], isLoading } = useBudgets();
+  const { profile } = usePhotographerProfile();
   const deleteBudget = useDeleteBudget();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const filteredBudgets = budgets.filter(budget => 
     budget.budget_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -39,7 +44,7 @@ export default function Budgets() {
   };
 
   const handleEdit = (budget: Budget) => {
-    navigate(`/budgets/${budget.id}`);
+    navigate(`/budgets/${budget.id}/edit`);
   };
 
   const handleDelete = (budget: Budget) => {
@@ -59,16 +64,34 @@ export default function Budgets() {
 
   const handleDownload = async (budget: Budget) => {
     try {
-      // Import PDF generation dynamically to avoid loading it unnecessarily
-      const { downloadBudgetPDF } = await import('@/utils/pdfGenerator');
-      const { useBudget } = await import('@/hooks/useBudgets');
+      setDownloadingId(budget.id);
       
-      // For now, we'll just show a toast. In a real implementation,
-      // we'd fetch the budget with items and company info first
-      toast.info('Funcionalidade de download será implementada em breve');
+      // Fetch complete budget data with items
+      const budgetWithItems = await fetchBudgetWithItems(budget.id);
+      
+      if (!budgetWithItems) {
+        toast.error('Erro ao carregar dados do orçamento');
+        return;
+      }
+
+      // Prepare company info from profile
+      const companyInfo = profile ? {
+        company_name: profile.company_name,
+        name: profile.brand_name,
+        email: profile.email,
+        phone: profile.whatsapp,
+        website: profile.website,
+        avatar_url: profile.logo_url,
+      } : undefined;
+      
+      // Generate and download PDF
+      downloadBudgetPDF(budgetWithItems, companyInfo);
+      toast.success('PDF baixado com sucesso!');
     } catch (error) {
       console.error('Error downloading budget:', error);
       toast.error('Erro ao baixar orçamento');
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -120,6 +143,7 @@ export default function Budgets() {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onDownload={handleDownload}
+          downloadingId={downloadingId}
         />
 
         <AlertDialog open={!!budgetToDelete} onOpenChange={() => setBudgetToDelete(null)}>

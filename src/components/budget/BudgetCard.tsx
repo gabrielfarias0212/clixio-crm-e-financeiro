@@ -23,6 +23,7 @@ interface BudgetCardProps {
   onEdit?: (budget: Budget) => void;
   onDelete?: (budget: Budget) => void;
   onDownload?: (budget: Budget) => void;
+  isDownloading?: boolean;
 }
 
 const statusColors = {
@@ -44,7 +45,8 @@ export function BudgetCard({
   onView, 
   onEdit, 
   onDelete, 
-  onDownload 
+  onDownload,
+  isDownloading 
 }: BudgetCardProps) {
   const createdDate = format(new Date(budget.created_at), 'dd/MM/yyyy', { locale: ptBR });
   
@@ -108,6 +110,7 @@ export function BudgetCard({
             variant="outline"
             size="sm"
             onClick={() => onDownload?.(budget)}
+            disabled={isDownloading}
           >
             <Download className="h-4 w-4" />
           </Button>

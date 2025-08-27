@@ -5,13 +5,6 @@ import { formatCurrency } from '@/utils/currency';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-// Extend jsPDF interface for autoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
-
 interface CompanyInfo {
   company_name?: string;
   name?: string;
@@ -102,7 +95,7 @@ export function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: Company
     formatCurrency(item.subtotal)
   ]);
 
-  doc.autoTable({
+  (doc as any).autoTable({
     startY: yPosition,
     head: [['Serviço', 'Descrição', 'Quantidade', 'Preço Unitário', 'Subtotal']],
     body: tableData,

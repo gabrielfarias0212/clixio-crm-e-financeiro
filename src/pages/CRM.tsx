@@ -1,18 +1,64 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { CRMHeader } from "@/components/crm/CRMHeader";
 import { LeadOrigins } from "@/components/crm/LeadOrigins";
 import { CRMKanban } from "@/components/crm/CRMKanban";
+import { QuickLeadForm } from "@/components/client-form/QuickLeadForm";
 import { Button } from "@/components/ui/button";
-import { Plus, Filter } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Plus, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { QuickLeadValues } from "@/components/client-form/quickLeadTypes";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function CRM() {
-  const { clients, loading } = useClients();
-  const [timeFilter, setTimeFilter] = useState("2025");
+  const navigate = useNavigate();
+  const { addClient } = useClients();
+  const [showQuickForm, setShowQuickForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    document.title = "CRM | Wedding CRM";
+  }, []);
+
+  const handleQuickLead = async (data: QuickLeadValues) => {
+    setSubmitting(true);
+    try {
+      const newClient = await addClient({
+        name: data.name,
+        coupleName: "",
+        email: data.email,
+        phone: data.phone,
+        weddingDate: data.weddingDate,
+        weddingStartTime: "",
+        weddingEndTime: "",
+        contractValue: 0,
+        downPayment: 0,
+        status: "primeiro_contato",
+        nextAction: "enviar proposta",
+        eventCategory: data.eventCategory,
+        eventLocation: "",
+        preWeddingDate: null,
+        preWeddingStartTime: "",
+        preWeddingEndTime: "",
+        contractLink: "",
+        hasPreWedding: false,
+        salesFunnelStage: "primeiro_contato",
+        notes: data.notes || "",
+      });
+      
+      if (newClient) {
+        toast.success("Lead adicionado com sucesso!");
+        setShowQuickForm(false);
+      }
+    } catch (error) {
+      toast.error("Erro ao adicionar lead.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // Filter clients based on time filter
   const filteredClients = useMemo(() => {

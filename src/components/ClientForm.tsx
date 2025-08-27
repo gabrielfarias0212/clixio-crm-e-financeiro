@@ -4,17 +4,22 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { useNavigate } from "react-router-dom";
-import { FormFields } from "./client-form/FormFields";
+import { ConditionalFormFields } from "./client-form/ConditionalFormFields";
 import { NotesField } from "./client-form/NotesField";
 import { FormActions } from "./client-form/FormActions";
-import { formSchema, ClientFormProps, ClientFormValues } from "./client-form/types";
+import { createFormSchema, ClientFormProps, ClientFormValues } from "./client-form/types";
 
 export { type ClientFormValues };
 
 export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFormProps) {
   const navigate = useNavigate();
+  
+  // Get dynamic schema based on client status
+  const currentStatus = client?.status || "primeiro_contato";
+  const dynamicSchema = createFormSchema(currentStatus);
+  
   const form = useForm<ClientFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(dynamicSchema),
     defaultValues: client
       ? {
           name: client.name,
@@ -67,6 +72,13 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
   const watchStatus = form.watch("status");
   const watchHasPreWedding = form.watch("hasPreWedding");
 
+  // Update schema when status changes
+  useEffect(() => {
+    const newSchema = createFormSchema(watchStatus);
+    // Reset resolver with new schema
+    form.clearErrors();
+  }, [watchStatus, form]);
+
   // If hasPreWedding is false, clear the pre-wedding date fields
   useEffect(() => {
     if (!watchHasPreWedding) {
@@ -79,7 +91,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 animate-fade-in">
-        <FormFields 
+        <ConditionalFormFields 
           control={form.control} 
           watchStatus={watchStatus} 
           watchHasPreWedding={watchHasPreWedding}

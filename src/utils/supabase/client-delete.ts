@@ -7,7 +7,6 @@ import { supabase } from '@/integrations/supabase/client';
 export const deleteClient = async (id: string): Promise<boolean> => {
   try {
     // First, delete the calendar events related to this client
-    // With RLS enabled, this will only delete events owned by the current user
     const { error: calendarEventsError } = await supabase
       .from('calendar_events')
       .delete()

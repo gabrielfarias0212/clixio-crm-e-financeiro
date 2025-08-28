@@ -152,7 +152,7 @@ export function ClientTable({ clients, sortBy, setSortBy, sortOrder, setSortOrde
                     size="icon"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/clients/edit/${client.id}`);
+                      navigate(`/clients/${client.id}/edit`);
                     }}
                   >
                     <Edit className="h-4 w-4 text-gray-500" />

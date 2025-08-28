@@ -105,6 +105,7 @@ export default function AddClient() {
         <ClientForm 
           onSubmit={handleCreateClient} 
           isSubmitting={submitting}
+          isLeadForm={false}
         />
       </div>
     </Layout>

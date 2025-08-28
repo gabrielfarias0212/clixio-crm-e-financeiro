@@ -11,7 +11,7 @@ import { createFormSchema, ClientFormProps, ClientFormValues } from "./client-fo
 
 export { type ClientFormValues };
 
-export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFormProps) {
+export function ClientForm({ client, onSubmit, isSubmitting = false, isLeadForm = false }: ClientFormProps) {
   const navigate = useNavigate();
   
   // Get dynamic schema based on client status
@@ -98,6 +98,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           watchStatus={watchStatus} 
           watchHasPreWedding={watchHasPreWedding}
           clientId={client?.id}
+          isLeadForm={isLeadForm}
         />
         <NotesField control={form.control} />
         <FormActions 

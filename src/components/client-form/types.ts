@@ -77,6 +77,7 @@ export interface ClientFormProps {
     client?: Client;
     onSubmit: (values: ClientFormValues) => void;
     isSubmitting?: boolean;
+    isLeadForm?: boolean;
 }
 
 export interface ClientFormValues {

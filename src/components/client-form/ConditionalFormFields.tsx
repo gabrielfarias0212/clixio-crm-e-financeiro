@@ -15,15 +15,17 @@ interface ConditionalFormFieldsProps {
   watchStatus: string;
   watchHasPreWedding?: boolean;
   clientId?: string;
+  isLeadForm?: boolean;
 }
 
 export function ConditionalFormFields({ 
   control, 
   watchStatus, 
   watchHasPreWedding = true, 
-  clientId 
+  clientId,
+  isLeadForm = false
 }: ConditionalFormFieldsProps) {
-  const isLead = isLeadStage(watchStatus);
+  const isLead = isLeadForm || isLeadStage(watchStatus);
 
   return (
     <div className="space-y-6">

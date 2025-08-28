@@ -57,7 +57,7 @@ export function QuickLeadForm({ onSubmit, isSubmitting = false, onCancel }: Quic
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="name"
@@ -115,31 +115,6 @@ export function QuickLeadForm({ onSubmit, isSubmitting = false, onCancel }: Quic
 
             <FormField
               control={form.control}
-              name="eventCategory"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-foreground">Tipo de Evento</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="border-border">
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {eventCategories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="leadSource"
               render={({ field }) => (
                 <FormItem>
@@ -154,6 +129,31 @@ export function QuickLeadForm({ onSubmit, isSubmitting = false, onCancel }: Quic
                       {leadSources.map((source) => (
                         <SelectItem key={source} value={source}>
                           {source}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="eventCategory"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-foreground">Tipo de Evento</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="border-border">
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {eventCategories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
                         </SelectItem>
                       ))}
                     </SelectContent>

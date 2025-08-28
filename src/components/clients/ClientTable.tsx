@@ -11,7 +11,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/StatusBadge";
-import { CheckCircle, Edit, Trash2 } from "lucide-react";
+import { CheckCircle, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DeleteClientDialog } from "@/components/client-detail/DeleteClientDialog";
 import { useClients } from "@/contexts/ClientsContext";
@@ -19,9 +19,13 @@ import { toast } from "sonner";
 
 interface ClientTableProps {
   clients: Client[];
+  sortBy: "name" | "date" | "value" | "status";
+  setSortBy: (sort: "name" | "date" | "value" | "status") => void;
+  sortOrder: "asc" | "desc";
+  setSortOrder: (order: "asc" | "desc") => void;
 }
 
-export function ClientTable({ clients }: ClientTableProps) {
+export function ClientTable({ clients, sortBy, setSortBy, sortOrder, setSortOrder }: ClientTableProps) {
   const navigate = useNavigate();
   const { removeClient } = useClients();
 
@@ -51,15 +55,65 @@ export function ClientTable({ clients }: ClientTableProps) {
     navigate(`/clients/${clientId}`);
   };
 
+  const handleSort = (column: "name" | "date" | "value" | "status") => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortOrder('asc');
+    }
+  };
+
+  const getSortIcon = (column: "name" | "date" | "value" | "status") => {
+    if (sortBy !== column) {
+      return <ArrowUpDown className="h-4 w-4 ml-1 text-gray-400" />;
+    }
+    return sortOrder === 'asc' ? 
+      <ArrowUp className="h-4 w-4 ml-1 text-primary" /> : 
+      <ArrowDown className="h-4 w-4 ml-1 text-primary" />;
+  };
+
   return (
     <div className="bg-white rounded-md border overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Data</TableHead>
-            <TableHead>Valor</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>
+              <button 
+                className="flex items-center hover:text-primary transition-colors"
+                onClick={() => handleSort('name')}
+              >
+                Nome
+                {getSortIcon('name')}
+              </button>
+            </TableHead>
+            <TableHead>
+              <button 
+                className="flex items-center hover:text-primary transition-colors"
+                onClick={() => handleSort('date')}
+              >
+                Data
+                {getSortIcon('date')}
+              </button>
+            </TableHead>
+            <TableHead>
+              <button 
+                className="flex items-center hover:text-primary transition-colors"
+                onClick={() => handleSort('value')}
+              >
+                Valor
+                {getSortIcon('value')}
+              </button>
+            </TableHead>
+            <TableHead>
+              <button 
+                className="flex items-center hover:text-primary transition-colors"
+                onClick={() => handleSort('status')}
+              >
+                Status
+                {getSortIcon('status')}
+              </button>
+            </TableHead>
             <TableHead>Contato</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>

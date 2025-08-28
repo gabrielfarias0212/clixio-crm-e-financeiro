@@ -18,7 +18,9 @@ import { toast } from "sonner";
 export default function ClientList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "primeiro_contato" | "orçamento enviado" | "negociacao" | "fechado" | "projeto_finalizado">("all");
-  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  const [viewMode, setViewMode] = useState<"cards" | "table">("table");
+  const [sortBy, setSortBy] = useState<"name" | "date" | "value" | "status">("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [clearingData, setClearingData] = useState(false);
 
   // Hook otimizado para clientes
@@ -31,7 +33,9 @@ export default function ClientList() {
   } = useOptimizedClients({
     pageSize: 50,
     searchTerm,
-    statusFilter
+    statusFilter,
+    sortBy,
+    sortOrder
   });
 
   const { clients: allClientsFromContext } = useClients();
@@ -129,6 +133,10 @@ export default function ClientList() {
                 setStatusFilter={(status) => handleFiltersChange(searchTerm, status)}
                 viewMode={viewMode === "cards" ? "card" : "list"}
                 setViewMode={(mode) => setViewMode(mode === "card" ? "cards" : "table")}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
                 clearFilters={clearFilters}
                 hasActiveFilters={hasActiveFilters}
               />
@@ -150,7 +158,13 @@ export default function ClientList() {
                     onDeleteSuccess={handleDeleteSuccess}
                   />
                 ) : (
-                  <ClientTable clients={clients} />
+                  <ClientTable 
+                    clients={clients} 
+                    sortBy={sortBy}
+                    setSortBy={setSortBy}
+                    sortOrder={sortOrder}
+                    setSortOrder={setSortOrder}
+                  />
                 )}
                 
                 <ClientPagination

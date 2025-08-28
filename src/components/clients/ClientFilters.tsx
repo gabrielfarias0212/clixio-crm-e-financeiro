@@ -9,7 +9,7 @@ import {
   DropdownMenuRadioItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Search, X, ChevronDown, List, LayoutGrid } from "lucide-react";
+import { Search, X, ChevronDown, List, LayoutGrid, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { ClientStatus } from "@/utils/types";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +20,10 @@ interface ClientFiltersProps {
   setStatusFilter: (status: ClientStatus | "all") => void;
   viewMode: "list" | "card";
   setViewMode: (mode: "list" | "card") => void;
+  sortBy: "name" | "date" | "value" | "status";
+  setSortBy: (sort: "name" | "date" | "value" | "status") => void;
+  sortOrder: "asc" | "desc";
+  setSortOrder: (order: "asc" | "desc") => void;
   clearFilters: () => void;
   hasActiveFilters: boolean;
 }
@@ -31,11 +35,26 @@ export function ClientFilters({
   setStatusFilter,
   viewMode,
   setViewMode,
+  sortBy,
+  setSortBy,
+  sortOrder,
+  setSortOrder,
   clearFilters,
   hasActiveFilters
 }: ClientFiltersProps) {
+
+  const getSortLabel = (sort: string) => {
+    switch (sort) {
+      case 'name': return 'Nome';
+      case 'date': return 'Data';
+      case 'value': return 'Valor';
+      case 'status': return 'Status';
+      default: return 'Nome';
+    }
+  };
   return (
-    <div className="mb-8 flex flex-col sm:flex-row gap-3">
+    <div className="mb-8 space-y-4">
+      <div className="flex flex-col sm:flex-row gap-3">
       <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input
@@ -95,15 +114,48 @@ export function ClientFilters({
         </Button>
       </div>
       
-      {hasActiveFilters && (
-        <Button 
-          variant="ghost" 
-          onClick={clearFilters}
-          className="sm:ml-auto w-full sm:w-auto"
+        {hasActiveFilters && (
+          <Button 
+            variant="ghost" 
+            onClick={clearFilters}
+            className="sm:ml-auto w-full sm:w-auto"
+          >
+            Limpar filtros
+          </Button>
+        )}
+      </div>
+      
+      {/* Controles de ordenação */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <span className="text-sm font-medium text-muted-foreground">Ordenar por:</span>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="w-full sm:w-auto min-w-[120px] justify-between">
+              {getSortLabel(sortBy)}
+              <ChevronDown className="h-4 w-4 ml-2" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-48">
+            <DropdownMenuRadioGroup value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
+              <DropdownMenuRadioItem value="name">Nome</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="date">Data</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="value">Valor</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="status">Status</DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          className="w-full sm:w-auto"
+          title={sortOrder === 'asc' ? 'Crescente' : 'Decrescente'}
         >
-          Limpar filtros
+          {sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
         </Button>
-      )}
+      </div>
     </div>
   );
 }

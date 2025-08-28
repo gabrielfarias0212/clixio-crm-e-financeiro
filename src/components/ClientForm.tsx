@@ -41,6 +41,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           contractLink: client.contractLink || "",
           hasPreWedding: client.hasPreWedding !== false,
           notes: client.notes,
+          leadSource: client.leadSource || "Não informado",
         }
       : {
           name: "",
@@ -62,6 +63,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false }: ClientFor
           contractLink: "",
           hasPreWedding: true,
           notes: "",
+          leadSource: "Não informado",
         },
   });
 

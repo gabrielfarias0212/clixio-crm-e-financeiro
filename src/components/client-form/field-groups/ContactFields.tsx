@@ -11,11 +11,24 @@ import {
 } from "@/components/ui/form";
 import { ClientFormValues } from "../types";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Phone } from "lucide-react";
 
 interface ContactFieldsProps {
   control: Control<ClientFormValues>;
 }
+
+const leadSources = [
+  "Facebook",
+  "Instagram", 
+  "Indicações",
+  "Website",
+  "Telefone",
+  "E-mail",
+  "WhatsApp",
+  "Outros",
+  "Não informado"
+];
 
 export function ContactFields({ control }: ContactFieldsProps) {
   const getWhatsAppLink = (phone: string) => {
@@ -130,6 +143,34 @@ export function ContactFields({ control }: ContactFieldsProps) {
                 </Button>
               )}
             </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="leadSource"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Origem do Lead</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value || "Não informado"}>
+              <FormControl>
+                <SelectTrigger className="focus:ring-1 focus:ring-black dark:focus:ring-white transition-shadow">
+                  <SelectValue placeholder="Como chegou até você?" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {leadSources.map((source) => (
+                  <SelectItem key={source} value={source}>
+                    {source}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormDescription className="text-xs text-gray-500">
+              Como o cliente chegou até você
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}

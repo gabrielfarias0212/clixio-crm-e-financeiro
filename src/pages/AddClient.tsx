@@ -68,6 +68,7 @@ export default function AddClient() {
         hasPreWedding: data.hasPreWedding,
         salesFunnelStage: mapStatusToFunnelStage(data.status),
         notes: data.notes || "",
+        leadSource: data.leadSource || "Não informado",
       });
       
       if (newClient) {

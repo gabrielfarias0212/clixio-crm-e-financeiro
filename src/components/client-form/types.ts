@@ -35,6 +35,7 @@ export const createFormSchema = (status?: string) => {
       contractLink: z.string().optional(),
       hasPreWedding: z.boolean().optional(),
       notes: z.string().optional(),
+      leadSource: z.string().optional().default("Não informado"),
     });
   }
   
@@ -65,6 +66,7 @@ export const createFormSchema = (status?: string) => {
     contractLink: z.string().optional(),
     hasPreWedding: z.boolean().optional(),
     notes: z.string().optional(),
+    leadSource: z.string().optional().default("Não informado"),
   });
 };
 
@@ -97,4 +99,5 @@ export interface ClientFormValues {
   contractLink: string;
   hasPreWedding: boolean;
   notes: string;
+  leadSource?: string;
 }

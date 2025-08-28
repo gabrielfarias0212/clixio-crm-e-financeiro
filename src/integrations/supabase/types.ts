@@ -1250,6 +1250,7 @@ export type Database = {
           sales_funnel_stage: string | null
           status: string | null
           updated_at: string | null
+          user_id: string | null
           wedding_date: string | null
           wedding_end_time: string | null
           wedding_photographed: boolean | null
@@ -1285,6 +1286,7 @@ export type Database = {
           sales_funnel_stage?: string | null
           status?: string | null
           updated_at?: string | null
+          user_id?: string | null
           wedding_date?: string | null
           wedding_end_time?: string | null
           wedding_photographed?: boolean | null
@@ -1320,6 +1322,7 @@ export type Database = {
           sales_funnel_stage?: string | null
           status?: string | null
           updated_at?: string | null
+          user_id?: string | null
           wedding_date?: string | null
           wedding_end_time?: string | null
           wedding_photographed?: boolean | null
@@ -1337,6 +1340,7 @@ export type Database = {
           id: string
           notes: string | null
           payment_status: string | null
+          user_id: string | null
         }
         Insert: {
           amount: number
@@ -1347,6 +1351,7 @@ export type Database = {
           id?: string
           notes?: string | null
           payment_status?: string | null
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -1357,6 +1362,7 @@ export type Database = {
           id?: string
           notes?: string | null
           payment_status?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1379,6 +1385,7 @@ export type Database = {
           id: string
           payment_id: string | null
           type: string
+          user_id: string | null
         }
         Insert: {
           amount: number
@@ -1390,6 +1397,7 @@ export type Database = {
           id?: string
           payment_id?: string | null
           type: string
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -1401,6 +1409,7 @@ export type Database = {
           id?: string
           payment_id?: string | null
           type?: string
+          user_id?: string | null
         }
         Relationships: [
           {

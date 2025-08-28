@@ -39,9 +39,17 @@ export const createPayment = async (payment: {
   payment_status?: string
 }): Promise<Payment | null> => {
   try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('No authenticated user found');
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('wedding_payments')
       .insert({
+        user_id: user.id,
         client_id: payment.clientId,
         amount: payment.amount,
         date: formatDateForSupabase(payment.date),
@@ -283,9 +291,17 @@ export const markContractAsPaid = async (clientId: string, createTransactionFlag
     if (!existingPayments || existingPayments.length === 0) {
       console.log('No payments found, creating full payment');
       
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('No authenticated user found');
+        return false;
+      }
+
       const { data: newPayment, error: createPaymentError } = await supabase
         .from('wedding_payments')
         .insert({
+          user_id: user.id,
           client_id: clientId,
           amount: clientData.contract_value,
           date: formatDateForSupabase(new Date().toISOString()),
@@ -321,10 +337,18 @@ export const markContractAsPaid = async (clientId: string, createTransactionFlag
     if (pendingAmount > 0) {
       console.log(`Creating additional payment for pending amount: ${pendingAmount}`);
       
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('No authenticated user found');
+        return false;
+      }
+
       // Create a payment for the remaining amount
       const { data: additionalPayment, error: additionalPaymentError } = await supabase
         .from('wedding_payments')
         .insert({
+          user_id: user.id,
           client_id: clientId,
           amount: pendingAmount,
           date: formatDateForSupabase(new Date().toISOString()),

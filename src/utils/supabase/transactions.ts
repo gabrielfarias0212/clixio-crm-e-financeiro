@@ -33,10 +33,18 @@ export const fetchTransactions = async (): Promise<Transaction[]> => {
 
 export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'createdAt'>): Promise<Transaction | null> => {
   try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('No authenticated user found');
+      return null;
+    }
+
     // First, create the transaction record
     const { data, error } = await supabase
       .from('wedding_transactions')
       .insert({
+        user_id: user.id,
         amount: transaction.amount,
         date: formatDateForSupabase(transaction.date),
         type: transaction.type,
@@ -58,6 +66,7 @@ export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'c
       await supabase
         .from('wedding_payments')
         .insert({
+          user_id: user.id,
           client_id: transaction.clientId,
           amount: transaction.amount,
           date: formatDateForSupabase(transaction.date),
@@ -156,9 +165,17 @@ export const updateTransaction = async (
         // Create new payment only if no existing payment and no current payment link
         console.log('Creating new payment for transaction associated with client');
         
+        // Get current user for creating payment
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.error('No authenticated user found for creating payment');
+          return null;
+        }
+
         const { data: newPayment, error: paymentError } = await supabase
           .from('wedding_payments')
           .insert({
+            user_id: user.id,
             client_id: updates.clientId,
             amount: updates.amount || currentTransaction.amount,
             date: updates.date ? formatDateForSupabase(updates.date) : currentTransaction.date,

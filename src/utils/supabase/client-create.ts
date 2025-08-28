@@ -26,11 +26,19 @@ const mapStatusToFunnelStage = (status: string): SalesFunnelStage => {
 
 export const createClient = async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'payments'>): Promise<Client | null> => {
   try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('No authenticated user found');
+      return null;
+    }
+
     const salesFunnelStage = mapStatusToFunnelStage(clientData.status);
     
     const { data, error } = await supabase
       .from('wedding_clients')
       .insert({
+        user_id: user.id,
         name: clientData.name,
         email: clientData.email,
         phone: clientData.phone,
@@ -63,14 +71,6 @@ export const createClient = async (clientData: Omit<Client, 'id' | 'createdAt' |
     }
 
     const newClient = parseClient(data);
-
-    // Get current user for calendar events
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      console.error('No authenticated user found');
-      return newClient; // Return client even if calendar events fail
-    }
 
     // Create calendar event for wedding if date is provided
     if (newClient.weddingDate && newClient.eventCategory) {

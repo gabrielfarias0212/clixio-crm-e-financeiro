@@ -107,6 +107,7 @@ export interface Client {
   albumApprovedDelivered?: boolean;
   isDelivered?: boolean;
   salesFunnelStage: SalesFunnelStage;
+  leadSource?: string;
   payments: Payment[];
   createdAt: string;
   updatedAt: string;

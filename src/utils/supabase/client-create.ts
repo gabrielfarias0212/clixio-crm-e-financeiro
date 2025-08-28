@@ -51,6 +51,7 @@ export const createClient = async (clientData: Omit<Client, 'id' | 'createdAt' |
         contract_link: clientData.contractLink,
         has_pre_wedding: clientData.hasPreWedding,
         sales_funnel_stage: salesFunnelStage,
+        lead_source: clientData.leadSource,
         notes: clientData.notes,
       })
       .select()

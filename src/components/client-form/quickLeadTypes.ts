@@ -13,6 +13,7 @@ export const quickLeadSchema = z.object({
   }),
   weddingDate: z.string().nullable().optional(),
   eventCategory: z.string().default("Casamento"),
+  leadSource: z.string().default("Não informado"),
   notes: z.string().optional(),
 });
 
@@ -51,6 +52,7 @@ export interface QuickLeadValues {
   email: string;
   weddingDate?: string | null;
   eventCategory: string;
+  leadSource: string;
   notes?: string;
 }
 

@@ -50,6 +50,7 @@ export default function CRM() {
         hasPreWedding: false,
         salesFunnelStage: "primeiro_contato",
         notes: data.notes || "",
+        leadSource: data.leadSource,
       });
       
       if (newClient) {

@@ -1235,6 +1235,7 @@ export type Database = {
           has_pre_wedding: boolean | null
           id: string
           in_editing: boolean | null
+          lead_source: string | null
           link_sent: boolean | null
           name: string
           next_action: string | null
@@ -1269,6 +1270,7 @@ export type Database = {
           has_pre_wedding?: boolean | null
           id?: string
           in_editing?: boolean | null
+          lead_source?: string | null
           link_sent?: boolean | null
           name: string
           next_action?: string | null
@@ -1303,6 +1305,7 @@ export type Database = {
           has_pre_wedding?: boolean | null
           id?: string
           in_editing?: boolean | null
+          lead_source?: string | null
           link_sent?: boolean | null
           name?: string
           next_action?: string | null

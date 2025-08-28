@@ -24,6 +24,7 @@ export const parseClient = (data: any): Client => {
     contractLink: data.contract_link,
     hasPreWedding: data.has_pre_wedding,
     salesFunnelStage: data.sales_funnel_stage || 'primeiro_contato', // New field
+    leadSource: data.lead_source,
     notes: data.notes,
     payments: [], // Will be loaded separately
     createdAt: data.created_at,

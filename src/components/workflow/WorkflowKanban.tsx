@@ -103,6 +103,12 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
       return optimisticUpdate.toStage;
     }
 
+    // Use the database workflow_stage field as primary source
+    if (client.workflowStage) {
+      return client.workflowStage;
+    }
+
+    // Fallback to boolean field logic for backwards compatibility
     if (client.status === 'projeto_finalizado') return 'projeto_finalizado';
     if (client.boxDelivered || client.albumApprovedDelivered) return 'entrega_fisica';
     if (client.linkSent) return 'link_enviado';
@@ -123,6 +129,9 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
   const updateClientStage = async (client: Client, newStage: WorkflowStage) => {
     const updates: Partial<Client> = { ...client };
 
+    // CRITICAL: Update the workflow_stage field in database
+    updates.workflowStage = newStage;
+
     // Reset all workflow flags
     updates.weddingPhotographed = false;
     updates.backupCompleted = false;
@@ -135,6 +144,9 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
 
     // Set appropriate flags based on stage
     switch (newStage) {
+      case 'evento_ensaio':
+        // All flags remain false for initial stage
+        break;
       case 'copia':
         updates.weddingPhotographed = true;
         break;
@@ -190,6 +202,13 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         break;
     }
 
+    console.log('Updating client workflow stage:', { 
+      clientId: client.id, 
+      fromStage: client.workflowStage, 
+      toStage: newStage,
+      updates: Object.keys(updates).filter(key => updates[key as keyof Client] !== client[key as keyof Client])
+    });
+
     return updates;
   };
 
@@ -209,6 +228,13 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
       return;
     }
 
+    console.log('Drag end initiated:', { 
+      clientId, 
+      clientName: client.name,
+      fromStage: oldStage, 
+      toStage: newStage 
+    });
+
     // Add optimistic update
     const optimisticUpdate: OptimisticUpdate = {
       clientId,
@@ -222,12 +248,23 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
 
     try {
       const updates = await updateClientStage(client, newStage);
-      await updateClient(client.id, updates);
       
-      // Remove optimistic update on success
-      setOptimisticUpdates(prev => prev.filter(u => u.clientId !== clientId));
+      console.log('Sending client update to database:', { 
+        clientId: client.id,
+        updates: updates
+      });
       
-      toast.success(`${client.name} movido para ${workflowStages.find(s => s.id === newStage)?.title}`);
+      const updatedClient = await updateClient(client.id, updates);
+      
+      if (updatedClient) {
+        console.log('Client updated successfully:', updatedClient.workflowStage);
+        // Remove optimistic update on success
+        setOptimisticUpdates(prev => prev.filter(u => u.clientId !== clientId));
+        
+        toast.success(`${client.name} movido para ${workflowStages.find(s => s.id === newStage)?.title}`);
+      } else {
+        throw new Error('Failed to update client - no response from server');
+      }
     } catch (error) {
       console.error("Erro ao atualizar cliente:", error);
       

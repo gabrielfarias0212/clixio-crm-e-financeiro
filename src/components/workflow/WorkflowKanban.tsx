@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Copy, Shield, Palette, Edit3, Link, Send, Package, CheckCircle } from "lucide-react";
+import { Camera, Copy, Shield, Palette, Edit3, Link, Send, Package, CheckCircle, Loader2 } from "lucide-react";
 import { Client, WorkflowStage } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
@@ -11,6 +11,13 @@ import { ptBR } from "date-fns/locale";
 
 interface WorkflowKanbanProps {
   clients: Client[];
+}
+
+interface OptimisticUpdate {
+  clientId: string;
+  fromStage: WorkflowStage;
+  toStage: WorkflowStage;
+  timestamp: number;
 }
 
 const workflowStages = [
@@ -81,9 +88,21 @@ const workflowStages = [
 
 export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
   const { updateClient } = useClients();
+  const [optimisticUpdates, setOptimisticUpdates] = useState<OptimisticUpdate[]>([]);
+  const [loadingClients, setLoadingClients] = useState<Set<string>>(new Set());
 
   // Mapear cliente para estágio do workflow baseado nos campos boolean
-  const getClientWorkflowStage = (client: Client): WorkflowStage => {
+  const getClientWorkflowStage = useCallback((client: Client): WorkflowStage => {
+    // Check for optimistic updates first
+    const optimisticUpdate = optimisticUpdates.find(update => 
+      update.clientId === client.id && 
+      Date.now() - update.timestamp < 5000 // 5 seconds timeout
+    );
+    
+    if (optimisticUpdate) {
+      return optimisticUpdate.toStage;
+    }
+
     if (client.status === 'projeto_finalizado') return 'projeto_finalizado';
     if (client.boxDelivered || client.albumApprovedDelivered) return 'entrega_fisica';
     if (client.linkSent) return 'link_enviado';
@@ -93,12 +112,12 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
     if (client.backupCompleted) return 'backup';
     if (client.weddingPhotographed) return 'copia';
     return 'evento_ensaio';
-  };
+  }, [optimisticUpdates]);
 
   // Agrupar clientes por estágio
-  const getClientsInStage = (stageId: WorkflowStage) => {
+  const getClientsInStage = useCallback((stageId: WorkflowStage) => {
     return clients.filter(client => getClientWorkflowStage(client) === stageId);
-  };
+  }, [clients, getClientWorkflowStage]);
 
   // Atualizar campos boolean baseado no estágio
   const updateClientStage = async (client: Client, newStage: WorkflowStage) => {
@@ -182,18 +201,46 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
 
     const clientId = draggableId;
     const newStage = destination.droppableId as WorkflowStage;
+    const oldStage = source.droppableId as WorkflowStage;
     const client = clients.find(c => c.id === clientId);
 
-    if (!client) return;
+    if (!client) {
+      toast.error("Cliente não encontrado");
+      return;
+    }
+
+    // Add optimistic update
+    const optimisticUpdate: OptimisticUpdate = {
+      clientId,
+      fromStage: oldStage,
+      toStage: newStage,
+      timestamp: Date.now()
+    };
+    
+    setOptimisticUpdates(prev => [...prev.filter(u => u.clientId !== clientId), optimisticUpdate]);
+    setLoadingClients(prev => new Set(prev).add(clientId));
 
     try {
       const updates = await updateClientStage(client, newStage);
       await updateClient(client.id, updates);
       
+      // Remove optimistic update on success
+      setOptimisticUpdates(prev => prev.filter(u => u.clientId !== clientId));
+      
       toast.success(`${client.name} movido para ${workflowStages.find(s => s.id === newStage)?.title}`);
     } catch (error) {
       console.error("Erro ao atualizar cliente:", error);
-      toast.error("Erro ao atualizar o progresso do projeto");
+      
+      // Rollback optimistic update
+      setOptimisticUpdates(prev => prev.filter(u => u.clientId !== clientId));
+      
+      toast.error("Erro ao atualizar o progresso do projeto. Tente novamente.");
+    } finally {
+      setLoadingClients(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(clientId);
+        return newSet;
+      });
     }
   };
 
@@ -219,9 +266,9 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
             
             return (
               <div key={stage.id} className="flex-shrink-0 w-80">
-                <div className={`rounded-lg border-2 ${stage.color} min-h-[600px]`}>
+                <div className={`rounded-lg border-2 ${stage.color} h-[32rem] flex flex-col`}>
                   {/* Header */}
-                  <div className={`${stage.headerColor} p-4 rounded-t-lg border-b-2 border-current`}>
+                  <div className={`${stage.headerColor} p-4 rounded-t-lg border-b-2 border-current flex-shrink-0`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <StageIcon className="h-5 w-5" />
@@ -239,7 +286,7 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`p-3 space-y-3 min-h-[500px] ${
+                        className={`p-3 space-y-3 flex-1 overflow-y-auto custom-scrollbar ${
                           snapshot.isDraggingOver ? 'bg-white bg-opacity-50' : ''
                         }`}
                       >
@@ -249,28 +296,36 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
                             draggableId={client.id}
                             index={index}
                           >
-                            {(provided, snapshot) => (
-                              <Card
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                className={`cursor-move transition-shadow hover:shadow-md ${
-                                  snapshot.isDragging ? 'shadow-lg rotate-3' : ''
-                                }`}
-                              >
-                                <CardContent className="p-3">
-                                  <div className="space-y-2">
-                                    <div className="flex items-start justify-between">
-                                      <h4 className="font-medium text-sm leading-tight">
-                                        {client.name}
-                                      </h4>
-                                      <Badge 
-                                        variant="outline" 
-                                        className="text-xs ml-2 flex-shrink-0"
-                                      >
-                                        {client.eventCategory}
-                                      </Badge>
-                                    </div>
+                            {(provided, snapshot) => {
+                              const isLoading = loadingClients.has(client.id);
+                              
+                              return (
+                                <Card
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className={`cursor-move transition-all hover:shadow-md ${
+                                    snapshot.isDragging ? 'shadow-lg rotate-3' : ''
+                                  } ${isLoading ? 'opacity-75' : ''}`}
+                                >
+                                  <CardContent className="p-3">
+                                    <div className="space-y-2">
+                                      <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-2">
+                                          <h4 className="font-medium text-sm leading-tight">
+                                            {client.name}
+                                          </h4>
+                                          {isLoading && (
+                                            <Loader2 className="h-3 w-3 animate-spin text-gray-400" />
+                                          )}
+                                        </div>
+                                        <Badge 
+                                          variant="outline" 
+                                          className="text-xs ml-2 flex-shrink-0"
+                                        >
+                                          {client.eventCategory}
+                                        </Badge>
+                                      </div>
                                     
                                     {client.weddingDate && (
                                       <p className="text-xs text-gray-600">
@@ -289,10 +344,11 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
                                         {client.coupleName}
                                       </p>
                                     )}
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            )}
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              );
+                            }}
                           </Draggable>
                         ))}
                         {provided.placeholder}

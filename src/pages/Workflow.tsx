@@ -1,10 +1,12 @@
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import { useState } from "react";
 import { WorkflowKanban } from "@/components/workflow/WorkflowKanban";
 import { QuickProjectForm } from "@/components/workflow/QuickProjectForm";
+import { SearchInput } from "@/components/SearchInput";
 import { useClients } from "@/contexts/ClientsContext";
+import { useWorkflowSearch } from "@/hooks/useWorkflowSearch";
 
 export default function Workflow() {
   const [showQuickForm, setShowQuickForm] = useState(false);
@@ -14,6 +16,15 @@ export default function Workflow() {
   const workflowClients = clients.filter(client => 
     client.status === "fechado" || client.status === "projeto_finalizado"
   );
+
+  // Hook de pesquisa
+  const {
+    searchTerm,
+    setSearchTerm,
+    filteredClients,
+    clearSearch,
+    totalResults
+  } = useWorkflowSearch(workflowClients);
 
   const handleQuickSubmit = (data: any) => {
     // Implementar criação rápida de projeto
@@ -50,6 +61,34 @@ export default function Workflow() {
           </Button>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="max-w-md">
+            <SearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Pesquisar por nome, casal, categoria..."
+              className="w-full"
+            />
+          </div>
+          {searchTerm && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-sm text-gray-600">
+                {totalResults} resultado{totalResults !== 1 ? 's' : ''} encontrado{totalResults !== 1 ? 's' : ''}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearSearch}
+                className="h-6 px-2 text-xs"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Limpar
+              </Button>
+            </div>
+          )}
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-lg border p-4">
@@ -79,7 +118,7 @@ export default function Workflow() {
         </div>
 
         {/* Kanban Board */}
-        <WorkflowKanban clients={workflowClients} />
+        <WorkflowKanban clients={filteredClients} />
 
         {/* Quick Project Form Modal */}
         {showQuickForm && (

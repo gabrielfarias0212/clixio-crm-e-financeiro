@@ -21,9 +21,22 @@ export const parseClient = (data: any): Client => {
     preWeddingStartTime: data.pre_wedding_start_time,
     preWeddingEndTime: data.pre_wedding_end_time,
     preWeddingScheduled: data.pre_wedding_scheduled,
+    preWeddingCompleted: data.pre_wedding_completed,
+    preWeddingDelivered: data.pre_wedding_delivered,
+    weddingPhotographed: data.wedding_photographed,
+    inEditing: data.in_editing,
+    linkSent: data.link_sent,
+    boxDelivered: data.box_delivered,
+    albumDesigned: data.album_designed,
+    albumApprovedDelivered: data.album_approved_delivered,
+    // Novos campos do workflow
+    backupCompleted: data.backup_completed,
+    curationCompleted: data.curation_completed,
+    linkReady: data.link_ready,
+    workflowStage: data.workflow_stage,
     contractLink: data.contract_link,
     hasPreWedding: data.has_pre_wedding,
-    salesFunnelStage: data.sales_funnel_stage || 'primeiro_contato', // New field
+    salesFunnelStage: data.sales_funnel_stage || 'primeiro_contato',
     leadSource: data.lead_source,
     notes: data.notes,
     payments: [], // Will be loaded separately

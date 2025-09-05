@@ -1,4 +1,15 @@
 
+export type WorkflowStage = 
+  | 'evento_ensaio'
+  | 'copia' 
+  | 'backup'
+  | 'curadoria'
+  | 'edicao'
+  | 'link_pronto'
+  | 'link_enviado'
+  | 'entrega_fisica'
+  | 'projeto_finalizado';
+
 export type ClientStatus = 
   | "primeiro_contato"
   | "orçamento enviado" 
@@ -106,6 +117,11 @@ export interface Client {
   albumDesigned?: boolean;
   albumApprovedDelivered?: boolean;
   isDelivered?: boolean;
+  // Novos campos do workflow
+  backupCompleted?: boolean;
+  curationCompleted?: boolean;
+  linkReady?: boolean;
+  workflowStage?: WorkflowStage;
   salesFunnelStage: SalesFunnelStage;
   leadSource?: string;
   payments: Payment[];

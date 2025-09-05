@@ -64,12 +64,42 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
       contract_link: updatedData.contractLink,
       has_pre_wedding: updatedData.hasPreWedding,
       notes: updatedData.notes,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      
+      // CRITICAL: Include workflow stage and boolean fields
+      workflow_stage: updatedData.workflowStage,
+      wedding_photographed: updatedData.weddingPhotographed,
+      backup_completed: updatedData.backupCompleted,
+      curation_completed: updatedData.curationCompleted,
+      in_editing: updatedData.inEditing,
+      link_ready: updatedData.linkReady,
+      link_sent: updatedData.linkSent,
+      box_delivered: updatedData.boxDelivered,
+      album_approved_delivered: updatedData.albumApprovedDelivered
     };
 
     // Add sales funnel stage to the payload if it exists
     if (salesFunnelStage) {
       updatePayload.sales_funnel_stage = salesFunnelStage;
+    }
+
+    console.log(`[ClientUpdate] Updating client ${id} with payload:`, {
+      clientId: id,
+      workflowStage: updatePayload.workflow_stage,
+      weddingPhotographed: updatePayload.wedding_photographed,
+      payloadKeys: Object.keys(updatePayload)
+    });
+
+    // Ensure critical workflow fields are included
+    const requiredWorkflowFields = [
+      'workflow_stage', 'wedding_photographed', 'backup_completed', 
+      'curation_completed', 'in_editing', 'link_ready', 'link_sent', 
+      'box_delivered', 'album_approved_delivered'
+    ];
+    
+    const missingFields = requiredWorkflowFields.filter(field => !(field in updatePayload));
+    if (missingFields.length > 0) {
+      console.warn(`[ClientUpdate] Missing workflow fields in payload:`, missingFields);
     }
 
     const { data, error } = await supabase
@@ -80,11 +110,26 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
       .single();
 
     if (error) {
-      console.error('Error updating client:', error);
+      console.error('[ClientUpdate] Error updating client:', error);
       return null;
     }
 
+    console.log('[ClientUpdate] Supabase response:', {
+      clientId: id,
+      returnedWorkflowStage: data?.workflow_stage,
+      returnedWeddingPhotographed: data?.wedding_photographed,
+      dataKeys: data ? Object.keys(data) : []
+    });
+
     const updatedClient = data ? parseClientForUpdate(data) : null;
+
+    if (updatedClient) {
+      console.log('[ClientUpdate] Parsed client result:', {
+        clientId: updatedClient.id,
+        workflowStage: updatedClient.workflowStage,
+        weddingPhotographed: updatedClient.weddingPhotographed
+      });
+    }
 
     // Gerenciar evento de pré-wedding no calendário
     if (updatedClient) {
@@ -174,10 +219,21 @@ const parseClientForUpdate = (data: any): Client => {
     preWeddingScheduled: data.pre_wedding_scheduled,
     contractLink: data.contract_link,
     hasPreWedding: data.has_pre_wedding,
-    salesFunnelStage: data.sales_funnel_stage || 'primeiro_contato', // New field
+    salesFunnelStage: data.sales_funnel_stage || 'primeiro_contato',
     notes: data.notes,
     payments: [], // Will be loaded separately
     createdAt: data.created_at,
-    updatedAt: data.updated_at
+    updatedAt: data.updated_at,
+    
+    // CRITICAL: Include all workflow fields
+    workflowStage: data.workflow_stage || 'evento_ensaio',
+    weddingPhotographed: data.wedding_photographed || false,
+    backupCompleted: data.backup_completed || false,
+    curationCompleted: data.curation_completed || false,
+    inEditing: data.in_editing || false,
+    linkReady: data.link_ready || false,
+    linkSent: data.link_sent || false,
+    boxDelivered: data.box_delivered || false,
+    albumApprovedDelivered: data.album_approved_delivered || false
   };
 };

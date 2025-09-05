@@ -96,7 +96,7 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
     // Check for optimistic updates first
     const optimisticUpdate = optimisticUpdates.find(update => 
       update.clientId === client.id && 
-      Date.now() - update.timestamp < 5000 // 5 seconds timeout
+      Date.now() - update.timestamp < 10000 // 10 seconds timeout
     );
     
     if (optimisticUpdate) {
@@ -119,6 +119,17 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
     if (client.weddingPhotographed) return 'copia';
     return 'evento_ensaio';
   }, [optimisticUpdates]);
+
+  // Clean up expired optimistic updates
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setOptimisticUpdates(prev => 
+        prev.filter(update => Date.now() - update.timestamp < 10000)
+      );
+    }, 2000); // Check every 2 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Agrupar clientes por estágio
   const getClientsInStage = useCallback((stageId: WorkflowStage) => {
@@ -257,7 +268,23 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
       const updatedClient = await updateClient(client.id, updates);
       
       if (updatedClient) {
-        console.log('Client updated successfully:', updatedClient.workflowStage);
+        console.log('Client updated successfully:', {
+          clientId: updatedClient.id,
+          newWorkflowStage: updatedClient.workflowStage,
+          weddingPhotographed: updatedClient.weddingPhotographed,
+          allWorkflowFields: {
+            workflowStage: updatedClient.workflowStage,
+            weddingPhotographed: updatedClient.weddingPhotographed,
+            backupCompleted: updatedClient.backupCompleted,
+            curationCompleted: updatedClient.curationCompleted,
+            inEditing: updatedClient.inEditing,
+            linkReady: updatedClient.linkReady,
+            linkSent: updatedClient.linkSent,
+            boxDelivered: updatedClient.boxDelivered,
+            albumApprovedDelivered: updatedClient.albumApprovedDelivered
+          }
+        });
+        
         // Remove optimistic update on success
         setOptimisticUpdates(prev => prev.filter(u => u.clientId !== clientId));
         

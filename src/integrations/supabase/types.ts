@@ -1223,11 +1223,13 @@ export type Database = {
         Row: {
           album_approved_delivered: boolean | null
           album_designed: boolean | null
+          backup_completed: boolean | null
           box_delivered: boolean | null
           contract_link: string | null
           contract_value: number | null
           couple_name: string | null
           created_at: string | null
+          curation_completed: boolean | null
           down_payment: number | null
           email: string | null
           event_category: string | null
@@ -1236,6 +1238,7 @@ export type Database = {
           id: string
           in_editing: boolean | null
           lead_source: string | null
+          link_ready: boolean | null
           link_sent: boolean | null
           name: string
           next_action: string | null
@@ -1255,15 +1258,20 @@ export type Database = {
           wedding_end_time: string | null
           wedding_photographed: boolean | null
           wedding_start_time: string | null
+          workflow_stage:
+            | Database["public"]["Enums"]["workflow_stage_enum"]
+            | null
         }
         Insert: {
           album_approved_delivered?: boolean | null
           album_designed?: boolean | null
+          backup_completed?: boolean | null
           box_delivered?: boolean | null
           contract_link?: string | null
           contract_value?: number | null
           couple_name?: string | null
           created_at?: string | null
+          curation_completed?: boolean | null
           down_payment?: number | null
           email?: string | null
           event_category?: string | null
@@ -1272,6 +1280,7 @@ export type Database = {
           id?: string
           in_editing?: boolean | null
           lead_source?: string | null
+          link_ready?: boolean | null
           link_sent?: boolean | null
           name: string
           next_action?: string | null
@@ -1291,15 +1300,20 @@ export type Database = {
           wedding_end_time?: string | null
           wedding_photographed?: boolean | null
           wedding_start_time?: string | null
+          workflow_stage?:
+            | Database["public"]["Enums"]["workflow_stage_enum"]
+            | null
         }
         Update: {
           album_approved_delivered?: boolean | null
           album_designed?: boolean | null
+          backup_completed?: boolean | null
           box_delivered?: boolean | null
           contract_link?: string | null
           contract_value?: number | null
           couple_name?: string | null
           created_at?: string | null
+          curation_completed?: boolean | null
           down_payment?: number | null
           email?: string | null
           event_category?: string | null
@@ -1308,6 +1322,7 @@ export type Database = {
           id?: string
           in_editing?: boolean | null
           lead_source?: string | null
+          link_ready?: boolean | null
           link_sent?: boolean | null
           name?: string
           next_action?: string | null
@@ -1327,6 +1342,9 @@ export type Database = {
           wedding_end_time?: string | null
           wedding_photographed?: boolean | null
           wedding_start_time?: string | null
+          workflow_stage?:
+            | Database["public"]["Enums"]["workflow_stage_enum"]
+            | null
         }
         Relationships: []
       }
@@ -1444,6 +1462,16 @@ export type Database = {
     }
     Enums: {
       calculation_type: "mensal" | "semanal"
+      workflow_stage_enum:
+        | "evento_ensaio"
+        | "copia"
+        | "backup"
+        | "curadoria"
+        | "edicao"
+        | "link_pronto"
+        | "link_enviado"
+        | "entrega_fisica"
+        | "projeto_finalizado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1572,6 +1600,17 @@ export const Constants = {
   public: {
     Enums: {
       calculation_type: ["mensal", "semanal"],
+      workflow_stage_enum: [
+        "evento_ensaio",
+        "copia",
+        "backup",
+        "curadoria",
+        "edicao",
+        "link_pronto",
+        "link_enviado",
+        "entrega_fisica",
+        "projeto_finalizado",
+      ],
     },
   },
 } as const

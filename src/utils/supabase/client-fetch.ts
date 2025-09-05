@@ -8,7 +8,7 @@ import { parsePayment } from './payments';
 const cache = {
   data: null as Client[] | null,
   timestamp: 0,
-  ttl: 30000 // 30 segundos
+  ttl: 5000 // 5 segundos - mais agressivo para garantir dados atualizados
 };
 
 /**
@@ -47,12 +47,27 @@ export const fetchClients = async (): Promise<Client[]> => {
         pre_wedding_start_time,
         pre_wedding_end_time,
         pre_wedding_scheduled,
+        pre_wedding_completed,
+        pre_wedding_delivered,
         contract_link,
         has_pre_wedding,
         sales_funnel_stage,
+        lead_source,
         notes,
         created_at,
         updated_at,
+        
+        workflow_stage,
+        wedding_photographed,
+        backup_completed,
+        curation_completed,
+        in_editing,
+        link_ready,
+        link_sent,
+        box_delivered,
+        album_designed,
+        album_approved_delivered,
+        
         wedding_payments (
           id,
           amount,
@@ -127,12 +142,27 @@ export const fetchClient = async (id: string): Promise<Client | null> => {
         pre_wedding_start_time,
         pre_wedding_end_time,
         pre_wedding_scheduled,
+        pre_wedding_completed,
+        pre_wedding_delivered,
         contract_link,
         has_pre_wedding,
         sales_funnel_stage,
+        lead_source,
         notes,
         created_at,
         updated_at,
+        
+        workflow_stage,
+        wedding_photographed,
+        backup_completed,
+        curation_completed,
+        in_editing,
+        link_ready,
+        link_sent,
+        box_delivered,
+        album_designed,
+        album_approved_delivered,
+        
         wedding_payments (
           id,
           amount,

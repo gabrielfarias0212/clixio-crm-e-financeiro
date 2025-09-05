@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Camera, Copy, Shield, Palette, Edit3, Link, Send, Package, CheckCircle, Loader2 } from "lucide-react";
 import { Client, WorkflowStage } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
+import { invalidateClientsCache } from "@/utils/supabase/client-fetch";
 import { toast } from "sonner";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -87,7 +88,7 @@ const workflowStages = [
 ];
 
 export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
-  const { updateClient } = useClients();
+  const { updateClient, refreshClients } = useClients();
   const [optimisticUpdates, setOptimisticUpdates] = useState<OptimisticUpdate[]>([]);
   const [loadingClients, setLoadingClients] = useState<Set<string>>(new Set());
 
@@ -287,6 +288,14 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         
         // Remove optimistic update on success
         setOptimisticUpdates(prev => prev.filter(u => u.clientId !== clientId));
+        
+        // Force refresh clients to ensure data persistence
+        setTimeout(() => {
+          console.log('[WorkflowKanban] Refreshing clients to ensure persistence');
+          // Force cache invalidation before refresh
+          invalidateClientsCache();
+          refreshClients();
+        }, 1000); // Small delay to ensure DB has processed the update
         
         toast.success(`${client.name} movido para ${workflowStages.find(s => s.id === newStage)?.title}`);
       } else {

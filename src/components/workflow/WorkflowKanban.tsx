@@ -161,21 +161,29 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         break;
       case 'copia':
         updates.weddingPhotographed = true;
+        // Set nextAction to "editar" for workflow stages that require editing
+        updates.nextAction = "editar";
         break;
       case 'backup':
         updates.weddingPhotographed = true;
         updates.backupCompleted = true;
+        // Set nextAction to "editar" for workflow stages that require editing
+        updates.nextAction = "editar";
         break;
       case 'curadoria':
         updates.weddingPhotographed = true;
         updates.backupCompleted = true;
         updates.curationCompleted = true;
+        // Set nextAction to "editar" for workflow stages that require editing
+        updates.nextAction = "editar";
         break;
       case 'edicao':
         updates.weddingPhotographed = true;
         updates.backupCompleted = true;
         updates.curationCompleted = true;
         updates.inEditing = true;
+        // Set nextAction to "editar" for workflow stages that require editing
+        updates.nextAction = "editar";
         break;
       case 'link_pronto':
         updates.weddingPhotographed = true;

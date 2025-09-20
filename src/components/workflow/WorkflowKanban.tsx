@@ -219,6 +219,8 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         updates.boxDelivered = true;
         updates.albumApprovedDelivered = true;
         updates.status = 'projeto_finalizado';
+        // Set nextAction to "nenhuma" when project is finalized
+        updates.nextAction = "nenhuma";
         break;
     }
 

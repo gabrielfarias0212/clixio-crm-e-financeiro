@@ -149,27 +149,12 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         if (!dateA) return 1;
         if (!dateB) return -1;
         
-        // Calcular diferença em relação à data atual
-        const diffA = dateA.getTime() - now.getTime();
-        const diffB = dateB.getTime() - now.getTime();
+        // Calcular distância absoluta em relação à data atual (proximidade)
+        const distanceA = Math.abs(dateA.getTime() - now.getTime());
+        const distanceB = Math.abs(dateB.getTime() - now.getTime());
         
-        // Eventos que já passaram (diferença negativa) vêm primeiro
-        // Ordenados do mais recente para o mais antigo
-        if (diffA < 0 && diffB < 0) {
-          return diffB - diffA; // Mais recente primeiro (diferença menor)
-        }
-        
-        // Eventos futuros vêm depois
-        // Ordenados do mais próximo para o mais distante
-        if (diffA >= 0 && diffB >= 0) {
-          return diffA - diffB; // Mais próximo primeiro
-        }
-        
-        // Eventos passados vêm antes dos futuros
-        if (diffA < 0 && diffB >= 0) return -1;
-        if (diffA >= 0 && diffB < 0) return 1;
-        
-        return 0;
+        // Ordenar por proximidade: mais próximos (menor distância) primeiro
+        return distanceA - distanceB;
       });
     }
     

@@ -191,6 +191,8 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         updates.curationCompleted = true;
         updates.inEditing = true;
         updates.linkReady = true;
+        // Set nextAction to "entregar" for delivery stages
+        updates.nextAction = "entregar";
         break;
       case 'link_enviado':
         updates.weddingPhotographed = true;
@@ -199,6 +201,8 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         updates.inEditing = true;
         updates.linkReady = true;
         updates.linkSent = true;
+        // Set nextAction to "entregar" for delivery stages
+        updates.nextAction = "entregar";
         break;
       case 'entrega_fisica':
         updates.weddingPhotographed = true;
@@ -208,6 +212,8 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         updates.linkReady = true;
         updates.linkSent = true;
         updates.boxDelivered = true;
+        // Set nextAction to "entregar" for delivery stages
+        updates.nextAction = "entregar";
         break;
       case 'projeto_finalizado':
         updates.weddingPhotographed = true;

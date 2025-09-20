@@ -134,7 +134,47 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
 
   // Agrupar clientes por estágio
   const getClientsInStage = useCallback((stageId: WorkflowStage) => {
-    return clients.filter(client => getClientWorkflowStage(client) === stageId);
+    const stageClients = clients.filter(client => getClientWorkflowStage(client) === stageId);
+    
+    // Ordenação especial para a etapa evento/ensaio
+    if (stageId === 'evento_ensaio') {
+      const now = new Date();
+      
+      return stageClients.sort((a, b) => {
+        const dateA = a.weddingDate ? new Date(a.weddingDate) : null;
+        const dateB = b.weddingDate ? new Date(b.weddingDate) : null;
+        
+        // Clientes sem data vão para o final
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        
+        // Calcular diferença em relação à data atual
+        const diffA = dateA.getTime() - now.getTime();
+        const diffB = dateB.getTime() - now.getTime();
+        
+        // Eventos que já passaram (diferença negativa) vêm primeiro
+        // Ordenados do mais recente para o mais antigo
+        if (diffA < 0 && diffB < 0) {
+          return diffB - diffA; // Mais recente primeiro (diferença menor)
+        }
+        
+        // Eventos futuros vêm depois
+        // Ordenados do mais próximo para o mais distante
+        if (diffA >= 0 && diffB >= 0) {
+          return diffA - diffB; // Mais próximo primeiro
+        }
+        
+        // Eventos passados vêm antes dos futuros
+        if (diffA < 0 && diffB >= 0) return -1;
+        if (diffA >= 0 && diffB < 0) return 1;
+        
+        return 0;
+      });
+    }
+    
+    // Para outras etapas, manter ordenação padrão
+    return stageClients;
   }, [clients, getClientWorkflowStage]);
 
   // Atualizar campos boolean baseado no estágio

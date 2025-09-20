@@ -234,6 +234,8 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
       clientId: client.id, 
       fromStage: client.workflowStage, 
       toStage: newStage,
+      currentNextAction: client.nextAction,
+      newNextAction: updates.nextAction,
       updates: Object.keys(updates).filter(key => updates[key as keyof Client] !== client[key as keyof Client])
     });
 
@@ -288,9 +290,11 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         console.log('Client updated successfully:', {
           clientId: updatedClient.id,
           newWorkflowStage: updatedClient.workflowStage,
+          newNextAction: updatedClient.nextAction,
           weddingPhotographed: updatedClient.weddingPhotographed,
           allWorkflowFields: {
             workflowStage: updatedClient.workflowStage,
+            nextAction: updatedClient.nextAction,
             weddingPhotographed: updatedClient.weddingPhotographed,
             backupCompleted: updatedClient.backupCompleted,
             curationCompleted: updatedClient.curationCompleted,

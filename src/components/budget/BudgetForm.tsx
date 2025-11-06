@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { useCreateBudget, useUpdateBudget } from '@/hooks/useBudgets';
 import { formatCurrency } from '@/utils/currency';
@@ -244,15 +244,19 @@ export function BudgetForm({ onSuccess, initialData, isEditing = false }: Budget
               name="validity_days"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Validade (dias)</FormLabel>
+                  <FormLabel>Validade do Orçamento (dias)</FormLabel>
                   <FormControl>
                     <Input 
                       {...field} 
                       type="number" 
                       min="1"
                       onChange={(e) => field.onChange(parseInt(e.target.value) || 15)}
+                      placeholder="15"
                     />
                   </FormControl>
+                  <FormDescription>
+                    Quantos dias este orçamento ficará válido a partir da data de criação
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

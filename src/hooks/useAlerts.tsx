@@ -351,10 +351,14 @@ export function useAlerts(clients: Client[] = []) {
     
     // Pre-wedding alerts for clients with unscheduled pre-weddings
     // UPDATED: Only show if preWeddingDate is NOT filled (indicating it's not scheduled)
+    // AND preWeddingCompleted is not true
     const preWeddingAlerts: AlertItem[] = clients
       .filter(client => {
         // Requirement: Client needs a pre-wedding
         const needsPreWedding = client.hasPreWedding !== false;
+        
+        // Skip if pre-wedding was already completed
+        if (client.preWeddingCompleted === true) return false;
         
         // UPDATED: Pre-wedding not scheduled if preWeddingDate is empty/null
         const notScheduled = !client.preWeddingDate;

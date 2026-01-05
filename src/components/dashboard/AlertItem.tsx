@@ -18,6 +18,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { EventStatusActions } from "./EventStatusActions";
+import { PreWeddingCompleteAction } from "./PreWeddingCompleteAction";
 
 interface AlertItemProps {
   alert: AlertItemType;
@@ -158,6 +159,14 @@ export function AlertItem({ alert, onStatusUpdate }: AlertItemProps) {
             {alert.type === "calendar_event" && alert.event && (
               <EventStatusActions 
                 event={alert.event} 
+                onStatusUpdate={onStatusUpdate}
+              />
+            )}
+            
+            {/* Ação rápida para pré-wedding */}
+            {alert.type === "pre_wedding" && (
+              <PreWeddingCompleteAction 
+                client={alert.client} 
                 onStatusUpdate={onStatusUpdate}
               />
             )}

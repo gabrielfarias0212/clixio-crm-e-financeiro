@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
  */
 export const deleteClient = async (id: string): Promise<boolean> => {
   try {
-    // First, delete the calendar events related to this client
+    // Delete calendar events related to this client
     const { error: calendarEventsError } = await supabase
       .from('calendar_events')
       .delete()
@@ -14,10 +14,10 @@ export const deleteClient = async (id: string): Promise<boolean> => {
 
     if (calendarEventsError) {
       console.error('Error deleting client calendar events:', calendarEventsError);
-      return false;
+      // Continue with other deletions, this might not have any records
     }
 
-    // Delete the payments related to this client
+    // Delete payments related to this client
     const { error: paymentsError } = await supabase
       .from('wedding_payments')
       .delete()
@@ -25,10 +25,10 @@ export const deleteClient = async (id: string): Promise<boolean> => {
 
     if (paymentsError) {
       console.error('Error deleting client payments:', paymentsError);
-      return false;
+      // Continue with other deletions
     }
 
-    // Delete the transactions related to this client
+    // Delete transactions related to this client
     const { error: transactionsError } = await supabase
       .from('wedding_transactions')
       .delete()
@@ -36,7 +36,29 @@ export const deleteClient = async (id: string): Promise<boolean> => {
 
     if (transactionsError) {
       console.error('Error deleting client transactions:', transactionsError);
-      return false;
+      // Continue with other deletions
+    }
+
+    // Delete contract form submissions related to this client
+    const { error: contractFormError } = await supabase
+      .from('contract_form_submissions')
+      .delete()
+      .eq('client_id', id);
+
+    if (contractFormError) {
+      console.error('Error deleting client contract forms:', contractFormError);
+      // Continue with other deletions
+    }
+
+    // Delete product sales related to this client
+    const { error: productSalesError } = await supabase
+      .from('product_sales')
+      .delete()
+      .eq('client_id', id);
+
+    if (productSalesError) {
+      console.error('Error deleting client product sales:', productSalesError);
+      // Continue with other deletions
     }
 
     // Finally, delete the client

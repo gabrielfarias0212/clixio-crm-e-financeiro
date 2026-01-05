@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -1455,10 +1455,7 @@ export type Database = {
         Args: { client_id_param: string }
         Returns: string
       }
-      generate_unique_token: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_unique_token: { Args: never; Returns: string }
     }
     Enums: {
       calculation_type: "mensal" | "semanal"

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Client } from "@/utils/types";
-import { updateClient } from "@/utils/supabase/client-update";
+import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -13,6 +13,7 @@ interface PreWeddingCompleteActionProps {
 export function PreWeddingCompleteAction({ client, onStatusUpdate }: PreWeddingCompleteActionProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const { updateClient } = useClients();
 
   const handleMarkAsCompleted = async (checked: boolean) => {
     if (!checked || isUpdating) return;
@@ -23,17 +24,19 @@ export function PreWeddingCompleteAction({ client, onStatusUpdate }: PreWeddingC
       // Set preWeddingCompleted to true and keep preWeddingDate as today if not set
       const today = new Date().toISOString().split('T')[0];
       
-      await updateClient(client.id, {
+      const result = await updateClient(client.id, {
         preWeddingCompleted: true,
         preWeddingDate: client.preWeddingDate || today,
       });
       
-      setIsCompleted(true);
-      toast.success(`Pré-wedding de ${client.name} marcado como realizado!`);
-      
-      // Refresh the alerts list
-      if (onStatusUpdate) {
-        onStatusUpdate();
+      if (result) {
+        setIsCompleted(true);
+        toast.success(`Pré-wedding de ${client.name} marcado como realizado!`);
+        
+        // Refresh the alerts list
+        if (onStatusUpdate) {
+          onStatusUpdate();
+        }
       }
     } catch (error) {
       console.error("Erro ao atualizar pré-wedding:", error);

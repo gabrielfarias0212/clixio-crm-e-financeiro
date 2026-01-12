@@ -109,6 +109,39 @@ export type Database = {
         }
         Relationships: []
       }
+      business_fixed_expenses: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          due_date: number | null
+          id: string
+          is_active: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          due_date?: number | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          due_date?: number | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           client_id: string | null

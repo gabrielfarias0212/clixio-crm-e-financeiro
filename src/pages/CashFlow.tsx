@@ -4,7 +4,7 @@ import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, TrendingUp, Settings } from "lucide-react";
+import { PlusCircle, TrendingUp, Settings, Calendar } from "lucide-react";
 import { Transaction, TransactionType } from "@/utils/types";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +17,8 @@ import { ProjectionsSection } from "@/components/financial/ProjectionsSection";
 import { OptimizedFinancialSummary } from "@/components/financial/OptimizedFinancialSummary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TransactionImporter } from "@/components/transaction-importer/TransactionImporter";
+import { BusinessFixedExpensesManager } from "@/components/financial/BusinessFixedExpensesManager";
+import { FixedExpensesAlerts } from "@/components/financial/FixedExpensesAlerts";
 
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
@@ -195,13 +197,17 @@ export default function CashFlow() {
           onWeeklyBalanceChange={setWeeklyBalance}
         />
 
-        {/* Tabs para separar Transações e Projeções */}
+        {/* Tabs para separar Transações, Projeções e Despesas Fixas */}
         <Tabs defaultValue="transactions" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="transactions">Transações</TabsTrigger>
             <TabsTrigger value="projections" className="gap-2">
               <TrendingUp className="h-4 w-4" />
               Projeções & Pró-Labore
+            </TabsTrigger>
+            <TabsTrigger value="fixed-expenses" className="gap-2">
+              <Calendar className="h-4 w-4" />
+              Despesas Fixas
             </TabsTrigger>
           </TabsList>
 
@@ -233,6 +239,13 @@ export default function CashFlow() {
           <TabsContent value="projections">
             <Suspense fallback={<Skeleton className="h-96" />}>
               <ProjectionsSection />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="fixed-expenses" className="space-y-6">
+            <Suspense fallback={<Skeleton className="h-96" />}>
+              <FixedExpensesAlerts />
+              <BusinessFixedExpensesManager />
             </Suspense>
           </TabsContent>
         </Tabs>

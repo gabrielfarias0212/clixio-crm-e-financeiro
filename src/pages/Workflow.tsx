@@ -1,16 +1,19 @@
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, X } from "lucide-react";
+import { Plus, FileText, X } from "lucide-react";
 import { useState } from "react";
 import { WorkflowKanban } from "@/components/workflow/WorkflowKanban";
 import { QuickProjectForm } from "@/components/workflow/QuickProjectForm";
+import { WorkflowReportDialog } from "@/components/workflow/WorkflowReportDialog";
 import { SearchInput } from "@/components/SearchInput";
 import { useClients } from "@/contexts/ClientsContext";
 import { useWorkflowSearch } from "@/hooks/useWorkflowSearch";
-
+import { usePhotographerProfile } from "@/hooks/usePhotographerProfile";
 export default function Workflow() {
   const [showQuickForm, setShowQuickForm] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
   const { clients, loading } = useClients();
+  const { profile } = usePhotographerProfile();
 
   // Filtrar apenas clientes com projetos em andamento (fechado mas não finalizado)
   const workflowClients = clients.filter(client => 
@@ -55,10 +58,20 @@ export default function Workflow() {
               Acompanhe o progresso de todos os seus projetos
             </p>
           </div>
-          <Button onClick={() => setShowQuickForm(true)} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Novo Projeto
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowReportDialog(true)} 
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Relatório
+            </Button>
+            <Button onClick={() => setShowQuickForm(true)} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Novo Projeto
+            </Button>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -131,6 +144,14 @@ export default function Workflow() {
             </div>
           </div>
         )}
+
+        {/* Workflow Report Dialog */}
+        <WorkflowReportDialog
+          open={showReportDialog}
+          onOpenChange={setShowReportDialog}
+          clients={workflowClients}
+          companyName={profile?.company_name || profile?.brand_name || undefined}
+        />
       </div>
     </Layout>
   );

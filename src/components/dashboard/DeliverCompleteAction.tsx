@@ -34,10 +34,9 @@ export function DeliverCompleteAction({ client, onStatusUpdate }: DeliverComplet
     try {
       // Mark the work as delivered and finalized
       // Update workflow-related fields and status
-      // IMPORTANT: Use null (not undefined) to clear nextAction field in database
       const result = await updateClient(client.id, {
-        // Clear next action (use null to actually remove the value in DB)
-        nextAction: null as any,
+        // Set next action to "nenhuma" (none) so it disappears from deliver alerts
+        nextAction: "nenhuma",
         // Mark as delivered in workflow
         linkSent: true,
         boxDelivered: true,

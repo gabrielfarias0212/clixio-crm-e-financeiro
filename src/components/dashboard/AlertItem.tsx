@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { EventStatusActions } from "./EventStatusActions";
 import { PreWeddingCompleteAction } from "./PreWeddingCompleteAction";
+import { DeliverCompleteAction } from "./DeliverCompleteAction";
 
 interface AlertItemProps {
   alert: AlertItemType;
@@ -166,6 +167,14 @@ export function AlertItem({ alert, onStatusUpdate }: AlertItemProps) {
             {/* Ação rápida para pré-wedding */}
             {alert.type === "pre_wedding" && (
               <PreWeddingCompleteAction 
+                client={alert.client} 
+                onStatusUpdate={onStatusUpdate}
+              />
+            )}
+
+            {/* Ação rápida para marcar como entregue */}
+            {alert.type === "task" && alert.client.nextAction === "entregar" && (
+              <DeliverCompleteAction 
                 client={alert.client} 
                 onStatusUpdate={onStatusUpdate}
               />

@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { AlertsTabContent } from "./AlertsTabContent";
 import { useAlerts } from "@/hooks/useAlerts";
+import { useClients } from "@/contexts/ClientsContext";
 import { Client } from "@/utils/types";
 import { 
   DollarSign, 
@@ -21,11 +22,12 @@ interface AlertsRemindersProps {
 
 export function AlertsReminders({ clients = [] }: AlertsRemindersProps) {
   const [activeTab, setActiveTab] = useState("edit");
-  const [refreshKey, setRefreshKey] = useState(0);
+  const { refreshClients } = useClients();
   const alerts = useAlerts(clients);
 
-  const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
+  const handleRefresh = async () => {
+    // Refresh clients from the database to update the alerts
+    await refreshClients();
   };
 
   const totalAlerts = alerts.editTasks.length + alerts.deliverTasks.length + alerts.payments.length + alerts.preWedding.length;
@@ -62,7 +64,7 @@ export function AlertsReminders({ clients = [] }: AlertsRemindersProps) {
   ];
 
   return (
-    <Card className="overflow-hidden" key={refreshKey}>
+    <Card className="overflow-hidden">
       <CardHeader className="pb-4 bg-gradient-to-r from-background to-muted/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">

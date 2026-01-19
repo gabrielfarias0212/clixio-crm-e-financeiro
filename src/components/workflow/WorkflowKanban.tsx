@@ -2,9 +2,10 @@ import React, { useState, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Copy, Shield, Palette, Edit3, Link, Send, Package, CheckCircle, Loader2 } from "lucide-react";
+import { Camera, Copy, Shield, Palette, Edit3, Link, Send, Package, CheckCircle, Loader2, HardDrive } from "lucide-react";
 import { Client, WorkflowStage } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
+import { ProjectDetailDialog } from "./ProjectDetailDialog";
 
 import { toast } from "sonner";
 import { formatDistanceToNow, parseISO } from "date-fns";
@@ -91,6 +92,8 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
   const { updateClient } = useClients();
   const [optimisticUpdates, setOptimisticUpdates] = useState<OptimisticUpdate[]>([]);
   const [loadingClients, setLoadingClients] = useState<Set<string>>(new Set());
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
   // Mapear cliente para estágio do workflow baseado nos campos boolean
   const getClientWorkflowStage = useCallback((client: Client): WorkflowStage => {
@@ -367,6 +370,18 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
     }
   };
 
+  const handleCardClick = (client: Client, e: React.MouseEvent) => {
+    // Prevent opening dialog when dragging
+    if (e.defaultPrevented) return;
+    setSelectedClient(client);
+    setIsDetailDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDetailDialogOpen(false);
+    setSelectedClient(null);
+  };
+
   return (
     <div className="overflow-x-auto">
       <DragDropContext onDragEnd={handleDragEnd}>
@@ -415,7 +430,8 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  className={`cursor-move transition-all hover:shadow-md ${
+                                  onClick={(e) => handleCardClick(client, e)}
+                                  className={`cursor-pointer transition-all hover:shadow-md ${
                                     snapshot.isDragging ? 'shadow-lg rotate-3' : ''
                                   } ${isLoading ? 'opacity-75' : ''}`}
                                 >
@@ -455,6 +471,13 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
                                         {client.coupleName}
                                       </p>
                                     )}
+
+                                    {client.storageLocation && (
+                                      <div className="flex items-center gap-1 text-xs text-blue-600">
+                                        <HardDrive className="h-3 w-3" />
+                                        <span>{client.storageLocation}</span>
+                                      </div>
+                                    )}
                                     </div>
                                   </CardContent>
                                 </Card>
@@ -472,6 +495,13 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
           })}
         </div>
       </DragDropContext>
+
+      {/* Modal de detalhes do projeto */}
+      <ProjectDetailDialog
+        client={selectedClient}
+        isOpen={isDetailDialogOpen}
+        onClose={handleCloseDialog}
+      />
     </div>
   );
 }

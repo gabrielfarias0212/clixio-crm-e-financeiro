@@ -1285,6 +1285,7 @@ export type Database = {
           pre_wedding_start_time: string | null
           sales_funnel_stage: string | null
           status: string | null
+          storage_location: string | null
           updated_at: string | null
           user_id: string | null
           wedding_date: string | null
@@ -1327,6 +1328,7 @@ export type Database = {
           pre_wedding_start_time?: string | null
           sales_funnel_stage?: string | null
           status?: string | null
+          storage_location?: string | null
           updated_at?: string | null
           user_id?: string | null
           wedding_date?: string | null
@@ -1369,6 +1371,7 @@ export type Database = {
           pre_wedding_start_time?: string | null
           sales_funnel_stage?: string | null
           status?: string | null
+          storage_location?: string | null
           updated_at?: string | null
           user_id?: string | null
           wedding_date?: string | null

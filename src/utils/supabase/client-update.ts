@@ -75,7 +75,8 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
       link_ready: updatedData.linkReady,
       link_sent: updatedData.linkSent,
       box_delivered: updatedData.boxDelivered,
-      album_approved_delivered: updatedData.albumApprovedDelivered
+      album_approved_delivered: updatedData.albumApprovedDelivered,
+      storage_location: updatedData.storageLocation
     };
 
     // Add sales funnel stage to the payload if it exists
@@ -234,6 +235,7 @@ const parseClientForUpdate = (data: any): Client => {
     linkReady: data.link_ready || false,
     linkSent: data.link_sent || false,
     boxDelivered: data.box_delivered || false,
-    albumApprovedDelivered: data.album_approved_delivered || false
+    albumApprovedDelivered: data.album_approved_delivered || false,
+    storageLocation: data.storage_location
   };
 };

@@ -124,6 +124,8 @@ export interface Client {
   workflowStage?: WorkflowStage;
   salesFunnelStage: SalesFunnelStage;
   leadSource?: string;
+  // Campo para local de armazenamento (SSD1, SSD2, HD1, etc.)
+  storageLocation?: string;
   payments: Payment[];
   createdAt: string;
   updatedAt: string;

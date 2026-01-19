@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, X } from "lucide-react";
-import { EventCategory } from "@/utils/types";
+import { Loader2, X, Link2 } from "lucide-react";
+import { EventCategory, Client } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
 
@@ -27,15 +27,12 @@ const quickProjectSchema = z.object({
   name: z.string().min(2, {
     message: "Nome deve ter pelo menos 2 caracteres.",
   }),
-  phone: z.string().min(10, {
-    message: "Telefone deve ter pelo menos 10 caracteres.",
-  }),
-  email: z.string().email({
-    message: "Email inválido.",
-  }),
+  phone: z.string().optional(),
+  email: z.string().email({ message: "Email inválido." }).optional().or(z.literal("")),
   weddingDate: z.string().nullable(),
   eventCategory: z.string().default("Casamento"),
   notes: z.string().optional(),
+  linkedClientId: z.string().optional(),
 });
 
 type QuickProjectValues = z.infer<typeof quickProjectSchema>;
@@ -46,8 +43,16 @@ interface QuickProjectFormProps {
 }
 
 export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) {
-  const { addClient } = useClients();
+  const { addClient, clients } = useClients();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  // Filtrar apenas clientes fechados que podem ser vinculados
+  const availableClients = useMemo(() => {
+    return clients.filter(client => 
+      client.status === "fechado" && 
+      client.name
+    ).sort((a, b) => a.name.localeCompare(b.name));
+  }, [clients]);
 
   const form = useForm<QuickProjectValues>({
     resolver: zodResolver(quickProjectSchema),
@@ -58,8 +63,27 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
       weddingDate: null,
       eventCategory: "Casamento",
       notes: "",
+      linkedClientId: "",
     },
   });
+
+  const linkedClientId = form.watch("linkedClientId");
+
+  // Quando selecionar um cliente existente, preencher os campos
+  React.useEffect(() => {
+    if (linkedClientId && linkedClientId !== "new") {
+      const selectedClient = clients.find(c => c.id === linkedClientId);
+      if (selectedClient) {
+        form.setValue("name", selectedClient.name || "");
+        form.setValue("phone", selectedClient.phone || "");
+        form.setValue("email", selectedClient.email || "");
+        form.setValue("eventCategory", selectedClient.eventCategory || "Casamento");
+        if (selectedClient.weddingDate) {
+          form.setValue("weddingDate", selectedClient.weddingDate);
+        }
+      }
+    }
+  }, [linkedClientId, clients, form]);
 
   const handleSubmit = async (data: QuickProjectValues) => {
     setIsSubmitting(true);
@@ -68,19 +92,18 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
       // Criar cliente com status "fechado" para aparecer no workflow
       const clientData = {
         name: data.name,
-        email: data.email,
-        phone: data.phone,
+        email: data.email || "",
+        phone: data.phone || "",
         weddingDate: data.weddingDate,
         eventCategory: data.eventCategory as EventCategory,
         notes: data.notes || "",
         status: "fechado" as const,
         nextAction: "editar" as const,
-        contractValue: 0, // Pode ser editado depois
+        contractValue: 0,
         downPayment: 0,
         salesFunnelStage: "contrato_fechado" as const,
         leadSource: "Projeto Direto",
-        preWeddingDate: null, // Campo obrigatório
-        // Campos do workflow - começar no primeiro estágio
+        preWeddingDate: null,
         weddingPhotographed: false,
         backupCompleted: false,
         curationCompleted: false,
@@ -128,6 +151,38 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          {/* Vincular a cliente existente */}
+          {availableClients.length > 0 && (
+            <FormField
+              control={form.control}
+              name="linkedClientId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-foreground flex items-center gap-2">
+                    <Link2 className="h-4 w-4" />
+                    Vincular a Cliente Existente (opcional)
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="border-border">
+                        <SelectValue placeholder="Criar novo projeto sem vínculo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="new">Criar novo projeto sem vínculo</SelectItem>
+                      {availableClients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name} {client.eventCategory ? `(${client.eventCategory})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
@@ -153,7 +208,7 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-foreground">Tipo de Evento *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="border-border">
                         <SelectValue placeholder="Selecione o tipo" />
@@ -177,7 +232,7 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
               name="weddingDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-foreground">Data do Evento *</FormLabel>
+                  <FormLabel className="text-foreground">Data do Evento</FormLabel>
                   <FormControl>
                     <DatePicker
                       value={field.value}
@@ -195,7 +250,7 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-foreground">Telefone *</FormLabel>
+                  <FormLabel className="text-foreground">Telefone</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="(00) 00000-0000"
@@ -213,7 +268,7 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
               name="email"
               render={({ field }) => (
                 <FormItem className="md:col-span-2">
-                  <FormLabel className="text-foreground">Email *</FormLabel>
+                  <FormLabel className="text-foreground">Email</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="email@exemplo.com"

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, X, Link2 } from "lucide-react";
+import { Loader2, X, Link2, HardDrive } from "lucide-react";
 import { EventCategory, Client } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
@@ -33,6 +33,7 @@ const quickProjectSchema = z.object({
   eventCategory: z.string().default("Casamento"),
   notes: z.string().optional(),
   linkedClientId: z.string().optional(),
+  storageLocation: z.string().optional(),
 });
 
 type QuickProjectValues = z.infer<typeof quickProjectSchema>;
@@ -64,6 +65,7 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
       eventCategory: "Casamento",
       notes: "",
       linkedClientId: "",
+      storageLocation: "",
     },
   });
 
@@ -78,6 +80,7 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
         form.setValue("phone", selectedClient.phone || "");
         form.setValue("email", selectedClient.email || "");
         form.setValue("eventCategory", selectedClient.eventCategory || "Casamento");
+        form.setValue("storageLocation", selectedClient.storageLocation || "");
         if (selectedClient.weddingDate) {
           form.setValue("weddingDate", selectedClient.weddingDate);
         }
@@ -115,7 +118,9 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
         preWeddingScheduled: false,
         preWeddingCompleted: false,
         preWeddingDelivered: false,
-        hasPreWedding: false
+        hasPreWedding: false,
+        storageLocation: data.storageLocation || "",
+        workflowStage: "evento_ensaio" as const,
       };
 
       await addClient(clientData);
@@ -282,6 +287,27 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
               )}
             />
           </div>
+
+          <FormField
+            control={form.control}
+            name="storageLocation"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-foreground flex items-center gap-2">
+                  <HardDrive className="h-4 w-4" />
+                  Local de Armazenamento
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Ex: SSD1, HD2, Drive externo..."
+                    {...field}
+                    className="focus:ring-2 focus:ring-primary/20 border-border"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}

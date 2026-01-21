@@ -35,8 +35,10 @@ export function LeadsVsContractsChart({ clients }: LeadsVsContractsChartProps) {
         startDate = new Date(2020, 0, 1); // Início arbitrário para "all"
     }
 
-    // Filtrar clientes no período
+    // Filtrar clientes no período (exclude workflow projects from lead/contract counts)
     const filteredClients = clients.filter(client => {
+      // Exclude workflow-linked projects from lead/contract analysis
+      if (client.leadSource === "Projeto Direto") return false;
       const clientDate = parseISO(client.createdAt);
       return isWithinInterval(clientDate, { start: startDate, end: now });
     });

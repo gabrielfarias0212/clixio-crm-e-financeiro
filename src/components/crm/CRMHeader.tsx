@@ -10,31 +10,34 @@ interface CRMHeaderProps {
 
 export function CRMHeader({ clients }: CRMHeaderProps) {
   const stats = useMemo(() => {
-    const opportunities = clients.filter(c => 
+    // Filter out workflow projects (leadSource === "Projeto Direto") from CRM stats
+    const crmClients = clients.filter(c => c.leadSource !== "Projeto Direto");
+    
+    const opportunities = crmClients.filter(c => 
       ["primeiro_contato", "orcamento_enviado", "negociacao"].includes(c.salesFunnelStage || c.status)
     ).length;
     
-    const inContact = clients.filter(c => 
+    const inContact = crmClients.filter(c => 
       c.salesFunnelStage === "primeiro_contato" || c.status === "primeiro_contato"
     ).length;
     
-    const closed = clients.filter(c => 
+    const closed = crmClients.filter(c => 
       c.salesFunnelStage === "contrato_fechado" || c.status === "fechado"
     ).length;
     
-    const lost = clients.filter(c => 
+    const lost = crmClients.filter(c => 
       c.salesFunnelStage === "contrato_perdido" || c.status === "contrato_perdido"
     ).length;
     
-    const finished = clients.filter(c => 
+    const finished = crmClients.filter(c => 
       c.salesFunnelStage === "projeto_finalizado" || c.status === "projeto_finalizado"
     ).length;
 
-    const totalValue = clients
+    const totalValue = crmClients
       .filter(c => c.salesFunnelStage === "contrato_fechado" || c.status === "fechado")
       .reduce((total, client) => total + (client.contractValue || 0), 0);
 
-    const pipelineValue = clients
+    const pipelineValue = crmClients
       .filter(c => ["primeiro_contato", "orcamento_enviado", "negociacao"].includes(c.salesFunnelStage || c.status))
       .reduce((total, client) => total + (client.contractValue || 0), 0);
 

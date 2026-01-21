@@ -15,10 +15,12 @@ export function useBusinessMetrics() {
 
   // Calculate metrics using useMemo to avoid recalculations on every render
   const metrics = useMemo(() => {
-    // 1. Total de contratos ativos no ano (exclude delivered status)
+    // 1. Total de contratos ativos no ano (exclude delivered status and workflow projects)
     const activeContractsData = clients.filter(client => {
       if (!(client.status === "fechado")) return false;
       if (!client.createdAt) return false;
+      // Exclude workflow-linked projects from contract count
+      if (client.leadSource === "Projeto Direto") return false;
       
       const createdAt = stringToDate(client.createdAt);
       return createdAt && isWithinInterval(createdAt, { start: yearStart, end: yearEnd });
@@ -66,9 +68,11 @@ export function useBusinessMetrics() {
     const monthsElapsed = currentMonth + 1; // +1 porque os meses são indexados de 0
     const averageMonthlyRevenue = monthsElapsed > 0 ? totalRevenue / monthsElapsed : 0;
 
-    // 3. Taxa de conversão de leads em contratos
+    // 3. Taxa de conversão de leads em contratos (exclude workflow projects)
     const totalLeadsData = clients.filter(client => {
       if (!client.createdAt) return false;
+      // Exclude workflow-linked projects from lead count
+      if (client.leadSource === "Projeto Direto") return false;
       
       const createdAt = stringToDate(client.createdAt);
       return createdAt && isWithinInterval(createdAt, { start: yearStart, end: yearEnd });
@@ -79,6 +83,8 @@ export function useBusinessMetrics() {
     const closedContractsData = clients.filter(client => {
       if (!(client.status === "fechado" || client.status === "projeto_finalizado")) return false;
       if (!client.createdAt) return false;
+      // Exclude workflow-linked projects from contract count
+      if (client.leadSource === "Projeto Direto") return false;
       
       const createdAt = stringToDate(client.createdAt);
       return createdAt && isWithinInterval(createdAt, { start: yearStart, end: yearEnd });

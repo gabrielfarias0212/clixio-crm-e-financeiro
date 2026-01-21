@@ -20,10 +20,12 @@ export function DashboardStats() {
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [monthlyEventsModalOpen, setMonthlyEventsModalOpen] = useState(false);
 
-  // Monthly leads
+  // Monthly leads - exclude workflow projects (leadSource === "Projeto Direto")
   const monthlyLeadsClients = useMemo(() => {
     return clients.filter(client => {
       if (!client.createdAt) return false;
+      // Exclude workflow-linked projects from lead count
+      if (client.leadSource === "Projeto Direto") return false;
       const createdAt = stringToDate(client.createdAt);
       return createdAt && isWithinInterval(createdAt, {
         start: monthStart,
@@ -33,10 +35,12 @@ export function DashboardStats() {
   }, [clients, monthStart, monthEnd]);
   const monthlyLeads = monthlyLeadsClients.length;
 
-  // Monthly closed contracts - using "fechado" status
+  // Monthly closed contracts - using "fechado" status, exclude workflow projects
   const monthlyClosedContractsClients = useMemo(() => {
     return clients.filter(client => {
       if (!client.createdAt) return false;
+      // Exclude workflow-linked projects from contract count
+      if (client.leadSource === "Projeto Direto") return false;
       const createdAt = stringToDate(client.createdAt);
       return createdAt && isWithinInterval(createdAt, {
         start: monthStart,

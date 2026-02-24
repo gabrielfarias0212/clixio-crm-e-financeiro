@@ -27,37 +27,43 @@ export function mapClientData(row: any): Partial<Client> {
   // Get client name
   const name = getProperty([
     'nome', 'Nome', 'nome do cliente', 'Nome do Cliente', 'cliente', 'Cliente',
-    'name', 'Name', 'client name', 'Client Name'
+    'name', 'Name', 'client name', 'Client Name',
+    'Nome do Contratante', 'nome do contratante', 'contratante', 'Contratante'
   ]);
 
   // Get couple name
   const coupleName = getProperty([
     'casal', 'Casal', 'nome do casal', 'Nome do Casal', 'couple name', 'Couple Name',
-    'partner', 'Partner', 'cônjuge', 'Cônjuge'
+    'partner', 'Partner', 'cônjuge', 'Cônjuge',
+    'Nome do Casal'
   ]);
 
   // Get email
   const email = getProperty([
-    'email', 'Email', 'e-mail', 'E-mail', 'contato', 'Contato'
+    'email', 'Email', 'e-mail', 'E-mail', 'contato', 'Contato',
+    'E-Mail'
   ]);
 
   // Get phone
   const rawPhone = getProperty([
     'telefone', 'Telefone', 'tel', 'Tel', 'celular', 'Celular', 'whatsapp', 'Whatsapp',
-    'phone', 'Phone', 'mobile', 'Mobile'
+    'phone', 'Phone', 'mobile', 'Mobile',
+    'Telefone/WhatsApp', 'telefone/whatsapp', 'Telefone / WhatsApp'
   ]);
 
   // Get wedding date
   const rawWeddingDate = getProperty([
     'data', 'Data', 'data do evento', 'Data do Evento', 'evento', 'Evento',
     'data de casamento', 'Data de Casamento', 'data casamento', 'Data Casamento',
-    'date', 'Date', 'event date', 'Event Date', 'wedding date', 'Wedding Date'
+    'date', 'Date', 'event date', 'Event Date', 'wedding date', 'Wedding Date',
+    'Data do Casamento (AAAA-MM-DD)', 'Data do Casamento', 'data do casamento'
   ]);
 
   // Get contract value
   const rawContractValue = getProperty([
     'valor', 'Valor', 'valor do contrato', 'Valor do Contrato', 'valor contrato', 'Valor Contrato',
-    'preço', 'Preço', 'price', 'Price', 'contract value', 'Contract Value', 'value', 'Value'
+    'preço', 'Preço', 'price', 'Price', 'contract value', 'Contract Value', 'value', 'Value',
+    'Valor Total (R$)', 'Valor Total', 'valor total'
   ]);
 
   // Get down payment
@@ -87,6 +93,20 @@ export function mapClientData(row: any): Partial<Client> {
   const notes = getProperty([
     'notas', 'Notas', 'observações', 'Observações', 'obs', 'Obs',
     'notes', 'Notes', 'comments', 'Comments'
+  ]);
+
+  // Get event location
+  const eventLocation = getProperty([
+    'local', 'Local', 'local do evento', 'Local do Evento',
+    'Local da Cerimônia', 'local da cerimônia', 'Local da Recepção', 'local da recepção',
+    'Cidade do Evento', 'cidade do evento', 'event location', 'Event Location',
+    'venue', 'Venue'
+  ]);
+
+  // Get wedding start time
+  const weddingStartTime = getProperty([
+    'Horário de Início (HH:MM)', 'Horário de Início', 'horário de início',
+    'horário', 'Horário', 'hora', 'Hora', 'start time', 'Start Time'
   ]);
 
   // Parse values
@@ -141,6 +161,8 @@ export function mapClientData(row: any): Partial<Client> {
     status,
     nextAction,
     eventCategory,
+    eventLocation: eventLocation || '',
+    weddingStartTime: weddingStartTime || '',
     notes: notes || ''
   };
 }

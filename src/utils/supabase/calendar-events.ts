@@ -1,7 +1,10 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CalendarEvent } from '../types';
-import { formatDateForSupabase } from './base';
+
+const getCurrentUserId = async (): Promise<string | null> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id || null;
+};
 
 export const fetchCalendarEvents = async (): Promise<CalendarEvent[]> => {
   try {
@@ -24,6 +27,13 @@ export const fetchCalendarEvents = async (): Promise<CalendarEvent[]> => {
 
 export const createCalendarEvent = async (eventData: CalendarEvent): Promise<CalendarEvent | null> => {
   try {
+    const userId = await getCurrentUserId();
+
+    if (!userId) {
+      console.error('No authenticated user found');
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('calendar_events')
       .insert({
@@ -38,7 +48,7 @@ export const createCalendarEvent = async (eventData: CalendarEvent): Promise<Cal
         client_id: eventData.clientId || null,
         is_edited: eventData.isEdited || false,
         is_delivered: eventData.isDelivered || false,
-        user_id: (await supabase.auth.getUser()).data.user?.id // Add user_id for RLS
+        user_id: userId,
       })
       .select()
       .single();
@@ -69,8 +79,8 @@ export const updateCalendarEvent = async (eventData: CalendarEvent): Promise<Cal
         color: eventData.color,
         client_id: eventData.clientId || null,
         is_edited: eventData.isEdited || false,
-        is_delivered: eventData.isDelivered || false
-        // Note: user_id should not be updated, only set on creation
+        is_delivered: eventData.isDelivered || false,
+        // user_id não é atualizado — imutável após criação
       })
       .eq('id', eventData.id)
       .select()
@@ -89,19 +99,14 @@ export const updateCalendarEvent = async (eventData: CalendarEvent): Promise<Cal
 };
 
 export const updateCalendarEventStatus = async (
-  eventId: string, 
+  eventId: string,
   updates: { isEdited?: boolean; isDelivered?: boolean }
 ): Promise<CalendarEvent | null> => {
   try {
-    const updateData: any = {};
-    
-    if (updates.isEdited !== undefined) {
-      updateData.is_edited = updates.isEdited;
-    }
-    
-    if (updates.isDelivered !== undefined) {
-      updateData.is_delivered = updates.isDelivered;
-    }
+    const updateData: Record<string, boolean> = {};
+
+    if (updates.isEdited !== undefined) updateData.is_edited = updates.isEdited;
+    if (updates.isDelivered !== undefined) updateData.is_delivered = updates.isDelivered;
 
     const { data, error } = await supabase
       .from('calendar_events')
@@ -141,7 +146,6 @@ export const deleteCalendarEvent = async (eventId: string): Promise<boolean> => 
   }
 };
 
-// Helper function to parse calendar event data
 const parseCalendarEvent = (data: any): CalendarEvent => {
   return {
     id: data.id,
@@ -154,6 +158,6 @@ const parseCalendarEvent = (data: any): CalendarEvent => {
     color: data.color,
     clientId: data.client_id,
     isEdited: data.is_edited || false,
-    isDelivered: data.is_delivered || false
+    isDelivered: data.is_delivered || false,
   };
 };

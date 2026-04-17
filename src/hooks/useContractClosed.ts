@@ -1,17 +1,12 @@
 import { useState, useCallback } from "react";
-import { Client } from "@/utils/types";
+import { Client, ClientStatus, EventCategory, NextAction } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
+import { ContractClosedFormData } from "@/components/ContractClosedDialog";
 import { toast } from "sonner";
-
-type UpdateClientFn = (
-  id: string,
-  updates: Partial<Omit<Client, "id" | "createdAt" | "updatedAt" | "payments">>
-) => Promise<Client | null>;
 
 interface PendingUpdate {
   id: string;
-  updates: Partial<Omit<Client, "id" | "createdAt" | "updatedAt" | "payments">>;
   client: Client;
 }
 
@@ -22,66 +17,76 @@ export function useContractClosed() {
   const [pendingUpdate, setPendingUpdate] = useState<PendingUpdate | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Substitui o updateClient normal — intercepta quando status vira "fechado"
-  const updateClientWithContractCheck: UpdateClientFn = useCallback(
-    async (id, updates) => {
-      const isClosing = updates.status === "fechado";
+  // Intercepta quando status vira "fechado" via drag no kanban
+  const openContractDialog = useCallback(
+    (clientId: string) => {
+      const client = clients.find((c) => c.id === clientId);
+      if (!client) return false;
 
-      if (!isClosing) {
-        // Atualização normal, sem interceptação
-        return updateClient(id, updates);
-      }
+      // Se já está fechado, não re-abre o dialog
+      if (client.status === "fechado") return false;
 
-      // Verificar se já estava fechado (evitar re-trigger em edições)
-      const client = clients.find((c) => c.id === id);
-      if (!client) return updateClient(id, updates);
-
-      const jaEstaFechado = client.status === "fechado";
-      if (jaEstaFechado) {
-        return updateClient(id, updates);
-      }
-
-      // Guardar update pendente e abrir dialog
-      setPendingUpdate({ id, updates, client: { ...client, ...updates } as Client });
+      setPendingUpdate({ id: clientId, client });
       setDialogOpen(true);
-      return null; // O update será feito após confirmação no dialog
+      return true; // sinaliza que o dialog foi aberto
     },
-    [updateClient, clients]
+    [clients]
   );
 
-  const handleDialogConfirm = useCallback(
-    async (entradaPaga: boolean, valorEntrada: number) => {
+  const handleConfirm = useCallback(
+    async (data: ContractClosedFormData) => {
       if (!pendingUpdate) return;
 
       setDialogOpen(false);
 
-      // 1. Salvar o cliente como fechado
-      const updatedClient = await updateClient(pendingUpdate.id, pendingUpdate.updates);
+      // Atualizar o cliente com todos os dados do formulário
+      const updatedClient = await updateClient(pendingUpdate.id, {
+        name: data.name,
+        coupleName: data.coupleName,
+        email: data.email,
+        phone: data.phone,
+        eventCategory: data.eventCategory as EventCategory,
+        weddingDate: data.weddingDate,
+        weddingStartTime: data.weddingStartTime,
+        weddingEndTime: data.weddingEndTime,
+        contractValue: data.contractValue,
+        downPayment: data.downPayment,
+        eventLocation: data.eventLocation,
+        contractLink: data.contractLink,
+        notes: data.notes,
+        status: "fechado" as ClientStatus,
+        nextAction: "nenhuma" as NextAction,
+        salesFunnelStage: "contrato_fechado",
+        // Remover badge de cadastro pendente
+        leadSource: pendingUpdate.client.leadSource || "Não informado",
+      });
 
       if (!updatedClient) {
-        toast.error("Erro ao fechar contrato.");
+        toast.error("Erro ao cadastrar cliente.");
         setPendingUpdate(null);
         return;
       }
 
-      // 2. Se entrada foi paga, registrar no financeiro
-      if (entradaPaga && valorEntrada > 0) {
+      // Registrar entrada no financeiro se foi paga
+      if (data.entradaPaga && data.downPayment > 0) {
         const today = new Date().toISOString().split("T")[0];
-
         await addTransaction({
           type: "entrada",
           category: "pagamento de cliente",
-          amount: valorEntrada,
+          amount: data.downPayment,
           date: today,
-          description: `Entrada — ${updatedClient.name}`,
+          description: `Entrada — ${data.name}`,
           clientId: updatedClient.id,
         });
 
         toast.success(
-          `Contrato fechado e entrada de R$ ${valorEntrada.toFixed(2).replace(".", ",")} registrada no financeiro!`
+          `Cliente cadastrado e entrada de ${new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }).format(data.downPayment)} registrada no financeiro!`
         );
       } else {
-        toast.success("Contrato fechado! Entrada não registrada.");
+        toast.success("Cliente cadastrado com sucesso!");
       }
 
       setPendingUpdate(null);
@@ -89,16 +94,39 @@ export function useContractClosed() {
     [pendingUpdate, updateClient, addTransaction]
   );
 
-  const handleDialogCancel = useCallback(() => {
+  const handleLater = useCallback(async () => {
+    if (!pendingUpdate) return;
+
+    setDialogOpen(false);
+
+    // Mover para contrato fechado mas marcar como cadastro pendente nas notas
+    await updateClient(pendingUpdate.id, {
+      status: "fechado" as ClientStatus,
+      salesFunnelStage: "contrato_fechado",
+      nextAction: "nenhuma" as NextAction,
+      notes: pendingUpdate.client.notes
+        ? `${pendingUpdate.client.notes}\n\n⚠️ CADASTRO PENDENTE — completar informações do cliente.`
+        : "⚠️ CADASTRO PENDENTE — completar informações do cliente.",
+    });
+
+    toast.warning("Contrato fechado. Lembre-se de completar o cadastro do cliente depois.", {
+      duration: 5000,
+    });
+
+    setPendingUpdate(null);
+  }, [pendingUpdate, updateClient]);
+
+  const handleCancel = useCallback(() => {
     setDialogOpen(false);
     setPendingUpdate(null);
   }, []);
 
   return {
-    updateClientWithContractCheck,
+    openContractDialog,
     dialogOpen,
     pendingClient: pendingUpdate?.client ?? null,
-    handleDialogConfirm,
-    handleDialogCancel,
+    handleConfirm,
+    handleLater,
+    handleCancel,
   };
 }

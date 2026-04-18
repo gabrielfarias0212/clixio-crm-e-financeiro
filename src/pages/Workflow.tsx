@@ -272,10 +272,28 @@ export default function WorkflowPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "finished">("active");
 
-  const workflowClients = useMemo(() =>
-    clients.filter(c => c.status === "fechado" || c.status === "projeto_finalizado"),
-    [clients]
-  );
+  const workflowClients = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return clients.filter(c => {
+      // Sempre mostrar finalizados
+      if (c.status === "projeto_finalizado") return true;
+
+      // Só mostrar "fechado" se:
+      // 1. O evento já aconteceu (data <= hoje), OU
+      // 2. Já tem alguma etapa do workflow marcada (foi fotografado)
+      if (c.status !== "fechado") return false;
+
+      const jaFotografado = !!c.weddingPhotographed;
+      if (jaFotografado) return true;
+
+      if (!c.weddingDate) return false;
+      const eventDate = new Date(c.weddingDate);
+      eventDate.setHours(0, 0, 0, 0);
+      return eventDate <= today;
+    });
+  }, [clients]);
 
   const filtered = useMemo(() => {
     let list = workflowClients;

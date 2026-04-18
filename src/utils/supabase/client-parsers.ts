@@ -1,4 +1,3 @@
-
 import { Client } from '../types';
 
 export const parseClient = (data: any): Client => {
@@ -23,25 +22,39 @@ export const parseClient = (data: any): Client => {
     preWeddingScheduled: data.pre_wedding_scheduled,
     preWeddingCompleted: data.pre_wedding_completed,
     preWeddingDelivered: data.pre_wedding_delivered,
-    weddingPhotographed: data.wedding_photographed,
-    inEditing: data.in_editing,
-    linkSent: data.link_sent,
-    boxDelivered: data.box_delivered,
-    albumDesigned: data.album_designed,
-    albumApprovedDelivered: data.album_approved_delivered,
-    // Novos campos do workflow
-    backupCompleted: data.backup_completed,
-    curationCompleted: data.curation_completed,
-    linkReady: data.link_ready,
-    workflowStage: data.workflow_stage,
     contractLink: data.contract_link,
     hasPreWedding: data.has_pre_wedding,
     salesFunnelStage: data.sales_funnel_stage || 'primeiro_contato',
     leadSource: data.lead_source,
     storageLocation: data.storage_location,
     notes: data.notes,
-    payments: [], // Will be loaded separately
+    workflowStage: data.workflow_stage,
+
+    // ── Workflow principal ──────────────────────────
+    weddingPhotographed: data.wedding_photographed ?? false,
+    backupDone: data.backup_done ?? false,
+    curadoriaDone: data.curadoria_done ?? false,
+    inEditing: data.in_editing ?? false,
+    linkSent: data.link_sent ?? false,
+    boxDelivered: data.box_delivered ?? false,
+
+    // ── Álbum ───────────────────────────────────────
+    hasAlbum: data.has_album ?? false,
+    albumLinkSent: data.album_link_sent ?? false,
+    albumClientChose: data.album_client_chose ?? false,
+    albumDiagrammed: data.album_diagrammed ?? false,
+    albumClientApproved: data.album_client_approved ?? false,
+    albumOrdered: data.album_ordered ?? false,
+
+    // ── Legados (compatibilidade) ───────────────────
+    albumDesigned: data.album_designed,
+    albumApprovedDelivered: data.album_approved_delivered,
+    backupCompleted: data.backup_completed,
+    curationCompleted: data.curation_completed,
+    linkReady: data.link_ready,
+
+    payments: [],
     createdAt: data.created_at,
-    updatedAt: data.updated_at
+    updatedAt: data.updated_at,
   };
 };

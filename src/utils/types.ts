@@ -1,13 +1,15 @@
-
 export type WorkflowStage = 
   | 'evento_ensaio'
   | 'copia' 
   | 'backup'
   | 'curadoria'
   | 'edicao'
+  | 'edicao_base'
+  | 'edicao_final'
   | 'link_pronto'
   | 'link_enviado'
   | 'entrega_fisica'
+  | 'album_em_andamento'
   | 'projeto_finalizado';
 
 export type ClientStatus = 
@@ -110,22 +112,37 @@ export interface Client {
   preWeddingScheduled?: boolean;
   preWeddingCompleted?: boolean;
   preWeddingDelivered?: boolean;
-  weddingPhotographed?: boolean;
-  inEditing?: boolean;
-  linkSent?: boolean;
-  boxDelivered?: boolean;
+
+  // ── Workflow principal ──────────────────────────────
+  weddingPhotographed?: boolean;  // Evento fotografado
+  backupDone?: boolean;           // Cópia RAW+JPG para SSD
+  curadoriaDone?: boolean;        // Curadoria no Aftershoot
+  inEditing?: boolean;            // Edição final no Lightroom
+  linkSent?: boolean;             // Link Wfolio enviado ao cliente
+  boxDelivered?: boolean;         // Entrega física (pen drive)
+
+  // ── Álbum (quando incluso no pacote) ───────────────
+  hasAlbum?: boolean;             // Pacote inclui álbum?
+  albumLinkSent?: boolean;        // Link enviado para cliente escolher fotos
+  albumClientChose?: boolean;     // Cliente escolheu as fotos
+  albumDiagrammed?: boolean;      // Álbum diagramado
+  albumClientApproved?: boolean;  // Cliente aprovou o layout
+  albumOrdered?: boolean;         // Pedido de produção feito
+
+  // ── Campos legados (manter compatibilidade) ─────────
   albumDesigned?: boolean;
   albumApprovedDelivered?: boolean;
   isDelivered?: boolean;
-  // Novos campos do workflow
   backupCompleted?: boolean;
   curationCompleted?: boolean;
   linkReady?: boolean;
+
+  // ── Workflow stage e funil ──────────────────────────
   workflowStage?: WorkflowStage;
   salesFunnelStage: SalesFunnelStage;
   leadSource?: string;
-  // Campo para local de armazenamento (SSD1, SSD2, HD1, etc.)
   storageLocation?: string;
+
   payments: Payment[];
   createdAt: string;
   updatedAt: string;
@@ -158,12 +175,10 @@ export interface CalendarEvent {
   type: EventType;
   color: EventColor;
   clientId?: string;
-  // Novos campos para controle de status
   isEdited?: boolean;
   isDelivered?: boolean;
 }
 
-// Update the AlertItem type to include the 'pre_wedding' and 'calendar_event' types
 export interface AlertItem {
   type: "task" | "payment" | "due_payment" | "event" | "pre_wedding" | "calendar_event";
   title: string;
@@ -171,7 +186,7 @@ export interface AlertItem {
   client: Client;
   date: Date;
   payment?: Payment;
-  event?: CalendarEvent; // Adicionado para alertas de eventos do calendário
+  event?: CalendarEvent;
   urgency?: "high" | "medium" | "low";
   isOverdue?: boolean;
 }

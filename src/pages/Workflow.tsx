@@ -79,7 +79,9 @@ function calcProgress(client: any): { done: number; total: number; pct: number; 
 
 function daysSince(dateStr?: string | null): number {
   if (!dateStr) return 0;
-  const d = new Date(dateStr);
+  // Forçar interpretação como data local (sem fuso) adicionando T12:00:00
+  const normalized = dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00`;
+  const d = new Date(normalized);
   const now = new Date();
   return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
 }

@@ -164,9 +164,15 @@ export function useAlerts(clients: Client[] = []) {
     // Combinar alertas de edição de clientes e eventos do calendário
     const allEditTasks = [...editTasks, ...calendarEditingAlerts];
     
-    // Deliver tasks (clients with nextAction "entregar")
+    // Deliver tasks — clientes com link enviado mas entrega física pendente
     const deliverTasks: AlertItem[] = clients
-      .filter(client => client.nextAction === "entregar")
+      .filter(client =>
+        (client.nextAction === "entregar") ||
+        (client.linkSent === true && client.boxDelivered !== true && client.weddingDate &&
+          new Date(client.weddingDate) <= now)
+      )
+      // Remover duplicatas caso nextAction e linkSent coincidam no mesmo cliente
+      .filter((client, index, arr) => arr.findIndex(c => c.id === client.id) === index)
       .map(client => {
         let description = `Cliente: ${client.name}`;
         let urgency: "high" | "medium" | "low" = "medium";

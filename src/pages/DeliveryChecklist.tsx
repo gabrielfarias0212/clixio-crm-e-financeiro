@@ -5,7 +5,10 @@ import { toast } from "sonner";
 
 function daysSince(dateStr?: string | null): number {
   if (!dateStr) return 0;
-  return Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
+  const normalized = dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00`;
+  const d = new Date(normalized);
+  const now = new Date();
+  return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export default function DeliveryChecklist() {

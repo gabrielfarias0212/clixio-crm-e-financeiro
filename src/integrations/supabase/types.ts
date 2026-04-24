@@ -150,12 +150,14 @@ export type Database = {
           date: string
           description: string | null
           end_time: string
+          google_event_id: string | null
           id: string
           is_delivered: boolean | null
           is_edited: boolean | null
           start_time: string
           title: string
           type: string
+          user_id: string
         }
         Insert: {
           client_id?: string | null
@@ -164,12 +166,14 @@ export type Database = {
           date: string
           description?: string | null
           end_time: string
+          google_event_id?: string | null
           id?: string
           is_delivered?: boolean | null
           is_edited?: boolean | null
           start_time: string
           title: string
           type: string
+          user_id: string
         }
         Update: {
           client_id?: string | null
@@ -178,12 +182,14 @@ export type Database = {
           date?: string
           description?: string | null
           end_time?: string
+          google_event_id?: string | null
           id?: string
           is_delivered?: boolean | null
           is_edited?: boolean | null
           start_time?: string
           title?: string
           type?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -1255,18 +1261,29 @@ export type Database = {
       wedding_clients: {
         Row: {
           album_approved_delivered: boolean | null
+          album_client_approved: boolean | null
+          album_client_chose: boolean | null
           album_designed: boolean | null
+          album_diagrammed: boolean | null
+          album_link_sent: boolean | null
+          album_ordered: boolean | null
           backup_completed: boolean | null
+          backup_done: boolean | null
           box_delivered: boolean | null
           contract_link: string | null
           contract_value: number | null
           couple_name: string | null
           created_at: string | null
+          curadoria_done: boolean | null
           curation_completed: boolean | null
+          days_in_stage: number | null
           down_payment: number | null
+          edicao_base_done: boolean | null
+          edicao_final_done: boolean | null
           email: string | null
           event_category: string | null
           event_location: string | null
+          has_album: boolean | null
           has_pre_wedding: boolean | null
           id: string
           in_editing: boolean | null
@@ -1295,21 +1312,33 @@ export type Database = {
           workflow_stage:
             | Database["public"]["Enums"]["workflow_stage_enum"]
             | null
+          workflow_updated_at: string | null
         }
         Insert: {
           album_approved_delivered?: boolean | null
+          album_client_approved?: boolean | null
+          album_client_chose?: boolean | null
           album_designed?: boolean | null
+          album_diagrammed?: boolean | null
+          album_link_sent?: boolean | null
+          album_ordered?: boolean | null
           backup_completed?: boolean | null
+          backup_done?: boolean | null
           box_delivered?: boolean | null
           contract_link?: string | null
           contract_value?: number | null
           couple_name?: string | null
           created_at?: string | null
+          curadoria_done?: boolean | null
           curation_completed?: boolean | null
+          days_in_stage?: number | null
           down_payment?: number | null
+          edicao_base_done?: boolean | null
+          edicao_final_done?: boolean | null
           email?: string | null
           event_category?: string | null
           event_location?: string | null
+          has_album?: boolean | null
           has_pre_wedding?: boolean | null
           id?: string
           in_editing?: boolean | null
@@ -1338,21 +1367,33 @@ export type Database = {
           workflow_stage?:
             | Database["public"]["Enums"]["workflow_stage_enum"]
             | null
+          workflow_updated_at?: string | null
         }
         Update: {
           album_approved_delivered?: boolean | null
+          album_client_approved?: boolean | null
+          album_client_chose?: boolean | null
           album_designed?: boolean | null
+          album_diagrammed?: boolean | null
+          album_link_sent?: boolean | null
+          album_ordered?: boolean | null
           backup_completed?: boolean | null
+          backup_done?: boolean | null
           box_delivered?: boolean | null
           contract_link?: string | null
           contract_value?: number | null
           couple_name?: string | null
           created_at?: string | null
+          curadoria_done?: boolean | null
           curation_completed?: boolean | null
+          days_in_stage?: number | null
           down_payment?: number | null
+          edicao_base_done?: boolean | null
+          edicao_final_done?: boolean | null
           email?: string | null
           event_category?: string | null
           event_location?: string | null
+          has_album?: boolean | null
           has_pre_wedding?: boolean | null
           id?: string
           in_editing?: boolean | null
@@ -1381,6 +1422,7 @@ export type Database = {
           workflow_stage?:
             | Database["public"]["Enums"]["workflow_stage_enum"]
             | null
+          workflow_updated_at?: string | null
         }
         Relationships: []
       }
@@ -1505,6 +1547,9 @@ export type Database = {
         | "link_enviado"
         | "entrega_fisica"
         | "projeto_finalizado"
+        | "edicao_base"
+        | "edicao_final"
+        | "album_em_andamento"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1643,6 +1688,9 @@ export const Constants = {
         "link_enviado",
         "entrega_fisica",
         "projeto_finalizado",
+        "edicao_base",
+        "edicao_final",
+        "album_em_andamento",
       ],
     },
   },

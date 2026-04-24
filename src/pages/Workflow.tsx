@@ -3,20 +3,16 @@ import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { useNavigate } from "react-router-dom";
 import { Client } from "@/utils/types";
-import { SearchInput } from "@/components/SearchInput";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Camera, HardDrive, Scissors, Sliders, Link, Package,
-  BookOpen, AlertTriangle, CheckCircle2, Clock, ChevronRight,
-  X, Filter
+  BookOpen, AlertTriangle, CheckCircle2, Clock, Search, ChevronRight
 } from "lucide-react";
-import { useClients as useClientsHook } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
 
-// ─── Definição das etapas ───────────────────────────────────────────────────
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 interface WorkflowStep {
   key: string;
@@ -26,7 +22,7 @@ interface WorkflowStep {
   bgColor: string;
   field: keyof Client;
   description: string;
-  albumStep?: boolean; // etapas só para quem tem álbum
+  albumStep?: boolean;
 }
 
 const WORKFLOW_STEPS: WorkflowStep[] = [
@@ -41,49 +37,48 @@ const WORKFLOW_STEPS: WorkflowStep[] = [
 const ALBUM_STEPS: WorkflowStep[] = [
   { key: "album_link_sent", label: "Link p/ Escolha", icon: Link, color: "text-indigo-600", bgColor: "bg-indigo-50", field: "albumLinkSent", description: "Link enviado para cliente escolher fotos", albumStep: true },
   { key: "album_client_chose", label: "Cliente Escolheu", icon: CheckCircle2, color: "text-indigo-600", bgColor: "bg-indigo-50", field: "albumClientChose", description: "Cliente selecionou as fotos", albumStep: true },
-  { key: "album_diagrammed", label: "Diagramado", icon: BookOpen, color: "text-indigo-600", bgColor: "bg-indigo-50", field: "albumDiagrammed", description: "Álbum diagramado por você ou Laís", albumStep: true },
+  { key: "album_diagrammed", label: "Diagramado", icon: BookOpen, color: "text-indigo-600", bgColor: "bg-indigo-50", field: "albumDiagrammed", description: "Álbum diagramado", albumStep: true },
   { key: "album_client_approved", label: "Aprovado", icon: CheckCircle2, color: "text-indigo-600", bgColor: "bg-indigo-50", field: "albumClientApproved", description: "Cliente aprovou o layout", albumStep: true },
   { key: "album_ordered", label: "Pedido Feito", icon: Package, color: "text-indigo-600", bgColor: "bg-indigo-50", field: "albumOrdered", description: "Álbum enviado para produção", albumStep: true },
 ];
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+const MONTHS = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+];
 
-function getClientField(client: any, field: string): boolean {
-  const map: Record<string, string> = {
-    weddingPhotographed: "weddingPhotographed",
-    backupDone: "backupDone",
-    curadoriaDone: "curadoriaDone",
-    inEditing: "inEditing",
-    linkSent: "linkSent",
-    boxDelivered: "boxDelivered",
-    albumLinkSent: "albumLinkSent",
-    albumClientChose: "albumClientChose",
-    albumDiagrammed: "albumDiagrammed",
-    albumClientApproved: "albumClientApproved",
-    albumOrdered: "albumOrdered",
-  };
-  return !!client[map[field] ?? field];
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function calcProgress(client: any): { done: number; total: number; pct: number; currentStep: string } {
-  const hasAlbum = !!client.hasAlbum;
-  const steps = hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
-  const done = steps.filter(s => getClientField(client, s.field as string)).length;
-  const total = steps.length;
-  const pct = Math.round((done / total) * 100);
-
-  // Encontrar etapa atual (primeira não concluída)
-  const current = steps.find(s => !getClientField(client, s.field as string));
-  return { done, total, pct, currentStep: current?.label ?? "Finalizado" };
+// Normaliza data para evitar problema de fuso UTC→local
+function parseDate(dateStr?: string | null): Date | null {
+  if (!dateStr) return null;
+  const normalized = dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00`;
+  return new Date(normalized);
 }
 
 function daysSince(dateStr?: string | null): number {
-  if (!dateStr) return 0;
-  // Forçar interpretação como data local (sem fuso) adicionando T12:00:00
-  const normalized = dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00`;
-  const d = new Date(normalized);
-  const now = new Date();
-  return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+  const d = parseDate(dateStr);
+  if (!d) return 0;
+  return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function formatDate(dateStr?: string | null): string {
+  const d = parseDate(dateStr);
+  if (!d) return "—";
+  return d.toLocaleDateString("pt-BR");
+}
+
+function getClientField(client: any, field: string): boolean {
+  return !!client[field];
+}
+
+function calcProgress(client: any) {
+  const steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
+  const done = steps.filter(s => getClientField(client, s.field as string)).length;
+  const total = steps.length;
+  const pct = Math.round((done / total) * 100);
+  const current = steps.find(s => !getClientField(client, s.field as string));
+  return { done, total, pct, currentStep: current?.label ?? "Finalizado" };
 }
 
 function urgencyColor(days: number, linkSent: boolean): string {
@@ -93,18 +88,17 @@ function urgencyColor(days: number, linkSent: boolean): string {
   return "text-gray-500";
 }
 
-// ─── Card do projeto ──────────────────────────────────────────────────────────
+// ─── ProjectCard ──────────────────────────────────────────────────────────────
 
 function ProjectCard({ client, onToggleStep, onClick }: {
   client: any;
-  onToggleStep: (clientId: string, field: string, value: boolean) => void;
+  onToggleStep: (id: string, field: string, value: boolean) => void;
   onClick: () => void;
 }) {
   const { done, total, pct, currentStep } = calcProgress(client);
   const days = daysSince(client.weddingDate);
   const isFinished = client.status === "projeto_finalizado";
-  const hasAlbum = !!client.hasAlbum;
-  const steps = hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
+  const steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
 
   return (
     <div
@@ -113,16 +107,18 @@ function ProjectCard({ client, onToggleStep, onClick }: {
       }`}
       onClick={onClick}
     >
-      {/* Header */}
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h3 className="font-semibold text-gray-900 truncate">{client.name}</h3>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1">
+            <h3 className="font-semibold text-gray-900 truncate">{client.name}</h3>
+            <ChevronRight className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+          </div>
           {client.coupleName && (
             <p className="text-xs text-muted-foreground truncate">{client.coupleName}</p>
           )}
           <p className={`text-xs mt-0.5 ${urgencyColor(days, client.linkSent)}`}>
             {client.weddingDate
-              ? `Evento: ${new Date(client.weddingDate).toLocaleDateString("pt-BR")} · ${days}d atrás`
+              ? `${formatDate(client.weddingDate)} · ${days}d atrás`
               : "Data não definida"}
           </p>
         </div>
@@ -134,19 +130,14 @@ function ProjectCard({ client, onToggleStep, onClick }: {
               <AlertTriangle className="h-3 w-3" /> Atrasado
             </Badge>
           ) : (
-            <Badge className="bg-blue-50 text-blue-700 border-blue-100 text-xs">
-              {currentStep}
-            </Badge>
+            <Badge className="bg-blue-50 text-blue-700 border-blue-100 text-xs">{currentStep}</Badge>
           )}
-          {hasAlbum && (
-            <Badge className="bg-indigo-50 text-indigo-700 border-indigo-100 text-xs">
-              📖 Álbum
-            </Badge>
+          {client.hasAlbum && (
+            <Badge className="bg-indigo-50 text-indigo-700 border-indigo-100 text-xs">📖 Álbum</Badge>
           )}
         </div>
       </div>
 
-      {/* Progress */}
       <div>
         <div className="flex justify-between text-xs text-muted-foreground mb-1">
           <span>{done}/{total} etapas</span>
@@ -155,21 +146,17 @@ function ProjectCard({ client, onToggleStep, onClick }: {
         <Progress value={pct} className="h-1.5" />
       </div>
 
-      {/* Steps rápidos */}
-      <div
-        className="flex flex-wrap gap-1.5"
-        onClick={e => e.stopPropagation()}
-      >
+      <div className="flex flex-wrap gap-1.5" onClick={e => e.stopPropagation()}>
         {steps.map(step => {
-          const done = getClientField(client, step.field as string);
+          const isDone = getClientField(client, step.field as string);
           const Icon = step.icon;
           return (
             <button
               key={step.key}
               title={step.label}
-              onClick={() => onToggleStep(client.id, step.field as string, !done)}
+              onClick={() => onToggleStep(client.id, step.field as string, !isDone)}
               className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border transition-all ${
-                done
+                isDone
                   ? `${step.bgColor} ${step.color} border-current/20`
                   : "bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100"
               } ${step.albumStep ? "border-dashed" : ""}`}
@@ -184,19 +171,47 @@ function ProjectCard({ client, onToggleStep, onClick }: {
   );
 }
 
-// ─── Fila de Entregas Físicas ─────────────────────────────────────────────────
+// ─── DeliveryQueue ────────────────────────────────────────────────────────────
 
-function DeliveryQueue({ clients, onToggleStep }: {
+function DeliveryQueue({ clients, onToggleStep, onNavigate }: {
   clients: any[];
-  onToggleStep: (clientId: string, field: string, value: boolean) => void;
+  onToggleStep: (id: string, field: string, value: boolean) => void;
+  onNavigate: (id: string) => void;
 }) {
-  const pending = clients
-    .filter(c => c.linkSent && !c.boxDelivered)
-    .sort((a, b) => {
-      const da = new Date(a.weddingDate || 0).getTime();
-      const db = new Date(b.weddingDate || 0).getTime();
-      return da - db; // mais antigos primeiro
+  const [search, setSearch] = useState("");
+  const [filterMonth, setFilterMonth] = useState<number | "all">("all");
+  const [filterYear, setFilterYear] = useState<number | "all">("all");
+
+  const pending = useMemo(() =>
+    clients
+      .filter(c => c.linkSent && !c.boxDelivered)
+      .sort((a, b) => {
+        const da = parseDate(a.weddingDate)?.getTime() ?? 0;
+        const db = parseDate(b.weddingDate)?.getTime() ?? 0;
+        return da - db;
+      }),
+    [clients]
+  );
+
+  const years = useMemo(() => {
+    const ys = new Set(pending.map(c => parseDate(c.weddingDate)?.getFullYear()).filter(Boolean));
+    return Array.from(ys).sort() as number[];
+  }, [pending]);
+
+  const filtered = useMemo(() => {
+    return pending.filter(c => {
+      const d = parseDate(c.weddingDate);
+      if (filterMonth !== "all" && d?.getMonth() !== filterMonth) return false;
+      if (filterYear !== "all" && d?.getFullYear() !== filterYear) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        return c.name.toLowerCase().includes(q) ||
+          (c.coupleName ?? "").toLowerCase().includes(q) ||
+          (c.weddingDate ?? "").includes(q);
+      }
+      return true;
     });
+  }, [pending, filterMonth, filterYear, search]);
 
   if (pending.length === 0) {
     return (
@@ -209,151 +224,176 @@ function DeliveryQueue({ clients, onToggleStep }: {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* Alerta */}
       <div className="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
         <AlertTriangle className="h-4 w-4 text-orange-600 shrink-0" />
         <p className="text-sm text-orange-800">
           <strong>{pending.length} entrega{pending.length > 1 ? "s" : ""} pendente{pending.length > 1 ? "s" : ""}</strong>
-          {" "}— ordenadas do mais antigo para o mais recente
+          {filtered.length !== pending.length && ` · mostrando ${filtered.length}`}
+          {" "}— ordenadas do mais antigo
         </p>
       </div>
 
-      {pending.map((client, index) => {
-        const days = daysSince(client.weddingDate);
-        const hasAlbum = !!client.hasAlbum;
-        const albumPending = hasAlbum && !client.albumOrdered;
+      {/* Filtros */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        {/* Pesquisa */}
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar nome, casal, data..."
+            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
+          />
+        </div>
 
-        return (
-          <div
-            key={client.id}
-            className={`bg-white border rounded-xl p-4 flex items-center gap-4 ${
-              days > 90 ? "border-red-200 bg-red-50/30" : "border-gray-200"
-            }`}
-          >
-            <div className={`text-2xl font-bold w-8 text-center ${
-              days > 90 ? "text-red-500" : "text-gray-300"
-            }`}>
-              {index + 1}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 truncate">{client.name}</p>
-              {client.coupleName && (
-                <p className="text-xs text-muted-foreground">{client.coupleName}</p>
-              )}
-              <div className="flex items-center gap-3 mt-1">
-                <span className={`text-xs ${days > 90 ? "text-red-600 font-medium" : "text-gray-500"}`}>
-                  <Clock className="h-3 w-3 inline mr-0.5" />
-                  {days} dias desde o evento
-                </span>
-                {albumPending && (
-                  <span className="text-xs text-indigo-600">
-                    📖 Álbum em andamento
-                  </span>
-                )}
+        {/* Filtro Ano */}
+        <select
+          value={filterYear}
+          onChange={e => setFilterYear(e.target.value === "all" ? "all" : Number(e.target.value))}
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
+        >
+          <option value="all">Todos os anos</option>
+          {years.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+
+        {/* Filtro Mês */}
+        <select
+          value={filterMonth}
+          onChange={e => setFilterMonth(e.target.value === "all" ? "all" : Number(e.target.value))}
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
+        >
+          <option value="all">Todos os meses</option>
+          {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
+        </select>
+      </div>
+
+      {/* Lista */}
+      {filtered.length === 0 ? (
+        <p className="text-center text-sm text-muted-foreground py-8">Nenhum resultado para os filtros selecionados.</p>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((client, index) => {
+            const days = daysSince(client.weddingDate);
+            const isUrgent = days > 90;
+
+            return (
+              <div
+                key={client.id}
+                className={`bg-white border rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:shadow-sm transition-all ${
+                  isUrgent ? "border-red-200 bg-red-50/20" : "border-gray-200"
+                }`}
+                onClick={() => onNavigate(client.id)}
+              >
+                <div className={`text-2xl font-bold w-8 text-center shrink-0 ${
+                  isUrgent ? "text-red-400" : "text-gray-200"
+                }`}>
+                  {index + 1}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1">
+                    <p className="font-semibold text-gray-900 truncate">
+                      {client.coupleName || client.name}
+                    </p>
+                    <ChevronRight className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                  </div>
+                  {client.coupleName && (
+                    <p className="text-xs text-gray-400 truncate">{client.name}</p>
+                  )}
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Clock className={`h-3 w-3 shrink-0 ${isUrgent ? "text-red-500" : "text-gray-400"}`} />
+                    <span className={`text-xs ${isUrgent ? "text-red-500 font-medium" : "text-gray-400"}`}>
+                      {formatDate(client.weddingDate)} · {days} dias atrás
+                    </span>
+                    {client.hasAlbum && !client.albumOrdered && (
+                      <span className="text-xs text-indigo-600 ml-2">📖 Álbum pendente</span>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    onToggleStep(client.id, "boxDelivered", true);
+                  }}
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-gray-900 hover:bg-gray-700 active:scale-95 text-white text-xs font-medium rounded-lg transition-all"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Entregue
+                </button>
               </div>
-            </div>
-            <button
-              onClick={() => onToggleStep(client.id, "boxDelivered", true)}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium rounded-lg transition-colors"
-            >
-              <Package className="h-3.5 w-3.5" />
-              Marcar entregue
-            </button>
-          </div>
-        );
-      })}
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── Página principal ─────────────────────────────────────────────────────────
+// ─── Página Principal ─────────────────────────────────────────────────────────
 
 export default function WorkflowPage() {
   const { clients, loading, updateClient } = useClients();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "finished">("active");
+  const [filterMonth, setFilterMonth] = useState<number | "all">("all");
+  const [filterYear, setFilterYear] = useState<number | "all">("all");
 
   const workflowClients = useMemo(() => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
+    today.setHours(23, 59, 59, 999);
     return clients.filter(c => {
-      // Sempre mostrar finalizados
       if (c.status === "projeto_finalizado") return true;
-
-      // Só mostrar "fechado" se:
-      // 1. O evento já aconteceu (data <= hoje), OU
-      // 2. Já tem alguma etapa do workflow marcada (foi fotografado)
       if (c.status !== "fechado") return false;
-
-      const jaFotografado = !!c.weddingPhotographed;
-      if (jaFotografado) return true;
-
+      if (c.weddingPhotographed) return true;
       if (!c.weddingDate) return false;
-      const eventDate = new Date(c.weddingDate);
-      eventDate.setHours(0, 0, 0, 0);
-      return eventDate <= today;
+      const d = parseDate(c.weddingDate);
+      return d ? d <= today : false;
     });
   }, [clients]);
 
+  const years = useMemo(() => {
+    const ys = new Set(workflowClients.map(c => parseDate(c.weddingDate)?.getFullYear()).filter(Boolean));
+    return Array.from(ys).sort() as number[];
+  }, [workflowClients]);
+
   const filtered = useMemo(() => {
     let list = workflowClients;
-
     if (filterStatus === "active") list = list.filter(c => c.status === "fechado");
     if (filterStatus === "finished") list = list.filter(c => c.status === "projeto_finalizado");
-
+    if (filterMonth !== "all") list = list.filter(c => parseDate(c.weddingDate)?.getMonth() === filterMonth);
+    if (filterYear !== "all") list = list.filter(c => parseDate(c.weddingDate)?.getFullYear() === filterYear);
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
       list = list.filter(c =>
         c.name.toLowerCase().includes(q) ||
-        (c.coupleName ?? "").toLowerCase().includes(q)
+        (c.coupleName ?? "").toLowerCase().includes(q) ||
+        (c.weddingDate ?? "").includes(q) ||
+        (c.eventLocation ?? "").toLowerCase().includes(q)
       );
     }
-
     return list;
-  }, [workflowClients, filterStatus, searchTerm]);
+  }, [workflowClients, filterStatus, filterMonth, filterYear, searchTerm]);
 
-  // Stats
   const stats = useMemo(() => ({
     ativos: workflowClients.filter(c => c.status === "fechado").length,
     entregaFisicaPendente: workflowClients.filter(c => c.linkSent && !c.boxDelivered).length,
     linkEnviado: workflowClients.filter(c => c.linkSent).length,
     finalizados: workflowClients.filter(c => c.status === "projeto_finalizado").length,
-    atrasados: workflowClients.filter(c => {
-      const days = daysSince(c.weddingDate);
-      return !c.linkSent && days > 60;
-    }).length,
+    atrasados: workflowClients.filter(c => !c.linkSent && daysSince(c.weddingDate) > 60).length,
   }), [workflowClients]);
 
   const handleToggleStep = async (clientId: string, field: string, value: boolean) => {
-    // Map de campo frontend → banco
-    const fieldMap: Record<string, string> = {
-      weddingPhotographed: "weddingPhotographed",
-      backupDone: "backupDone",
-      curadoriaDone: "curadoriaDone",
-      inEditing: "inEditing",
-      linkSent: "linkSent",
-      boxDelivered: "boxDelivered",
-      albumLinkSent: "albumLinkSent",
-      albumClientChose: "albumClientChose",
-      albumDiagrammed: "albumDiagrammed",
-      albumClientApproved: "albumClientApproved",
-      albumOrdered: "albumOrdered",
-    };
-
-    const updates: any = { [fieldMap[field] ?? field]: value };
-
-    // Se todas as etapas principais estão concluídas, marcar como finalizado
+    const updates: any = { [field]: value };
     const client = workflowClients.find(c => c.id === clientId);
     if (client && field === "boxDelivered" && value) {
-      const hasAlbum = !!client.hasAlbum;
-      const albumOk = !hasAlbum || client.albumOrdered;
-      if (albumOk) {
-        updates.status = "projeto_finalizado";
-      }
+      const albumOk = !client.hasAlbum || client.albumOrdered;
+      if (albumOk) updates.status = "projeto_finalizado";
     }
-
     await updateClient(clientId, updates);
     toast.success("Etapa atualizada!");
   };
@@ -372,7 +412,6 @@ export default function WorkflowPage() {
     <Layout>
       <div className="container mx-auto p-6 space-y-6">
 
-        {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Fluxo de Trabalho</h1>
           <p className="text-gray-500 text-sm mt-0.5">Acompanhe cada projeto do evento até a entrega</p>
@@ -394,7 +433,6 @@ export default function WorkflowPage() {
           ))}
         </div>
 
-        {/* Tabs */}
         <Tabs defaultValue="projetos">
           <TabsList>
             <TabsTrigger value="projetos">Todos os Projetos</TabsTrigger>
@@ -410,21 +448,27 @@ export default function WorkflowPage() {
 
           {/* Tab: Projetos */}
           <TabsContent value="projetos" className="space-y-4 mt-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1 max-w-sm">
-                <SearchInput
+            {/* Filtros */}
+            <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
+              {/* Pesquisa */}
+              <div className="relative flex-1 min-w-48">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
                   value={searchTerm}
-                  onChange={setSearchTerm}
-                  placeholder="Buscar por nome ou casal..."
-                  className="w-full"
+                  onChange={e => setSearchTerm(e.target.value)}
+                  placeholder="Buscar nome, casal, local..."
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
                 />
               </div>
-              <div className="flex gap-2">
+
+              {/* Status */}
+              <div className="flex gap-1.5">
                 {(["all", "active", "finished"] as const).map(f => (
                   <button
                     key={f}
                     onClick={() => setFilterStatus(f)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                    className={`px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
                       filterStatus === f
                         ? "bg-gray-900 text-white border-gray-900"
                         : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
@@ -434,6 +478,26 @@ export default function WorkflowPage() {
                   </button>
                 ))}
               </div>
+
+              {/* Ano */}
+              <select
+                value={filterYear}
+                onChange={e => setFilterYear(e.target.value === "all" ? "all" : Number(e.target.value))}
+                className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
+              >
+                <option value="all">Todos os anos</option>
+                {years.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+
+              {/* Mês */}
+              <select
+                value={filterMonth}
+                onChange={e => setFilterMonth(e.target.value === "all" ? "all" : Number(e.target.value))}
+                className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
+              >
+                <option value="all">Todos os meses</option>
+                {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
+              </select>
             </div>
 
             {filtered.length === 0 ? (
@@ -460,6 +524,7 @@ export default function WorkflowPage() {
             <DeliveryQueue
               clients={workflowClients}
               onToggleStep={handleToggleStep}
+              onNavigate={id => navigate(`/clients/${id}`)}
             />
           </TabsContent>
         </Tabs>

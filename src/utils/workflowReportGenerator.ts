@@ -18,7 +18,10 @@ const workflowStageLabels: Record<WorkflowStage, string> = {
   link_pronto: 'Link Pronto',
   link_enviado: 'Link Enviado',
   entrega_fisica: 'Entrega Física',
-  projeto_finalizado: 'Finalizado'
+  projeto_finalizado: 'Finalizado',
+  edicao_base: 'Edição Base',
+  edicao_final: 'Edição Final',
+  album_em_andamento: 'Álbum em Andamento'
 };
 
 // Determinar o estágio do workflow de um cliente

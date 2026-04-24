@@ -1,182 +1,149 @@
 import { useClients } from "@/contexts/ClientsContext";
 import { Card, CardContent } from "@/components/ui/card";
-import { BadgeAlert, Calendar, CalendarCheck, FileCheck, Users } from "lucide-react";
+import { Calendar, CalendarCheck, FileCheck, Users } from "lucide-react";
 import { startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { useState, useMemo } from "react";
 import { DashboardCardModal } from "./DashboardCardModal";
 import { MonthlyEventsModal } from "./MonthlyEventsModal";
 import { Client } from "@/utils/types";
 import { stringToDate } from "@/utils/dates";
+
 export function DashboardStats() {
-  const {
-    clients
-  } = useClients();
+  const { clients } = useClients();
   const now = new Date();
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [modalType, setModalType] = useState<"leads" | "contracts" | "delivered" | "pending" | "monthly-events">("leads");
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [monthlyEventsModalOpen, setMonthlyEventsModalOpen] = useState(false);
 
-  // Monthly leads - exclude workflow projects (leadSource === "Projeto Direto")
-  const monthlyLeadsClients = useMemo(() => {
-    return clients.filter(client => {
-      if (!client.createdAt) return false;
-      // Exclude workflow-linked projects from lead count
-      if (client.leadSource === "Projeto Direto") return false;
-      const createdAt = stringToDate(client.createdAt);
-      return createdAt && isWithinInterval(createdAt, {
-        start: monthStart,
-        end: monthEnd
-      });
-    });
-  }, [clients, monthStart, monthEnd]);
-  const monthlyLeads = monthlyLeadsClients.length;
+  const monthlyLeadsClients = useMemo(() => clients.filter(client => {
+    if (!client.createdAt || client.leadSource === "Projeto Direto") return false;
+    const createdAt = stringToDate(client.createdAt);
+    return createdAt && isWithinInterval(createdAt, { start: monthStart, end: monthEnd });
+  }), [clients, monthStart, monthEnd]);
 
-  // Monthly closed contracts - using "fechado" status, exclude workflow projects
-  const monthlyClosedContractsClients = useMemo(() => {
-    return clients.filter(client => {
-      if (!client.createdAt) return false;
-      // Exclude workflow-linked projects from contract count
-      if (client.leadSource === "Projeto Direto") return false;
-      const createdAt = stringToDate(client.createdAt);
-      return createdAt && isWithinInterval(createdAt, {
-        start: monthStart,
-        end: monthEnd
-      }) && client.status === "fechado";
-    });
-  }, [clients, monthStart, monthEnd]);
-  const monthlyClosedContracts = monthlyClosedContractsClients.length;
+  const monthlyClosedContractsClients = useMemo(() => clients.filter(client => {
+    if (!client.createdAt || client.leadSource === "Projeto Direto") return false;
+    const createdAt = stringToDate(client.createdAt);
+    return createdAt && isWithinInterval(createdAt, { start: monthStart, end: monthEnd }) && client.status === "fechado";
+  }), [clients, monthStart, monthEnd]);
 
-  // Delivered events - using "projeto_finalizado" status
-  const deliveredEventsClients = useMemo(() => {
-    return clients.filter(client => client.status === "projeto_finalizado");
-  }, [clients]);
-  const deliveredEvents = deliveredEventsClients.length;
+  const deliveredEventsClients = useMemo(() =>
+    clients.filter(client => client.status === "projeto_finalizado"),
+  [clients]);
 
-  // Pending payments - clients with "fechado" status and incomplete payments
-  const pendingPaymentsClients = useMemo(() => {
-    return clients.filter(client => client.status === "fechado" && client.payments.reduce((sum, payment) => sum + payment.amount, 0) < client.contractValue);
-  }, [clients]);
-  const pendingPayments = pendingPaymentsClients.length;
+  const pendingPaymentsClients = useMemo(() =>
+    clients.filter(client =>
+      client.status === "fechado" &&
+      client.payments.reduce((sum, p) => sum + p.amount, 0) < client.contractValue
+    ),
+  [clients]);
 
-  // Monthly events - events happening this month (wedding or pre-wedding dates)
   const monthlyEvents = useMemo(() => {
-    let eventsCount = 0;
+    let count = 0;
     clients.forEach(client => {
-      // Check wedding date
       if (client.weddingDate) {
-        const weddingDate = stringToDate(client.weddingDate);
-        if (weddingDate && isWithinInterval(weddingDate, {
-          start: monthStart,
-          end: monthEnd
-        })) {
-          eventsCount++;
-        }
+        const d = stringToDate(client.weddingDate);
+        if (d && isWithinInterval(d, { start: monthStart, end: monthEnd })) count++;
       }
-
-      // Check pre-wedding date
       if (client.preWeddingDate) {
-        const preWeddingDate = stringToDate(client.preWeddingDate);
-        if (preWeddingDate && isWithinInterval(preWeddingDate, {
-          start: monthStart,
-          end: monthEnd
-        })) {
-          eventsCount++;
-        }
+        const d = stringToDate(client.preWeddingDate);
+        if (d && isWithinInterval(d, { start: monthStart, end: monthEnd })) count++;
       }
     });
-    return eventsCount;
+    return count;
   }, [clients, monthStart, monthEnd]);
 
-  // Handle card clicks
   const handleCardClick = (type: "leads" | "contracts" | "delivered" | "pending" | "monthly-events") => {
     if (type === "monthly-events") {
       setMonthlyEventsModalOpen(true);
       return;
     }
-    let title = "";
-    let clientsToShow: Client[] = [];
-    switch (type) {
-      case "leads":
-        title = "Leads do Mês";
-        clientsToShow = monthlyLeadsClients;
-        break;
-      case "contracts":
-        title = "Contratos Fechados no Mês";
-        clientsToShow = monthlyClosedContractsClients;
-        break;
-      case "delivered":
-        title = "Eventos Entregues";
-        clientsToShow = deliveredEventsClients;
-        break;
-      case "pending":
-        title = "Pendências Financeiras";
-        clientsToShow = pendingPaymentsClients;
-        break;
-    }
+    const map = {
+      leads:     { title: "Leads do Mês",               list: monthlyLeadsClients },
+      contracts: { title: "Contratos Fechados no Mês",   list: monthlyClosedContractsClients },
+      delivered: { title: "Eventos Entregues",           list: deliveredEventsClients },
+      pending:   { title: "Pendências Financeiras",      list: pendingPaymentsClients },
+    };
+    const { title, list } = map[type];
     setModalTitle(title);
     setModalType(type);
-    setFilteredClients(clientsToShow);
+    setFilteredClients(list);
     setModalOpen(true);
   };
-  return <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick("leads")}>
-          <CardContent className="pt-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Leads do Mês</p>
-                <p className="text-2xl font-bold">{monthlyLeads}</p>
-              </div>
-              <Users className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick("contracts")}>
-          <CardContent className="pt-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Contratos Fechados</p>
-                <p className="text-2xl font-bold">{monthlyClosedContracts}</p>
-              </div>
-              <FileCheck className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
+  const stats = [
+    {
+      label: "Leads do Mês",
+      value: monthlyLeadsClients.length,
+      icon: Users,
+      type: "leads" as const,
+      color: "text-stone-400",
+    },
+    {
+      label: "Contratos Fechados",
+      value: monthlyClosedContractsClients.length,
+      icon: FileCheck,
+      type: "contracts" as const,
+      color: "text-stone-400",
+    },
+    {
+      label: "Eventos do Mês",
+      value: monthlyEvents,
+      icon: Calendar,
+      type: "monthly-events" as const,
+      color: "text-stone-400",
+    },
+    {
+      label: "Eventos Entregues",
+      value: deliveredEventsClients.length,
+      icon: CalendarCheck,
+      type: "delivered" as const,
+      color: "text-stone-400",
+    },
+  ];
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick("monthly-events")}>
-          <CardContent className="pt-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Eventos do Mês</p>
-                <p className="text-2xl font-bold">{monthlyEvents}</p>
+  return (
+    <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {stats.map(({ label, value, icon: Icon, type, color }) => (
+          <Card
+            key={type}
+            className="cursor-pointer rounded-xl border-stone-200 shadow-sm hover:shadow-md hover:border-stone-300 transition-all"
+            onClick={() => handleCardClick(type)}
+          >
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[11px] text-stone-400 mb-2">{label}</p>
+                  <p className="font-mono text-2xl font-medium text-stone-900 leading-none tracking-tight">
+                    {value}
+                  </p>
+                </div>
+                <Icon size={16} strokeWidth={1.5} className={color} />
               </div>
-              <Calendar className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick("delivered")}>
-          <CardContent className="pt-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Eventos Entregues</p>
-                <p className="text-2xl font-bold">{deliveredEvents}</p>
-              </div>
-              <CalendarCheck className="h-8 w-8 text-emerald-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <DashboardCardModal title={modalTitle} open={modalOpen} onClose={() => setModalOpen(false)} clients={filteredClients} type={modalType} />
+      <DashboardCardModal
+        title={modalTitle}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        clients={filteredClients}
+        type={modalType}
+      />
 
-      <MonthlyEventsModal open={monthlyEventsModalOpen} onClose={() => setMonthlyEventsModalOpen(false)} clients={clients} />
-    </>;
+      <MonthlyEventsModal
+        open={monthlyEventsModalOpen}
+        onClose={() => setMonthlyEventsModalOpen(false)}
+        clients={clients}
+      />
+    </>
+  );
 }

@@ -1,130 +1,54 @@
-
 import { useClients } from "@/contexts/ClientsContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useState, useMemo } from "react";
-import { format, subMonths } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { CircleDot, ChevronDown, ChevronUp } from "lucide-react";
+import { subMonths } from "date-fns";
+import { CircleDot, ChevronDown } from "lucide-react";
 import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip as RechartsTooltip,
-  Sector
+  PieChart, Pie, Cell, ResponsiveContainer,
+  Tooltip as RechartsTooltip, Sector
 } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { EventCategory } from "@/utils/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-// Updated modern color palette
-const EVENT_COLORS = {
-  "Casamento": "#8B5CF6",
-  "Aniversario": "#10B981",
-  "Civil": "#F59E0B",
-  "Ensaio Estudio": "#EF4444",
-  "Ensaio externo": "#3B82F6",
-  "Evento Corporativo": "#EC4899",
-  "15 anos": "#6366F1",
+const EVENT_COLORS: Record<string, string> = {
+  "Casamento":          "#a8a29e",
+  "Aniversario":        "#78716c",
+  "Civil":              "#d6d3d1",
+  "Ensaio Estudio":     "#57534e",
+  "Ensaio externo":     "#c4b5ad",
+  "Evento Corporativo": "#44403c",
+  "15 anos":            "#e7e5e4",
 };
 
-// Configuration for the chart
-const chartConfig = {
-  "Casamento": { color: "#8B5CF6" },
-  "Aniversario": { color: "#10B981" },
-  "Civil": { color: "#F59E0B" },
-  "Ensaio Estudio": { color: "#EF4444" },
-  "Ensaio externo": { color: "#3B82F6" },
-  "Evento Corporativo": { color: "#EC4899" },
-  "15 anos": { color: "#6366F1" },
-};
+const chartConfig = Object.fromEntries(
+  Object.entries(EVENT_COLORS).map(([k, v]) => [k, { color: v }])
+);
 
 type TimeRangeOption = "all" | "3" | "6" | "12";
 
 const timeRangeOptions = [
   { value: "all", label: "Todos" },
-  { value: "3", label: "Últimos 3 meses" },
-  { value: "6", label: "Últimos 6 meses" },
-  { value: "12", label: "Último ano" },
+  { value: "3",   label: "Últimos 3 meses" },
+  { value: "6",   label: "Últimos 6 meses" },
+  { value: "12",  label: "Último ano" },
 ];
 
-// Active shape for the pie chart to show percentage
 const renderActiveShape = (props: any) => {
-  const { 
-    cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent 
-  } = props;
-
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent } = props;
   return (
     <g>
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius + 10}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-      />
-      <text
-        x={cx}
-        y={cy - 10}
-        dy={8}
-        textAnchor="middle"
-        fill="#333"
-        className="text-xs font-medium"
-      >
+      <Sector cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={outerRadius + 8}
+        startAngle={startAngle} endAngle={endAngle} fill={fill} />
+      <text x={cx} y={cy - 8} textAnchor="middle" fill="#1c1917" fontSize={11} fontWeight={500}>
         {payload.name}
       </text>
-      <text
-        x={cx}
-        y={cy + 10}
-        textAnchor="middle"
-        fill="#333"
-        className="text-lg font-bold"
-      >
+      <text x={cx} y={cy + 10} textAnchor="middle" fill="#1c1917" fontSize={16} fontWeight={600}
+        fontFamily="monospace">
         {`${(percent * 100).toFixed(0)}%`}
       </text>
     </g>
-  );
-};
-
-// Modern fixed legend
-const ModernLegend = ({ data }: { data: any[] }) => {
-  return (
-    <div className="mt-6 p-4 bg-gray-50/50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800">
-      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-        Categorias de Eventos
-      </h4>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {Object.entries(EVENT_COLORS).map(([category, color]) => {
-          const categoryData = data.find(item => item.name === category);
-          const percentage = categoryData ? parseFloat(categoryData.percent) : 0;
-          const count = categoryData ? categoryData.value : 0;
-          
-          return (
-            <div 
-              key={category} 
-              className="flex items-center gap-2 p-2 rounded-md hover:bg-white dark:hover:bg-gray-800 transition-colors"
-            >
-              <div 
-                className="h-3 w-3 rounded-full flex-shrink-0 ring-2 ring-white dark:ring-gray-900" 
-                style={{ backgroundColor: color }}
-              />
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
-                  {category}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {count > 0 ? `${count} (${percentage.toFixed(1)}%)` : '0 (0%)'}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
   );
 };
 
@@ -132,145 +56,106 @@ export function EventCategoryChart() {
   const { clients } = useClients();
   const [timeRange, setTimeRange] = useState<TimeRangeOption>("all");
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
-  
+
   const chartData = useMemo(() => {
     const now = new Date();
-    const categoryCount = {} as Record<string, number>;
-    
-    // Filter clients based on selected time range
-    const filteredClients = clients.filter(client => {
+    const categoryCount: Record<string, number> = {};
+
+    const filtered = clients.filter(client => {
+      if (client.status !== "fechado") return false;
       if (timeRange === "all") return true;
-      
       const createdAt = new Date(client.createdAt);
-      const monthsAgo = parseInt(timeRange);
-      const cutoffDate = subMonths(now, monthsAgo);
-      
-      return createdAt >= cutoffDate && client.status === "fechado";
+      return createdAt >= subMonths(now, parseInt(timeRange));
     });
-    
-    // Count clients by event category
-    filteredClients.forEach(client => {
-      if (client.eventCategory && client.status === "fechado") {
-        const category = client.eventCategory;
-        categoryCount[category] = (categoryCount[category] || 0) + 1;
+
+    filtered.forEach(client => {
+      if (client.eventCategory) {
+        categoryCount[client.eventCategory] = (categoryCount[client.eventCategory] || 0) + 1;
       }
     });
-    
-    // Calculate total for percentages
-    const total = Object.values(categoryCount).reduce((sum, count) => sum + count, 0);
-    
-    // Transform the data for the pie chart
+
+    const total = Object.values(categoryCount).reduce((s, n) => s + n, 0);
     return Object.entries(categoryCount).map(([name, value]) => ({
-      name,
-      value,
-      percent: total > 0 ? ((value / total) * 100).toFixed(1) : "0"
+      name, value,
+      percent: total > 0 ? ((value / total) * 100).toFixed(1) : "0",
     }));
   }, [clients, timeRange]);
 
-  // Calculate total events
-  const totalEvents = chartData.reduce((sum, item) => sum + item.value, 0);
-
-  const onPieEnter = (_: any, index: number) => {
-    setActiveIndex(index);
-  };
-
-  const onPieLeave = () => {
-    setActiveIndex(undefined);
-  };
+  const selectedLabel = timeRangeOptions.find(o => o.value === timeRange)?.label ?? "Filtrar";
 
   return (
-    <Card className="overflow-hidden shadow-md border-gray-100 dark:border-gray-800">
-      <CardHeader className="pb-0">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <CardTitle className="text-lg font-semibold">
-            Distribuição de Contratos por Categoria
-          </CardTitle>
+    <Card className="rounded-xl border-stone-200 shadow-sm overflow-hidden">
+      <CardHeader className="px-5 py-4 border-b border-stone-100">
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-medium tracking-widest uppercase text-stone-400">
+            Contratos por Categoria
+          </p>
           <Popover>
             <PopoverTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="h-9 border-gray-200 dark:border-gray-700"
-              >
-                {timeRangeOptions.find(option => option.value === timeRange)?.label || "Filtrar"}
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
+              <button className="flex items-center gap-1 text-[11px] text-stone-500 hover:text-stone-700 border border-stone-200 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-stone-50">
+                {selectedLabel}
+                <ChevronDown size={11} strokeWidth={1.5} />
+              </button>
             </PopoverTrigger>
-            <PopoverContent className="w-48 p-0">
-              <div className="rounded-md border border-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-950">
-                {timeRangeOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    className={cn(
-                      "w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
-                      timeRange === option.value ? "font-medium bg-gray-50 dark:bg-gray-900" : ""
-                    )}
-                    onClick={() => setTimeRange(option.value as TimeRangeOption)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+            <PopoverContent className="w-44 p-1 rounded-xl border-stone-200 shadow-md">
+              {timeRangeOptions.map(option => (
+                <button
+                  key={option.value}
+                  onClick={() => setTimeRange(option.value as TimeRangeOption)}
+                  className={cn(
+                    "w-full text-left px-3 py-2 text-[12px] rounded-lg transition-colors",
+                    timeRange === option.value
+                      ? "bg-stone-100 text-stone-900 font-medium"
+                      : "text-stone-500 hover:bg-stone-50"
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
             </PopoverContent>
           </Popover>
         </div>
       </CardHeader>
-      <CardContent className="pt-6">
-        <div className="h-[300px] mt-2">
+
+      <CardContent className="p-5">
+        <div className="h-[220px]">
           {chartData.length > 0 ? (
-            <ChartContainer 
-              config={chartConfig}
-            >
+            <ChartContainer config={chartConfig}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    activeIndex={activeIndex}
-                    activeShape={renderActiveShape}
-                    outerRadius={100}
-                    innerRadius={60}
+                    cx="50%" cy="50%"
+                    outerRadius={90} innerRadius={52}
                     paddingAngle={3}
                     dataKey="value"
                     nameKey="name"
-                    onMouseEnter={onPieEnter}
-                    onMouseLeave={onPieLeave}
+                    activeIndex={activeIndex}
+                    activeShape={renderActiveShape}
+                    onMouseEnter={(_, i) => setActiveIndex(i)}
+                    onMouseLeave={() => setActiveIndex(undefined)}
                   >
-                    {chartData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={EVENT_COLORS[entry.name as EventCategory] || "#000000"}
-                        stroke="rgba(255,255,255,0.8)"
+                    {chartData.map((entry, i) => (
+                      <Cell
+                        key={`cell-${i}`}
+                        fill={EVENT_COLORS[entry.name] ?? "#e7e5e4"}
+                        stroke="white"
                         strokeWidth={2}
                       />
                     ))}
                   </Pie>
                   <RechartsTooltip
                     content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        const percentage = parseFloat(data.percent);
-                        
-                        return (
-                          <ChartTooltipContent>
-                            <div className="px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg rounded-lg">
-                              <div className="text-sm font-medium">{data.name}</div>
-                              <div className="text-xs mt-2 space-y-1">
-                                <div className="flex justify-between gap-4">
-                                  <span className="text-gray-500">Quantidade:</span>
-                                  <span className="font-medium">{data.value}</span>
-                                </div>
-                                <div className="flex justify-between gap-4">
-                                  <span className="text-gray-500">Porcentagem:</span>
-                                  <span className="font-medium">{percentage.toFixed(1)}%</span>
-                                </div>
-                              </div>
-                            </div>
-                          </ChartTooltipContent>
-                        );
-                      }
-                      return null;
+                      if (!active || !payload?.length) return null;
+                      const d = payload[0].payload;
+                      return (
+                        <ChartTooltipContent>
+                          <div className="px-3 py-2 bg-white border border-stone-200 rounded-lg shadow-md text-[11px]">
+                            <p className="font-medium text-stone-800 mb-1">{d.name}</p>
+                            <p className="text-stone-500">{d.value} contrato{d.value !== 1 ? "s" : ""} · {d.percent}%</p>
+                          </div>
+                        </ChartTooltipContent>
+                      );
                     }}
                   />
                 </PieChart>
@@ -278,18 +163,37 @@ export function EventCategoryChart() {
             </ChartContainer>
           ) : (
             <div className="flex flex-col items-center justify-center h-full">
-              <CircleDot className="h-12 w-12 text-muted-foreground/30 mb-2" />
-              <p className="text-center text-muted-foreground">
-                {timeRange === "all" ? 
-                  "Nenhum contrato fechado até o momento" : 
-                  "Nenhum contrato fechado no período selecionado"}
+              <CircleDot size={28} strokeWidth={1} className="text-stone-300 mb-2" />
+              <p className="text-[11px] text-stone-400 text-center">
+                {timeRange === "all"
+                  ? "Nenhum contrato fechado até o momento"
+                  : "Nenhum contrato fechado no período"}
               </p>
             </div>
           )}
         </div>
-        
-        {/* Modern fixed legend */}
-        <ModernLegend data={chartData} />
+
+        {/* Legend */}
+        <div className="mt-4 pt-4 border-t border-stone-100">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            {Object.entries(EVENT_COLORS).map(([category, color]) => {
+              const item = chartData.find(d => d.name === category);
+              return (
+                <div key={category} className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <div className="min-w-0">
+                    <span className="text-[11px] text-stone-600 truncate block">{category}</span>
+                    {item && (
+                      <span className="text-[10px] text-stone-400 font-mono">
+                        {item.value} · {item.percent}%
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

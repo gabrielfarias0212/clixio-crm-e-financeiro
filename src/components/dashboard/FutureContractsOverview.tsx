@@ -1,94 +1,77 @@
-
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { CalendarDays, TrendingUp, DollarSign, Target } from "lucide-react";
 import { useFutureContracts } from "@/hooks/useFutureContracts";
 import { FutureContractsDetailModal } from "./FutureContractsDetailModal";
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
 export function FutureContractsOverview() {
   const { projections } = useFutureContracts();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"active" | "nextYear" | "guaranteed" | "projected">("active");
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
-
-  const handleCardClick = (type: "active" | "nextYear" | "guaranteed" | "projected") => {
+  const handleCardClick = (type: typeof modalType) => {
     setModalType(type);
     setModalOpen(true);
   };
 
+  const cards = [
+    {
+      type: "active" as const,
+      label: "Contratos Ativos",
+      value: String(projections.totalActiveContracts),
+      sub: "Total de contratos futuros",
+      icon: Target,
+    },
+    {
+      type: "nextYear" as const,
+      label: "Próximo Ano",
+      value: String(projections.nextYearContracts),
+      sub: formatCurrency(projections.nextYearRevenue),
+      icon: CalendarDays,
+    },
+    {
+      type: "guaranteed" as const,
+      label: "Receita Garantida",
+      value: formatCurrency(projections.guaranteedRevenue),
+      sub: "Contratos fechados/pagos",
+      icon: DollarSign,
+    },
+    {
+      type: "projected" as const,
+      label: "Projeção Total",
+      value: formatCurrency(projections.totalProjectedRevenue),
+      sub: "Valor total projetado",
+      icon: TrendingUp,
+    },
+  ];
+
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card 
-          className="cursor-pointer hover:shadow-md transition-shadow duration-200 hover:bg-accent/50"
-          onClick={() => handleCardClick("active")}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Contratos Ativos</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{projections.totalActiveContracts}</div>
-            <p className="text-xs text-muted-foreground">Total de contratos futuros</p>
-          </CardContent>
-        </Card>
-
-        <Card 
-          className="cursor-pointer hover:shadow-md transition-shadow duration-200 hover:bg-accent/50"
-          onClick={() => handleCardClick("nextYear")}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Próximo Ano</CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{projections.nextYearContracts}</div>
-            <p className="text-xs text-muted-foreground">
-              {formatCurrency(projections.nextYearRevenue)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card 
-          className="cursor-pointer hover:shadow-md transition-shadow duration-200 hover:bg-accent/50"
-          onClick={() => handleCardClick("guaranteed")}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receita Garantida</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(projections.guaranteedRevenue)}
-            </div>
-            <p className="text-xs text-muted-foreground">Contratos fechados/pagos</p>
-          </CardContent>
-        </Card>
-
-        <Card 
-          className="cursor-pointer hover:shadow-md transition-shadow duration-200 hover:bg-accent/50"
-          onClick={() => handleCardClick("projected")}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Projeção Total</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(projections.totalProjectedRevenue)}
-            </div>
-            <p className="text-xs text-muted-foreground">Valor total projetado</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {cards.map(({ type, label, value, sub, icon: Icon }) => (
+          <Card
+            key={type}
+            onClick={() => handleCardClick(type)}
+            className="cursor-pointer rounded-xl border-stone-200 shadow-sm hover:shadow-md hover:border-stone-300 transition-all"
+          >
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between mb-3">
+                <p className="text-[11px] text-stone-400">{label}</p>
+                <Icon size={13} strokeWidth={1.5} className="text-stone-300 flex-shrink-0" />
+              </div>
+              <p className="font-mono text-xl font-medium text-stone-900 leading-none tracking-tight mb-1">
+                {value}
+              </p>
+              <p className="text-[11px] text-stone-400">{sub}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <FutureContractsDetailModal 
+      <FutureContractsDetailModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         type={modalType}

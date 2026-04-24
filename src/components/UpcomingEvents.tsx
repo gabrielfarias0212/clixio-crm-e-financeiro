@@ -1,10 +1,9 @@
-
 import { useMemo } from "react";
-import { format, addDays, isBefore, isAfter, startOfDay } from "date-fns";
+import { addDays, isBefore, isAfter, startOfDay } from "date-fns";
 import { Client, EventCategory, CalendarEvent } from "@/utils/types";
 import { StatusBadge } from "./StatusBadge";
-import { CalendarIcon, MapPinIcon } from "lucide-react";
-import { Card, CardContent } from "./ui/card";
+import { Calendar, MapPin } from "lucide-react";
+import { Card, CardContent, CardHeader } from "./ui/card";
 import { useNavigate } from "react-router-dom";
 import { stringToDate } from "@/utils/dates";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
@@ -14,7 +13,6 @@ interface UpcomingEventsProps {
   loading: boolean;
 }
 
-// Define proper types for our combined events
 type ClientEventItem = {
   type: "client";
   client: Client;
@@ -43,14 +41,12 @@ export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
   const upcomingEvents = useMemo(() => {
     const today = startOfDay(new Date());
     const twoWeeksFromNow = addDays(today, 15);
-    
-    // Filter clients with upcoming wedding dates
+
     const clientEvents: ClientEventItem[] = clients
       .filter(client => {
         if (!client.weddingDate) return false;
-        
-        const eventDate = stringToDate(client.weddingDate);
-        return eventDate && isAfter(eventDate, today) && isBefore(eventDate, twoWeeksFromNow);
+        const d = stringToDate(client.weddingDate);
+        return d && isAfter(d, today) && isBefore(d, twoWeeksFromNow);
       })
       .map(client => ({
         type: "client",
@@ -58,106 +54,106 @@ export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
         title: client.name,
         date: client.weddingDate!,
         location: client.eventLocation || "",
-        category: client.eventCategory
+        category: client.eventCategory,
       }));
-    
-    // Filter calendar events for the next two weeks
+
     const calendarEvents: CalendarEventItem[] = events
       .filter(event => {
-        const eventDate = stringToDate(event.date);
-        return eventDate && isAfter(eventDate, today) && isBefore(eventDate, twoWeeksFromNow);
+        const d = stringToDate(event.date);
+        return d && isAfter(d, today) && isBefore(d, twoWeeksFromNow);
       })
-      .map(event => {
-        // If the event is linked to a client, find that client
-        const linkedClient = event.clientId ? clients.find(c => c.id === event.clientId) : null;
-        
-        return {
-          type: "calendar",
-          event,
-          client: linkedClient,
-          title: event.title,
-          date: event.date,
-          location: event.description || "",
-          time: event.startTime
-        };
-      });
-    
-    // Combine and sort all events by date
+      .map(event => ({
+        type: "calendar",
+        event,
+        client: event.clientId ? clients.find(c => c.id === event.clientId) ?? null : null,
+        title: event.title,
+        date: event.date,
+        location: event.description || "",
+        time: event.startTime,
+      }));
+
     return [...clientEvents, ...calendarEvents].sort((a, b) => {
-      const dateA = stringToDate(a.date);
-      const dateB = stringToDate(b.date);
-      
-      if (!dateA || !dateB) return 0;
-      return dateA.getTime() - dateB.getTime();
+      const dA = stringToDate(a.date);
+      const dB = stringToDate(b.date);
+      if (!dA || !dB) return 0;
+      return dA.getTime() - dB.getTime();
     });
   }, [clients, events]);
-
-  if (loading) {
-    return (
-      <div className="py-12 text-center">
-        <p>Carregando eventos...</p>
-      </div>
-    );
-  }
 
   const handleEventClick = (event: CombinedEventItem) => {
     if (event.type === "client" && event.client) {
       navigate(`/clients/${event.client.id}`);
     } else {
-      // For calendar events, navigate to calendar page
-      navigate('/calendar');
+      navigate("/calendar");
     }
   };
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <h2 className="text-xl font-semibold mb-4">Próximos Eventos</h2>
-        {upcomingEvents.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">
-            Nenhum evento agendado para as próximas duas semanas
-          </p>
+    <Card className="rounded-xl border-stone-200 shadow-sm overflow-hidden">
+      <CardHeader className="px-5 py-4 border-b border-stone-100">
+        <p className="text-[10px] font-medium tracking-widest uppercase text-stone-400">
+          Próximos Eventos
+        </p>
+      </CardHeader>
+
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="px-5 py-8 space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-14 bg-stone-100 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        ) : upcomingEvents.length === 0 ? (
+          <div className="px-5 py-10 text-center">
+            <Calendar size={24} strokeWidth={1} className="text-stone-300 mx-auto mb-2" />
+            <p className="text-[11px] text-stone-400">
+              Nenhum evento nas próximas duas semanas
+            </p>
+          </div>
         ) : (
-          <div className="space-y-4">
+          <ul className="divide-y divide-stone-100">
             {upcomingEvents.map((event, index) => (
-              <div
+              <li
                 key={`${event.type}-${index}`}
-                className="p-4 rounded-lg border border-gray-100 hover:border-gray-200 cursor-pointer transition-all hover:shadow-sm"
                 onClick={() => handleEventClick(event)}
+                className="px-5 py-4 hover:bg-stone-50 cursor-pointer transition-colors"
               >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium">{event.title}</h3>
-                    <p className="text-sm text-gray-500 mt-1">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium text-stone-800 truncate">
+                      {event.title}
+                    </p>
+                    <p className="text-[11px] text-stone-400 mt-0.5">
                       {event.type === "client" ? event.category : "Evento de Calendário"}
                     </p>
                   </div>
-                  {event.type === "client" && event.client && (
-                    <StatusBadge status={event.client.status} />
-                  )}
-                  {event.type === "calendar" && (
-                    <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                      Calendário
+                  <div className="flex-shrink-0">
+                    {event.type === "client" && event.client ? (
+                      <StatusBadge status={event.client.status} />
+                    ) : (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100 font-medium">
+                        Calendário
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                  <span className="flex items-center gap-1 text-[11px] text-stone-400">
+                    <Calendar size={11} strokeWidth={1.5} />
+                    {event.date}
+                    {event.type === "calendar" && event.time && ` às ${event.time}`}
+                  </span>
+                  {event.location && (
+                    <span className="flex items-center gap-1 text-[11px] text-stone-400">
+                      <MapPin size={11} strokeWidth={1.5} />
+                      {event.location}
                     </span>
                   )}
                 </div>
-                
-                <div className="mt-3 space-y-1">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CalendarIcon className="h-4 w-4 mr-2" />
-                    {event.date}
-                    {event.type === "calendar" && event.time && ` às ${event.time}`}
-                  </div>
-                  {event.location && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <MapPinIcon className="h-4 w-4 mr-2" />
-                      {event.location}
-                    </div>
-                  )}
-                </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </CardContent>
     </Card>

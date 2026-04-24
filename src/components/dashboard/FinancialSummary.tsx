@@ -1,12 +1,10 @@
-
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { RefreshCw, CalendarDays } from "lucide-react";
 import { useAnnualFinancialData } from "@/hooks/useAnnualFinancialData";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { FinancialStatCards } from "./financial/FinancialStatCards";
 import { AnnualFinancialBarChart } from "./financial/AnnualFinancialBarChart";
-import { Button } from "@/components/ui/button";
 import { useTransactions } from "@/contexts/TransactionsContext";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -18,97 +16,87 @@ export function FinancialSummary() {
 
   const handleRefresh = async () => {
     if (isRefreshing) return;
-    
     setIsRefreshing(true);
     try {
-      console.log("Manual refresh of financial data requested");
       await refreshTransactions();
     } catch (error) {
       console.error("Error refreshing transactions:", error);
     } finally {
-      // Set a small timeout to ensure the UI shows the refresh animation
-      setTimeout(() => {
-        setIsRefreshing(false);
-      }, 500);
+      setTimeout(() => setIsRefreshing(false), 500);
     }
   };
 
-  // Determine if we should show empty state
-  const showEmptyState = annualHasCalculated && annualChartData.length === 0 && !annualLoading && !monthlyLoading;
-  
-  // Determine if data is ready to display
-  const dataReady = !annualLoading && !monthlyLoading && annualChartData.length > 0;
-  
-  // Show loading if either annual or monthly data is loading
   const isLoading = annualLoading || monthlyLoading;
+  const showEmptyState = annualHasCalculated && annualChartData.length === 0 && !isLoading;
+  const dataReady = !isLoading && annualChartData.length > 0;
 
   return (
-    <Card className="overflow-hidden shadow-md border-gray-100 dark:border-gray-800">
-      <CardHeader>
+    <Card className="rounded-xl border-stone-200 shadow-sm overflow-hidden">
+      <CardHeader className="px-5 py-4 border-b border-stone-100">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">Resumo Financeiro</CardTitle>
-          <div className="flex gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleRefresh} 
-              disabled={isRefreshing || transactionsLoading}
-              title="Atualizar dados financeiros"
-              className="h-8 w-8"
-            >
-              <RefreshCw className={`h-4 w-4 ${isRefreshing || transactionsLoading ? "animate-spin" : ""}`} />
-            </Button>
-          </div>
+          <p className="text-[10px] font-medium tracking-widest uppercase text-stone-400">
+            Resumo Financeiro {currentYear}
+          </p>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing || transactionsLoading}
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-stone-400 hover:bg-stone-100 hover:text-stone-600 transition-colors disabled:opacity-40"
+            title="Atualizar dados financeiros"
+          >
+            <RefreshCw
+              size={13}
+              strokeWidth={1.5}
+              className={isRefreshing || transactionsLoading ? "animate-spin" : ""}
+            />
+          </button>
         </div>
       </CardHeader>
-      <CardContent>
+
+      <CardContent className="p-5">
         {isLoading && (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-20" />
+            <div className="grid grid-cols-3 gap-3">
+              {[1, 2, 3].map(i => (
+                <Skeleton key={i} className="h-16 rounded-lg bg-stone-100" />
               ))}
             </div>
-            <Skeleton className="h-[240px]" />
+            <Skeleton className="h-52 rounded-lg bg-stone-100" />
           </div>
         )}
-        
+
         {showEmptyState && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="text-gray-400 mb-4">
-              <CalendarDays className="h-12 w-12 mx-auto mb-2" />
-              <h3 className="text-lg font-medium">Nenhum dado financeiro encontrado</h3>
-            </div>
-            <p className="text-gray-500 max-w-md mx-auto mb-4">
-              Adicione transações financeiras para visualizar o resumo financeiro.
+            <CalendarDays size={32} strokeWidth={1} className="text-stone-300 mb-3" />
+            <p className="text-sm font-medium text-stone-500 mb-1">
+              Nenhum dado financeiro encontrado
             </p>
-            <Button 
-              variant="outline" 
+            <p className="text-[11px] text-stone-400 mb-4">
+              Adicione transações para visualizar o resumo.
+            </p>
+            <button
               onClick={handleRefresh}
               disabled={isRefreshing}
+              className="text-[11px] text-stone-500 hover:text-stone-700 underline underline-offset-2 transition-colors"
             >
-              Atualizar dados
-              {isRefreshing && <RefreshCw className="ml-2 h-4 w-4 animate-spin" />}
-            </Button>
+              {isRefreshing ? "Atualizando..." : "Atualizar dados"}
+            </button>
           </div>
         )}
-        
+
         {dataReady && (
-          <>
+          <div className="space-y-4">
             <FinancialStatCards monthlyTotals={monthlyTotals} />
-            
-            <div className="h-[240px] mt-4">
-              <AnnualFinancialBarChart 
+            <div className="h-52">
+              <AnnualFinancialBarChart
                 chartData={annualChartData}
                 loading={annualLoading}
                 currentYear={currentYear}
               />
             </div>
-            
-            <div className="mt-4 text-sm text-center text-gray-500">
+            <p className="text-[11px] text-stone-400 text-center">
               Resumo financeiro anual de {currentYear}
-            </div>
-          </>
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>

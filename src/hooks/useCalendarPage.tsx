@@ -1,9 +1,7 @@
-
 import { useState, useMemo } from "react";
-import { format, parse, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
-import { normalizeDate, TIMEZONE, stringToDate, dateToString } from "@/utils/dates";
+import { normalizeDate, TIMEZONE, stringToDate } from "@/utils/dates";
 import { Client } from "@/utils/types";
 import { formatInTimeZone } from "date-fns-tz";
 
@@ -12,108 +10,69 @@ export function useCalendarPage(clients: Client[]) {
   const [view, setView] = useState<"day" | "week" | "month">("month");
   const [addEventOpen, setAddEventOpen] = useState(false);
   const { events } = useCalendarEvents();
-  
-  // Filter clients with wedding dates
-  const clientsWithWeddingDates = useMemo(() => 
-    clients.filter(client => client.weddingDate !== null) as (Client & { weddingDate: string })[],
-  [clients]);
 
-  // Get current month and year for header display
-  const currentMonthYear = useMemo(() => {
-    if (!date) return "";
-    
-    try {
-      // Format the current date for display
-      return formatInTimeZone(date, TIMEZONE, "MMMM 'de' yyyy", { locale: ptBR });
-    } catch (error) {
-      console.error("Error formatting date:", error);
-      return format(date, "MMMM 'de' yyyy", { locale: ptBR });
-    }
-  }, [date]);
-
-  // Group clients by date
+  // 1. Agrupar Clientes por Data (YYYY-MM-DD)
   const clientsByDate = useMemo(() => {
     const result: Record<string, Client[]> = {};
     
-    clientsWithWeddingDates.forEach(client => {
+    clients.forEach(client => {
       if (!client.weddingDate) return;
-      
-      // Convert to YYYY-MM-DD for consistent key format
       const dateObj = stringToDate(client.weddingDate);
       if (!dateObj) return;
       
       const dateKey = normalizeDate(dateObj);
-      
-      if (!result[dateKey]) {
-        result[dateKey] = [];
-      }
+      if (!result[dateKey]) result[dateKey] = [];
       result[dateKey].push(client);
     });
     
     return result;
-  }, [clientsWithWeddingDates]);
+  }, [clients]);
 
-  // Get all event dates (client events + calendar events)
-  const eventDates = useMemo(() => {
-    const dates: Date[] = [];
+  // 2. Agrupar Eventos do Calendário por Data (YYYY-MM-DD)
+  // Isso resolve o problema de sincronização do Claude
+  const eventsByDate = useMemo(() => {
+    const result: Record<string, any[]> = {};
     
-    // Add client wedding dates
-    Object.keys(clientsByDate).forEach(dateStr => {
-      try {
-        // Convert YYYY-MM-DD to Date object
-        if (dateStr && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-          const [year, month, day] = dateStr.split('-').map(Number);
-          const eventDate = new Date(year, month - 1, day);
-          
-          // Make sure it's valid before adding
-          if (!isNaN(eventDate.getTime())) {
-            dates.push(eventDate);
-          }
-        }
-      } catch (error) {
-        console.error("Error parsing date:", dateStr, error);
-      }
-    });
-    
-    // Add calendar events
     events.forEach(event => {
-      // Convert string date to Date object
-      const eventDate = stringToDate(event.date);
-      if (eventDate && !isNaN(eventDate.getTime()) && 
-          !dates.some(d => 
-            d.getFullYear() === eventDate.getFullYear() && 
-            d.getMonth() === eventDate.getMonth() &&
-            d.getDate() === eventDate.getDate())) {
-        dates.push(eventDate);
-      }
+      const dateObj = stringToDate(event.date);
+      if (!dateObj) return;
+      
+      const dateKey = normalizeDate(dateObj);
+      if (!result[dateKey]) result[dateKey] = [];
+      result[dateKey].push(event);
     });
     
-    return dates;
-  }, [clientsByDate, events]);
+    return result;
+  }, [events]);
 
-  // Get selected day's clients and events
+  // 3. Gerar array de objetos Date para os marcadores (dots) do calendário
+  const eventDates = useMemo(() => {
+    // Usamos um Set para evitar duplicatas no mesmo dia
+    const allKeys = new Set([...Object.keys(clientsByDate), ...Object.keys(eventsByDate)]);
+    
+    return Array.from(allKeys).map(dateStr => {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      // Criamos a data local às 12:00 para evitar que o fuso a jogue para o dia anterior
+      return new Date(year, month - 1, day, 12, 0, 0);
+    });
+  }, [clientsByDate, eventsByDate]);
+
+  // 4. Itens do dia selecionado
   const selectedDayItems = useMemo(() => {
     if (!date) return { clients: [], events: [] };
     
-    try {
-      // Convert the selected Date object to a normalized date string
-      const dateKey = normalizeDate(date);
-      
-      // Get clients for this date
-      const dayClients = clientsByDate[dateKey] || [];
-      
-      // Get events for this date
-      const dayEvents = events.filter(event => {
-        const eventDate = stringToDate(event.date);
-        return eventDate && normalizeDate(eventDate) === dateKey;
-      });
-      
-      return { clients: dayClients, events: dayEvents };
-    } catch (error) {
-      console.error("Error getting selected day items:", error);
-      return { clients: [], events: [] };
-    }
-  }, [date, clientsByDate, events]);
+    const dateKey = normalizeDate(date);
+    return {
+      clients: clientsByDate[dateKey] || [],
+      events: eventsByDate[dateKey] || []
+    };
+  }, [date, clientsByDate, eventsByDate]);
+
+  // 5. Título do Header (Ex: "Abril de 2026")
+  const currentMonthYear = useMemo(() => {
+    if (!date) return "";
+    return formatInTimeZone(date, TIMEZONE, "MMMM 'de' yyyy", { locale: ptBR });
+  }, [date]);
 
   return {
     date,
@@ -125,6 +84,7 @@ export function useCalendarPage(clients: Client[]) {
     currentMonthYear,
     eventDates,
     selectedDayItems,
-    clientsByDate
+    clientsByDate,
+    eventsByDate
   };
 }

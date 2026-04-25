@@ -65,12 +65,11 @@ export function UserMenu() {
     <>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="flex items-center gap-2 px-3">
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full p-0">
             <Avatar className="h-8 w-8">
               <AvatarImage src={avatarUrl} alt={displayName} />
               <AvatarFallback className="text-xs">{initial}</AvatarFallback>
             </Avatar>
-            <span className="hidden md:inline text-sm font-medium">{displayName}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">

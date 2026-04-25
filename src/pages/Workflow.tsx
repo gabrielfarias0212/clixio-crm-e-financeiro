@@ -81,6 +81,21 @@ function calcProgress(client: any) {
   return { done, total, pct, currentStep: current?.label ?? "Finalizado" };
 }
 
+// Retorna a chave da etapa atual (próxima pendente) de um cliente
+function getCurrentStageKey(client: any): string {
+  if (client.status === "projeto_finalizado") return "finalizado";
+  const steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
+  const current = steps.find(s => !getClientField(client, s.field as string));
+  return current?.key ?? "finalizado";
+}
+
+// Lista única de etapas (workflow + álbum + finalizado) para o filtro
+const ALL_STAGE_OPTIONS: { key: string; label: string }[] = [
+  ...WORKFLOW_STEPS.map(s => ({ key: s.key, label: s.label })),
+  ...ALBUM_STEPS.map(s => ({ key: s.key, label: `Álbum: ${s.label}` })),
+  { key: "finalizado", label: "Finalizado" },
+];
+
 function urgencyColor(days: number, linkSent: boolean): string {
   if (linkSent) return "text-green-600";
   if (days > 60) return "text-red-600";
@@ -342,6 +357,7 @@ export default function WorkflowPage() {
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "finished">("active");
   const [filterMonth, setFilterMonth] = useState<number | "all">("all");
   const [filterYear, setFilterYear] = useState<number | "all">("all");
+  const [filterStage, setFilterStage] = useState<string>("all");
 
   const workflowClients = useMemo(() => {
     const today = new Date();
@@ -361,10 +377,21 @@ export default function WorkflowPage() {
     return Array.from(ys).sort() as number[];
   }, [workflowClients]);
 
+  // Contagem por etapa para mostrar quantos projetos estão em cada uma
+  const stageCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    workflowClients.forEach(c => {
+      const key = getCurrentStageKey(c);
+      counts[key] = (counts[key] ?? 0) + 1;
+    });
+    return counts;
+  }, [workflowClients]);
+
   const filtered = useMemo(() => {
     let list = workflowClients;
     if (filterStatus === "active") list = list.filter(c => c.status === "fechado");
     if (filterStatus === "finished") list = list.filter(c => c.status === "projeto_finalizado");
+    if (filterStage !== "all") list = list.filter(c => getCurrentStageKey(c) === filterStage);
     if (filterMonth !== "all") list = list.filter(c => parseDate(c.weddingDate)?.getMonth() === filterMonth);
     if (filterYear !== "all") list = list.filter(c => parseDate(c.weddingDate)?.getFullYear() === filterYear);
     if (searchTerm.trim()) {
@@ -377,7 +404,7 @@ export default function WorkflowPage() {
       );
     }
     return list;
-  }, [workflowClients, filterStatus, filterMonth, filterYear, searchTerm]);
+  }, [workflowClients, filterStatus, filterStage, filterMonth, filterYear, searchTerm]);
 
   const stats = useMemo(() => ({
     ativos: workflowClients.filter(c => c.status === "fechado").length,
@@ -498,6 +525,20 @@ export default function WorkflowPage() {
               >
                 <option value="all">Todos os meses</option>
                 {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
+              </select>
+
+              {/* Etapa */}
+              <select
+                value={filterStage}
+                onChange={e => setFilterStage(e.target.value)}
+                className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
+              >
+                <option value="all">Todas as etapas</option>
+                {ALL_STAGE_OPTIONS.map(opt => (
+                  <option key={opt.key} value={opt.key}>
+                    {opt.label} ({stageCounts[opt.key] ?? 0})
+                  </option>
+                ))}
               </select>
             </div>
 

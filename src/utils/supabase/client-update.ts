@@ -1,11 +1,16 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Client, SalesFunnelStage } from '../types';
 import { formatDateForSupabase } from './base';
-import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, fetchCalendarEvents } from './calendar-events';
+import { parseClient } from './client-parsers';
+import {
+  createCalendarEvent,
+  updateCalendarEvent,
+  deleteCalendarEvent,
+  fetchCalendarEvents,
+} from './calendar-events';
 import { v4 as uuidv4 } from 'uuid';
 
-// Function to map client status to sales funnel stage
+// Mapeia status -> etapa do funil (apenas usado se o caller mandar status)
 const mapStatusToFunnelStage = (status: string): SalesFunnelStage => {
   switch (status.toLowerCase()) {
     case 'primeiro_contato':
@@ -29,85 +34,113 @@ const mapStatusToFunnelStage = (status: string): SalesFunnelStage => {
   }
 };
 
-export const updateClient = async (id: string, clientData: Partial<Client>): Promise<Client | null> => {
+// Mapeamento camelCase -> snake_case (somente para colunas existentes em wedding_clients)
+const FIELD_MAP: Record<string, string> = {
+  name: 'name',
+  email: 'email',
+  phone: 'phone',
+  coupleName: 'couple_name',
+  weddingStartTime: 'wedding_start_time',
+  weddingEndTime: 'wedding_end_time',
+  contractValue: 'contract_value',
+  downPayment: 'down_payment',
+  status: 'status',
+  nextAction: 'next_action',
+  eventCategory: 'event_category',
+  eventLocation: 'event_location',
+  preWeddingStartTime: 'pre_wedding_start_time',
+  preWeddingEndTime: 'pre_wedding_end_time',
+  contractLink: 'contract_link',
+  hasPreWedding: 'has_pre_wedding',
+  notes: 'notes',
+  workflowStage: 'workflow_stage',
+  weddingPhotographed: 'wedding_photographed',
+  inEditing: 'in_editing',
+  linkReady: 'link_ready',
+  linkSent: 'link_sent',
+  boxDelivered: 'box_delivered',
+  albumApprovedDelivered: 'album_approved_delivered',
+  albumDesigned: 'album_designed',
+  hasAlbum: 'has_album',
+  albumLinkSent: 'album_link_sent',
+  albumClientChose: 'album_client_chose',
+  albumDiagrammed: 'album_diagrammed',
+  albumClientApproved: 'album_client_approved',
+  albumOrdered: 'album_ordered',
+  storageLocation: 'storage_location',
+  leadSource: 'lead_source',
+  preWeddingScheduled: 'pre_wedding_scheduled',
+  preWeddingCompleted: 'pre_wedding_completed',
+  preWeddingDelivered: 'pre_wedding_delivered',
+  salesFunnelStage: 'sales_funnel_stage',
+};
+
+export const updateClient = async (
+  id: string,
+  clientData: Partial<Client>
+): Promise<Client | null> => {
   try {
-    // Automatically set preWeddingScheduled based on preWeddingDate
-    const updatedData = {
-      ...clientData,
-      pre_wedding_scheduled: !!clientData.preWeddingDate // true if date exists, false if null/empty
-    };
-
-    // Prioritize salesFunnelStage from clientData. If not present, derive from status.
-    let salesFunnelStage = clientData.salesFunnelStage;
-    if (!salesFunnelStage && clientData.status) {
-      salesFunnelStage = mapStatusToFunnelStage(clientData.status);
-    }
-
-    const updatePayload: any = {
-      name: updatedData.name,
-      email: updatedData.email,
-      phone: updatedData.phone,
-      couple_name: updatedData.coupleName,
-      wedding_date: updatedData.weddingDate ? formatDateForSupabase(updatedData.weddingDate) : null,
-      wedding_start_time: updatedData.weddingStartTime,
-      wedding_end_time: updatedData.weddingEndTime,
-      contract_value: updatedData.contractValue,
-      down_payment: updatedData.downPayment,
-      status: updatedData.status,
-      next_action: updatedData.nextAction,
-      event_category: updatedData.eventCategory,
-      event_location: updatedData.eventLocation,
-      pre_wedding_date: updatedData.preWeddingDate ? formatDateForSupabase(updatedData.preWeddingDate) : null,
-      pre_wedding_start_time: updatedData.preWeddingStartTime,
-      pre_wedding_end_time: updatedData.preWeddingEndTime,
-      pre_wedding_scheduled: updatedData.pre_wedding_scheduled,
-      contract_link: updatedData.contractLink,
-      has_pre_wedding: updatedData.hasPreWedding,
-      notes: updatedData.notes,
+    const updatePayload: Record<string, any> = {
       updated_at: new Date().toISOString(),
-      
-      // CRITICAL: Include workflow stage and boolean fields
-      workflow_stage: updatedData.workflowStage,
-      wedding_photographed: updatedData.weddingPhotographed,
-      backup_completed: updatedData.backupCompleted,
-      curation_completed: updatedData.curationCompleted,
-      in_editing: updatedData.inEditing,
-      link_ready: updatedData.linkReady,
-      link_sent: updatedData.linkSent,
-      box_delivered: updatedData.boxDelivered,
-      album_approved_delivered: updatedData.albumApprovedDelivered,
-      storage_location: updatedData.storageLocation
     };
 
-    // Add sales funnel stage to the payload if it exists
-    if (salesFunnelStage) {
-      updatePayload.sales_funnel_stage = salesFunnelStage;
+    // Itera apenas sobre os campos realmente enviados — update parcial real
+    for (const key of Object.keys(clientData) as (keyof Client)[]) {
+      const value = clientData[key];
+      if (value === undefined) continue;
+      const column = FIELD_MAP[key as string];
+      if (column) updatePayload[column] = value;
     }
 
-    console.log(`[ClientUpdate] Updating client ${id} with payload:`, {
-      clientId: id,
-      workflowStage: updatePayload.workflow_stage,
-      weddingPhotographed: updatePayload.wedding_photographed,
-      payloadKeys: Object.keys(updatePayload)
-    });
-
-    // Ensure critical workflow fields are included
-    const requiredWorkflowFields = [
-      'workflow_stage', 'wedding_photographed', 'backup_completed', 
-      'curation_completed', 'in_editing', 'link_ready', 'link_sent', 
-      'box_delivered', 'album_approved_delivered'
-    ];
-    
-    const missingFields = requiredWorkflowFields.filter(field => !(field in updatePayload));
-    if (missingFields.length > 0) {
-      console.warn(`[ClientUpdate] Missing workflow fields in payload:`, missingFields);
+    // Datas precisam de formatação especial; null é permitido apenas se vier explicitamente
+    if ('weddingDate' in clientData) {
+      updatePayload.wedding_date = clientData.weddingDate
+        ? formatDateForSupabase(clientData.weddingDate)
+        : null;
     }
+    if ('preWeddingDate' in clientData) {
+      updatePayload.pre_wedding_date = clientData.preWeddingDate
+        ? formatDateForSupabase(clientData.preWeddingDate)
+        : null;
+      // Sincroniza preWeddingScheduled se não vier explicitamente
+      if (!('preWeddingScheduled' in clientData)) {
+        updatePayload.pre_wedding_scheduled = !!clientData.preWeddingDate;
+      }
+    }
+
+    // Sincronia entre campos legados e atuais para Cópia/Backup e Curadoria
+    if ('backupCompleted' in clientData) {
+      updatePayload.backup_completed = clientData.backupCompleted;
+      updatePayload.backup_done = clientData.backupCompleted;
+    }
+    if ('backupDone' in clientData) {
+      updatePayload.backup_done = clientData.backupDone;
+      updatePayload.backup_completed = clientData.backupDone;
+    }
+    if ('curationCompleted' in clientData) {
+      updatePayload.curation_completed = clientData.curationCompleted;
+      updatePayload.curadoria_done = clientData.curationCompleted;
+    }
+    if ('curadoriaDone' in clientData) {
+      updatePayload.curadoria_done = clientData.curadoriaDone;
+      updatePayload.curation_completed = clientData.curadoriaDone;
+    }
+
+    // Funil derivado de status, somente se status foi enviado e funil não
+    if (clientData.status && !clientData.salesFunnelStage) {
+      updatePayload.sales_funnel_stage = mapStatusToFunnelStage(clientData.status);
+    }
+
+    console.log(`[ClientUpdate] Partial update for ${id}:`, Object.keys(updatePayload));
 
     const { data, error } = await supabase
       .from('wedding_clients')
       .update(updatePayload)
       .eq('id', id)
-      .select()
+      .select(`
+        *,
+        wedding_payments ( id, amount, date, notes, due_date, payment_status )
+      `)
       .single();
 
     if (error) {
@@ -115,26 +148,18 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
       return null;
     }
 
-    console.log('[ClientUpdate] Supabase response:', {
-      clientId: id,
-      returnedWorkflowStage: data?.workflow_stage,
-      returnedWeddingPhotographed: data?.wedding_photographed,
-      dataKeys: data ? Object.keys(data) : []
-    });
+    const updatedClient = data ? parseClient(data) : null;
 
-    const updatedClient = data ? parseClientForUpdate(data) : null;
-
-    if (updatedClient) {
-      console.log('[ClientUpdate] Parsed client result:', {
-        clientId: updatedClient.id,
-        workflowStage: updatedClient.workflowStage,
-        weddingPhotographed: updatedClient.weddingPhotographed
-      });
-    }
-
-    // Gerenciar evento de pré-wedding no calendário
-    if (updatedClient) {
-      await managePreWeddingCalendarEvent(updatedClient, clientData);
+    // Gerenciar evento de pré-wedding no calendário apenas se algo relevante mudou
+    if (
+      updatedClient &&
+      ('preWeddingDate' in clientData ||
+        'hasPreWedding' in clientData ||
+        'preWeddingStartTime' in clientData ||
+        'preWeddingEndTime' in clientData ||
+        'name' in clientData)
+    ) {
+      await managePreWeddingCalendarEvent(updatedClient);
     }
 
     return updatedClient;
@@ -144,98 +169,37 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
   }
 };
 
-// Função para gerenciar evento de pré-wedding no calendário
-const managePreWeddingCalendarEvent = async (client: Client, updatedData: Partial<Client>) => {
+// Gerencia o evento de pré-wedding no calendário
+const managePreWeddingCalendarEvent = async (client: Client) => {
   try {
-    console.log('[ClientUpdate] Gerenciando evento de pré-wedding:', {
-      clientId: client.id,
-      clientName: client.name,
-      hasPreWedding: client.hasPreWedding,
-      preWeddingDate: client.preWeddingDate
-    });
-
-    // Buscar evento existente de pré-wedding para este cliente
     const allEvents = await fetchCalendarEvents();
-    const existingEvent = allEvents.find(event => 
-      event.type === 'pre-wedding' && event.clientId === client.id
+    const existingEvent = allEvents.find(
+      (event) => event.type === 'pre-wedding' && event.clientId === client.id
     );
 
-    // Se não tem pré-wedding ou não tem data, remover evento existente
     if (!client.hasPreWedding || !client.preWeddingDate) {
-      if (existingEvent) {
-        console.log('[ClientUpdate] Removendo evento de pré-wedding existente');
-        await deleteCalendarEvent(existingEvent.id);
-      }
+      if (existingEvent) await deleteCalendarEvent(existingEvent.id);
       return;
     }
 
-    // Criar dados do evento
     const eventData = {
       id: existingEvent?.id || uuidv4(),
       title: `Pré-Wedding - ${client.name}`,
       description: `Sessão de pré-wedding para ${client.name}`,
       date: client.preWeddingDate,
-      startTime: client.preWeddingStartTime || "09:00",
-      endTime: client.preWeddingEndTime || "10:00",
+      startTime: client.preWeddingStartTime || '09:00',
+      endTime: client.preWeddingEndTime || '10:00',
       type: 'pre-wedding' as const,
       color: 'purple' as const,
-      clientId: client.id
+      clientId: client.id,
     };
 
-    // Atualizar ou criar evento
     if (existingEvent) {
-      console.log('[ClientUpdate] Atualizando evento de pré-wedding existente');
       await updateCalendarEvent(eventData);
     } else {
-      console.log('[ClientUpdate] Criando novo evento de pré-wedding');
       await createCalendarEvent(eventData);
     }
-
   } catch (error) {
     console.error('[ClientUpdate] Erro ao gerenciar evento de pré-wedding:', error);
-    // Não falha a atualização do cliente se o evento falhar
   }
-};
-
-// Helper function to parse client data for update response
-const parseClientForUpdate = (data: any): Client => {
-  return {
-    id: data.id,
-    name: data.name,
-    email: data.email,
-    phone: data.phone,
-    coupleName: data.couple_name,
-    weddingDate: data.wedding_date,
-    weddingStartTime: data.wedding_start_time,
-    weddingEndTime: data.wedding_end_time,
-    contractValue: Number(data.contract_value) || 0,
-    downPayment: Number(data.down_payment) || 0,
-    status: data.status,
-    nextAction: data.next_action,
-    eventCategory: data.event_category,
-    eventLocation: data.event_location,
-    preWeddingDate: data.pre_wedding_date,
-    preWeddingStartTime: data.pre_wedding_start_time,
-    preWeddingEndTime: data.pre_wedding_end_time,
-    preWeddingScheduled: data.pre_wedding_scheduled,
-    contractLink: data.contract_link,
-    hasPreWedding: data.has_pre_wedding,
-    salesFunnelStage: data.sales_funnel_stage || 'primeiro_contato',
-    notes: data.notes,
-    payments: [], // Will be loaded separately
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-    
-    // CRITICAL: Include all workflow fields
-    workflowStage: data.workflow_stage || 'evento_ensaio',
-    weddingPhotographed: data.wedding_photographed || false,
-    backupCompleted: data.backup_completed || false,
-    curationCompleted: data.curation_completed || false,
-    inEditing: data.in_editing || false,
-    linkReady: data.link_ready || false,
-    linkSent: data.link_sent || false,
-    boxDelivered: data.box_delivered || false,
-    albumApprovedDelivered: data.album_approved_delivered || false,
-    storageLocation: data.storage_location
-  };
 };

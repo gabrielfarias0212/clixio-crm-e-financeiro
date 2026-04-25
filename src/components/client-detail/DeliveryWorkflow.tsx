@@ -108,7 +108,7 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
 
   // Calculate progress
   const needsPreWedding = client.hasPreWedding !== false;
-  const totalSteps = needsPreWedding ? 9 : 6; // Reduce total steps if no pre-wedding is needed
+  const totalSteps = needsPreWedding ? 11 : 8; // Reduce total steps if no pre-wedding is needed
   
   // Count completed steps, excluding pre-wedding steps if not needed
   const completedSteps = [
@@ -120,6 +120,8 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
     ] : []),
     // Always count these steps
     client.weddingPhotographed,
+    client.backupCompleted,
+    client.curationCompleted,
     client.inEditing,
     client.linkSent,
     client.boxDelivered,
@@ -203,6 +205,20 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
             checked={client.weddingPhotographed}
             onChange={(checked) => updateWorkflowStatus('weddingPhotographed', checked)}
             field="wedding_photographed"
+          />
+          
+          <CheckboxItem
+            label="Cópia/Backup feito?"
+            checked={client.backupCompleted}
+            onChange={(checked) => updateWorkflowStatus('backupCompleted', checked)}
+            field="backup_completed"
+          />
+          
+          <CheckboxItem
+            label="Curadoria feita?"
+            checked={client.curationCompleted}
+            onChange={(checked) => updateWorkflowStatus('curationCompleted', checked)}
+            field="curation_completed"
           />
           
           <CheckboxItem

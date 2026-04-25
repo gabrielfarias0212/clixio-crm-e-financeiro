@@ -526,6 +526,20 @@ export default function WorkflowPage() {
                 <option value="all">Todos os meses</option>
                 {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
               </select>
+
+              {/* Etapa */}
+              <select
+                value={filterStage}
+                onChange={e => setFilterStage(e.target.value)}
+                className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
+              >
+                <option value="all">Todas as etapas</option>
+                {ALL_STAGE_OPTIONS.map(opt => (
+                  <option key={opt.key} value={opt.key}>
+                    {opt.label} ({stageCounts[opt.key] ?? 0})
+                  </option>
+                ))}
+              </select>
             </div>
 
             {filtered.length === 0 ? (

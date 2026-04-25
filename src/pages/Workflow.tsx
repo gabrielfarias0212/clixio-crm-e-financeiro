@@ -357,6 +357,7 @@ export default function WorkflowPage() {
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "finished">("active");
   const [filterMonth, setFilterMonth] = useState<number | "all">("all");
   const [filterYear, setFilterYear] = useState<number | "all">("all");
+  const [filterStage, setFilterStage] = useState<string>("all");
 
   const workflowClients = useMemo(() => {
     const today = new Date();
@@ -376,10 +377,21 @@ export default function WorkflowPage() {
     return Array.from(ys).sort() as number[];
   }, [workflowClients]);
 
+  // Contagem por etapa para mostrar quantos projetos estão em cada uma
+  const stageCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    workflowClients.forEach(c => {
+      const key = getCurrentStageKey(c);
+      counts[key] = (counts[key] ?? 0) + 1;
+    });
+    return counts;
+  }, [workflowClients]);
+
   const filtered = useMemo(() => {
     let list = workflowClients;
     if (filterStatus === "active") list = list.filter(c => c.status === "fechado");
     if (filterStatus === "finished") list = list.filter(c => c.status === "projeto_finalizado");
+    if (filterStage !== "all") list = list.filter(c => getCurrentStageKey(c) === filterStage);
     if (filterMonth !== "all") list = list.filter(c => parseDate(c.weddingDate)?.getMonth() === filterMonth);
     if (filterYear !== "all") list = list.filter(c => parseDate(c.weddingDate)?.getFullYear() === filterYear);
     if (searchTerm.trim()) {
@@ -392,7 +404,7 @@ export default function WorkflowPage() {
       );
     }
     return list;
-  }, [workflowClients, filterStatus, filterMonth, filterYear, searchTerm]);
+  }, [workflowClients, filterStatus, filterStage, filterMonth, filterYear, searchTerm]);
 
   const stats = useMemo(() => ({
     ativos: workflowClients.filter(c => c.status === "fechado").length,

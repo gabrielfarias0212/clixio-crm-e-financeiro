@@ -208,6 +208,20 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
           />
           
           <CheckboxItem
+            label="Cópia/Backup feito?"
+            checked={client.backupCompleted}
+            onChange={(checked) => updateWorkflowStatus('backupCompleted', checked)}
+            field="backup_completed"
+          />
+          
+          <CheckboxItem
+            label="Curadoria feita?"
+            checked={client.curationCompleted}
+            onChange={(checked) => updateWorkflowStatus('curationCompleted', checked)}
+            field="curation_completed"
+          />
+          
+          <CheckboxItem
             label="Em edição?"
             checked={client.inEditing}
             onChange={(checked) => updateWorkflowStatus('inEditing', checked)}

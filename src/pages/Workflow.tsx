@@ -27,8 +27,8 @@ interface WorkflowStep {
 
 const WORKFLOW_STEPS: WorkflowStep[] = [
   { key: "wedding_photographed", label: "Fotografado", icon: Camera, color: "text-purple-600", bgColor: "bg-purple-50", field: "weddingPhotographed", description: "Evento realizado" },
-  { key: "backup_done", label: "Cópia/Backup", icon: HardDrive, color: "text-gray-600", bgColor: "bg-gray-50", field: "backupDone", description: "RAW + JPG copiados para o SSD" },
-  { key: "curadoria_done", label: "Curadoria", icon: Scissors, color: "text-yellow-600", bgColor: "bg-yellow-50", field: "curadoriaDone", description: "Seleção no Aftershoot" },
+  { key: "backup_completed", label: "Cópia/Backup", icon: HardDrive, color: "text-gray-600", bgColor: "bg-gray-50", field: "backupCompleted", description: "RAW + JPG copiados para o SSD" },
+  { key: "curation_completed", label: "Curadoria", icon: Scissors, color: "text-yellow-600", bgColor: "bg-yellow-50", field: "curationCompleted", description: "Seleção no Aftershoot" },
   { key: "in_editing", label: "Edição Final", icon: Sliders, color: "text-blue-600", bgColor: "bg-blue-50", field: "inEditing", description: "Lightroom — ajustes finais" },
   { key: "link_sent", label: "Link Enviado", icon: Link, color: "text-green-600", bgColor: "bg-green-50", field: "linkSent", description: "Galeria Wfolio enviada ao cliente" },
   { key: "box_delivered", label: "Entrega Física", icon: Package, color: "text-orange-600", bgColor: "bg-orange-50", field: "boxDelivered", description: "Pen drive entregue" },

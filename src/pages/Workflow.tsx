@@ -81,6 +81,21 @@ function calcProgress(client: any) {
   return { done, total, pct, currentStep: current?.label ?? "Finalizado" };
 }
 
+// Retorna a chave da etapa atual (próxima pendente) de um cliente
+function getCurrentStageKey(client: any): string {
+  if (client.status === "projeto_finalizado") return "finalizado";
+  const steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
+  const current = steps.find(s => !getClientField(client, s.field as string));
+  return current?.key ?? "finalizado";
+}
+
+// Lista única de etapas (workflow + álbum + finalizado) para o filtro
+const ALL_STAGE_OPTIONS: { key: string; label: string }[] = [
+  ...WORKFLOW_STEPS.map(s => ({ key: s.key, label: s.label })),
+  ...ALBUM_STEPS.map(s => ({ key: s.key, label: `Álbum: ${s.label}` })),
+  { key: "finalizado", label: "Finalizado" },
+];
+
 function urgencyColor(days: number, linkSent: boolean): string {
   if (linkSent) return "text-green-600";
   if (days > 60) return "text-red-600";

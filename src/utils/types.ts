@@ -190,3 +190,21 @@ export interface AlertItem {
   urgency?: "high" | "medium" | "low";
   isOverdue?: boolean;
 }
+// ── Adicionar ao final de src/utils/types.ts ──────────────────────────────────
+
+export type MessageType =
+  | "follow_up"
+  | "cobranca"
+  | "contrato"
+  | "boas_vindas"
+  | "personalizada";
+
+export interface ClientMessage {
+  id: string;
+  client_id: string;
+  user_id?: string;
+  message_type: MessageType;
+  message_text: string;
+  sent_at: string;
+  created_at: string;
+}

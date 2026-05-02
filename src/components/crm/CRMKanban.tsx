@@ -1,14 +1,21 @@
-import React from "react";
+// src/components/crm/CRMKanban.tsx
+
+import React, { useState } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { Client, SalesFunnelStage, ClientStatus } from "@/utils/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Send, MessageCircle, FileCheck, Archive, XCircle, Phone, Mail, Calendar, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Users, Send, MessageCircle, FileCheck, Archive, XCircle,
+  Phone, Mail, Calendar, AlertCircle,
+} from "lucide-react";
 import { useContractClosed } from "@/hooks/useContractClosed";
 import { ContractClosedDialog } from "@/components/ContractClosedDialog";
 import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
+import { WhatsAppMessageDialog } from "@/components/crm/WhatsAppMessageDialog";
 
 interface CRMKanbanProps {
   clients: Client[];
@@ -30,7 +37,7 @@ const funnelStages: Array<{
     color: "text-blue-600",
     bgColor: "bg-blue-50",
     borderColor: "border-blue-200",
-    statusMapping: ["primeiro_contato"]
+    statusMapping: ["primeiro_contato"],
   },
   {
     key: "orcamento_enviado",
@@ -39,7 +46,7 @@ const funnelStages: Array<{
     color: "text-orange-600",
     bgColor: "bg-orange-50",
     borderColor: "border-orange-200",
-    statusMapping: ["orçamento enviado"]
+    statusMapping: ["orçamento enviado"],
   },
   {
     key: "negociacao",
@@ -48,7 +55,7 @@ const funnelStages: Array<{
     color: "text-yellow-600",
     bgColor: "bg-yellow-50",
     borderColor: "border-yellow-200",
-    statusMapping: ["negociacao"]
+    statusMapping: ["negociacao"],
   },
   {
     key: "contrato_fechado",
@@ -57,7 +64,7 @@ const funnelStages: Array<{
     color: "text-green-600",
     bgColor: "bg-green-50",
     borderColor: "border-green-200",
-    statusMapping: ["fechado"]
+    statusMapping: ["fechado"],
   },
   {
     key: "projeto_finalizado",
@@ -66,7 +73,7 @@ const funnelStages: Array<{
     color: "text-gray-600",
     bgColor: "bg-gray-50",
     borderColor: "border-gray-200",
-    statusMapping: ["projeto_finalizado"]
+    statusMapping: ["projeto_finalizado"],
   },
   {
     key: "contrato_perdido",
@@ -75,8 +82,8 @@ const funnelStages: Array<{
     color: "text-red-600",
     bgColor: "bg-red-50",
     borderColor: "border-red-200",
-    statusMapping: ["contrato_perdido"]
-  }
+    statusMapping: ["contrato_perdido"],
+  },
 ];
 
 export function CRMKanban({ clients }: CRMKanbanProps) {
@@ -90,30 +97,29 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
     handleCancel,
   } = useContractClosed();
 
-  const getClientsInStage = (stage: SalesFunnelStage) => {
-    return clients.filter(client => client.salesFunnelStage === stage);
-  };
+  // Estado do dialog de mensagem
+  const [messageDialogClient, setMessageDialogClient] = useState<Client | null>(null);
 
-  const getTotalValue = (clientsInStage: Client[]) => {
-    return clientsInStage.reduce((total, client) => total + (client.contractValue || 0), 0);
-  };
+  const getClientsInStage = (stage: SalesFunnelStage) =>
+    clients.filter((c) => c.salesFunnelStage === stage);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
+  const getTotalValue = (clientsInStage: Client[]) =>
+    clientsInStage.reduce((t, c) => t + (c.contractValue || 0), 0);
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(value);
-  };
 
-  const formatDate = (date: string | Date) => {
-    return new Date(date).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: '2-digit'
+  const formatDate = (date: string | Date) =>
+    new Date(date).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
     });
-  };
 
   const mapFunnelStageToStatus = (stage: SalesFunnelStage): ClientStatus => {
     switch (stage) {
@@ -127,38 +133,36 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
     }
   };
 
-  const hasPendingRegistration = (client: Client) => {
-    return client.notes?.includes("⚠️ CADASTRO PENDENTE") ?? false;
-  };
+  const hasPendingRegistration = (client: Client) =>
+    client.notes?.includes("⚠️ CADASTRO PENDENTE") ?? false;
 
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
-
     if (!destination) return;
     if (
       destination.droppableId === source.droppableId &&
       destination.index === source.index
-    ) return;
+    )
+      return;
 
     const clientId = draggableId;
     const newStage = destination.droppableId as SalesFunnelStage;
     const newStatus = mapFunnelStageToStatus(newStage);
 
-    // Se está indo para contrato fechado, abre o dialog de cadastro
     if (newStage === "contrato_fechado") {
       const dialogOpened = openContractDialog(clientId);
-      if (dialogOpened) return; // aguarda confirmação no dialog
+      if (dialogOpened) return;
     }
 
-    // Para outros estágios, atualiza normalmente
     try {
       const success = await updateClient(clientId, {
         salesFunnelStage: newStage,
         status: newStatus,
       });
-
       if (success) {
-        toast.success(`Cliente movido para ${funnelStages.find(s => s.key === newStage)?.label}`);
+        toast.success(
+          `Cliente movido para ${funnelStages.find((s) => s.key === newStage)?.label}`
+        );
       } else {
         toast.error("Erro ao mover cliente");
       }
@@ -193,7 +197,8 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                 {stage.label}
                               </CardTitle>
                               <div className="text-xs text-muted-foreground">
-                                {clientsInStage.length} cliente{clientsInStage.length !== 1 ? 's' : ''}
+                                {clientsInStage.length} cliente
+                                {clientsInStage.length !== 1 ? "s" : ""}
                               </div>
                             </div>
                           </div>
@@ -216,7 +221,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                               className={`min-h-40 max-h-96 overflow-y-auto space-y-3 p-3 rounded-lg transition-all duration-200 ${
                                 snapshot.isDraggingOver
                                   ? `${stage.bgColor} border-2 ${stage.borderColor} border-dashed`
-                                  : 'bg-gray-50/50'
+                                  : "bg-gray-50/50"
                               }`}
                             >
                               {clientsInStage.map((client, index) => (
@@ -231,11 +236,17 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                       {...provided.draggableProps}
                                       {...provided.dragHandleProps}
                                       className={`bg-white rounded-lg shadow-sm border hover:shadow-md transition-all duration-200 cursor-move ${
-                                        snapshot.isDragging ? 'shadow-lg rotate-1 scale-105' : ''
-                                      } ${stage.key === "contrato_perdido" ? 'border-red-200 bg-red-50' : 'border-gray-200'}`}
+                                        snapshot.isDragging
+                                          ? "shadow-lg rotate-1 scale-105"
+                                          : ""
+                                      } ${
+                                        stage.key === "contrato_perdido"
+                                          ? "border-red-200 bg-red-50"
+                                          : "border-gray-200"
+                                      }`}
                                     >
                                       <div className="p-4 space-y-3">
-                                        {/* Badge de cadastro pendente */}
+                                        {/* Badge cadastro pendente */}
                                         {hasPendingRegistration(client) && (
                                           <div className="flex items-center gap-1 text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 rounded px-2 py-1">
                                             <AlertCircle className="h-3 w-3 shrink-0" />
@@ -243,18 +254,29 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                           </div>
                                         )}
 
+                                        {/* Nome + categoria */}
                                         <div className="flex items-start justify-between">
                                           <div className="flex items-center gap-3">
                                             <Avatar className="h-8 w-8">
-                                              <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${client.name}`} />
+                                              <AvatarImage
+                                                src={`https://api.dicebear.com/7.x/initials/svg?seed=${client.name}`}
+                                              />
                                               <AvatarFallback className="text-xs">
-                                                {client.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                                {client.name
+                                                  .split(" ")
+                                                  .map((n) => n[0])
+                                                  .join("")
+                                                  .slice(0, 2)}
                                               </AvatarFallback>
                                             </Avatar>
                                             <div className="min-w-0 flex-1">
-                                              <h4 className={`font-semibold text-sm truncate ${
-                                                stage.key === "contrato_perdido" ? 'text-red-700' : 'text-gray-900'
-                                              }`}>
+                                              <h4
+                                                className={`font-semibold text-sm truncate ${
+                                                  stage.key === "contrato_perdido"
+                                                    ? "text-red-700"
+                                                    : "text-gray-900"
+                                                }`}
+                                              >
                                                 {client.name}
                                               </h4>
                                               {client.coupleName && (
@@ -265,17 +287,26 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                             </div>
                                           </div>
                                           <Badge
-                                            variant={stage.key === "contrato_perdido" ? "destructive" : "secondary"}
+                                            variant={
+                                              stage.key === "contrato_perdido"
+                                                ? "destructive"
+                                                : "secondary"
+                                            }
                                             className="text-xs shrink-0"
                                           >
                                             {client.eventCategory}
                                           </Badge>
                                         </div>
 
+                                        {/* Valor + data */}
                                         <div className="flex items-center justify-between">
-                                          <span className={`text-sm font-bold ${
-                                            stage.key === "contrato_perdido" ? 'text-red-600' : 'text-green-600'
-                                          }`}>
+                                          <span
+                                            className={`text-sm font-bold ${
+                                              stage.key === "contrato_perdido"
+                                                ? "text-red-600"
+                                                : "text-green-600"
+                                            }`}
+                                          >
                                             {formatCurrency(client.contractValue)}
                                           </span>
                                           {client.weddingDate && (
@@ -286,6 +317,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                           )}
                                         </div>
 
+                                        {/* Telefone + email */}
                                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                           {client.phone && (
                                             <div className="flex items-center gap-1">
@@ -296,10 +328,38 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                           {client.email && (
                                             <div className="flex items-center gap-1">
                                               <Mail className="h-3 w-3" />
-                                              <span className="truncate">{client.email.split('@')[0]}</span>
+                                              <span className="truncate">
+                                                {client.email.split("@")[0]}
+                                              </span>
                                             </div>
                                           )}
                                         </div>
+
+                                        {/* ── Botão WhatsApp com mensagem ─── */}
+                                        {client.phone && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setMessageDialogClient(client);
+                                            }}
+                                          >
+                                            <svg
+                                              xmlns="http://www.w3.org/2000/svg"
+                                              width="14"
+                                              height="14"
+                                              viewBox="0 0 24 24"
+                                              fill="currentColor"
+                                              className="mr-1.5 shrink-0"
+                                            >
+                                              <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
+                                              <path d="M9 10a1 1 0 0 0 1 1c1 0 2.5-2.5 2.5-2.5s1.5 2.5 2.5 2.5 1-1 1-1v3c0 1-1 2-3 2s-3-1-3-2v-3" />
+                                            </svg>
+                                            Enviar mensagem
+                                          </Button>
+                                        )}
                                       </div>
                                     </div>
                                   )}
@@ -308,8 +368,14 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                               {provided.placeholder}
                               {clientsInStage.length === 0 && (
                                 <div className="text-center text-muted-foreground text-sm py-12 border-2 border-dashed border-gray-200 rounded-lg">
-                                  <Icon className={`h-8 w-8 mx-auto mb-2 ${stage.color} opacity-50`} />
-                                  <p>{stage.key === "contrato_perdido" ? "Nenhum contrato perdido" : "Arraste leads aqui"}</p>
+                                  <Icon
+                                    className={`h-8 w-8 mx-auto mb-2 ${stage.color} opacity-50`}
+                                  />
+                                  <p>
+                                    {stage.key === "contrato_perdido"
+                                      ? "Nenhum contrato perdido"
+                                      : "Arraste leads aqui"}
+                                  </p>
                                 </div>
                               )}
                             </div>
@@ -333,6 +399,15 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
           onConfirm={handleConfirm}
           onLater={handleLater}
           onCancel={handleCancel}
+        />
+      )}
+
+      {/* Dialog de mensagem WhatsApp */}
+      {messageDialogClient && (
+        <WhatsAppMessageDialog
+          open={!!messageDialogClient}
+          onOpenChange={(open) => { if (!open) setMessageDialogClient(null); }}
+          client={messageDialogClient}
         />
       )}
     </>

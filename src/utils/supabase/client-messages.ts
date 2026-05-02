@@ -3,6 +3,11 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ClientMessage, MessageType } from '@/utils/types';
 
+// Cast necessário porque client_messages não está nos types gerados pelo Supabase.
+// Após rodar a migration, você pode regenerar os types com: supabase gen types typescript
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any;
+
 export const saveClientMessage = async (
   clientId: string,
   messageType: MessageType,
@@ -11,7 +16,7 @@ export const saveClientMessage = async (
   try {
     const { data: { user } } = await supabase.auth.getUser();
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('client_messages')
       .insert({
         client_id: clientId,
@@ -38,7 +43,7 @@ export const fetchClientMessages = async (
   clientId: string
 ): Promise<ClientMessage[]> => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('client_messages')
       .select('*')
       .eq('client_id', clientId)

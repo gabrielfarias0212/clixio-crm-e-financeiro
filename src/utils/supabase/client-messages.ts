@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { ClientMessage, MessageType } from '@/utils/types';
 
 // Cast necessário porque client_messages não está nos types gerados pelo Supabase.
-// Após rodar a migration, você pode regenerar os types com: supabase gen types typescript
+// Após rodar a migration, você pode regenerar os types com:
+//   supabase gen types typescript --project-id lwdfznskytyjqurxqebu > src/integrations/supabase/types.ts
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
 
@@ -12,15 +13,20 @@ export const saveClientMessage = async (
   clientId: string,
   messageType: MessageType,
   messageText: string
-): Promise<ClientMessage | null> => {
+): Promise<{ data: ClientMessage | null; errorMessage: string | null }> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+
+    if (authError) {
+      console.error('Erro de autenticação:', authError);
+      return { data: null, errorMessage: `Auth: ${authError.message}` };
+    }
 
     const { data, error } = await db
       .from('client_messages')
       .insert({
         client_id: clientId,
-        user_id: user?.id ?? null,
+        user_id: authData.user?.id ?? null,
         message_type: messageType,
         message_text: messageText,
       })
@@ -28,14 +34,14 @@ export const saveClientMessage = async (
       .single();
 
     if (error) {
-      console.error('Erro ao salvar mensagem:', error);
-      return null;
+      console.error('Erro Supabase ao salvar mensagem:', error);
+      return { data: null, errorMessage: error.message };
     }
 
-    return data as ClientMessage;
-  } catch (err) {
+    return { data: data as ClientMessage, errorMessage: null };
+  } catch (err: any) {
     console.error('Erro inesperado ao salvar mensagem:', err);
-    return null;
+    return { data: null, errorMessage: err?.message ?? 'Erro desconhecido' };
   }
 };
 

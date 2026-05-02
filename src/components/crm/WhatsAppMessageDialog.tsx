@@ -131,6 +131,10 @@ export function WhatsAppMessageDialog({
       return;
     }
 
+    // Open WhatsApp immediately (in the click context) to avoid popup blocker
+    const whatsappUrl = getWhatsAppLink(client.phone, messageText.trim());
+    window.open(whatsappUrl, "_blank");
+
     setSending(true);
     try {
       const { data: saved, errorMessage } = await saveClientMessage(
@@ -140,7 +144,6 @@ export function WhatsAppMessageDialog({
       );
 
       if (saved) {
-        window.open(getWhatsAppLink(client.phone, messageText.trim()), "_blank");
         toast.success("Mensagem registrada e WhatsApp aberto! ✅");
         setHistory((prev) => [saved, ...prev]);
         setSelectedType(null);

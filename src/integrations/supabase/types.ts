@@ -242,6 +242,44 @@ export type Database = {
           },
         ]
       }
+      client_messages: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          message_text: string
+          message_type: string
+          sent_at: string
+          user_id: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          message_text: string
+          message_type: string
+          sent_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          message_text?: string
+          message_type?: string
+          sent_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null

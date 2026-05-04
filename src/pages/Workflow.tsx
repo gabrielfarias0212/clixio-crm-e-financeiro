@@ -85,16 +85,27 @@ function calcProgress(client: any) {
 }
 
 // Retorna a chave da etapa atual (próxima pendente) de um cliente
+function isFutureEvent(client: any): boolean {
+  const d = parseDate(client.weddingDate);
+  if (!d) return false;
+  return d.getTime() > Date.now();
+}
+
 function getCurrentStageKey(client: any): string {
   if (client.status === "projeto_finalizado") return "finalizado";
   let steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
   if (client.semEntregaFisica) steps = steps.filter(s => s.field !== 'boxDelivered');
   const current = steps.find(s => !getClientField(client, s.field as string));
+  // Se a próxima etapa é fotografar e o evento ainda não aconteceu → aguardando
+  if (current?.key === "wedding_photographed" && isFutureEvent(client)) {
+    return "aguardando_evento";
+  }
   return current?.key ?? "finalizado";
 }
 
 // Lista única de etapas (workflow + álbum + finalizado) para o filtro
 const ALL_STAGE_OPTIONS: { key: string; label: string }[] = [
+  { key: "aguardando_evento", label: "Aguardando Evento" },
   ...WORKFLOW_STEPS.map(s => ({ key: s.key, label: s.label })),
   ...ALBUM_STEPS.map(s => ({ key: s.key, label: `Álbum: ${s.label}` })),
   { key: "finalizado", label: "Finalizado" },
@@ -116,9 +127,16 @@ function ProjectCard({ client, onToggleStep, onClick }: {
 }) {
   const { done, total, pct, currentStep } = calcProgress(client);
   const days = daysSince(client.weddingDate);
+  const isFuture = isFutureEvent(client);
   const isFinished = client.status === "projeto_finalizado";
   let steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
   if (client.semEntregaFisica) steps = steps.filter(s => s.field !== 'boxDelivered');
+
+  const dateLabel = client.weddingDate
+    ? isFuture
+      ? `${formatDate(client.weddingDate)} · em ${Math.abs(days)} dias`
+      : `${formatDate(client.weddingDate)} · ${days}d atrás`
+    : "Data não definida";
 
   return (
     <div
@@ -136,15 +154,15 @@ function ProjectCard({ client, onToggleStep, onClick }: {
           {client.coupleName && (
             <p className="text-xs text-muted-foreground truncate">{client.coupleName}</p>
           )}
-          <p className={`text-xs mt-0.5 ${urgencyColor(days, client.linkSent)}`}>
-            {client.weddingDate
-              ? `${formatDate(client.weddingDate)} · ${days}d atrás`
-              : "Data não definida"}
+          <p className={`text-xs mt-0.5 ${isFuture ? "text-blue-600" : urgencyColor(days, client.linkSent)}`}>
+            {dateLabel}
           </p>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
           {isFinished ? (
             <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">Finalizado</Badge>
+          ) : isFuture && !client.weddingPhotographed ? (
+            <Badge className="bg-sky-100 text-sky-700 border-sky-200 text-xs">Aguardando Evento</Badge>
           ) : days > 60 && !client.linkSent ? (
             <Badge className="bg-red-100 text-red-800 border-red-200 text-xs flex items-center gap-1">
               <AlertTriangle className="h-3 w-3" /> Atrasado

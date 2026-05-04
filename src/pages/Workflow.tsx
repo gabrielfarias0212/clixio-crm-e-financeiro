@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { QuickProjectForm } from "@/components/workflow/QuickProjectForm";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { useNavigate } from "react-router-dom";

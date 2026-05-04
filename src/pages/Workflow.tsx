@@ -441,10 +441,26 @@ export default function WorkflowPage() {
     <Layout>
       <div className="container mx-auto p-6 space-y-6">
 
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Fluxo de Trabalho</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Acompanhe cada projeto do evento até a entrega</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Fluxo de Trabalho</h1>
+            <p className="text-gray-500 text-sm mt-0.5">Acompanhe cada projeto do evento até a entrega</p>
+          </div>
+          <button
+            onClick={() => setShowQuickForm(prev => !prev)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Novo Projeto
+          </button>
         </div>
+
+        {showQuickForm && (
+          <QuickProjectForm
+            onSubmit={() => setShowQuickForm(false)}
+            onCancel={() => setShowQuickForm(false)}
+          />
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

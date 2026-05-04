@@ -17,7 +17,7 @@ export interface ExportFilters {
 const STATUS_LABELS: Record<ClientStatus, string> = {
   primeiro_contato: "Primeiro Contato",
   "orçamento enviado": "Orçamento Enviado",
-  negociacao: "Negociação",
+  negociacao: "Follow-up",
   fechado: "Fechado",
   projeto_finalizado: "Projeto Finalizado",
   contrato_perdido: "Contrato Perdido"

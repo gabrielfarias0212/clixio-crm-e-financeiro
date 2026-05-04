@@ -37,7 +37,7 @@ export function StatusFields({ control }: StatusFieldsProps) {
               <SelectContent>
                 <SelectItem value="primeiro_contato">Primeiro Contato</SelectItem>
                 <SelectItem value="orçamento enviado">Orçamento Enviado</SelectItem>
-                <SelectItem value="negociacao">Negociação</SelectItem>
+                <SelectItem value="negociacao">Follow-up</SelectItem>
                 <SelectItem value="fechado">Fechado</SelectItem>
                 <SelectItem value="projeto_finalizado">Projeto Finalizado</SelectItem>
                 <SelectItem value="contrato_perdido">Contrato Perdido</SelectItem>

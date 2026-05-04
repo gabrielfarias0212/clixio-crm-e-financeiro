@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import {
   Users, Send, MessageCircle, FileCheck, Archive, XCircle,
   Phone, Mail, Calendar, AlertCircle,
@@ -50,7 +51,7 @@ const funnelStages: Array<{
   },
   {
     key: "negociacao",
-    label: "Negociação",
+    label: "Follow-up",
     icon: MessageCircle,
     color: "text-yellow-600",
     bgColor: "bg-yellow-50",
@@ -75,15 +76,6 @@ const funnelStages: Array<{
     borderColor: "border-gray-200",
     statusMapping: ["projeto_finalizado"],
   },
-  {
-    key: "contrato_perdido",
-    label: "Perdidos",
-    icon: XCircle,
-    color: "text-red-600",
-    bgColor: "bg-red-50",
-    borderColor: "border-red-200",
-    statusMapping: ["contrato_perdido"],
-  },
 ];
 
 export function CRMKanban({ clients }: CRMKanbanProps) {
@@ -99,6 +91,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
 
   // Estado do dialog de mensagem
   const [messageDialogClient, setMessageDialogClient] = useState<Client | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   const getClientsInStage = (stage: SalesFunnelStage) =>
     clients.filter((c) => c.salesFunnelStage === stage);
@@ -204,11 +197,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                           </div>
                         </div>
                         <div className="text-lg font-bold">
-                          {stage.key === "contrato_perdido" ? (
-                            <span className="text-red-600">{formatCurrency(totalValue)}</span>
-                          ) : (
-                            <span className={stage.color}>{formatCurrency(totalValue)}</span>
-                          )}
+                          <span className={stage.color}>{formatCurrency(totalValue)}</span>
                         </div>
                       </CardHeader>
 
@@ -389,6 +378,76 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
             </div>
           </div>
         </DragDropContext>
+
+        {/* ── Seção Arquivados (Contrato Perdido) ── */}
+        {(() => {
+          const archivedClients = clients.filter(c => c.salesFunnelStage === "contrato_perdido" || c.status === "contrato_perdido");
+          const archivedTotal = getTotalValue(archivedClients);
+          return (
+            <div className="mt-6 border border-red-100 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setShowArchived(v => !v)}
+                className="w-full flex items-center justify-between px-5 py-3 bg-red-50 hover:bg-red-100 transition-colors text-red-700"
+              >
+                <div className="flex items-center gap-2">
+                  <XCircle className="h-4 w-4" />
+                  <span className="font-semibold text-sm">Arquivados — Contratos Perdidos</span>
+                  <span className="ml-2 bg-red-200 text-red-800 text-xs font-medium px-2 py-0.5 rounded-full">
+                    {archivedClients.length}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-bold text-red-600">{formatCurrency(archivedTotal)}</span>
+                  {showArchived ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </div>
+              </button>
+
+              {showArchived && (
+                <div className="p-4 bg-white">
+                  {archivedClients.length === 0 ? (
+                    <p className="text-center text-sm text-muted-foreground py-6">Nenhum contrato perdido</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                      {archivedClients.map(client => (
+                        <div key={client.id} className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-2 opacity-80">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${client.name}`} />
+                                <AvatarFallback className="text-xs">{client.name.split(" ").map(n => n[0]).join("").slice(0,2)}</AvatarFallback>
+                              </Avatar>
+                              <span className="font-semibold text-sm text-red-700 truncate">{client.name}</span>
+                            </div>
+                            <Badge variant="destructive" className="text-xs shrink-0">{client.eventCategory}</Badge>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span className="font-bold text-red-600">{formatCurrency(client.contractValue)}</span>
+                            {client.weddingDate && (
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {formatDate(client.weddingDate)}
+                              </div>
+                            )}
+                          </div>
+                          {client.phone && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                              onClick={() => setMessageDialogClient(client)}
+                            >
+                              Enviar mensagem
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Dialog de cadastro ao fechar contrato */}

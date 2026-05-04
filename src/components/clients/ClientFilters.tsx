@@ -86,7 +86,7 @@ export function ClientFilters({
             <DropdownMenuRadioItem value="all">Todos os status</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="primeiro_contato">Primeiro Contato</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="orçamento enviado">Orçamento Enviado</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="negociacao">Negociação</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="negociacao">Follow-up</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="fechado">Fechado</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="projeto_finalizado">Projeto Finalizado</DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>

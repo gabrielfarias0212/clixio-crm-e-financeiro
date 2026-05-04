@@ -30,7 +30,7 @@ interface ExportClientsDialogProps {
 const STATUS_OPTIONS: { value: ClientStatus; label: string }[] = [
   { value: 'primeiro_contato', label: 'Primeiro Contato' },
   { value: 'orçamento enviado', label: 'Orçamento Enviado' },
-  { value: 'negociacao', label: 'Negociação' },
+  { value: 'negociacao', label: 'Follow-up' },
   { value: 'fechado', label: 'Fechado' },
   { value: 'projeto_finalizado', label: 'Projeto Finalizado' },
   { value: 'contrato_perdido', label: 'Contrato Perdido' },

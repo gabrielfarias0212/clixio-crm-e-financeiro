@@ -61,7 +61,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
         className
       )}
     >
-      {status}
+      {status === "negociacao" ? "Follow-up" : status === "contrato_perdido" ? "Arquivado" : status}
     </span>
   );
 }

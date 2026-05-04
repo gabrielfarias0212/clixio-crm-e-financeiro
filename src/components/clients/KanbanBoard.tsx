@@ -38,7 +38,7 @@ const funnelStages: Array<{
   },
   {
     key: "negociacao",
-    label: "Negociação",
+    label: "Follow-up",
     icon: MessageCircle,
     color: "text-yellow-600",
     bgColor: "bg-yellow-50",
@@ -272,7 +272,7 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
               <div className="text-2xl font-bold text-orange-600">
                 {((getClientsInStage("negociacao").length / Math.max(getClientsInStage("orcamento_enviado").length, 1)) * 100).toFixed(1)}%
               </div>
-              <div className="text-sm text-gray-600">Taxa de Negociação</div>
+              <div className="text-sm text-gray-600">Taxa de Follow-up</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">

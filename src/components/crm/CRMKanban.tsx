@@ -181,30 +181,27 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
 
                 return (
                   <div key={stage.key} className="flex-1 min-w-[260px] max-w-xs overflow-hidden">
-                    <Card className={`h-full border-t-4 ${stage.borderColor}`}>
-                      <CardHeader className="pb-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${stage.bgColor}`}>
-                              <Icon className={`h-5 w-5 ${stage.color}`} />
-                            </div>
-                            <div>
-                              <CardTitle className="text-sm font-semibold text-gray-900">
-                                {stage.label}
-                              </CardTitle>
-                              <div className="text-xs text-muted-foreground">
-                                {clientsInStage.length} cliente
-                                {clientsInStage.length !== 1 ? "s" : ""}
-                              </div>
-                            </div>
+                    <Card className={`h-full border-t-2 ${stage.borderColor} shadow-sm`}>
+                      <CardHeader className="pb-2 pt-3 px-3">
+                        <div className="flex items-center gap-2">
+                          <div className={`p-1.5 rounded-md ${stage.bgColor}`}>
+                            <Icon className={`h-3.5 w-3.5 ${stage.color}`} />
                           </div>
+                          <div className="min-w-0 flex-1">
+                            <CardTitle className="text-xs font-semibold text-gray-800 truncate">
+                              {stage.label}
+                            </CardTitle>
+                          </div>
+                          <span className={`text-xs font-bold rounded-full px-2 py-0.5 ${stage.bgColor} ${stage.color}`}>
+                            {clientsInStage.length}
+                          </span>
                         </div>
-                        <div className="text-lg font-bold">
-                          <span className={stage.color}>{formatCurrency(totalValue)}</span>
+                        <div className={`text-sm font-bold ${stage.color} mt-1`}>
+                          {formatCurrency(totalValue)}
                         </div>
                       </CardHeader>
 
-                      <CardContent className="pt-0">
+                      <CardContent className="pt-0 px-2 pb-2">
                         <Droppable droppableId={stage.key}>
                           {(provided, snapshot) => (
                             <div
@@ -243,122 +240,68 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                         }
                                       }}
                                     >
-                                      <div className="p-4 space-y-3">
-                                        {/* Badge cadastro pendente */}
+                                      <div className="p-3">
+                                        {/* Alerta cadastro pendente */}
                                         {hasPendingRegistration(client) && (
-                                          <div className="flex items-center gap-1 text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 rounded px-2 py-1">
+                                          <div className="flex items-center gap-1 text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md px-2 py-1 mb-2">
                                             <AlertCircle className="h-3 w-3 shrink-0" />
                                             Cadastro pendente
                                           </div>
                                         )}
 
-                                        {/* Nome + categoria */}
-                                        <div className="flex items-start justify-between">
-                                          <div className="flex items-center gap-3">
-                                            <Avatar className="h-8 w-8">
-                                              <AvatarImage
-                                                src={`https://api.dicebear.com/7.x/initials/svg?seed=${client.name}`}
-                                              />
-                                              <AvatarFallback className="text-xs">
-                                                {client.name
-                                                  .split(" ")
-                                                  .map((n) => n[0])
-                                                  .join("")
-                                                  .slice(0, 2)}
-                                              </AvatarFallback>
-                                            </Avatar>
-                                            <div className="min-w-0 flex-1">
-                                              <h4
-                                                className={`font-semibold text-sm truncate ${
-                                                  stage.key === "contrato_perdido"
-                                                    ? "text-red-700"
-                                                    : "text-gray-900"
-                                                }`}
-                                              >
-                                                {client.name}
-                                              </h4>
-                                              {client.coupleName && (
-                                                <p className="text-xs text-muted-foreground truncate">
-                                                  & {client.coupleName}
-                                                </p>
-                                              )}
-                                            </div>
+                                        {/* Avatar + nome */}
+                                        <div className="flex items-center gap-2.5 mb-2.5">
+                                          <Avatar className="h-9 w-9 shrink-0">
+                                            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${client.name}`} />
+                                            <AvatarFallback className="text-xs font-semibold">
+                                              {client.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                                            </AvatarFallback>
+                                          </Avatar>
+                                          <div className="min-w-0">
+                                            <p className={`font-semibold text-sm leading-tight truncate ${stage.key === "contrato_perdido" ? "text-red-700" : "text-gray-900"}`}>
+                                              {client.name}
+                                            </p>
+                                            {client.coupleName && (
+                                              <p className="text-xs text-muted-foreground truncate leading-tight">
+                                                & {client.coupleName}
+                                              </p>
+                                            )}
                                           </div>
-                                          <Badge
-                                            variant={
-                                              stage.key === "contrato_perdido"
-                                                ? "destructive"
-                                                : "secondary"
-                                            }
-                                            className="text-xs shrink-0"
-                                          >
-                                            {client.eventCategory}
-                                          </Badge>
                                         </div>
 
-                                        {/* Valor + data */}
-                                        <div className="flex items-center justify-between">
-                                          <span
-                                            className={`text-sm font-bold ${
-                                              stage.key === "contrato_perdido"
-                                                ? "text-red-600"
-                                                : "text-green-600"
-                                            }`}
-                                          >
-                                            {formatCurrency(client.contractValue)}
-                                          </span>
-                                          {client.weddingDate && (
-                                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                              <Calendar className="h-3 w-3" />
-                                              {formatDate(client.weddingDate)}
+                                        {/* Contato */}
+                                        <div className="space-y-1 mb-2.5">
+                                          {client.email && (
+                                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+                                              <Mail className="h-3 w-3 shrink-0" />
+                                              <span className="truncate">{client.email}</span>
                                             </div>
                                           )}
-                                        </div>
-
-                                        {/* Telefone + email */}
-                                        <div className="flex flex-col gap-1 text-xs text-muted-foreground overflow-hidden">
                                           {client.phone && (
-                                            <div className="flex items-center gap-1 min-w-0">
+                                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
                                               <Phone className="h-3 w-3 shrink-0" />
                                               <span className="truncate">{client.phone}</span>
                                             </div>
                                           )}
-                                          {client.email && (
-                                            <div className="flex items-center gap-1 min-w-0">
-                                              <Mail className="h-3 w-3 shrink-0" />
-                                              <span className="truncate">
-                                                {client.email.split("@")[0]}
-                                              </span>
-                                            </div>
-                                          )}
                                         </div>
 
-                                        {/* ── Botão WhatsApp com mensagem ─── */}
-                                        {client.phone && (
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="w-full text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setSelectedClient(client);
-                                              setClientDialogOpen(true);
-                                            }}
-                                          >
-                                            <svg
-                                              xmlns="http://www.w3.org/2000/svg"
-                                              width="14"
-                                              height="14"
-                                              viewBox="0 0 24 24"
-                                              fill="currentColor"
-                                              className="mr-1.5 shrink-0"
-                                            >
-                                              <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
-                                              <path d="M9 10a1 1 0 0 0 1 1c1 0 2.5-2.5 2.5-2.5s1.5 2.5 2.5 2.5 1-1 1-1v3c0 1-1 2-3 2s-3-1-3-2v-3" />
-                                            </svg>
-                                            Enviar mensagem
-                                          </Button>
-                                        )}
+                                        {/* Rodapé: valor + tags */}
+                                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100">
+                                          <span className={`text-xs font-bold ${stage.key === "contrato_perdido" ? "text-red-600" : "text-green-600"}`}>
+                                            {formatCurrency(client.contractValue)}
+                                          </span>
+                                          <div className="flex items-center gap-1 flex-wrap justify-end">
+                                            {client.weddingDate && (
+                                              <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground bg-gray-100 rounded px-1.5 py-0.5">
+                                                <Calendar className="h-2.5 w-2.5" />
+                                                {formatDate(client.weddingDate)}
+                                              </span>
+                                            )}
+                                            <span className={`text-xs rounded px-1.5 py-0.5 font-medium ${stage.key === "contrato_perdido" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
+                                              {client.eventCategory}
+                                            </span>
+                                          </div>
+                                        </div>
                                       </div>
                                     </div>
                                   )}

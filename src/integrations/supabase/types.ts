@@ -112,6 +112,7 @@ export type Database = {
       business_fixed_expenses: {
         Row: {
           amount: number
+          category: string | null
           created_at: string
           description: string
           due_date: number | null
@@ -122,6 +123,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          category?: string | null
           created_at?: string
           description: string
           due_date?: number | null
@@ -132,6 +134,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          category?: string | null
           created_at?: string
           description?: string
           due_date?: number | null

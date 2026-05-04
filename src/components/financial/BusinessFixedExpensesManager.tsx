@@ -151,7 +151,7 @@ export function BusinessFixedExpensesManager() {
               </div>
               <div>
                 <Label>Categoria</Label>
-                <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v as ExpenseCategory }))}>
+                <Select value={form.category || undefined} onValueChange={v => setForm(f => ({ ...f, category: v as ExpenseCategory }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>

@@ -68,6 +68,7 @@ const FIELD_MAP: Record<string, string> = {
   albumClientApproved: 'album_client_approved',
   albumOrdered: 'album_ordered',
   storageLocation: 'storage_location',
+  semEntregaFisica: 'sem_entrega_fisica',
   leadSource: 'lead_source',
   preWeddingScheduled: 'pre_wedding_scheduled',
   preWeddingCompleted: 'pre_wedding_completed',

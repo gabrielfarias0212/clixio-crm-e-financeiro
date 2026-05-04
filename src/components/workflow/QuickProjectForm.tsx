@@ -31,6 +31,10 @@ const quickProjectSchema = z.object({
   email: z.string().email({ message: "Email inválido." }).optional().or(z.literal("")),
   weddingDate: z.string().nullable(),
   eventCategory: z.string().default("Casamento"),
+  eventLocation: z.string().optional(),
+  weddingStartTime: z.string().optional(),
+  weddingEndTime: z.string().optional(),
+  contractValue: z.number().optional().default(0),
   notes: z.string().optional(),
   linkedClientId: z.string().optional(),
   storageLocation: z.string().optional(),
@@ -63,6 +67,10 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
       email: "",
       weddingDate: null,
       eventCategory: "Casamento",
+      eventLocation: "",
+      weddingStartTime: "",
+      weddingEndTime: "",
+      contractValue: 0,
       notes: "",
       linkedClientId: "",
       storageLocation: "",
@@ -80,7 +88,11 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
         form.setValue("phone", selectedClient.phone || "");
         form.setValue("email", selectedClient.email || "");
         form.setValue("eventCategory", selectedClient.eventCategory || "Casamento");
+        form.setValue("eventLocation", selectedClient.eventLocation || "");
         form.setValue("storageLocation", selectedClient.storageLocation || "");
+        form.setValue("weddingStartTime", selectedClient.weddingStartTime || "");
+        form.setValue("weddingEndTime", selectedClient.weddingEndTime || "");
+        form.setValue("contractValue", selectedClient.contractValue || 0);
         if (selectedClient.weddingDate) {
           form.setValue("weddingDate", selectedClient.weddingDate);
         }
@@ -99,10 +111,13 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
         phone: data.phone || "",
         weddingDate: data.weddingDate,
         eventCategory: data.eventCategory as EventCategory,
+        eventLocation: data.eventLocation || "",
+        weddingStartTime: data.weddingStartTime || "",
+        weddingEndTime: data.weddingEndTime || "",
         notes: data.notes || "",
         status: "fechado" as const,
         nextAction: "editar" as const,
-        contractValue: 0,
+        contractValue: data.contractValue || 0,
         downPayment: 0,
         salesFunnelStage: "contrato_fechado" as const,
         leadSource: "Projeto Direto",
@@ -288,6 +303,82 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
             />
           </div>
 
+          {/* Dados do Evento */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="eventLocation"
+              render={({ field }) => (
+                <FormItem className="md:col-span-3">
+                  <FormLabel className="text-foreground">Local do Evento</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Ex: Espaço XYZ, Fazenda ABC..."
+                      {...field}
+                      className="focus:ring-2 focus:ring-primary/20 border-border"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="weddingStartTime"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-foreground">Horário Início</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="time"
+                      {...field}
+                      className="focus:ring-2 focus:ring-primary/20 border-border"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="weddingEndTime"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-foreground">Horário Fim</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="time"
+                      {...field}
+                      className="focus:ring-2 focus:ring-primary/20 border-border"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="contractValue"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-foreground">Valor do Contrato</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number"
+                      placeholder="0,00"
+                      {...field}
+                      onChange={e => field.onChange(Number(e.target.value))}
+                      className="focus:ring-2 focus:ring-primary/20 border-border"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           <FormField
             control={form.control}
             name="storageLocation"

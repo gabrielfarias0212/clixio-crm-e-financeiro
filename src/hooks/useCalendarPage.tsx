@@ -16,6 +16,7 @@ export function useCalendarPage(clients: Client[]) {
     const result: Record<string, Client[]> = {};
     
     clients.forEach(client => {
+      if (client.status === "contrato_perdido") return;
       if (!client.weddingDate) return;
       const dateObj = stringToDate(client.weddingDate);
       if (!dateObj) return;

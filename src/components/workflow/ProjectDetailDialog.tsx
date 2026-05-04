@@ -39,6 +39,7 @@ import {
   DollarSign,
   StickyNote,
   BookMarked,
+  XCircle,
 } from "lucide-react";
 import { formatDate } from "@/utils/dates";
 import { Link } from "react-router-dom";
@@ -92,6 +93,15 @@ const ALBUM_STEPS: WorkflowStep[] = [
 
 export function ProjectDetailDialog({ client, isOpen, onClose }: ProjectDetailDialogProps) {
   const { updateClient } = useClients();
+  const [confirmCancel, setConfirmCancel] = useState(false);
+
+  const handleCancelContract = async () => {
+    if (!localClient) return;
+    await updateClient(localClient.id, { status: "contrato_perdido" });
+    toast.success("Contrato cancelado. Projeto removido do fluxo e do calendário.");
+    setConfirmCancel(false);
+    onClose();
+  };
   const [localClient, setLocalClient] = useState<Client | null>(client);
   const [storageLocation, setStorageLocation] = useState(client?.storageLocation || "");
   const [isSaving, setIsSaving] = useState(false);
@@ -332,6 +342,45 @@ export function ProjectDetailDialog({ client, isOpen, onClose }: ProjectDetailDi
               Ver Página Completa do Cliente
             </Button>
           </Link>
+
+          <Separator />
+
+          {/* Cancelar contrato */}
+          {!confirmCancel ? (
+            <Button
+              variant="ghost"
+              className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={() => setConfirmCancel(true)}
+            >
+              <XCircle className="h-4 w-4 mr-2" />
+              Cancelar Contrato
+            </Button>
+          ) : (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 space-y-2">
+              <p className="text-sm font-medium text-red-700">Confirmar cancelamento?</p>
+              <p className="text-xs text-red-600">
+                O projeto será marcado como contrato perdido e removido do calendário e do fluxo de trabalho.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={handleCancelContract}
+                >
+                  Sim, cancelar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setConfirmCancel(false)}
+                >
+                  Voltar
+                </Button>
+              </div>
+            </div>
+          )}
 
         </div>
       </DialogContent>

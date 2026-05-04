@@ -250,7 +250,8 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         updates.inEditing = true;
         updates.linkReady = true;
         updates.linkSent = true;
-        updates.boxDelivered = true;
+        // Só marca entrega física se o projeto não for somente digital
+        if (!client.semEntregaFisica) updates.boxDelivered = true;
         updates.albumApprovedDelivered = true;
         updates.status = 'projeto_finalizado';
         // Set nextAction to "nenhuma" when project is finalized

@@ -88,7 +88,11 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
         form.setValue("phone", selectedClient.phone || "");
         form.setValue("email", selectedClient.email || "");
         form.setValue("eventCategory", selectedClient.eventCategory || "Casamento");
+        form.setValue("eventLocation", selectedClient.eventLocation || "");
         form.setValue("storageLocation", selectedClient.storageLocation || "");
+        form.setValue("weddingStartTime", selectedClient.weddingStartTime || "");
+        form.setValue("weddingEndTime", selectedClient.weddingEndTime || "");
+        form.setValue("contractValue", selectedClient.contractValue || 0);
         if (selectedClient.weddingDate) {
           form.setValue("weddingDate", selectedClient.weddingDate);
         }

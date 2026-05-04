@@ -164,30 +164,30 @@ export function useAlerts(clients: Client[] = []) {
     // Combinar alertas de edição de clientes e eventos do calendário
     const allEditTasks = [...editTasks, ...calendarEditingAlerts];
     
-    // Deliver tasks — clientes com link enviado mas entrega física pendente
+    // Deliver tasks — baseado no fluxo de trabalho: link enviado mas entrega física pendente
     const deliverTasks: AlertItem[] = clients
       .filter(client =>
-        (client.nextAction === "entregar") ||
-        (client.linkSent === true && client.boxDelivered !== true && client.weddingDate &&
-          new Date(client.weddingDate) <= now)
+        client.linkSent === true && client.boxDelivered !== true &&
+        client.status !== "projeto_finalizado"
       )
-      // Remover duplicatas caso nextAction e linkSent coincidam no mesmo cliente
-      .filter((client, index, arr) => arr.findIndex(c => c.id === client.id) === index)
+      .sort((a, b) => {
+        // Ordenar do evento mais antigo para o mais recente
+        const da = a.weddingDate ? new Date(a.weddingDate).getTime() : 0;
+        const db = b.weddingDate ? new Date(b.weddingDate).getTime() : 0;
+        return da - db;
+      })
       .map(client => {
         let description = `Cliente: ${client.name}`;
         let urgency: "high" | "medium" | "low" = "medium";
         
-        // Calculate days since wedding if wedding date exists
         if (client.weddingDate) {
           const weddingDate = stringToDate(client.weddingDate);
           if (weddingDate) {
             const daysSinceWedding = differenceInDays(now, weddingDate);
             
             if (daysSinceWedding > 0) {
-              // Wedding already happened
-              description += ` - Casamento foi há ${daysSinceWedding} ${daysSinceWedding === 1 ? 'dia' : 'dias'}`;
+              description += ` - Evento foi há ${daysSinceWedding} ${daysSinceWedding === 1 ? 'dia' : 'dias'}`;
               
-              // Adjust urgency based on days passed
               if (daysSinceWedding > 30) {
                 urgency = "high";
               } else if (daysSinceWedding > 15) {
@@ -196,9 +196,8 @@ export function useAlerts(clients: Client[] = []) {
                 urgency = "low";
               }
             } else {
-              // Wedding in the future
               const daysUntilWedding = Math.abs(daysSinceWedding);
-              description += ` - Casamento em ${daysUntilWedding} ${daysUntilWedding === 1 ? 'dia' : 'dias'}`;
+              description += ` - Evento em ${daysUntilWedding} ${daysUntilWedding === 1 ? 'dia' : 'dias'}`;
               urgency = "low";
             }
           }
@@ -206,7 +205,7 @@ export function useAlerts(clients: Client[] = []) {
         
         return {
           type: "task" as const,
-          title: `Ação pendente: ${client.nextAction}`,
+          title: `Entrega pendente`,
           description,
           client,
           date: now,

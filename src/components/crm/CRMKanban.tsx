@@ -17,6 +17,7 @@ import { ContractClosedDialog } from "@/components/ContractClosedDialog";
 import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
 import { WhatsAppMessageDialog } from "@/components/crm/WhatsAppMessageDialog";
+import { CRMClientDialog } from "@/components/crm/CRMClientDialog";
 
 interface CRMKanbanProps {
   clients: Client[];
@@ -92,6 +93,8 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
   // Estado do dialog de mensagem
   const [messageDialogClient, setMessageDialogClient] = useState<Client | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [clientDialogOpen, setClientDialogOpen] = useState(false);
 
   const getClientsInStage = (stage: SalesFunnelStage) =>
     clients.filter((c) => c.salesFunnelStage === stage);
@@ -224,7 +227,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                       ref={provided.innerRef}
                                       {...provided.draggableProps}
                                       {...provided.dragHandleProps}
-                                      className={`bg-white rounded-lg shadow-sm border hover:shadow-md transition-all duration-200 cursor-move ${
+                                      className={`bg-white rounded-lg shadow-sm border hover:shadow-md transition-all duration-200 cursor-pointer ${
                                         snapshot.isDragging
                                           ? "shadow-lg rotate-1 scale-105"
                                           : ""
@@ -233,6 +236,12 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                           ? "border-red-200 bg-red-50"
                                           : "border-gray-200"
                                       }`}
+                                      onClick={() => {
+                                        if (!snapshot.isDragging) {
+                                          setSelectedClient(client);
+                                          setClientDialogOpen(true);
+                                        }
+                                      }}
                                     >
                                       <div className="p-4 space-y-3">
                                         {/* Badge cadastro pendente */}
@@ -332,7 +341,8 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                             className="w-full text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300"
                                             onClick={(e) => {
                                               e.stopPropagation();
-                                              setMessageDialogClient(client);
+                                              setSelectedClient(client);
+                                              setClientDialogOpen(true);
                                             }}
                                           >
                                             <svg
@@ -461,7 +471,14 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
         />
       )}
 
-      {/* Dialog de mensagem WhatsApp */}
+      {/* Dialog de detalhes do cliente */}
+      <CRMClientDialog
+        client={selectedClient}
+        open={clientDialogOpen}
+        onOpenChange={(open) => { setClientDialogOpen(open); if (!open) setSelectedClient(null); }}
+      />
+
+      {/* Dialog de mensagem WhatsApp (legado, mantido para compatibilidade) */}
       {messageDialogClient && (
         <WhatsAppMessageDialog
           open={!!messageDialogClient}

@@ -142,6 +142,7 @@ export interface Client {
   salesFunnelStage: SalesFunnelStage;
   leadSource?: string;
   storageLocation?: string;
+  semEntregaFisica?: boolean;  // Entrega somente digital (sem pen drive)
 
   payments: Payment[];
   createdAt: string;

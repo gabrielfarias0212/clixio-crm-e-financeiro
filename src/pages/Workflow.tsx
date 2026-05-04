@@ -359,6 +359,7 @@ export default function WorkflowPage() {
   const [filterMonth, setFilterMonth] = useState<number | "all">("all");
   const [filterYear, setFilterYear] = useState<number | "all">("all");
   const [filterStage, setFilterStage] = useState<string>("all");
+  const [showQuickForm, setShowQuickForm] = useState(false);
 
   const workflowClients = useMemo(() => {
     const today = new Date();

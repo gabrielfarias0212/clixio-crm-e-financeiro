@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Camera, HardDrive, Scissors, Sliders, Link, Package,
-  BookOpen, AlertTriangle, CheckCircle2, Clock, Search, ChevronRight
+  BookOpen, AlertTriangle, CheckCircle2, Clock, Search, ChevronRight, Plus
 } from "lucide-react";
 import { toast } from "sonner";
 

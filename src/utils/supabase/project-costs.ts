@@ -3,20 +3,25 @@ import { supabase } from "@/integrations/supabase/client";
 export interface ProjectCost {
   id: string;
   client_id: string;
-  category: "assistente" | "combustivel" | "alimentacao" | "equipamento" | "deslocamento" | "outro";
+  category: string;
   description: string;
   amount: number;
   date: string;
+  supplier?: string;
   created_at?: string;
 }
 
-export const COST_CATEGORIES: { value: ProjectCost["category"]; label: string; emoji: string }[] = [
-  { value: "assistente",   label: "Assistente",    emoji: "👤" },
-  { value: "combustivel",  label: "Combustível",   emoji: "⛽" },
-  { value: "alimentacao",  label: "Alimentação",   emoji: "🍽️" },
-  { value: "equipamento",  label: "Equipamento",   emoji: "📷" },
-  { value: "deslocamento", label: "Deslocamento",  emoji: "🚗" },
-  { value: "outro",        label: "Outro",         emoji: "📌" },
+export const COST_CATEGORIES: { value: string; label: string; emoji: string; needsSupplier?: boolean }[] = [
+  { value: "assistente",      label: "Assistente",       emoji: "👤" },
+  { value: "album",           label: "Álbum",            emoji: "📘", needsSupplier: true },
+  { value: "impressao",       label: "Impressão",        emoji: "🖨️", needsSupplier: true },
+  { value: "moldura",         label: "Moldura / Quadro", emoji: "🖼️", needsSupplier: true },
+  { value: "edicao_externa",  label: "Edição externa",   emoji: "✂️", needsSupplier: true },
+  { value: "combustivel",     label: "Combustível",      emoji: "⛽" },
+  { value: "alimentacao",     label: "Alimentação",      emoji: "🍽️" },
+  { value: "equipamento",     label: "Equipamento",      emoji: "📷" },
+  { value: "deslocamento",    label: "Deslocamento",     emoji: "🚗" },
+  { value: "outro",           label: "Outro",            emoji: "📌" },
 ];
 
 export async function fetchProjectCosts(clientId: string): Promise<ProjectCost[]> {

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Client, WorkflowStage } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
@@ -21,7 +22,8 @@ import {
   Users, 
   Save,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Truck
 } from "lucide-react";
 import { formatDate } from "@/utils/dates";
 import { Link } from "react-router-dom";
@@ -50,14 +52,28 @@ const workflowStageLabels: Record<WorkflowStage, string> = {
 export function ProjectDetailDialog({ client, isOpen, onClose }: ProjectDetailDialogProps) {
   const { updateClient } = useClients();
   const [storageLocation, setStorageLocation] = useState(client?.storageLocation || "");
+  const [semEntregaFisica, setSemEntregaFisica] = useState(client?.semEntregaFisica ?? false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Update local state when client changes
   React.useEffect(() => {
     if (client) {
       setStorageLocation(client.storageLocation || "");
+      setSemEntregaFisica(client.semEntregaFisica ?? false);
     }
   }, [client]);
+
+  const handleToggleSemEntregaFisica = async (value: boolean) => {
+    if (!client) return;
+    setSemEntregaFisica(value);
+    try {
+      await updateClient(client.id, { semEntregaFisica: value });
+      toast.success(value ? "Marcado como entrega digital." : "Entrega física reativada.");
+    } catch (error) {
+      setSemEntregaFisica(!value);
+      toast.error("Erro ao atualizar entrega física");
+    }
+  };
 
   const handleSaveStorageLocation = async () => {
     if (!client) return;
@@ -188,6 +204,21 @@ export function ProjectDetailDialog({ client, isOpen, onClose }: ProjectDetailDi
             <p className="text-xs text-muted-foreground">
               Informe onde o projeto está armazenado (SSD, HD, etc.)
             </p>
+          </div>
+
+          {/* Entrega física */}
+          <div className="flex items-center justify-between border-t pt-4">
+            <div className="flex items-center gap-2 text-sm">
+              <Truck className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="font-medium">Sem entrega física</p>
+                <p className="text-xs text-muted-foreground">Entrega somente digital</p>
+              </div>
+            </div>
+            <Switch
+              checked={semEntregaFisica}
+              onCheckedChange={handleToggleSemEntregaFisica}
+            />
           </div>
 
           {/* Link para página do cliente */}

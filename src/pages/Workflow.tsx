@@ -74,7 +74,8 @@ function getClientField(client: any, field: string): boolean {
 }
 
 function calcProgress(client: any) {
-  const steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
+  let steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
+  if (client.semEntregaFisica) steps = steps.filter(s => s.field !== 'boxDelivered');
   const done = steps.filter(s => getClientField(client, s.field as string)).length;
   const total = steps.length;
   const pct = Math.round((done / total) * 100);
@@ -85,7 +86,8 @@ function calcProgress(client: any) {
 // Retorna a chave da etapa atual (próxima pendente) de um cliente
 function getCurrentStageKey(client: any): string {
   if (client.status === "projeto_finalizado") return "finalizado";
-  const steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
+  let steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
+  if (client.semEntregaFisica) steps = steps.filter(s => s.field !== 'boxDelivered');
   const current = steps.find(s => !getClientField(client, s.field as string));
   return current?.key ?? "finalizado";
 }
@@ -114,7 +116,8 @@ function ProjectCard({ client, onToggleStep, onClick }: {
   const { done, total, pct, currentStep } = calcProgress(client);
   const days = daysSince(client.weddingDate);
   const isFinished = client.status === "projeto_finalizado";
-  const steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
+  let steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
+  if (client.semEntregaFisica) steps = steps.filter(s => s.field !== 'boxDelivered');
 
   return (
     <div

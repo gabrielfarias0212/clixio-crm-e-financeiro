@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { isWorkDelivered, isFullyPaid } from "@/utils/clientUtils";
-import { CheckCircle, Package } from "lucide-react";
+import { CheckCircle, Package, Truck } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 interface DeliveryWorkflowProps {
   client: Client;
@@ -108,7 +109,10 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
 
   // Calculate progress
   const needsPreWedding = client.hasPreWedding !== false;
-  const totalSteps = needsPreWedding ? 11 : 8; // Reduce total steps if no pre-wedding is needed
+  const semEntregaFisica = client.semEntregaFisica ?? false;
+  // totalSteps: pré-wedding (3) + etapas principais (8), descontando entrega física se digital
+  const baseSteps = semEntregaFisica ? 7 : 8;
+  const totalSteps = needsPreWedding ? baseSteps + 3 : baseSteps;
   
   // Count completed steps, excluding pre-wedding steps if not needed
   const completedSteps = [
@@ -124,7 +128,8 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
     client.curationCompleted,
     client.inEditing,
     client.linkSent,
-    client.boxDelivered,
+    // Entrega física só conta se não for digital
+    ...(semEntregaFisica ? [] : [client.boxDelivered]),
     client.albumDesigned,
     client.albumApprovedDelivered
   ].filter(Boolean).length;
@@ -235,12 +240,29 @@ export function DeliveryWorkflow({ client: initialClient }: DeliveryWorkflowProp
             field="link_sent"
           />
           
-          <CheckboxItem
-            label="Caixinha entregue? (se aplicável)"
-            checked={client.boxDelivered}
-            onChange={(checked) => updateWorkflowStatus('boxDelivered', checked)}
-            field="box_delivered"
-          />
+          {!semEntregaFisica && (
+            <CheckboxItem
+              label="Caixinha entregue? (se aplicável)"
+              checked={client.boxDelivered}
+              onChange={(checked) => updateWorkflowStatus('boxDelivered', checked)}
+              field="box_delivered"
+            />
+          )}
+
+          {/* Toggle: entrega somente digital */}
+          <div className="flex items-center justify-between p-2 mt-2 rounded border border-dashed border-gray-200">
+            <div className="flex items-center gap-2 text-sm">
+              <Truck className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="font-medium text-sm">Sem entrega física</p>
+                <p className="text-xs text-muted-foreground">Entrega somente digital</p>
+              </div>
+            </div>
+            <Switch
+              checked={semEntregaFisica}
+              onCheckedChange={(value) => updateWorkflowStatus('semEntregaFisica', value)}
+            />
+          </div>
           
           <CheckboxItem
             label="Album diagramado? (se aplicável)"

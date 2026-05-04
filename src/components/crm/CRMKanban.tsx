@@ -176,15 +176,15 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
     <>
       <div className="space-y-6">
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="w-full overflow-x-auto pb-4">
-            <div className="flex gap-6 min-w-max">
+          <div className="w-full">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
               {funnelStages.map((stage) => {
                 const clientsInStage = getClientsInStage(stage.key);
                 const totalValue = getTotalValue(clientsInStage);
                 const Icon = stage.icon;
 
                 return (
-                  <div key={stage.key} className="flex-none w-80">
+                  <div key={stage.key} className="min-w-0">
                     <Card className={`h-full border-t-4 ${stage.borderColor}`}>
                       <CardHeader className="pb-4">
                         <div className="flex items-center justify-between">
@@ -218,7 +218,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                             <div
                               ref={provided.innerRef}
                               {...provided.droppableProps}
-                              className={`min-h-40 max-h-96 overflow-y-auto space-y-3 p-3 rounded-lg transition-all duration-200 ${
+                              className={`min-h-40 overflow-y-auto space-y-3 p-3 rounded-lg transition-all duration-200 ${
                                 snapshot.isDraggingOver
                                   ? `${stage.bgColor} border-2 ${stage.borderColor} border-dashed`
                                   : "bg-gray-50/50"

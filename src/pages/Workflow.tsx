@@ -365,15 +365,12 @@ export default function WorkflowPage() {
   const [showQuickForm, setShowQuickForm] = useState(false);
 
   const workflowClients = useMemo(() => {
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
     return clients.filter(c => {
+      // Finalizado sempre aparece
       if (c.status === "projeto_finalizado") return true;
-      if (c.status !== "fechado") return false;
-      if (c.weddingPhotographed) return true;
-      if (!c.weddingDate) return false;
-      const d = parseDate(c.weddingDate);
-      return d ? d <= today : false;
+      // Apenas clientes com contrato fechado entram no fluxo
+      // (inclui eventos futuros — aparecem na coluna Evento/Ensaio)
+      return c.status === "fechado";
     });
   }, [clients]);
 

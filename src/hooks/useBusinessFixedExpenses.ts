@@ -5,10 +5,13 @@ import {
   createBusinessFixedExpense,
   updateBusinessFixedExpense,
   deleteBusinessFixedExpense,
-  BusinessFixedExpense
+  BusinessFixedExpense,
+  EXPENSE_CATEGORIES,
+  ExpenseCategory
 } from "@/utils/supabase/business-fixed-expenses";
 
-export type { BusinessFixedExpense };
+export type { BusinessFixedExpense, ExpenseCategory };
+export { EXPENSE_CATEGORIES };
 
 export function useBusinessFixedExpenses() {
   const [expenses, setExpenses] = useState<BusinessFixedExpense[]>([]);
@@ -33,7 +36,7 @@ export function useBusinessFixedExpenses() {
     loadExpenses();
   }, [loadExpenses]);
 
-  const addExpense = async (description: string, amount: number, dueDate: number | null) => {
+  const addExpense = async (description: string, amount: number, dueDate: number | null, category: string | null = null) => {
     if (!description.trim()) {
       toast.error('Descrição é obrigatória');
       return false;
@@ -44,7 +47,7 @@ export function useBusinessFixedExpenses() {
     }
 
     try {
-      const newExpense = await createBusinessFixedExpense(description.trim(), amount, dueDate);
+      const newExpense = await createBusinessFixedExpense(description.trim(), amount, dueDate, category as any);
       setExpenses(prev => [...prev, newExpense]);
       toast.success('Despesa fixa cadastrada com sucesso!');
       return true;

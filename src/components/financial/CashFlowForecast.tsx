@@ -10,9 +10,8 @@ import { ptBR } from "date-fns/locale";
 const fmt = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
-const MEI_DAS = 75.9;
 const MONTHS_AHEAD = 6;
-const DAYS_BEFORE_EVENT = 7; // fallback: vencimento 7 dias antes do evento
+const DAYS_BEFORE_EVENT = 7;
 
 interface ReceiptItem {
   clientName: string;
@@ -52,7 +51,7 @@ export function CashFlowForecast() {
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
 
   const { months, totalPending, overdueAmount, fallbackCount } = useMemo(() => {
-    const fixedPerMonth = getTotalMonthlyExpenses() + MEI_DAS;
+    const fixedPerMonth = getTotalMonthlyExpenses();
     const now = new Date();
     const today = startOfMonth(now);
 
@@ -177,7 +176,7 @@ export function CashFlowForecast() {
               <span className="text-xs text-muted-foreground">Despesas fixas/mês</span>
             </div>
             <p className="text-xl font-bold">{fmt(months[0]?.fixedExpenses ?? 0)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">incl. DAS MEI</p>
+            <p className="text-xs text-muted-foreground mt-0.5">despesas ativas cadastradas</p>
           </CardContent>
         </Card>
       </div>
@@ -298,7 +297,7 @@ export function CashFlowForecast() {
       </div>
 
       <p className="text-xs text-muted-foreground text-center">
-        Parcelas sem vencimento usam data do evento − {DAYS_BEFORE_EVENT} dias como estimativa · Despesas fixas incluem DAS MEI (R$ 75,90)
+        Parcelas sem vencimento usam data do evento − {DAYS_BEFORE_EVENT} dias como estimativa · Despesas fixas baseadas no cadastro de despesas fixas
       </p>
     </div>
   );

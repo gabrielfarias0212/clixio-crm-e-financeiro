@@ -11,8 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 const fmt = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
-const MEI_DAS = 75.9; // DAS fixo MEI fotografia
-
 interface ProjectCostRow {
   client_id: string;
   amount: number;
@@ -41,7 +39,7 @@ export function BreakEvenAnalysis() {
 
   const analysis = useMemo(() => {
     // 1. Custos fixos mensais
-    const fixedCosts = getTotalMonthlyExpenses() + MEI_DAS;
+    const fixedCosts = getTotalMonthlyExpenses();
 
     // 2. Ticket médio por evento
     const avgTicket =
@@ -208,9 +206,7 @@ export function BreakEvenAnalysis() {
               <span className="text-xs text-muted-foreground">Custos Fixos/mês</span>
             </div>
             <p className="text-lg font-bold">{fmt(analysis.fixedCosts)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              incl. DAS MEI {fmt(MEI_DAS)}
-            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">despesas fixas cadastradas</p>
           </CardContent>
         </Card>
 

@@ -303,6 +303,82 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
             />
           </div>
 
+          {/* Dados do Evento */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="eventLocation"
+              render={({ field }) => (
+                <FormItem className="md:col-span-3">
+                  <FormLabel className="text-foreground">Local do Evento</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Ex: Espaço XYZ, Fazenda ABC..."
+                      {...field}
+                      className="focus:ring-2 focus:ring-primary/20 border-border"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="weddingStartTime"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-foreground">Horário Início</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="time"
+                      {...field}
+                      className="focus:ring-2 focus:ring-primary/20 border-border"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="weddingEndTime"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-foreground">Horário Fim</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="time"
+                      {...field}
+                      className="focus:ring-2 focus:ring-primary/20 border-border"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="contractValue"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-foreground">Valor do Contrato</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number"
+                      placeholder="0,00"
+                      {...field}
+                      onChange={e => field.onChange(Number(e.target.value))}
+                      className="focus:ring-2 focus:ring-primary/20 border-border"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           <FormField
             control={form.control}
             name="storageLocation"

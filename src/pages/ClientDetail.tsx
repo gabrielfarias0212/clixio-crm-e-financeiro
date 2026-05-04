@@ -11,6 +11,7 @@ import { ChevronLeft, Edit } from "lucide-react";
 import { useClients } from "@/contexts/ClientsContext";
 import { Client } from "@/utils/types";
 import { DeleteClientDialog } from "@/components/client-detail/DeleteClientDialog";
+import { ProjectCosts } from "@/components/client-detail/ProjectCosts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientDetails } from "@/components/client-detail/ClientDetails";
 import { DeliveryWorkflow } from "@/components/client-detail/DeliveryWorkflow";
@@ -114,6 +115,7 @@ export default function ClientDetail() {
             {hasDeliveryWorkflow && (
               <TabsTrigger value="workflow">Fluxo de Entrega</TabsTrigger>
             )}
+            <TabsTrigger value="custos">Custos do Projeto</TabsTrigger>
           </TabsList>
           
           <TabsContent value="details">
@@ -125,6 +127,9 @@ export default function ClientDetail() {
               <DeliveryWorkflow client={client} />
             </TabsContent>
           )}
+          <TabsContent value="custos">
+            <ProjectCosts client={client} />
+          </TabsContent>
         </Tabs>
       </div>
     </Layout>

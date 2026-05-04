@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -14,7 +13,6 @@ import { DeleteClientDialog } from "@/components/client-detail/DeleteClientDialo
 import { ProjectCosts } from "@/components/client-detail/ProjectCosts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientDetails } from "@/components/client-detail/ClientDetails";
-import { DeliveryWorkflow } from "@/components/client-detail/DeliveryWorkflow";
 
 export default function ClientDetail() {
   const { id } = useParams();
@@ -31,7 +29,6 @@ export default function ClientDetail() {
       if (foundClient) {
         setClient(foundClient);
       } else {
-        // Cliente não encontrado, redirecione para a lista
         navigate("/clients");
       }
     }
@@ -47,12 +44,10 @@ export default function ClientDetail() {
     if (!id) return;
     const success = await removeClient(id);
     if (success) {
-      // Direcionar para lista de clientes após excluir
       navigate("/clients");
     }
   };
   
-  // Function to update the client when payments are modified
   const handleClientUpdate = (updatedClient: Client) => {
     setClient(updatedClient);
   };
@@ -68,7 +63,6 @@ export default function ClientDetail() {
   }
 
   const isDelivered = client.status === "projeto_finalizado";
-  const hasDeliveryWorkflow = client.eventCategory === "Casamento" || client.eventCategory === "Aniversario";
   
   return (
     <Layout>
@@ -99,7 +93,6 @@ export default function ClientDetail() {
           </div>
         </div>
         
-        {/* Status e Ação */}
         <div className="flex flex-wrap gap-2 mb-6">
           <StatusBadge status={client.status} />
           <ActionChip action={client.nextAction} />
@@ -108,25 +101,16 @@ export default function ClientDetail() {
           </Badge>
         </div>
 
-        {/* Tabs for client details and delivery workflow */}
         <Tabs defaultValue="details" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="details">Informações</TabsTrigger>
-            {hasDeliveryWorkflow && (
-              <TabsTrigger value="workflow">Fluxo de Entrega</TabsTrigger>
-            )}
             <TabsTrigger value="custos">Custos do Projeto</TabsTrigger>
           </TabsList>
           
           <TabsContent value="details">
             <ClientDetails client={client} onUpdate={handleClientUpdate} />
           </TabsContent>
-          
-          {hasDeliveryWorkflow && (
-            <TabsContent value="workflow">
-              <DeliveryWorkflow client={client} />
-            </TabsContent>
-          )}
+
           <TabsContent value="custos">
             <ProjectCosts client={client} />
           </TabsContent>

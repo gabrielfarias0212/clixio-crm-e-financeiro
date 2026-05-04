@@ -1,11 +1,10 @@
 import { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, CalendarDays, DollarSign, AlertCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, CalendarDays, DollarSign, AlertCircle, Info } from "lucide-react";
 import { useClients } from "@/contexts/ClientsContext";
 import { useBusinessFixedExpenses } from "@/hooks/useBusinessFixedExpenses";
-import { addMonths, format, startOfMonth, parseISO } from "date-fns";
+import { addMonths, format, startOfMonth, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const fmt = (v: number) =>
@@ -13,27 +12,28 @@ const fmt = (v: number) =>
 
 const MEI_DAS = 75.9;
 const MONTHS_AHEAD = 6;
-
-interface MonthData {
-  label: string;       // "Mai 2026"
-  monthKey: string;    // "2026-05"
-  receipts: ReceiptItem[];
-  fixedExpenses: number;
-  totalReceipts: number;
-  netFlow: number;     // receipts - fixed expenses
-}
+const DAYS_BEFORE_EVENT = 7; // fallback: vencimento 7 dias antes do evento
 
 interface ReceiptItem {
   clientName: string;
-  clientId: string;
   amount: number;
-  dueDate: string;     // DD/MM/YYYY
+  dueDate: string;      // DD/MM/YYYY (real ou estimada)
   notes?: string;
   status: string;
+  isFallback: boolean;  // true = data estimada pelo evento
+}
+
+interface MonthData {
+  label: string;
+  monthKey: string;
+  receipts: ReceiptItem[];
+  fixedExpenses: number;
+  totalReceipts: number;
+  netFlow: number;
 }
 
 /** Parse DD/MM/YYYY → Date */
-function parseBR(dateStr: string): Date | null {
+function parseBR(dateStr: string | null | undefined): Date | null {
   if (!dateStr) return null;
   const parts = dateStr.split("/");
   if (parts.length !== 3) return null;
@@ -42,17 +42,20 @@ function parseBR(dateStr: string): Date | null {
   return new Date(y, m - 1, d);
 }
 
+function formatBR(date: Date): string {
+  return format(date, "dd/MM/yyyy");
+}
+
 export function CashFlowForecast() {
   const { clients } = useClients();
   const { getTotalMonthlyExpenses } = useBusinessFixedExpenses();
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
 
-  const { months, totalPending, overdueAmount } = useMemo(() => {
+  const { months, totalPending, overdueAmount, fallbackCount } = useMemo(() => {
     const fixedPerMonth = getTotalMonthlyExpenses() + MEI_DAS;
     const now = new Date();
     const today = startOfMonth(now);
 
-    // Build 6-month buckets (current + 5 ahead)
     const buckets: Record<string, MonthData> = {};
     for (let i = 0; i < MONTHS_AHEAD; i++) {
       const d = addMonths(today, i);
@@ -69,49 +72,58 @@ export function CashFlowForecast() {
 
     let totalPending = 0;
     let overdueAmount = 0;
+    let fallbackCount = 0;
 
     clients.forEach((client) => {
       if (!client.payments?.length) return;
+
+      // Data do evento como fallback
+      const eventDate = parseBR(client.weddingDate);
+      const fallbackDate = eventDate ? subDays(eventDate, DAYS_BEFORE_EVENT) : null;
+
       client.payments.forEach((payment) => {
         if (payment.payment_status === "pago") return;
-        if (!payment.due_date) return;
 
-        const date = parseBR(payment.due_date);
-        if (!date) return;
+        // Determina a data de vencimento: real ou fallback
+        const realDate = parseBR(payment.due_date);
+        const isFallback = !realDate && !!fallbackDate;
+        const dueDate = realDate ?? fallbackDate;
 
-        const key = format(date, "yyyy-MM");
+        if (!dueDate) return; // sem data de evento nem due_date → ignora
+
+        if (isFallback) fallbackCount++;
+
         totalPending += payment.amount;
+        if (dueDate < now) overdueAmount += payment.amount;
 
-        // Overdue = due_date before today
-        if (date < now) {
-          overdueAmount += payment.amount;
-        }
+        const key = format(dueDate, "yyyy-MM");
+        if (!buckets[key]) return; // fora da janela de 6 meses
 
-        if (buckets[key]) {
-          buckets[key].receipts.push({
-            clientName: client.name,
-            clientId: client.id,
-            amount: payment.amount,
-            dueDate: payment.due_date,
-            notes: payment.notes,
-            status: payment.payment_status ?? "pendente",
-          });
-          buckets[key].totalReceipts += payment.amount;
-        }
+        buckets[key].receipts.push({
+          clientName: client.name,
+          amount: payment.amount,
+          dueDate: isFallback
+            ? `${formatBR(dueDate)} (est.)`
+            : payment.due_date!,
+          notes: payment.notes,
+          status: payment.payment_status ?? "pendente",
+          isFallback,
+        });
+        buckets[key].totalReceipts += payment.amount;
       });
     });
 
     const months = Object.values(buckets).map((m) => ({
       ...m,
       receipts: m.receipts.sort((a, b) => {
-        const da = parseBR(a.dueDate)?.getTime() ?? 0;
-        const db = parseBR(b.dueDate)?.getTime() ?? 0;
+        const da = parseBR(a.dueDate.replace(" (est.)", ""))?.getTime() ?? 0;
+        const db = parseBR(b.dueDate.replace(" (est.)", ""))?.getTime() ?? 0;
         return da - db;
       }),
       netFlow: m.totalReceipts - m.fixedExpenses,
     }));
 
-    return { months, totalPending, overdueAmount };
+    return { months, totalPending, overdueAmount, fallbackCount };
   }, [clients, getTotalMonthlyExpenses]);
 
   const toggle = (key: string) =>
@@ -119,6 +131,17 @@ export function CashFlowForecast() {
 
   return (
     <div className="space-y-5">
+      {/* Aviso de estimativa */}
+      {fallbackCount > 0 && (
+        <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted/40 rounded-lg px-3 py-2.5">
+          <Info className="h-4 w-4 mt-0.5 shrink-0 text-blue-500" />
+          <span>
+            <span className="font-medium text-foreground">{fallbackCount} parcela{fallbackCount > 1 ? "s" : ""} sem data de vencimento</span>
+            {" "}— usando data do evento menos {DAYS_BEFORE_EVENT} dias como estimativa <span className="italic">(est.)</span>
+          </span>
+        </div>
+      )}
+
       {/* Summary strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Card>
@@ -127,7 +150,7 @@ export function CashFlowForecast() {
               <div className="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30">
                 <DollarSign className="h-3.5 w-3.5 text-blue-600" />
               </div>
-              <span className="text-xs text-muted-foreground">A receber (próx. 6 meses)</span>
+              <span className="text-xs text-muted-foreground">A receber (6 meses)</span>
             </div>
             <p className="text-xl font-bold text-blue-700 dark:text-blue-400">{fmt(totalPending)}</p>
           </CardContent>
@@ -164,72 +187,53 @@ export function CashFlowForecast() {
         {months.map((month) => {
           const isExpanded = expandedMonth === month.monthKey;
           const isPositive = month.netFlow > 0;
-          const isNeutral = month.netFlow === 0;
+          const isNeutral = month.netFlow === 0 && month.totalReceipts === 0;
           const isCurrentMonth = month.monthKey === format(new Date(), "yyyy-MM");
+          const maxBar = Math.max(month.totalReceipts, month.fixedExpenses, 1);
 
           return (
             <Card
               key={month.monthKey}
               className={`overflow-hidden transition-all ${isCurrentMonth ? "ring-1 ring-primary/40" : ""}`}
             >
-              <button
-                className="w-full text-left"
-                onClick={() => toggle(month.monthKey)}
-              >
+              <button className="w-full text-left" onClick={() => toggle(month.monthKey)}>
                 <div className="flex items-center gap-3 p-4">
-                  {/* Month label */}
+                  {/* Label */}
                   <div className="w-24 shrink-0">
                     <p className="font-semibold capitalize">{month.label}</p>
-                    {isCurrentMonth && (
-                      <span className="text-xs text-primary">Mês atual</span>
-                    )}
+                    {isCurrentMonth && <span className="text-xs text-primary">Mês atual</span>}
                   </div>
 
                   {/* Bar */}
-                  <div className="flex-1 relative h-6 rounded-full bg-muted overflow-hidden">
+                  <div className="flex-1 relative h-5 rounded-full bg-muted overflow-hidden">
                     {month.totalReceipts > 0 && (
                       <div
-                        className="absolute inset-y-0 left-0 bg-blue-400/70 dark:bg-blue-500/50 rounded-full"
-                        style={{
-                          width: `${Math.min(
-                            (month.totalReceipts / Math.max(month.totalReceipts, month.fixedExpenses, 1)) * 100,
-                            100
-                          )}%`,
-                        }}
+                        className="absolute inset-y-0 left-0 bg-blue-400/70 dark:bg-blue-500/50 rounded-full transition-all"
+                        style={{ width: `${(month.totalReceipts / maxBar) * 100}%` }}
                       />
                     )}
-                    {month.fixedExpenses > 0 && (
-                      <div
-                        className="absolute inset-y-0 left-0 border-r-2 border-red-500"
-                        style={{
-                          left: `${Math.min(
-                            (month.fixedExpenses / Math.max(month.totalReceipts, month.fixedExpenses, 1)) * 100,
-                            100
-                          )}%`,
-                        }}
-                      />
-                    )}
+                    {/* Linha de corte das despesas fixas */}
+                    <div
+                      className="absolute inset-y-0 border-r-2 border-red-500/70"
+                      style={{ left: `${Math.min((month.fixedExpenses / maxBar) * 100, 99)}%` }}
+                    />
                   </div>
 
                   {/* Numbers */}
-                  <div className="text-right shrink-0 w-32">
+                  <div className="text-right shrink-0 w-36">
                     <p className="text-sm text-muted-foreground">
-                      entradas: <span className="font-medium text-foreground">{fmt(month.totalReceipts)}</span>
+                      <span className="font-medium text-foreground">{fmt(month.totalReceipts)}</span>
                     </p>
-                    <p
-                      className={`text-sm font-semibold ${
-                        isPositive
-                          ? "text-green-600 dark:text-green-400"
-                          : isNeutral
-                          ? "text-muted-foreground"
-                          : "text-red-600 dark:text-red-400"
-                      }`}
-                    >
+                    <p className={`text-sm font-semibold ${
+                      isPositive ? "text-green-600 dark:text-green-400"
+                      : isNeutral ? "text-muted-foreground"
+                      : "text-red-600 dark:text-red-400"
+                    }`}>
                       {isPositive ? "+" : ""}{fmt(month.netFlow)}
                     </p>
                   </div>
 
-                  {/* Trend icon + chevron */}
+                  {/* Icon + chevron */}
                   <div className="shrink-0 flex items-center gap-1">
                     {isPositive ? (
                       <TrendingUp className="h-4 w-4 text-green-500" />
@@ -238,28 +242,24 @@ export function CashFlowForecast() {
                     ) : (
                       <TrendingDown className="h-4 w-4 text-red-500" />
                     )}
-                    {isExpanded ? (
-                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    )}
+                    {isExpanded
+                      ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      : <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    }
                   </div>
                 </div>
               </button>
 
-              {/* Expanded detail */}
+              {/* Expanded */}
               {isExpanded && (
                 <div className="border-t px-4 pb-4 pt-3 space-y-2 bg-muted/20">
                   {month.receipts.length === 0 ? (
                     <p className="text-sm text-muted-foreground italic">
-                      Nenhuma parcela com vencimento neste mês.
+                      Nenhuma parcela prevista para este mês.
                     </p>
                   ) : (
                     month.receipts.map((r, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between text-sm py-1.5 border-b last:border-0"
-                      >
+                      <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
                         <div>
                           <p className="font-medium">{r.clientName}</p>
                           <p className="text-xs text-muted-foreground">
@@ -267,20 +267,19 @@ export function CashFlowForecast() {
                             {r.notes ? ` · ${r.notes}` : ""}
                           </p>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex flex-col items-end gap-1">
                           <p className="font-semibold text-blue-700 dark:text-blue-400">{fmt(r.amount)}</p>
-                          <Badge
-                            variant="outline"
-                            className="text-xs capitalize"
-                          >
-                            {r.status}
-                          </Badge>
+                          <div className="flex gap-1">
+                            {r.isFallback && (
+                              <Badge variant="outline" className="text-xs text-muted-foreground">estimado</Badge>
+                            )}
+                            <Badge variant="outline" className="text-xs capitalize">{r.status}</Badge>
+                          </div>
                         </div>
                       </div>
                     ))
                   )}
 
-                  {/* Fixed expenses summary */}
                   <div className="flex items-center justify-between text-sm pt-1 text-muted-foreground">
                     <span>(-) Despesas fixas estimadas</span>
                     <span className="text-red-600 font-medium">- {fmt(month.fixedExpenses)}</span>
@@ -299,7 +298,7 @@ export function CashFlowForecast() {
       </div>
 
       <p className="text-xs text-muted-foreground text-center">
-        Baseado nas parcelas pendentes com data de vencimento definida · Despesas fixas incluem DAS MEI (R$ 75,90)
+        Parcelas sem vencimento usam data do evento − {DAYS_BEFORE_EVENT} dias como estimativa · Despesas fixas incluem DAS MEI (R$ 75,90)
       </p>
     </div>
   );

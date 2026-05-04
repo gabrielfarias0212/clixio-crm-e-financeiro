@@ -1341,6 +1341,7 @@ export type Database = {
           sales_funnel_stage: string | null
           status: string | null
           storage_location: string | null
+          sem_entrega_fisica: boolean
           updated_at: string | null
           user_id: string | null
           wedding_date: string | null
@@ -1396,6 +1397,7 @@ export type Database = {
           sales_funnel_stage?: string | null
           status?: string | null
           storage_location?: string | null
+          sem_entrega_fisica?: boolean
           updated_at?: string | null
           user_id?: string | null
           wedding_date?: string | null
@@ -1451,6 +1453,7 @@ export type Database = {
           sales_funnel_stage?: string | null
           status?: string | null
           storage_location?: string | null
+          sem_entrega_fisica?: boolean
           updated_at?: string | null
           user_id?: string | null
           wedding_date?: string | null

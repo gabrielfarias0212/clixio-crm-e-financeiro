@@ -7,70 +7,85 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Edit2, Calendar, DollarSign, Loader2, X, Check, AlertCircle, Info } from "lucide-react";
-import { useBusinessFixedExpenses, BusinessFixedExpense, EXPENSE_CATEGORIES, ExpenseCategory } from "@/hooks/useBusinessFixedExpenses";
+import { useBusinessFixedExpenses } from "@/hooks/useBusinessFixedExpenses";
+import { EXPENSE_CATEGORIES } from "@/utils/supabase/business-fixed-expenses";
+import type { BusinessFixedExpense } from "@/hooks/useBusinessFixedExpenses";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const fmt = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
-const EMPTY_FORM = {
+interface FormState {
+  description: string;
+  amount: string;
+  dueDate: string;
+  category: string;
+}
+
+const EMPTY: FormState = {
   description: "",
   amount: "",
   dueDate: "",
-  category: "" as ExpenseCategory | "",
+  category: "",
 };
 
 export function BusinessFixedExpensesManager() {
-  const { expenses, loading, error, addExpense, updateExpense, removeExpense, getActiveExpenses, getTotalMonthlyExpenses } =
-    useBusinessFixedExpenses();
+  const {
+    expenses,
+    loading,
+    error,
+    addExpense,
+    updateExpense,
+    removeExpense,
+    getActiveExpenses,
+    getTotalMonthlyExpenses,
+  } = useBusinessFixedExpenses();
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState<FormState>(EMPTY);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  const set = (key: keyof FormState) => (val: string) =>
+    setForm(f => ({ ...f, [key]: val }));
+
   const resetForm = () => {
-    setForm(EMPTY_FORM);
+    setForm(EMPTY);
     setShowForm(false);
     setEditingId(null);
   };
 
   const handleSubmit = async () => {
-    const dueDateNum = form.dueDate ? parseInt(form.dueDate) : null;
     const amountNum = parseFloat(form.amount.replace(",", "."));
-    const category = (form.category || null) as ExpenseCategory | null;
+    const dueDateNum = form.dueDate ? parseInt(form.dueDate) : null;
+    const category = form.category || null;
 
+    let ok = false;
     if (editingId) {
-      const ok = await updateExpense(editingId, {
+      ok = await updateExpense(editingId, {
         description: form.description,
         amount: amountNum,
         due_date: dueDateNum,
-        category,
+        category: category as any,
       });
-      if (ok) resetForm();
     } else {
-      const ok = await addExpense(form.description, amountNum, dueDateNum, category);
-      if (ok) resetForm();
+      ok = await addExpense(form.description, amountNum, dueDateNum, category as any);
     }
+    if (ok) resetForm();
   };
 
   const handleEdit = (expense: BusinessFixedExpense) => {
     setEditingId(expense.id);
     setForm({
       description: expense.description,
-      amount: expense.amount.toString(),
-      dueDate: expense.due_date?.toString() || "",
-      category: expense.category || "",
+      amount: String(expense.amount),
+      dueDate: expense.due_date ? String(expense.due_date) : "",
+      category: (expense as any).category || "",
     });
     setShowForm(true);
   };
 
-  const handleDelete = async (id: string) => {
-    await removeExpense(id);
-    setDeletingId(null);
-  };
-
-  const getCat = (val: string | null) =>
+  const getCat = (val: string | null | undefined) =>
     EXPENSE_CATEGORIES.find(c => c.value === val) ?? { label: "Outro", emoji: "📌" };
 
   if (loading) {
@@ -86,6 +101,7 @@ export function BusinessFixedExpensesManager() {
 
   const activeExpenses = getActiveExpenses();
   const totalMonthly = getTotalMonthlyExpenses();
+  const hasImpostos = expenses.some(e => (e as any).category === "impostos");
 
   return (
     <Card>
@@ -98,8 +114,11 @@ export function BusinessFixedExpensesManager() {
             </CardTitle>
             <CardDescription>Custos mensais recorrentes do seu negócio</CardDescription>
           </div>
-          <Button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm(EMPTY_FORM); }}
-            variant={showForm ? "outline" : "default"} size="sm">
+          <Button
+            onClick={() => { if (showForm) { resetForm(); } else { setShowForm(true); setEditingId(null); setForm(EMPTY); } }}
+            variant={showForm ? "outline" : "default"}
+            size="sm"
+          >
             {showForm ? <X className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
             {showForm ? "Cancelar" : "Nova Despesa"}
           </Button>
@@ -114,12 +133,11 @@ export function BusinessFixedExpensesManager() {
           </Alert>
         )}
 
-        {/* Aviso DAS MEI */}
-        {!expenses.some(e => e.category === "impostos") && (
+        {!hasImpostos && (
           <div className="flex items-start gap-2 text-sm bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2.5">
             <Info className="h-4 w-4 mt-0.5 shrink-0 text-amber-600" />
             <span className="text-amber-800 dark:text-amber-300">
-              <span className="font-medium">Dica:</span> Cadastre o DAS MEI (~R$ 75,90/mês) como uma despesa fixa na categoria <strong>Impostos / DAS</strong> para ele aparecer corretamente no ponto de equilíbrio e no fluxo de caixa.
+              <span className="font-medium">Dica:</span> Cadastre o DAS MEI (~R$ 75,90/mês) na categoria <strong>Impostos / DAS</strong> para ele aparecer no ponto de equilíbrio e fluxo de caixa.
             </span>
           </div>
         )}
@@ -140,18 +158,18 @@ export function BusinessFixedExpensesManager() {
         {showForm && (
           <div className="border rounded-lg p-4 space-y-3 bg-card">
             <h4 className="font-medium text-sm">{editingId ? "Editar Despesa" : "Nova Despesa Fixa"}</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="sm:col-span-2">
-                <Label>Descrição</Label>
-                <Input
-                  placeholder="Ex: DAS MEI, Hostinger, Adobe CC..."
-                  value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                />
-              </div>
+            <div>
+              <Label>Descrição</Label>
+              <Input
+                placeholder="Ex: DAS MEI, Adobe CC, Hostinger..."
+                value={form.description}
+                onChange={e => set("description")(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Categoria</Label>
-                <Select value={form.category || undefined} onValueChange={v => setForm(f => ({ ...f, category: v as ExpenseCategory }))}>
+                <Select value={form.category || undefined} onValueChange={set("category")}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
@@ -165,27 +183,26 @@ export function BusinessFixedExpensesManager() {
                 </Select>
               </div>
               <div>
-                <Label>Valor (R$)</Label>
-                <Input
-                  placeholder="0,00"
-                  value={form.amount}
-                  onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                />
-              </div>
-              <div>
                 <Label>Dia do Vencimento</Label>
-                <Select value={form.dueDate} onValueChange={v => setForm(f => ({ ...f, dueDate: v }))}>
+                <Select value={form.dueDate || undefined} onValueChange={set("dueDate")}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sem dia fixo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sem dia fixo</SelectItem>
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                      <SelectItem key={day} value={day.toString()}>Dia {day}</SelectItem>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                      <SelectItem key={d} value={String(d)}>Dia {d}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div>
+              <Label>Valor (R$)</Label>
+              <Input
+                placeholder="0,00"
+                value={form.amount}
+                onChange={e => set("amount")(e.target.value)}
+              />
             </div>
             <div className="flex gap-2 pt-1">
               <Button onClick={handleSubmit} size="sm">
@@ -207,9 +224,8 @@ export function BusinessFixedExpensesManager() {
         ) : (
           <div className="space-y-2">
             {expenses.map(expense => {
-              const cat = getCat(expense.category);
+              const cat = getCat((expense as any).category);
               const isDeleting = deletingId === expense.id;
-
               return (
                 <div key={expense.id} className={`border rounded-lg transition-colors ${expense.is_active ? "bg-card" : "bg-muted/50 opacity-60"}`}>
                   {!isDeleting ? (
@@ -220,7 +236,7 @@ export function BusinessFixedExpensesManager() {
                       />
                       <span className="text-base shrink-0">{cat.emoji}</span>
                       <div className="flex-1 min-w-0">
-                        <p className={`font-medium text-sm ${!expense.is_active && "line-through"}`}>
+                        <p className={`font-medium text-sm ${!expense.is_active ? "line-through" : ""}`}>
                           {expense.description}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -247,14 +263,16 @@ export function BusinessFixedExpensesManager() {
                     </div>
                   ) : (
                     <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-lg">
-                      <p className="text-sm font-medium text-red-700 dark:text-red-400 mb-2">
+                      <p className="text-sm font-medium text-red-700 mb-2">
                         Excluir <strong>{expense.description}</strong>?
                       </p>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => handleDelete(expense.id)}>
+                        <Button size="sm" variant="destructive" className="h-7 text-xs"
+                          onClick={() => { removeExpense(expense.id); setDeletingId(null); }}>
                           Sim, excluir
                         </Button>
-                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setDeletingId(null)}>
+                        <Button size="sm" variant="outline" className="h-7 text-xs"
+                          onClick={() => setDeletingId(null)}>
                           Cancelar
                         </Button>
                       </div>

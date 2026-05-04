@@ -169,15 +169,15 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
     <>
       <div className="space-y-6">
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="w-full">
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+          <div className="w-full overflow-x-auto pb-4">
+            <div className="flex gap-4" style={{ minWidth: `${funnelStages.length * 280}px` }}>
               {funnelStages.map((stage) => {
                 const clientsInStage = getClientsInStage(stage.key);
                 const totalValue = getTotalValue(clientsInStage);
                 const Icon = stage.icon;
 
                 return (
-                  <div key={stage.key} className="min-w-0">
+                  <div key={stage.key} className="flex-1 min-w-[260px] max-w-xs overflow-hidden">
                     <Card className={`h-full border-t-4 ${stage.borderColor}`}>
                       <CardHeader className="pb-4">
                         <div className="flex items-center justify-between">
@@ -207,7 +207,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                             <div
                               ref={provided.innerRef}
                               {...provided.droppableProps}
-                              className={`min-h-40 overflow-y-auto space-y-3 p-3 rounded-lg transition-all duration-200 ${
+                              className={`min-h-40 overflow-x-hidden overflow-y-auto space-y-3 p-3 rounded-lg transition-all duration-200 ${
                                 snapshot.isDraggingOver
                                   ? `${stage.bgColor} border-2 ${stage.borderColor} border-dashed`
                                   : "bg-gray-50/50"
@@ -307,16 +307,16 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                         </div>
 
                                         {/* Telefone + email */}
-                                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                        <div className="flex flex-col gap-1 text-xs text-muted-foreground overflow-hidden">
                                           {client.phone && (
-                                            <div className="flex items-center gap-1">
-                                              <Phone className="h-3 w-3" />
+                                            <div className="flex items-center gap-1 min-w-0">
+                                              <Phone className="h-3 w-3 shrink-0" />
                                               <span className="truncate">{client.phone}</span>
                                             </div>
                                           )}
                                           {client.email && (
-                                            <div className="flex items-center gap-1">
-                                              <Mail className="h-3 w-3" />
+                                            <div className="flex items-center gap-1 min-w-0">
+                                              <Mail className="h-3 w-3 shrink-0" />
                                               <span className="truncate">
                                                 {client.email.split("@")[0]}
                                               </span>

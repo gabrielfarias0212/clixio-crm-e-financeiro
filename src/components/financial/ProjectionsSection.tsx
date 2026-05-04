@@ -1,14 +1,15 @@
 import { ProLaboreSection } from "./ProLaboreSection";
 import { ProLaboreHistorySection } from "./ProLaboreHistorySection";
 import { FutureProjections } from "../FutureProjections";
+import { BreakEvenAnalysis } from "./BreakEvenAnalysis";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { History, TrendingUp, Wallet } from "lucide-react";
+import { History, TrendingUp, Wallet, Target } from "lucide-react";
 
 export function ProjectionsSection() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="current" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="current" className="gap-2">
             <Wallet className="h-4 w-4" />
             Mês Atual
@@ -20,6 +21,10 @@ export function ProjectionsSection() {
           <TabsTrigger value="projections" className="gap-2">
             <TrendingUp className="h-4 w-4" />
             Projeções
+          </TabsTrigger>
+          <TabsTrigger value="breakeven" className="gap-2">
+            <Target className="h-4 w-4" />
+            Equilíbrio
           </TabsTrigger>
         </TabsList>
 
@@ -33,6 +38,10 @@ export function ProjectionsSection() {
 
         <TabsContent value="projections">
           <FutureProjections />
+        </TabsContent>
+
+        <TabsContent value="breakeven">
+          <BreakEvenAnalysis />
         </TabsContent>
       </Tabs>
     </div>

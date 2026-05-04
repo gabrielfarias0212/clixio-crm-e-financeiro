@@ -1,4 +1,4 @@
-import { supabase } from "./base";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ProjectCost {
   id: string;

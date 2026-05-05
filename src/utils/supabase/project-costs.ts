@@ -51,9 +51,19 @@ export async function addProjectCost(
   };
   if (cost.supplier) payload.supplier = cost.supplier;
 
+  const insertData = {
+    category: cost.category,
+    description: cost.description,
+    amount: cost.amount,
+    date: cost.date,
+    client_id: clientId,
+    user_id: user.id,
+    ...(cost.supplier ? { supplier: cost.supplier } : {}),
+  };
+
   const { data, error } = await supabase
     .from("project_costs")
-    .insert(payload)
+    .insert(insertData)
     .select()
     .single();
   if (error) throw error;

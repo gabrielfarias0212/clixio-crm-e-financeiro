@@ -60,7 +60,7 @@ export function useBusinessFixedExpenses() {
 
   const updateExpense = async (
     id: string,
-    updates: Partial<Pick<BusinessFixedExpense, 'description' | 'amount' | 'due_date' | 'is_active'>>
+    updates: Partial<Pick<BusinessFixedExpense, 'description' | 'amount' | 'due_date' | 'is_active' | 'category'>>
   ) => {
     try {
       const updated = await updateBusinessFixedExpense(id, updates);

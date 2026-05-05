@@ -23,6 +23,7 @@ const CLIENT_SELECT = `
   wedding_photographed,
   backup_done,
   curadoria_done,
+  edicao_base_done,
   in_editing,
   link_sent,
   box_delivered,

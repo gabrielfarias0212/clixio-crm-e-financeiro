@@ -91,6 +91,14 @@ const ALBUM_STEPS: WorkflowStep[] = [
   { field: "albumOrdered",        label: "Pedido Feito",    icon: Package,      color: "text-indigo-600", bgColor: "bg-indigo-50", albumStep: true },
 ];
 
+const PRE_WEDDING_STEPS: WorkflowStep[] = [
+  { field: "preWeddingCompleted", label: "Realizado",      icon: Camera,   color: "text-amber-600", bgColor: "bg-amber-50"  },
+  { field: "backupDone",          label: "Cópia/Backup",   icon: Copy,     color: "text-amber-600", bgColor: "bg-amber-50"  },
+  { field: "curadoriaDone",       label: "Curadoria",      icon: Scissors, color: "text-amber-600", bgColor: "bg-amber-50"  },
+  { field: "edicaoBaseDone",      label: "Edição",         icon: Sliders,  color: "text-amber-600", bgColor: "bg-amber-50"  },
+  { field: "preWeddingDelivered", label: "Link Enviado",   icon: Send,     color: "text-amber-600", bgColor: "bg-amber-50"  },
+];
+
 export function ProjectDetailDialog({ client, isOpen, onClose }: ProjectDetailDialogProps) {
   const { updateClient } = useClients();
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -121,8 +129,10 @@ export function ProjectDetailDialog({ client, isOpen, onClose }: ProjectDetailDi
   // Calcular progresso
   const steps = localClient.hasAlbum ? [...MAIN_STEPS, ...ALBUM_STEPS] : MAIN_STEPS;
   const visibleSteps = semEntregaFisica ? steps.filter(s => s.field !== "boxDelivered") : steps;
-  const done = visibleSteps.filter(s => !!localClient[s.field]).length;
-  const pct = visibleSteps.length > 0 ? Math.round((done / visibleSteps.length) * 100) : 0;
+  const preWeddingSteps = localClient.hasPreWedding ? PRE_WEDDING_STEPS : [];
+  const allSteps = [...preWeddingSteps, ...visibleSteps];
+  const done = allSteps.filter(s => !!localClient[s.field]).length;
+  const pct = allSteps.length > 0 ? Math.round((done / allSteps.length) * 100) : 0;
 
   const handleToggleStep = async (field: keyof Client, value: boolean) => {
     setTogglingField(field as string);
@@ -241,11 +251,50 @@ export function ProjectDetailDialog({ client, isOpen, onClose }: ProjectDetailDi
           <div className="space-y-3">
             <div className="flex justify-between text-sm font-medium">
               <span>Progresso do Projeto</span>
-              <span className="text-muted-foreground">{done}/{visibleSteps.length} etapas · {pct}%</span>
+              <span className="text-muted-foreground">{done}/{allSteps.length} etapas · {pct}%</span>
             </div>
             <Progress value={pct} className="h-2" />
 
-            {/* Etapas clicáveis */}
+            {/* Etapas Pré-Wedding */}
+            {localClient.hasPreWedding && (
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
+                  <Camera className="h-3.5 w-3.5" />
+                  Pré-Wedding / Ensaio
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {PRE_WEDDING_STEPS.map(step => {
+                    const isDone = !!localClient[step.field];
+                    const Icon = step.icon;
+                    const isLoading = togglingField === step.field;
+                    return (
+                      <button
+                        key={step.field as string}
+                        title={step.label}
+                        onClick={() => handleToggleStep(step.field, !isDone)}
+                        disabled={!!togglingField}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border transition-all ${
+                          isDone
+                            ? "bg-amber-50 text-amber-700 border-amber-200"
+                            : "bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100"
+                        } ${isLoading ? "opacity-50" : ""}`}
+                      >
+                        {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Icon className="h-3 w-3" />}
+                        {step.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="border-t border-dashed border-gray-200 pt-2">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 mb-2">
+                    <Camera className="h-3.5 w-3.5" />
+                    Casamento / Evento Principal
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Etapas principais clicáveis */}
             <div className="flex flex-wrap gap-1.5 pt-1">
               {visibleSteps.map(step => {
                 const isDone = !!localClient[step.field];

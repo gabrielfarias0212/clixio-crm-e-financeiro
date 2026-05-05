@@ -35,6 +35,7 @@ export const parseClient = (data: any): Client => {
     weddingPhotographed: data.wedding_photographed ?? false,
     backupDone: data.backup_done ?? false,
     curadoriaDone: data.curadoria_done ?? false,
+    edicaoBaseDone: data.edicao_base_done ?? false,
     inEditing: data.in_editing ?? false,
     linkSent: data.link_sent ?? false,
     boxDelivered: data.box_delivered ?? false,

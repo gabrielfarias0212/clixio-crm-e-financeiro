@@ -115,8 +115,9 @@ export interface Client {
 
   // ── Workflow principal ──────────────────────────────
   weddingPhotographed?: boolean;  // Evento fotografado
-  backupDone?: boolean;           // Cópia RAW+JPG para SSD
-  curadoriaDone?: boolean;        // Curadoria no Aftershoot
+  backupDone?: boolean;           // Cópia RAW+JPG para SSD (pré-wedding)
+  curadoriaDone?: boolean;        // Curadoria no Aftershoot (pré-wedding)
+  edicaoBaseDone?: boolean;       // Edição base do pré-wedding
   inEditing?: boolean;            // Edição final no Lightroom
   linkSent?: boolean;             // Link Wfolio enviado ao cliente
   boxDelivered?: boolean;         // Entrega física (pen drive)

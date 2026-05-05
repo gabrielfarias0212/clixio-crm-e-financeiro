@@ -126,6 +126,9 @@ export const updateClient = async (
       updatePayload.curadoria_done = clientData.curadoriaDone;
       updatePayload.curation_completed = clientData.curadoriaDone;
     }
+    if ('edicaoBaseDone' in clientData) {
+      updatePayload.edicao_base_done = clientData.edicaoBaseDone;
+    }
 
     // Funil derivado de status, somente se status foi enviado e funil não
     if (clientData.status && !clientData.salesFunnelStage) {

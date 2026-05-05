@@ -62,7 +62,7 @@ export function CalendarHeader({
           <button
             key={opt.value}
             onClick={() => setEventTypeFilter(opt.value)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
               eventTypeFilter === opt.value
                 ? "bg-gray-900 text-white border-gray-900"
                 : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"

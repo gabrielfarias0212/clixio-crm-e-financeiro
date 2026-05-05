@@ -79,7 +79,7 @@ function SectionCard({ children, style, onClick }: { children: React.ReactNode; 
       borderRadius: "var(--border-radius-lg)",
       padding: "14px 16px",
       ...style,
-    }}>{children}</div>
+    }} onClick={onClick}>{children}</div>
   );
 }
 

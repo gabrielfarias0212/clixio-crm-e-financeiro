@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  BarChart, CalendarDays, Users, DollarSign,
-  Workflow, GitBranch, Menu, X
-} from "lucide-react";
+import { BarChart, CalendarDays, Users, DollarSign, Workflow, GitBranch, Menu, X, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { UserMenu } from "./UserMenu";
@@ -21,6 +18,7 @@ const navItems = [
   { name: "Fluxo de Trabalho", path: "/workflow", icon: GitBranch },
   { name: "Calendário",        path: "/calendar", icon: CalendarDays },
   { name: "Financeiro",        path: "/cash-flow",icon: DollarSign },
+  { name: "Configurações",      path: "/settings", icon: Settings2 },
 ];
 
 export function Navbar() {

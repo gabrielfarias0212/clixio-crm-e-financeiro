@@ -25,6 +25,7 @@ import BudgetDetail from "./pages/BudgetDetail";
 import CRM from "./pages/CRM";
 import Workflow from "./pages/Workflow";
 import NotFound from "./pages/NotFound";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,6 +67,7 @@ const App = () => (
                         <Route path="/budgets/create" element={<CreateBudget />} />
                         <Route path="/budgets/:id/edit" element={<EditBudget />} />
                         <Route path="/budgets/:id" element={<BudgetDetail />} />
+                        <Route path="/settings" element={<Settings />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </TransactionsProvider>

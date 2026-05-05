@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +17,8 @@ export default function CalendarPage() {
   const { clients, loading } = useClients();
   const { error } = useCalendarEvents();
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
-  
+  const [eventTypeFilter, setEventTypeFilter] = useState("all");
+
   const {
     date,
     setDate,
@@ -35,43 +35,40 @@ export default function CalendarPage() {
     document.title = "Calendário | Wedding CRM";
   }, []);
 
-  // Show error toast if there's an error with calendar events
   useEffect(() => {
     if (error) {
-      toast({
-        title: "Erro no calendário",
-        description: error,
-        variant: "destructive"
-      });
+      toast({ title: "Erro no calendário", description: error, variant: "destructive" });
     }
   }, [error]);
-  
+
   const handleOpenEditEvent = (event: CalendarEvent) => {
     setEditingEvent(event);
     setAddEventOpen(true);
   };
-  
+
   const handleCloseDialog = (open: boolean) => {
     setAddEventOpen(open);
-    if (!open) {
-      setEditingEvent(null);
-    }
+    if (!open) setEditingEvent(null);
   };
+
+  const handleGoToToday = () => setDate(new Date());
 
   return (
     <Layout>
       <div className="max-w-screen-xl mx-auto px-4 py-8 animate-fade-in">
-        <CalendarHeader 
+        <CalendarHeader
           currentMonthYear={currentMonthYear}
           view={view}
           setView={setView}
           setAddEventOpen={setAddEventOpen}
+          onGoToToday={handleGoToToday}
+          eventTypeFilter={eventTypeFilter}
+          setEventTypeFilter={setEventTypeFilter}
         />
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Calendar Grid */}
           <div className="lg:col-span-2">
-            <CalendarGrid 
+            <CalendarGrid
               date={date}
               setDate={setDate}
               view={view}
@@ -80,28 +77,28 @@ export default function CalendarPage() {
               eventDates={eventDates}
               clients={clients}
               onClientClick={(clientId) => navigate(`/clients/${clientId}`)}
+              eventTypeFilter={eventTypeFilter}
             />
           </div>
-          
-          {/* Events Sidebar */}
+
           <div className="lg:col-span-1">
-            <DayEventsSidebar 
+            <DayEventsSidebar
               date={date}
               selectedDayItems={selectedDayItems}
               setAddEventOpen={setAddEventOpen}
               openEditEvent={handleOpenEditEvent}
+              allClients={clients}
             />
           </div>
         </div>
-        
-        {/* Upcoming Events Section */}
+
         <div className="mt-6">
           <UpcomingEvents clients={clients} loading={loading} />
         </div>
-        
-        <AddEventDialog 
-          open={addEventOpen} 
-          onOpenChange={handleCloseDialog} 
+
+        <AddEventDialog
+          open={addEventOpen}
+          onOpenChange={handleCloseDialog}
           clients={clients}
           initialData={editingEvent || undefined}
         />

@@ -71,7 +71,7 @@ function Chip({ label, bg, color }: { label: string; bg: string; color: string }
   );
 }
 
-function SectionCard({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+function SectionCard({ children, style, onClick }: { children: React.ReactNode; style?: React.CSSProperties; onClick?: () => void }) {
   return (
     <div style={{
       background: "var(--color-background-primary)",

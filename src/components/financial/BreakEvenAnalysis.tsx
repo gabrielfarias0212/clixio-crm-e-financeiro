@@ -66,9 +66,9 @@ export function BreakEvenAnalysis() {
     // 6. Eventos no mês atual
     const now = new Date();
     const eventsThisMonth = clients.filter((c) => {
-      if (!c.eventDate) return false;
-      const [, m, y] = c.eventDate.split("/").map(Number);
-      return m === now.getMonth() + 1 && y === now.getFullYear();
+      if (!c.weddingDate) return false;
+      const d = new Date(c.weddingDate);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     }).length;
 
     // 7. Status

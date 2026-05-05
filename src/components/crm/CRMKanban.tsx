@@ -117,6 +117,19 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
       year: "2-digit",
     });
 
+  const daysSinceContact = (dateStr?: string | null): number => {
+    if (!dateStr) return 0;
+    const d = new Date(dateStr);
+    return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const contactBadgeStyle = (days: number) => {
+    if (days <= 3)  return { bg: "bg-green-50",  text: "text-green-700",  border: "border-green-200" };
+    if (days <= 7)  return { bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200" };
+    if (days <= 14) return { bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" };
+    return          { bg: "bg-red-50",    text: "text-red-700",    border: "border-red-200" };
+  };
+
   const mapFunnelStageToStatus = (stage: SalesFunnelStage): ClientStatus => {
     switch (stage) {
       case "primeiro_contato": return "primeiro_contato";
@@ -268,6 +281,22 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                             )}
                                           </div>
                                         </div>
+
+                                        {/* Dias desde o contato */}
+                                        {(() => {
+                                          const days = daysSinceContact(client.createdAt);
+                                          const style = contactBadgeStyle(days);
+                                          return (
+                                            <div className={`flex items-center justify-between text-xs rounded-md px-2 py-1 mb-2 border ${style.bg} ${style.border}`}>
+                                              <span className={`font-medium ${style.text}`}>
+                                                {days === 0 ? "Hoje" : days === 1 ? "1 dia atrás" : `${days} dias atrás`}
+                                              </span>
+                                              <span className={`${style.text} opacity-70`}>
+                                                {new Date(client.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                                              </span>
+                                            </div>
+                                          );
+                                        })()}
 
                                         {/* Contato */}
                                         <div className="space-y-1 mb-2.5">

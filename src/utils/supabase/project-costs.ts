@@ -41,15 +41,8 @@ export async function addProjectCost(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.id) throw new Error("Usuário não autenticado");
   
-  const payload: Record<string, unknown> = {
-    category: cost.category,
-    description: cost.description,
-    amount: cost.amount,
-    date: cost.date,
-    client_id: clientId,
-    user_id: user.id,
-  };
-  if (cost.supplier) payload.supplier = cost.supplier;
+
+
 
   const insertData = {
     category: cost.category,

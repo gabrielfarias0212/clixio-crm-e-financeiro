@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { QuickProjectForm } from "@/components/workflow/QuickProjectForm";
+import { WorkflowReportDialog } from "@/components/workflow/WorkflowReportDialog";
 import { ProjectDetailDialog } from "@/components/workflow/ProjectDetailDialog";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
@@ -10,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Camera, HardDrive, Scissors, Sliders, Link, Package,
-  BookOpen, AlertTriangle, CheckCircle2, Clock, Search, ChevronRight, Plus
+  BookOpen, AlertTriangle, CheckCircle2, Clock, Search, ChevronRight, Plus, FileText
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -405,6 +406,7 @@ export default function WorkflowPage() {
   const [filterYear, setFilterYear] = useState<number | "all">("all");
   const [filterStage, setFilterStage] = useState<string>("all");
   const [showQuickForm, setShowQuickForm] = useState(false);
+  const [showReports, setShowReports] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
@@ -491,13 +493,22 @@ export default function WorkflowPage() {
             <h1 className="text-2xl font-bold text-gray-900">Fluxo de Trabalho</h1>
             <p className="text-gray-500 text-sm mt-0.5">Acompanhe cada projeto do evento até a entrega</p>
           </div>
-          <button
-            onClick={() => setShowQuickForm(prev => !prev)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            Novo Projeto
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowReports(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+            >
+              <FileText className="h-4 w-4" />
+              Relatórios
+            </button>
+            <button
+              onClick={() => setShowQuickForm(prev => !prev)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Novo Projeto
+            </button>
+          </div>
         </div>
 
         {showQuickForm && (
@@ -638,6 +649,11 @@ export default function WorkflowPage() {
         client={selectedClient}
         isOpen={isDetailDialogOpen}
         onClose={() => { setIsDetailDialogOpen(false); setSelectedClient(null); }}
+      />
+      <WorkflowReportDialog
+        open={showReports}
+        onClose={() => setShowReports(false)}
+        clients={workflowClients}
       />
     </Layout>
   );

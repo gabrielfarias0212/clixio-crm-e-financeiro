@@ -69,6 +69,7 @@ export default function AddClient() {
         salesFunnelStage: mapStatusToFunnelStage(data.status),
         notes: data.notes || "",
         leadSource: data.leadSource || "Não informado",
+        packageId: data.packageId ?? null,
       });
       
       if (newClient) {

@@ -17,7 +17,8 @@ const CLIENT_SELECT = `
   pre_wedding_date, pre_wedding_start_time, pre_wedding_end_time,
   pre_wedding_scheduled, pre_wedding_completed, pre_wedding_delivered,
   contract_link, has_pre_wedding,
-  sales_funnel_stage, lead_source, storage_location, sem_entrega_fisica, notes,
+  sales_funnel_stage, lead_source, storage_location, sem_entrega_fisica,
+        package_id, notes,
   created_at, updated_at, workflow_stage,
 
   wedding_photographed,

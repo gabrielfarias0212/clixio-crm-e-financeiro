@@ -64,6 +64,7 @@ export default function EditClient() {
         contractLink: data.contractLink,
         hasPreWedding: data.hasPreWedding,
         notes: data.notes || "",
+        packageId: data.packageId ?? null,
       });
       
       if (updatedClient) {

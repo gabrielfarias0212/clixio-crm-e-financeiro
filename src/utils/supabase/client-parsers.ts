@@ -28,6 +28,7 @@ export const parseClient = (data: any): Client => {
     leadSource: data.lead_source,
     storageLocation: data.storage_location,
     semEntregaFisica: data.sem_entrega_fisica ?? false,
+    packageId: data.package_id ?? null,
     notes: data.notes,
     workflowStage: data.workflow_stage,
 

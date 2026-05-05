@@ -144,6 +144,7 @@ export interface Client {
   leadSource?: string;
   storageLocation?: string;
   semEntregaFisica?: boolean;  // Entrega somente digital (sem pen drive)
+  packageId?: string | null;      // Pacote de serviço aplicado
 
   payments: Payment[];
   createdAt: string;

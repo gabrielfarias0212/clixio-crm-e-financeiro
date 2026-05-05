@@ -36,6 +36,7 @@ export const createFormSchema = (status?: string) => {
       hasPreWedding: z.boolean().optional(),
       notes: z.string().optional(),
       leadSource: z.string().optional().default("Não informado"),
+      packageId: z.string().nullable().optional(),
     });
   }
   
@@ -67,6 +68,7 @@ export const createFormSchema = (status?: string) => {
     hasPreWedding: z.boolean().optional(),
     notes: z.string().optional(),
     leadSource: z.string().optional().default("Não informado"),
+  packageId: z.string().nullable().optional(),
   });
 };
 

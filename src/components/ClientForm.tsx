@@ -1,5 +1,4 @@
-
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
@@ -7,17 +6,19 @@ import { useNavigate } from "react-router-dom";
 import { ConditionalFormFields } from "./client-form/ConditionalFormFields";
 import { NotesField } from "./client-form/NotesField";
 import { FormActions } from "./client-form/FormActions";
+import { PackageSelector } from "./client-form/PackageSelector";
 import { createFormSchema, ClientFormProps, ClientFormValues } from "./client-form/types";
+import { ServicePackage } from "@/utils/supabase/packages";
 
 export { type ClientFormValues };
 
 export function ClientForm({ client, onSubmit, isSubmitting = false, isLeadForm = false }: ClientFormProps) {
   const navigate = useNavigate();
-  
-  // Get dynamic schema based on client status
+  const [selectedPackage, setSelectedPackage] = useState<ServicePackage | null>(null);
+
   const currentStatus = client?.status || "primeiro_contato";
   const dynamicSchema = createFormSchema(currentStatus);
-  
+
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(dynamicSchema),
     defaultValues: client
@@ -42,6 +43,7 @@ export function ClientForm({ client, onSubmit, isSubmitting = false, isLeadForm 
           hasPreWedding: client.hasPreWedding !== false,
           notes: client.notes,
           leadSource: client.leadSource || "Não informado",
+          packageId: client.packageId ?? null,
         }
       : {
           name: "",
@@ -64,24 +66,19 @@ export function ClientForm({ client, onSubmit, isSubmitting = false, isLeadForm 
           hasPreWedding: true,
           notes: "",
           leadSource: "Não informado",
+          packageId: null,
         },
   });
 
   const handleSubmit = (data: ClientFormValues) => {
-    onSubmit(data);
+    onSubmit({ ...data, packageId: selectedPackage?.id ?? data.packageId ?? null });
   };
 
   const watchStatus = form.watch("status");
   const watchHasPreWedding = form.watch("hasPreWedding");
 
-  // Update schema when status changes
-  useEffect(() => {
-    const newSchema = createFormSchema(watchStatus);
-    // Reset resolver with new schema
-    form.clearErrors();
-  }, [watchStatus, form]);
+  useEffect(() => { form.clearErrors(); }, [watchStatus, form]);
 
-  // If hasPreWedding is false, clear the pre-wedding date fields
   useEffect(() => {
     if (!watchHasPreWedding) {
       form.setValue("preWeddingDate", null);
@@ -90,20 +87,36 @@ export function ClientForm({ client, onSubmit, isSubmitting = false, isLeadForm 
     }
   }, [watchHasPreWedding, form]);
 
+  function handlePackageSelect(pkg: ServicePackage | null) {
+    setSelectedPackage(pkg);
+    if (pkg) {
+      form.setValue("contractValue", pkg.price);
+    }
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 animate-fade-in">
-        <ConditionalFormFields 
-          control={form.control} 
-          watchStatus={watchStatus} 
+        <ConditionalFormFields
+          control={form.control}
+          watchStatus={watchStatus}
           watchHasPreWedding={watchHasPreWedding}
           clientId={client?.id}
           isLeadForm={isLeadForm}
         />
+
+        {/* Package selector — shown above payment fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <PackageSelector
+            selectedId={selectedPackage?.id ?? client?.packageId ?? null}
+            onSelect={handlePackageSelect}
+          />
+        </div>
+
         <NotesField control={form.control} />
-        <FormActions 
-          isSubmitting={isSubmitting} 
-          onCancel={() => navigate(-1)} 
+        <FormActions
+          isSubmitting={isSubmitting}
+          onCancel={() => navigate(-1)}
           isEditing={!!client}
         />
       </form>

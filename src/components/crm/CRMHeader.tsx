@@ -41,7 +41,10 @@ export function CRMHeader({ clients }: CRMHeaderProps) {
       .filter(c => ["primeiro_contato", "orcamento_enviado", "negociacao"].includes(c.salesFunnelStage || c.status))
       .reduce((total, client) => total + (client.contractValue || 0), 0);
 
-    const conversionRate = opportunities > 0 ? ((closed / (opportunities + closed + lost)) * 100) : 0;
+    // Conversão correta: de todos os leads que chegaram a uma decisão final
+    // (fecharam contrato ou foram perdidos), quantos % converteram?
+    const totalDecided = closed + finished + lost;
+    const conversionRate = totalDecided > 0 ? (((closed + finished) / totalDecided) * 100) : 0;
 
     return {
       opportunities,

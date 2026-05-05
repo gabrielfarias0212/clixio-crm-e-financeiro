@@ -133,32 +133,53 @@ export function SalesFunnel({ clients }: SalesFunnelProps) {
           <CardTitle className="text-lg">Métricas de Conversão</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {((getClientsInStage("orcamento_enviado").length / Math.max(getClientsInStage("primeiro_contato").length, 1)) * 100).toFixed(1)}%
+          {(() => {
+            // Abordagem cumulativa: quantos % de todos os leads chegaram a cada etapa
+            const total = clients.length;
+            const reachedOrcamento = clients.filter(c =>
+              ["orcamento_enviado","negociacao","contrato_fechado","projeto_finalizado","contrato_perdido"].includes(c.salesFunnelStage || "")
+            ).length;
+            const reachedNegociacao = clients.filter(c =>
+              ["negociacao","contrato_fechado","projeto_finalizado","contrato_perdido"].includes(c.salesFunnelStage || "")
+            ).length;
+            const reachedFechado = clients.filter(c =>
+              ["contrato_fechado","projeto_finalizado"].includes(c.salesFunnelStage || "") ||
+              ["fechado","projeto_finalizado"].includes(c.status || "")
+            ).length;
+            const lost = clients.filter(c =>
+              c.salesFunnelStage === "contrato_perdido" || c.status === "contrato_perdido"
+            ).length;
+            // Taxa de conversão final: fechados / (fechados + perdidos)
+            const decided = reachedFechado + lost;
+            const convFinal = decided > 0 ? ((reachedFechado / decided) * 100) : 0;
+
+            const pct = (n: number) => total > 0 ? ((n / total) * 100).toFixed(1) : "0.0";
+
+            return (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{pct(reachedOrcamento)}%</div>
+                  <div className="text-sm text-gray-600">Enviaram Orçamento</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{reachedOrcamento} de {total} leads</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">{pct(reachedNegociacao)}%</div>
+                  <div className="text-sm text-gray-600">Entraram em Negociação</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{reachedNegociacao} de {total} leads</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">{pct(reachedFechado)}%</div>
+                  <div className="text-sm text-gray-600">Fecharam Contrato</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{reachedFechado} de {total} leads</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">{convFinal.toFixed(1)}%</div>
+                  <div className="text-sm text-gray-600">Taxa de Conversão Final</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{reachedFechado} fechados / {decided} decisões</div>
+                </div>
               </div>
-              <div className="text-sm text-gray-600">Taxa de Orçamento</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {((getClientsInStage("negociacao").length / Math.max(getClientsInStage("orcamento_enviado").length, 1)) * 100).toFixed(1)}%
-              </div>
-              <div className="text-sm text-gray-600">Taxa de Follow-up</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {((getClientsInStage("contrato_fechado").length / Math.max(getClientsInStage("negociacao").length, 1)) * 100).toFixed(1)}%
-              </div>
-              <div className="text-sm text-gray-600">Taxa de Fechamento</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-600">
-                {((getClientsInStage("projeto_finalizado").length / Math.max(getClientsInStage("contrato_fechado").length, 1)) * 100).toFixed(1)}%
-              </div>
-              <div className="text-sm text-gray-600">Taxa de Finalização</div>
-            </div>
-          </div>
+            );
+          })()}
         </CardContent>
       </Card>
     </div>

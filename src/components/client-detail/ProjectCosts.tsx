@@ -71,8 +71,9 @@ export function ProjectCosts({ client }: ProjectCostsProps) {
       setForm(EMPTY_FORM);
       setShowForm(false);
       toast.success("Custo registrado");
-    } catch {
-      toast.error("Erro ao salvar custo");
+    } catch (err: any) {
+      console.error("Erro ao salvar custo do projeto:", err);
+      toast.error(err?.message || "Erro ao salvar custo");
     } finally {
       setSaving(false);
     }

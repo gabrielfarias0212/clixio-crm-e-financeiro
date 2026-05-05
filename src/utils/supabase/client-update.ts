@@ -107,6 +107,10 @@ export const updateClient = async (
       if (!('preWeddingScheduled' in clientData)) {
         updatePayload.pre_wedding_scheduled = !!clientData.preWeddingDate;
       }
+      // Auto-ativa has_pre_wedding quando uma data é fornecida
+      if (clientData.preWeddingDate && !('hasPreWedding' in clientData)) {
+        updatePayload.has_pre_wedding = true;
+      }
     }
 
     // Sincronia entre campos legados e atuais para Cópia/Backup e Curadoria

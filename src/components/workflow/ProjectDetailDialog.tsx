@@ -129,7 +129,8 @@ export function ProjectDetailDialog({ client, isOpen, onClose }: ProjectDetailDi
   // Calcular progresso
   const steps = localClient.hasAlbum ? [...MAIN_STEPS, ...ALBUM_STEPS] : MAIN_STEPS;
   const visibleSteps = semEntregaFisica ? steps.filter(s => s.field !== "boxDelivered") : steps;
-  const preWeddingSteps = localClient.hasPreWedding ? PRE_WEDDING_STEPS : [];
+  const hasPreWedding = !!(localClient.hasPreWedding || localClient.preWeddingDate);
+  const preWeddingSteps = hasPreWedding ? PRE_WEDDING_STEPS : [];
   const allSteps = [...preWeddingSteps, ...visibleSteps];
   const done = allSteps.filter(s => !!localClient[s.field]).length;
   const pct = allSteps.length > 0 ? Math.round((done / allSteps.length) * 100) : 0;
@@ -256,7 +257,7 @@ export function ProjectDetailDialog({ client, isOpen, onClose }: ProjectDetailDi
             <Progress value={pct} className="h-2" />
 
             {/* Etapas Pré-Wedding */}
-            {localClient.hasPreWedding && (
+            {hasPreWedding && (
               <div className="space-y-2 pt-1">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
                   <Camera className="h-3.5 w-3.5" />

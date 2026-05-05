@@ -11,6 +11,11 @@ export interface CompanySettings {
   monthly_revenue_goal?: number | null;
   annual_revenue_goal?: number | null;
   monthly_events_goal?: number | null;
+  deadline_editing?: number | null;
+  deadline_digital_delivery?: number | null;
+  deadline_physical_delivery?: number | null;
+  deadline_album?: number | null;
+  deadline_pre_wedding?: number | null;
 }
 
 export async function fetchCompanySettings(): Promise<CompanySettings | null> {

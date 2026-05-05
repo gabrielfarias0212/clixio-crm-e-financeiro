@@ -39,13 +39,28 @@ export async function addProjectCost(
   cost: Omit<ProjectCost, "id" | "client_id" | "created_at">
 ): Promise<ProjectCost> {
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.id) throw new Error("Usuário não autenticado");
+  
+
+
+
+  const insertData = {
+    category: cost.category,
+    description: cost.description,
+    amount: cost.amount,
+    date: cost.date,
+    client_id: clientId,
+    user_id: user.id,
+    ...(cost.supplier ? { supplier: cost.supplier } : {}),
+  };
+
   const { data, error } = await supabase
     .from("project_costs")
-    .insert({ ...cost, client_id: clientId, user_id: user?.id })
+    .insert(insertData)
     .select()
     .single();
   if (error) throw error;
-  return data;
+  return data as ProjectCost;
 }
 
 export async function deleteProjectCost(id: string): Promise<void> {

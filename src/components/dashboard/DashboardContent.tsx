@@ -71,7 +71,7 @@ function Chip({ label, bg, color }: { label: string; bg: string; color: string }
   );
 }
 
-function SectionCard({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+function SectionCard({ children, style, onClick }: { children: React.ReactNode; style?: React.CSSProperties; onClick?: () => void }) {
   return (
     <div style={{
       background: "var(--color-background-primary)",
@@ -79,7 +79,7 @@ function SectionCard({ children, style }: { children: React.ReactNode; style?: R
       borderRadius: "var(--border-radius-lg)",
       padding: "14px 16px",
       ...style,
-    }}>{children}</div>
+    }} onClick={onClick}>{children}</div>
   );
 }
 

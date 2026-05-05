@@ -1122,6 +1122,50 @@ export type Database = {
         }
         Relationships: []
       }
+      project_costs: {
+        Row: {
+          amount: number
+          category: string
+          client_id: string
+          created_at: string | null
+          date: string
+          description: string
+          id: string
+          supplier: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category: string
+          client_id: string
+          created_at?: string | null
+          date?: string
+          description: string
+          id?: string
+          supplier?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          client_id?: string
+          created_at?: string | null
+          date?: string
+          description?: string
+          id?: string
+          supplier?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_costs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           client_name: string
@@ -1342,9 +1386,9 @@ export type Database = {
           pre_wedding_scheduled: boolean | null
           pre_wedding_start_time: string | null
           sales_funnel_stage: string | null
+          sem_entrega_fisica: boolean
           status: string | null
           storage_location: string | null
-          sem_entrega_fisica: boolean
           updated_at: string | null
           user_id: string | null
           wedding_date: string | null
@@ -1398,9 +1442,9 @@ export type Database = {
           pre_wedding_scheduled?: boolean | null
           pre_wedding_start_time?: string | null
           sales_funnel_stage?: string | null
+          sem_entrega_fisica?: boolean
           status?: string | null
           storage_location?: string | null
-          sem_entrega_fisica?: boolean
           updated_at?: string | null
           user_id?: string | null
           wedding_date?: string | null
@@ -1454,9 +1498,9 @@ export type Database = {
           pre_wedding_scheduled?: boolean | null
           pre_wedding_start_time?: string | null
           sales_funnel_stage?: string | null
+          sem_entrega_fisica?: boolean
           status?: string | null
           storage_location?: string | null
-          sem_entrega_fisica?: boolean
           updated_at?: string | null
           user_id?: string | null
           wedding_date?: string | null

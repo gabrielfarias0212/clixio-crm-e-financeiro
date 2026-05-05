@@ -282,8 +282,8 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                           </div>
                                         </div>
 
-                                        {/* Dias desde o contato */}
-                                        {(() => {
+                                        {/* Dias desde o contato — só para leads em negociação */}
+                                        {["primeiro_contato", "orcamento_enviado", "negociacao"].includes(stage.key) && (() => {
                                           const days = daysSinceContact(client.createdAt);
                                           const style = contactBadgeStyle(days);
                                           return (

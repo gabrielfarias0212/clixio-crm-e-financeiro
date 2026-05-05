@@ -68,25 +68,31 @@ export default function CRM() {
 
   // Filter clients based on time filter + name search
   const filteredClients = useMemo(() => {
-    if (!clients || timeFilter === "all") return clients || [];
+    if (!clients) return [];
     
-    const currentYear = new Date().getFullYear();
-    const filterYear = timeFilter === "2025" ? 2025 : currentYear;
-    
-    const byTime = clients.filter(client => {
-      if (client.weddingDate) {
-        const weddingYear = new Date(client.weddingDate).getFullYear();
-        return weddingYear === filterYear;
-      }
-      const createdYear = new Date(client.createdAt || Date.now()).getFullYear();
-      return createdYear === filterYear;
-    });
-    if (!searchName.trim()) return byTime;
-    const term = searchName.toLowerCase();
-    return byTime.filter(c =>
-      c.name.toLowerCase().includes(term) ||
-      (c.coupleName && c.coupleName.toLowerCase().includes(term))
-    );
+    let result = [...clients];
+
+    // Apply year filter
+    if (timeFilter !== "all") {
+      const filterYear = parseInt(timeFilter);
+      result = result.filter(client => {
+        if (client.weddingDate) {
+          return new Date(client.weddingDate).getFullYear() === filterYear;
+        }
+        return new Date(client.createdAt || Date.now()).getFullYear() === filterYear;
+      });
+    }
+
+    // Apply name search
+    if (searchName.trim()) {
+      const term = searchName.toLowerCase();
+      result = result.filter(c =>
+        c.name.toLowerCase().includes(term) ||
+        (c.coupleName && c.coupleName.toLowerCase().includes(term))
+      );
+    }
+
+    return result;
   }, [clients, timeFilter, searchName]);
 
   if (loading) {
@@ -128,23 +134,12 @@ export default function CRM() {
               </Select>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-              <Input
-                placeholder="Pesquisar cliente..."
-                value={searchName}
-                onChange={e => setSearchName(e.target.value)}
-                className="pl-8 w-52 h-9 text-sm"
-              />
-            </div>
-            <Link to="/clients/add">
-              <Button className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
-                <Plus className="h-4 w-4" />
-                Adicionar Lead
-              </Button>
-            </Link>
-          </div>
+          <Link to="/clients/add">
+            <Button className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
+              <Plus className="h-4 w-4" />
+              Adicionar Lead
+            </Button>
+          </Link>
         </div>
 
         {/* CRM Stats Header */}
@@ -156,7 +151,25 @@ export default function CRM() {
             <TabsTrigger value="analytics">Análises</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="pipeline" className="space-y-6">
+          <TabsContent value="pipeline" className="space-y-4">
+            {/* Search bar above Kanban */}
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <Input
+                placeholder="Pesquisar cliente por nome..."
+                value={searchName}
+                onChange={e => setSearchName(e.target.value)}
+                className="pl-9 h-10 text-sm"
+              />
+              {searchName && (
+                <button
+                  onClick={() => setSearchName("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
             {/* Kanban Board */}
             <CRMKanban clients={filteredClients} />
           </TabsContent>

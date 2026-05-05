@@ -209,32 +209,6 @@ export function TransactionSummary({
         {periodType === 'monthly' && goals && (goals.monthly_revenue_goal || goals.monthly_events_goal) && (
           <div className="border-t pt-4 mt-2 space-y-3">
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Progresso das Metas</p>
-            {goals.monthly_revenue_goal && (
-              <div className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">Receita do mês</span>
-                  <span className="text-xs font-medium text-gray-700">
-                    {formatCurrency(summary.periodIncome)} / {formatCurrency(Number(goals.monthly_revenue_goal))}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                  <div
-                    className={barColor}
-                    style={{ width: `${pct.toFixed(1)}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-400">
-                  {((summary.periodIncome / Number(goals.monthly_revenue_goal)) * 100).toFixed(0)}% da meta mensal atingida
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Metas financeiras */}
-        {periodType === 'monthly' && goals && (goals.monthly_revenue_goal || goals.monthly_events_goal) && (
-          <div className="border-t pt-4 mt-2 space-y-3">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Progresso das Metas</p>
             {goals.monthly_revenue_goal && (() => {
               const goal = Number(goals.monthly_revenue_goal);
               const pct = Math.min(100, (summary.periodIncome / goal) * 100);

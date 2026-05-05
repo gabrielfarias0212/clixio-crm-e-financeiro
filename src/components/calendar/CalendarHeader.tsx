@@ -1,5 +1,6 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { CalendarPlus, CalendarCheck } from "lucide-react";
+import { CalendarPlus, CalendarCheck, Heart, Camera, Sunset, Star, Cake, LayoutGrid } from "lucide-react";
 
 interface CalendarHeaderProps {
   currentMonthYear: string;
@@ -11,13 +12,13 @@ interface CalendarHeaderProps {
   setEventTypeFilter: (f: string) => void;
 }
 
-const EVENT_TYPE_OPTIONS = [
-  { value: "all",       label: "Todos" },
-  { value: "casamento", label: "💍 Casamento" },
-  { value: "ensaio",    label: "📸 Ensaio" },
-  { value: "pre_wedding", label: "🌅 Pré-Wedding" },
-  { value: "debutante", label: "🎀 Debutante" },
-  { value: "aniversario", label: "🎂 Aniversário" },
+const EVENT_TYPE_OPTIONS: { value: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { value: "all",         label: "Todos",       icon: LayoutGrid },
+  { value: "casamento",   label: "Casamento",   icon: Heart      },
+  { value: "ensaio",      label: "Ensaio",      icon: Camera     },
+  { value: "pre_wedding", label: "Pré-Wedding", icon: Sunset     },
+  { value: "debutante",   label: "Debutante",   icon: Star       },
+  { value: "aniversario", label: "Aniversário", icon: Cake       },
 ];
 
 export function CalendarHeader({ 
@@ -67,6 +68,7 @@ export function CalendarHeader({
                 : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
             }`}
           >
+            <opt.icon className="h-3 w-3" />
             {opt.label}
           </button>
         ))}

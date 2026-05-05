@@ -1,7 +1,8 @@
+import React from "react";
 import { useMemo } from "react";
 import { addDays, isAfter, isBefore, startOfDay, differenceInDays } from "date-fns";
 import { Client, EventCategory, CalendarEvent } from "@/utils/types";
-import { Calendar, MapPin, DollarSign, Clock } from "lucide-react";
+import { Calendar, MapPin, DollarSign, Clock, Heart, Camera, Sunset, Star, Cake, CalendarDays } from "lucide-react";
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { useNavigate } from "react-router-dom";
 import { stringToDate } from "@/utils/dates";
@@ -15,14 +16,16 @@ interface UpcomingEventsProps {
 const fmt = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 }).format(v);
 
-function categoryBadge(cat: string) {
+type BadgeInfo = { label: string; cls: string; Icon: React.ComponentType<{ className?: string }> };
+function categoryBadge(cat: string): BadgeInfo {
   const c = (cat || "").toLowerCase();
-  if (c.includes("casamento"))  return { label: "💍 Casamento",   cls: "bg-rose-50 text-rose-700 border-rose-200" };
-  if (c.includes("ensaio"))     return { label: "📸 Ensaio",      cls: "bg-blue-50 text-blue-700 border-blue-200" };
-  if (c.includes("pre") || c.includes("pré")) return { label: "🌅 Pré-Wedding", cls: "bg-amber-50 text-amber-700 border-amber-200" };
-  if (c.includes("debutante"))  return { label: "🎀 Debutante",   cls: "bg-purple-50 text-purple-700 border-purple-200" };
-  if (c.includes("aniversar"))  return { label: "🎂 Aniversário", cls: "bg-green-50 text-green-700 border-green-200" };
-  return { label: cat || "Evento", cls: "bg-gray-50 text-gray-700 border-gray-200" };
+  if (c.includes("casamento"))                return { label: "Casamento",   cls: "bg-rose-50 text-rose-700 border-rose-200",     Icon: Heart      };
+  if (c.includes("ensaio"))                   return { label: "Ensaio",      cls: "bg-blue-50 text-blue-700 border-blue-200",     Icon: Camera     };
+  if (c.includes("pre") || c.includes("pré")) return { label: "Pré-Wedding", cls: "bg-amber-50 text-amber-700 border-amber-200",  Icon: Sunset     };
+  if (c.includes("debutante"))                return { label: "Debutante",   cls: "bg-purple-50 text-purple-700 border-purple-200", Icon: Star     };
+  if (c.includes("aniversar"))                return { label: "Aniversário", cls: "bg-green-50 text-green-700 border-green-200",  Icon: Cake       };
+  if (c.includes("calendário") || c.includes("calendario")) return { label: "Calendário", cls: "bg-gray-50 text-gray-600 border-gray-200", Icon: CalendarDays };
+  return { label: cat || "Evento", cls: "bg-gray-50 text-gray-700 border-gray-200", Icon: CalendarDays };
 }
 
 function daysLabel(days: number) {
@@ -148,7 +151,8 @@ export function UpcomingEvents({ clients, loading }: UpcomingEventsProps) {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-[13px] font-semibold text-stone-800 truncate">{event.title}</p>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium shrink-0 ${badge.cls}`}>
+                        <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border font-medium shrink-0 ${badge.cls}`}>
+                          <badge.Icon className="h-2.5 w-2.5" />
                           {badge.label}
                         </span>
                       </div>

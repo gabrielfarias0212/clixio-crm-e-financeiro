@@ -1,3 +1,4 @@
+import React from "react";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,10 @@ import { useBusinessFixedExpenses } from "@/hooks/useBusinessFixedExpenses";
 import { EXPENSE_CATEGORIES } from "@/utils/supabase/business-fixed-expenses";
 import type { BusinessFixedExpense } from "@/hooks/useBusinessFixedExpenses";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Landmark, Monitor, Building2, Wifi, Smartphone, Megaphone,
+  Camera, BookOpen, MoreHorizontal
+} from "lucide-react";
 
 const fmt = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
@@ -85,8 +90,22 @@ export function BusinessFixedExpensesManager() {
     setShowForm(true);
   };
 
-  const getCat = (val: string | null | undefined) =>
-    EXPENSE_CATEGORIES.find(c => c.value === val) ?? { label: "Outro", emoji: "📌" };
+  const CAT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+    impostos:      Landmark,
+    software:      Monitor,
+    aluguel:       Building2,
+    internet:      Wifi,
+    telefone:      Smartphone,
+    marketing:     Megaphone,
+    equipamento:   Camera,
+    contabilidade: BookOpen,
+    outro:         MoreHorizontal,
+  };
+
+  const getCat = (val: string | null | undefined) => {
+    const found = EXPENSE_CATEGORIES.find(c => c.value === val);
+    return { label: found?.label ?? "Outro", Icon: CAT_ICONS[val ?? ""] ?? MoreHorizontal };
+  };
 
   if (loading) {
     return (
@@ -176,7 +195,7 @@ export function BusinessFixedExpensesManager() {
                   <SelectContent>
                     {EXPENSE_CATEGORIES.map(c => (
                       <SelectItem key={c.value} value={c.value}>
-                        {c.emoji} {c.label}
+                        {c.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -234,7 +253,7 @@ export function BusinessFixedExpensesManager() {
                         checked={expense.is_active}
                         onCheckedChange={() => updateExpense(expense.id, { is_active: !expense.is_active })}
                       />
-                      <span className="text-base shrink-0">{cat.emoji}</span>
+                      <cat.Icon className="h-4 w-4 shrink-0 text-gray-500" />
                       <div className="flex-1 min-w-0">
                         <p className={`font-medium text-sm ${!expense.is_active ? "line-through" : ""}`}>
                           {expense.description}

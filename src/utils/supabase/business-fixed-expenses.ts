@@ -11,16 +11,16 @@ export type ExpenseCategory =
   | "contabilidade"
   | "outro";
 
-export const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; emoji: string }[] = [
-  { value: "impostos",      label: "Impostos / DAS",   emoji: "🏛️" },
-  { value: "software",      label: "Software / SaaS",  emoji: "💻" },
-  { value: "aluguel",       label: "Aluguel / Espaço", emoji: "🏢" },
-  { value: "internet",      label: "Internet",          emoji: "📡" },
-  { value: "telefone",      label: "Telefone / Plano",  emoji: "📱" },
-  { value: "marketing",     label: "Marketing",         emoji: "📣" },
-  { value: "equipamento",   label: "Equipamento",       emoji: "📷" },
-  { value: "contabilidade", label: "Contabilidade",     emoji: "📊" },
-  { value: "outro",         label: "Outro",             emoji: "📌" },
+export const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string }[] = [
+  { value: "impostos",      label: "Impostos / DAS"   },
+  { value: "software",      label: "Software / SaaS"  },
+  { value: "aluguel",       label: "Aluguel / Espaço" },
+  { value: "internet",      label: "Internet"          },
+  { value: "telefone",      label: "Telefone / Plano"  },
+  { value: "marketing",     label: "Marketing"         },
+  { value: "equipamento",   label: "Equipamento"       },
+  { value: "contabilidade", label: "Contabilidade"     },
+  { value: "outro",         label: "Outro"             },
 ];
 
 export interface BusinessFixedExpense {

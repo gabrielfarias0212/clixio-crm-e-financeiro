@@ -91,16 +91,29 @@ function isFutureEvent(client: any): boolean {
   return d.getTime() > Date.now();
 }
 
+// Retorna a ÚLTIMA etapa concluída (onde o cliente está agora)
+// Assim "Cópia/Backup" no filtro = quem fez backup mas ainda não fez curadoria
 function getCurrentStageKey(client: any): string {
   if (client.status === "projeto_finalizado") return "finalizado";
-  let steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
-  if (client.semEntregaFisica) steps = steps.filter(s => s.field !== 'boxDelivered');
-  const current = steps.find(s => !getClientField(client, s.field as string));
-  // Se a próxima etapa é fotografar e o evento ainda não aconteceu → aguardando
-  if (current?.key === "wedding_photographed" && isFutureEvent(client)) {
+
+  // Evento futuro sem nenhuma etapa feita → aguardando
+  if (isFutureEvent(client) && !getClientField(client, "weddingPhotographed")) {
     return "aguardando_evento";
   }
-  return current?.key ?? "finalizado";
+
+  // Retorna a última etapa concluída (percorre de trás pra frente)
+  let steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
+  if (client.semEntregaFisica) steps = steps.filter((s: any) => s.field !== 'boxDelivered');
+
+  // Acha a última etapa concluída (mais avançada)
+  for (let i = steps.length - 1; i >= 0; i--) {
+    if (getClientField(client, steps[i].field as string)) {
+      return steps[i].key;
+    }
+  }
+
+  // Nenhuma etapa concluída e evento já passou → aguardando (sem data ou evento recente)
+  return "aguardando_evento";
 }
 
 // Lista única de etapas (workflow + álbum + finalizado) para o filtro
@@ -110,6 +123,14 @@ const ALL_STAGE_OPTIONS: { key: string; label: string }[] = [
   ...ALBUM_STEPS.map(s => ({ key: s.key, label: `Álbum: ${s.label}` })),
   { key: "finalizado", label: "Finalizado" },
 ];
+
+// Mapa rápido: chave → label legível para o badge do card
+const STAGE_LABEL: Record<string, string> = {
+  aguardando_evento: "Aguardando Evento",
+  ...Object.fromEntries(WORKFLOW_STEPS.map(s => [s.key, s.label])),
+  ...Object.fromEntries(ALBUM_STEPS.map(s => [s.key, s.label])),
+  finalizado: "Finalizado",
+};
 
 function urgencyColor(days: number, linkSent: boolean): string {
   if (linkSent) return "text-green-600";
@@ -125,7 +146,9 @@ function ProjectCard({ client, onToggleStep, onClick }: {
   onToggleStep: (id: string, field: string, value: boolean) => void;
   onClick: () => void;
 }) {
-  const { done, total, pct, currentStep } = calcProgress(client);
+  const { done, total, pct } = calcProgress(client);
+  const stageKey = getCurrentStageKey(client);
+  const stageLabel = STAGE_LABEL[stageKey] ?? stageKey;
   const days = daysSince(client.weddingDate);
   const isFuture = isFutureEvent(client);
   const isFinished = client.status === "projeto_finalizado";
@@ -168,7 +191,7 @@ function ProjectCard({ client, onToggleStep, onClick }: {
               <AlertTriangle className="h-3 w-3" /> Atrasado
             </Badge>
           ) : (
-            <Badge className="bg-blue-50 text-blue-700 border-blue-100 text-xs">{currentStep}</Badge>
+            <Badge className="bg-blue-50 text-blue-700 border-blue-100 text-xs">{stageLabel}</Badge>
           )}
           {client.hasAlbum && (
             <Badge className="bg-indigo-50 text-indigo-700 border-indigo-100 text-xs">📖 Álbum</Badge>

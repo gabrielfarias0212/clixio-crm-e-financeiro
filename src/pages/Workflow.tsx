@@ -15,6 +15,22 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+
+// ─── Status helpers ───────────────────────────────────────────────────────────
+function isDelivered(client: any): boolean {
+  if (client.status === "projeto_finalizado") return true;
+  if (client.semEntregaFisica) return !!client.linkSent;
+  return !!client.boxDelivered;
+}
+
+function isInProgress(client: any): boolean {
+  return !!client.weddingPhotographed && !isDelivered(client);
+}
+
+function isAwaiting(client: any): boolean {
+  return !client.weddingPhotographed && !isDelivered(client);
+}
+
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 interface WorkflowStep {
@@ -401,7 +417,7 @@ export default function WorkflowPage() {
   const { clients, loading, updateClient } = useClients();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "finished">("active");
+  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "finished" | "awaiting">("active");
   const [filterMonth, setFilterMonth] = useState<number | "all">("all");
   const [filterYear, setFilterYear] = useState<number | "all">("all");
   const [filterStage, setFilterStage] = useState<string>("all");
@@ -437,8 +453,9 @@ export default function WorkflowPage() {
 
   const filtered = useMemo(() => {
     let list = workflowClients;
-    if (filterStatus === "active") list = list.filter(c => c.status === "fechado");
-    if (filterStatus === "finished") list = list.filter(c => c.status === "projeto_finalizado");
+    if (filterStatus === "active") list = list.filter(c => isInProgress(c));
+    if (filterStatus === "finished") list = list.filter(c => isDelivered(c));
+    if (filterStatus === "awaiting") list = list.filter(c => isAwaiting(c));
     if (filterStage !== "all") list = list.filter(c => getCurrentStageKey(c) === filterStage);
     if (filterMonth !== "all") list = list.filter(c => parseDate(c.weddingDate)?.getMonth() === filterMonth);
     if (filterYear !== "all") list = list.filter(c => parseDate(c.weddingDate)?.getFullYear() === filterYear);
@@ -455,11 +472,12 @@ export default function WorkflowPage() {
   }, [workflowClients, filterStatus, filterStage, filterMonth, filterYear, searchTerm]);
 
   const stats = useMemo(() => ({
-    ativos: workflowClients.filter(c => c.status === "fechado").length,
-    entregaFisicaPendente: workflowClients.filter(c => c.linkSent && !c.boxDelivered).length,
+    ativos: workflowClients.filter(c => isInProgress(c)).length,
+    aguardando: workflowClients.filter(c => isAwaiting(c)).length,
+    entregaFisicaPendente: workflowClients.filter(c => c.linkSent && !c.boxDelivered && !c.semEntregaFisica).length,
     linkEnviado: workflowClients.filter(c => c.linkSent).length,
-    finalizados: workflowClients.filter(c => c.status === "projeto_finalizado").length,
-    atrasados: workflowClients.filter(c => !c.linkSent && daysSince(c.weddingDate) > 60).length,
+    finalizados: workflowClients.filter(c => isDelivered(c)).length,
+    atrasados: workflowClients.filter(c => isInProgress(c) && !c.linkSent && daysSince(c.weddingDate) > 60).length,
   }), [workflowClients]);
 
   const handleToggleStep = async (clientId: string, field: string, value: boolean) => {
@@ -521,8 +539,8 @@ export default function WorkflowPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {[
-            { label: "Ativos", value: stats.ativos, color: "text-gray-900" },
-            { label: "Link Enviado", value: stats.linkEnviado, color: "text-green-600" },
+            { label: "Em Andamento", value: stats.ativos, color: "text-blue-600" },
+            { label: "Aguardando Evento", value: stats.aguardando, color: "text-sky-500" },
             { label: "Entrega Pendente", value: stats.entregaFisicaPendente, color: stats.entregaFisicaPendente > 0 ? "text-orange-600" : "text-gray-400" },
             { label: "Atrasados", value: stats.atrasados, color: stats.atrasados > 0 ? "text-red-600" : "text-gray-400" },
             { label: "Finalizados", value: stats.finalizados, color: "text-purple-600" },
@@ -564,18 +582,29 @@ export default function WorkflowPage() {
               </div>
 
               {/* Status */}
-              <div className="flex gap-1.5">
-                {(["all", "active", "finished"] as const).map(f => (
+              <div className="flex gap-1.5 flex-wrap">
+                {([
+                  { key: "all",      label: "Todos" },
+                  { key: "active",   label: "Em andamento" },
+                  { key: "awaiting", label: "Aguardando" },
+                  { key: "finished", label: "Finalizados" },
+                ] as const).map(f => (
                   <button
-                    key={f}
-                    onClick={() => setFilterStatus(f)}
+                    key={f.key}
+                    onClick={() => setFilterStatus(f.key)}
                     className={`px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
-                      filterStatus === f
+                      filterStatus === f.key
                         ? "bg-gray-900 text-white border-gray-900"
                         : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
                     }`}
                   >
-                    {f === "all" ? "Todos" : f === "active" ? "Em andamento" : "Finalizados"}
+                    {f.label}
+                    {f.key === "active" && stats.ativos > 0 && (
+                      <span className="ml-1.5 bg-blue-500 text-white text-xs rounded-full px-1.5 py-0">{stats.ativos}</span>
+                    )}
+                    {f.key === "awaiting" && stats.aguardando > 0 && (
+                      <span className="ml-1.5 bg-sky-400 text-white text-xs rounded-full px-1.5 py-0">{stats.aguardando}</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -653,7 +682,7 @@ export default function WorkflowPage() {
       <WorkflowReportDialog
         open={showReports}
         onClose={() => setShowReports(false)}
-        clients={workflowClients}
+        clients={workflowClients.filter(c => isInProgress(c))}
       />
     </Layout>
   );

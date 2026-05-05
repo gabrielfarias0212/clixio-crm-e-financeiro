@@ -18,6 +18,9 @@ import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
 import { WhatsAppMessageDialog } from "@/components/crm/WhatsAppMessageDialog";
 import { CRMClientDialog } from "@/components/crm/CRMClientDialog";
+import { CRMActivityPanel } from "@/components/crm/CRMActivityPanel";
+import { FollowUpBanner } from "@/components/crm/FollowUpBanner";
+import { Bell } from "lucide-react";
 
 interface CRMKanbanProps {
   clients: Client[];
@@ -93,6 +96,12 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
   // Estado do dialog de mensagem
   const [messageDialogClient, setMessageDialogClient] = useState<Client | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+
+  const toggleCardExpand = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedCards(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientDialogOpen, setClientDialogOpen] = useState(false);
 
@@ -184,6 +193,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
   return (
     <>
       <div className="space-y-6">
+        <FollowUpBanner />
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="w-full overflow-x-auto pb-4">
             <div className="flex gap-4" style={{ minWidth: `${funnelStages.length * 280}px` }}>
@@ -331,7 +341,25 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                             </span>
                                           </div>
                                         </div>
+
+                                        {/* Expand: histórico + follow-up */}
+                                        <button
+                                          onClick={e => toggleCardExpand(client.id, e)}
+                                          className="w-full flex items-center justify-center gap-1 mt-2 py-1 rounded-md text-xs text-stone-400 hover:text-stone-600 hover:bg-stone-50 transition-colors border border-transparent hover:border-stone-100"
+                                        >
+                                          <Bell size={11} />
+                                          {expandedCards.has(client.id) ? "Fechar" : "Histórico & Follow-up"}
+                                          {expandedCards.has(client.id) ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                                        </button>
                                       </div>
+
+                                      {/* Activity Panel */}
+                                      {expandedCards.has(client.id) && (
+                                        <CRMActivityPanel
+                                          clientId={client.id}
+                                          clientName={client.name}
+                                        />
+                                      )}
                                     </div>
                                   )}
                                 </Draggable>

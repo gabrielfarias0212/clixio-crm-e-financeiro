@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowDownCircle, ArrowUpCircle, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isTransactionInWeek, WeekInfo } from "@/utils/dates/weekUtils";
+import { fetchCompanySettings, CompanySettings } from "@/utils/supabase/settings";
 import { PeriodType } from "@/hooks/useWeeklyFilter";
 
 interface TransactionSummaryProps {
@@ -23,6 +24,8 @@ export function TransactionSummary({
   currentWeek,
   onWeeklyBalanceChange
 }: TransactionSummaryProps) {
+  const [goals, setGoals] = useState<CompanySettings | null>(null);
+
   const [summary, setSummary] = useState({
     totalIncome: 0,
     totalExpenses: 0,
@@ -119,6 +122,10 @@ export function TransactionSummary({
     }
   }, [transactions, periodType, currentWeek, onWeeklyBalanceChange]);
 
+  useEffect(() => {
+    fetchCompanySettings().then(d => setGoals(d)).catch(() => {});
+  }, []);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -197,6 +204,67 @@ export function TransactionSummary({
               {formatCurrency(summary.periodBalance)} no {periodType === "monthly" ? "mês atual" : "período"}
             </div>
           </div>
+
+        {/* Metas financeiras */}
+        {periodType === 'monthly' && goals && (goals.monthly_revenue_goal || goals.monthly_events_goal) && (
+          <div className="border-t pt-4 mt-2 space-y-3">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Progresso das Metas</p>
+            {goals.monthly_revenue_goal && (
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">Receita do mês</span>
+                  <span className="text-xs font-medium text-gray-700">
+                    {formatCurrency(summary.periodIncome)} / {formatCurrency(Number(goals.monthly_revenue_goal))}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={barColor}
+                    style={{ width: `${pct.toFixed(1)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-400">
+                  {((summary.periodIncome / Number(goals.monthly_revenue_goal)) * 100).toFixed(0)}% da meta mensal atingida
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Metas financeiras */}
+        {periodType === 'monthly' && goals && (goals.monthly_revenue_goal || goals.monthly_events_goal) && (
+          <div className="border-t pt-4 mt-2 space-y-3">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Progresso das Metas</p>
+            {goals.monthly_revenue_goal && (() => {
+              const goal = Number(goals.monthly_revenue_goal);
+              const pct = Math.min(100, (summary.periodIncome / goal) * 100);
+              const barColor = summary.periodIncome >= goal
+                ? 'bg-green-500'
+                : pct >= 70
+                ? 'bg-amber-400'
+                : 'bg-red-400';
+              return (
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-500">Receita do mês</span>
+                    <span className="text-xs font-medium text-gray-700">
+                      {formatCurrency(summary.periodIncome)} / {formatCurrency(goal)}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div
+                      className={`h-2 rounded-full transition-all ${barColor}`}
+                      style={{ width: `${pct.toFixed(1)}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    {pct.toFixed(0)}% da meta mensal atingida
+                  </p>
+                </div>
+              );
+            })()}
+          </div>
+        )}
         </div>
       </CardContent>
     </Card>

@@ -1,14 +1,14 @@
-import { useState } from "react";
-import { Settings2, DollarSign, Building2 } from "lucide-react";
+import { Settings2, DollarSign, Building2, Target } from "lucide-react";
 import Layout from "@/components/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CompanyCostsTab } from "@/components/settings/CompanyCostsTab";
+import { CompanyDataTab } from "@/components/settings/CompanyDataTab";
+import { FinancialGoalsTab } from "@/components/settings/FinancialGoalsTab";
 
 export default function Settings() {
   return (
     <Layout>
       <div className="max-w-3xl mx-auto px-4 py-8">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <div className="w-9 h-9 rounded-xl bg-stone-100 flex items-center justify-center">
             <Settings2 size={18} className="text-stone-600" />
@@ -20,27 +20,37 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="costs">
-          <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl h-auto">
+          <TabsList className="mb-6 bg-stone-100 p-1 rounded-xl h-auto flex flex-wrap gap-1">
             <TabsTrigger
               value="costs"
               className="flex items-center gap-1.5 rounded-lg text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
             >
-              <DollarSign size={13} />
-              Custos Padrão
+              <DollarSign size={13} /> Custos Padrão
+            </TabsTrigger>
+            <TabsTrigger
+              value="goals"
+              className="flex items-center gap-1.5 rounded-lg text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <Target size={13} /> Metas Financeiras
             </TabsTrigger>
             <TabsTrigger
               value="company"
               className="flex items-center gap-1.5 rounded-lg text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
-              disabled
             >
-              <Building2 size={13} />
-              Empresa
-              <span className="ml-1 text-[10px] bg-stone-200 text-stone-500 px-1.5 py-0.5 rounded-full">Em breve</span>
+              <Building2 size={13} /> Empresa
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="costs">
             <CompanyCostsTab />
+          </TabsContent>
+
+          <TabsContent value="goals">
+            <FinancialGoalsTab />
+          </TabsContent>
+
+          <TabsContent value="company">
+            <CompanyDataTab />
           </TabsContent>
         </Tabs>
       </div>

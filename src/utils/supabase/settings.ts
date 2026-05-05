@@ -8,6 +8,9 @@ export interface CompanySettings {
   phone?: string;
   city?: string;
   email?: string;
+  monthly_revenue_goal?: number | null;
+  annual_revenue_goal?: number | null;
+  monthly_events_goal?: number | null;
 }
 
 export async function fetchCompanySettings(): Promise<CompanySettings | null> {

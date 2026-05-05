@@ -180,8 +180,8 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                 const Icon = stage.icon;
 
                 return (
-                  <div key={stage.key} className="flex-1 min-w-[260px] max-w-xs overflow-hidden">
-                    <Card className={`h-full border-t-2 ${stage.borderColor} shadow-sm`}>
+                  <div key={stage.key} className="flex-1 min-w-[260px] max-w-xs overflow-hidden flex flex-col">
+                    <Card className={`flex flex-col border-t-2 ${stage.borderColor} shadow-sm`} style={{height: "calc(100vh - 280px)", minHeight: "400px"}}>
                       <CardHeader className="pb-2 pt-3 px-3">
                         <div className="flex items-center gap-2">
                           <div className={`p-1.5 rounded-md ${stage.bgColor}`}>
@@ -201,13 +201,13 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                         </div>
                       </CardHeader>
 
-                      <CardContent className="pt-0 px-2 pb-2">
+                      <CardContent className="pt-0 px-2 pb-2 flex-1 overflow-hidden flex flex-col">
                         <Droppable droppableId={stage.key}>
                           {(provided, snapshot) => (
                             <div
                               ref={provided.innerRef}
                               {...provided.droppableProps}
-                              className={`min-h-40 overflow-x-hidden overflow-y-auto space-y-3 p-3 rounded-lg transition-all duration-200 ${
+                              style={{maxHeight: "100%", overflowY: "auto"}} className={`min-h-40 space-y-3 p-3 rounded-lg transition-all duration-200 flex-1 ${
                                 snapshot.isDraggingOver
                                   ? `${stage.bgColor} border-2 ${stage.borderColor} border-dashed`
                                   : "bg-gray-50/50"

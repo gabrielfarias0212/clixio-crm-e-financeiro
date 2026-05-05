@@ -7,12 +7,13 @@ import { LeadsVsContractsChart } from "@/components/crm/LeadsVsContractsChart";
 import { CRMKanban } from "@/components/crm/CRMKanban";
 import { QuickLeadForm } from "@/components/client-form/QuickLeadForm";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Filter } from "lucide-react";
+import { Plus, X, Filter, Search } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { QuickLeadValues } from "@/components/client-form/quickLeadTypes";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { EventCategory } from "@/utils/types";
 
 export default function CRM() {
@@ -21,6 +22,7 @@ export default function CRM() {
   const [showQuickForm, setShowQuickForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [timeFilter, setTimeFilter] = useState("all");
+  const [searchName, setSearchName] = useState("");
 
   useEffect(() => {
     document.title = "CRM | Wedding CRM";
@@ -64,23 +66,28 @@ export default function CRM() {
     }
   };
 
-  // Filter clients based on time filter
+  // Filter clients based on time filter + name search
   const filteredClients = useMemo(() => {
     if (!clients || timeFilter === "all") return clients || [];
     
     const currentYear = new Date().getFullYear();
     const filterYear = timeFilter === "2025" ? 2025 : currentYear;
     
-    return clients.filter(client => {
+    const byTime = clients.filter(client => {
       if (client.weddingDate) {
         const weddingYear = new Date(client.weddingDate).getFullYear();
         return weddingYear === filterYear;
       }
-      // If no wedding date, filter by creation date
       const createdYear = new Date(client.createdAt || Date.now()).getFullYear();
       return createdYear === filterYear;
     });
-  }, [clients, timeFilter]);
+    if (!searchName.trim()) return byTime;
+    const term = searchName.toLowerCase();
+    return byTime.filter(c =>
+      c.name.toLowerCase().includes(term) ||
+      (c.coupleName && c.coupleName.toLowerCase().includes(term))
+    );
+  }, [clients, timeFilter, searchName]);
 
   if (loading) {
     return (
@@ -121,12 +128,23 @@ export default function CRM() {
               </Select>
             </div>
           </div>
-          <Link to="/clients/add">
-            <Button className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
-              <Plus className="h-4 w-4" />
-              Adicionar Lead
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <Input
+                placeholder="Pesquisar cliente..."
+                value={searchName}
+                onChange={e => setSearchName(e.target.value)}
+                className="pl-8 w-52 h-9 text-sm"
+              />
+            </div>
+            <Link to="/clients/add">
+              <Button className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
+                <Plus className="h-4 w-4" />
+                Adicionar Lead
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* CRM Stats Header */}

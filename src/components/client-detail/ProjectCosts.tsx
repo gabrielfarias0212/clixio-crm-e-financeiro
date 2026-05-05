@@ -58,13 +58,19 @@ export function ProjectCosts({ client }: ProjectCostsProps) {
       toast.error("Preencha descrição e valor");
       return;
     }
+    const amountNum = parseFloat(form.amount.replace(",", "."));
+    if (isNaN(amountNum) || amountNum <= 0) {
+      toast.error("Valor inválido");
+      return;
+    }
+    const costDate = form.date || new Date().toISOString().split("T")[0];
     setSaving(true);
     try {
       const novo = await addProjectCost(client.id, {
         category: form.category,
         description: form.description.trim(),
-        amount: parseFloat(form.amount.replace(",", ".")),
-        date: form.date,
+        amount: amountNum,
+        date: costDate,
         supplier: form.supplier.trim() || undefined,
       });
       setCosts(prev => [novo, ...prev]);
@@ -72,8 +78,9 @@ export function ProjectCosts({ client }: ProjectCostsProps) {
       setShowForm(false);
       toast.success("Custo registrado");
     } catch (err: any) {
+      const msg = err?.message || err?.error_description || JSON.stringify(err);
       console.error("Erro ao salvar custo do projeto:", err);
-      toast.error(err?.message || "Erro ao salvar custo");
+      toast.error(`Erro: ${msg}`);
     } finally {
       setSaving(false);
     }

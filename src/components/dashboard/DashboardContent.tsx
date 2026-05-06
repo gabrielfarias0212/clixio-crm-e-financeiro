@@ -2,7 +2,7 @@ import { useClients } from "@/contexts/ClientsContext";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useBusinessMetrics } from "@/hooks/useBusinessMetrics";
 import { useState, useMemo, useEffect } from "react";
-import { startOfMonth, endOfMonth, isWithinInterval, differenceInDays, isToday, isPast, parseISO } from "date-fns";
+import { differenceInDays, isToday, isPast, parseISO } from "date-fns";
 import { stringToDate } from "@/utils/dates";
 import { isFullyPaid } from "@/utils/clientUtils";
 import { Client } from "@/utils/types";
@@ -11,9 +11,9 @@ import { DashboardCardModal } from "./DashboardCardModal";
 import { fetchAllPendingFollowups, completeFollowup, CRMFollowup } from "@/utils/supabase/crm-activities";
 import { fetchCompanySettings, CompanySettings } from "@/utils/supabase/settings";
 import {
-  TrendingUp, AlertTriangle, Clock, CheckCircle2,
-  Calendar, ChevronRight, DollarSign, Users, Zap, Package2,
-  Bell, MessageCircle, Phone, Mail, FileText, Target, Check
+  TrendingUp, AlertTriangle, CheckCircle2,
+  ChevronRight, DollarSign, Users,
+  Bell, Target, Check
 } from "lucide-react";
 
 const fmt = (v: number) =>
@@ -55,13 +55,7 @@ const STAGE_COLORS: Record<string, { bg: string; color: string }> = {
   projeto_finalizado: { bg: "#F1EFE8", color: "#5F5E5A" },
 };
 
-const ACTIVITY_ICON: Record<string, React.ReactNode> = {
-  whatsapp: <MessageCircle size={12} />,
-  call:     <Phone size={12} />,
-  email:    <Mail size={12} />,
-  meeting:  <Users size={12} />,
-  note:     <FileText size={12} />,
-};
+
 
 function Avatar({ name, size = 28 }: { name: string; size?: number }) {
   const c = avatarColor(name);
@@ -173,9 +167,9 @@ export function DashboardContent() {
   // ── Follow-ups do dia ──
   const todayFollowups = useMemo(() => {
     return followups.filter(f => {
-      const d = parseISO(f.due_date);
+      const d = parseISO(f.scheduled_date);
       return isToday(d) || isPast(d);
-    }).sort((a, b) => parseISO(a.due_date).getTime() - parseISO(b.due_date).getTime());
+    }).sort((a, b) => parseISO(a.scheduled_date).getTime() - parseISO(b.scheduled_date).getTime());
   }, [followups]);
 
   const handleCompleteFollowup = async (id: string, e: React.MouseEvent) => {
@@ -361,7 +355,7 @@ export function DashboardContent() {
             <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
               {todayFollowups.slice(0, 5).map(f => {
                 const clientName = (f as any).wedding_clients?.name ?? "Cliente";
-                const dDate = parseISO(f.due_date);
+                const dDate = parseISO(f.scheduled_date);
                 const isOverdue = isPast(dDate) && !isToday(dDate);
                 return (
                   <div key={f.id} style={{
@@ -374,11 +368,11 @@ export function DashboardContent() {
                       color: isOverdue ? "#A32D2D" : "#854F0B",
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
-                      {ACTIVITY_ICON[f.type] ?? <Bell size={12} />}
+                      <Bell size={12} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{clientName}</div>
-                      {f.note && <div style={{ fontSize: 11, color: "var(--color-text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.note}</div>}
+                      {f.description && <div style={{ fontSize: 11, color: "var(--color-text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.description}</div>}
                     </div>
                     <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }}>
                       {isOverdue && <Chip label="atrasado" bg="#FCEBEB" color="#A32D2D" />}

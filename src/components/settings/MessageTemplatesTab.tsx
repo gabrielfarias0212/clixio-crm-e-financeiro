@@ -10,41 +10,41 @@ const STAGE_COLORS: Record<TemplateFunnelStage, { bg: string; color: string }> =
   primeiro_contato:  { bg: "#E6F1FB", color: "#185FA5" },
   orcamento_enviado: { bg: "#FAEEDA", color: "#854F0B" },
   negociacao:        { bg: "#FEF3C7", color: "#92400E" },
-  fechado:           { bg: "#EAF3DE", color: "#3B6D11" },
-  pos_evento:        { bg: "#EEEDFE", color: "#534AB7" },
-  geral:             { bg: "#F1EFE8", color: "#5F5E5A" },
+  contrato_fechado:  { bg: "#EAF3DE", color: "#3B6D11" },
+  projeto_finalizado:{ bg: "#EEEDFE", color: "#534AB7" },
+  contrato_perdido:  { bg: "#FEE2E2", color: "#991B1B" },
 };
 
 const DEFAULT_TEMPLATES: Array<Omit<MessageTemplate, "id" | "user_id" | "created_at">> = [
   {
     stage: "primeiro_contato",
-    title: "Apresentação inicial",
-    body: "Olá, [Nome]! 😊 Tudo bem? Vi que você tem interesse nos meus serviços de fotografia. Adoraria entender melhor o que você está planejando e ver como posso ajudar. Pode me contar mais sobre o evento?"
+    title: "Primeiro contato — boas-vindas",
+    body: "Oi [Nome], tudo bem? Recebi sua mensagem e fico feliz com o interesse. Para eu conseguir te dar um retorno mais certeiro, me conta um pouquinho mais sobre o que você está planejando: qual a data do evento, o local e o que você tem em mente até agora. Pode ser bem por cima mesmo, estou aqui pra ajudar a organizar."
   },
   {
     stage: "orcamento_enviado",
-    title: "Follow-up 3 dias",
-    body: "Olá, [Nome]! Espero que esteja tudo bem. Queria saber se você teve a oportunidade de analisar o orçamento que enviei. Fico à disposição para tirar qualquer dúvida ou ajustar algo conforme a sua necessidade. 📸"
-  },
-  {
-    stage: "orcamento_enviado",
-    title: "Follow-up 7 dias",
-    body: "Oi, [Nome]! Passando para saber se ainda há interesse 😊. Entendo que planejar um evento envolve muitas decisões. Se precisar de mais informações ou quiser conversar sobre o orçamento, é só falar. Minha agenda ainda tem disponibilidade para a sua data!"
+    title: "Orçamento enviado — follow-up",
+    body: "Oi [Nome], te mandei o orçamento com as opções que acho que fazem mais sentido pro seu caso. Dá uma olhada com calma e, se tiver qualquer dúvida sobre algum pacote ou quiser conversar sobre algum ajuste, me fala. Estou à disposição pra gente alinhar o que precisar."
   },
   {
     stage: "negociacao",
-    title: "Última chance de data",
-    body: "Olá, [Nome]! Quero te avisar que recebi outra consulta para a sua data. Como o processo de reserva é por ordem de chegada, gostaria de saber se você tem interesse em garantir antes que a data fique indisponível. Me avise! 🗓️"
+    title: "Negociação — retomando conversa",
+    body: "Oi [Nome], queria saber se você teve chance de olhar o que te mandei. Se surgiu alguma dúvida ou quiser conversar sobre as opções, me chama. Às vezes é mais fácil resolver em uma troca rápida do que por texto."
   },
   {
-    stage: "fechado",
-    title: "Confirmação de contrato",
-    body: "Que notícia incrível, [Nome]! 🎉 Estou muito feliz em confirmar que vamos trabalhar juntos. Em breve envio o contrato para assinatura e os detalhes de pagamento. Mal posso esperar para fotografar esse momento especial!"
+    stage: "contrato_fechado",
+    title: "Contrato fechado — boas-vindas ao projeto",
+    body: "[Nome], que bom que a gente vai trabalhar juntos. Já fico ansioso pelo [DATA]. Vou te mandando as informações que precisar conforme a data for chegando. Qualquer coisa antes disso, pode me chamar à vontade."
   },
   {
-    stage: "pos_evento",
-    title: "Aviso de galeria pronta",
-    body: "Olá, [Nome]! Tenho uma novidade incrível: a galeria de fotos do seu evento está pronta! 🎉📸 Acesse pelo link: [LINK]. Aproveite cada memória e não esqueça de compartilhar com quem você ama!"
+    stage: "projeto_finalizado",
+    title: "Projeto finalizado — entrega",
+    body: "[Nome], as fotos estão prontas e entregues. Foi muito bom acompanhar esse momento com vocês. Se tiver algum retorno sobre o trabalho, fico feliz em ouvir. E se um dia precisar de fotografia de novo, ou quiser indicar pra alguém, eu agradeço muito."
+  },
+  {
+    stage: "contrato_perdido",
+    title: "Contrato perdido — porta aberta",
+    body: "Oi [Nome], tudo bem? Entendo que nem sempre o momento é o certo pra fechar esse tipo de coisa. Se um dia precisar de fotografia ou quiser indicar pra alguém, pode me chamar, estarei por aqui. Fica à vontade."
   },
 ];
 
@@ -106,7 +106,7 @@ export function MessageTemplatesTab() {
       await addMessageTemplate(form);
       await load();
       setCreating(false);
-      setForm({ title: "", stage: "geral", body: "" });
+      setForm({ title: "", stage: "primeiro_contato", body: "" });
     } finally {
       setSaving(false);
     }
@@ -182,7 +182,7 @@ export function MessageTemplatesTab() {
             </button>
           )}
           <button
-            onClick={() => { setCreating(true); setEditingId(null); setForm({ title: "", stage: "geral", body: "" }); }}
+            onClick={() => { setCreating(true); setEditingId(null); setForm({ title: "", stage: "primeiro_contato", body: "" }); }}
             style={{
               padding: "7px 14px", borderRadius: 8, border: "none",
               background: "#639922", color: "#fff", cursor: "pointer", fontSize: 12,

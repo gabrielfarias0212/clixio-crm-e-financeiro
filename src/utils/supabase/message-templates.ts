@@ -4,17 +4,17 @@ export type TemplateFunnelStage =
   | "primeiro_contato"
   | "orcamento_enviado"
   | "negociacao"
-  | "fechado"
-  | "pos_evento"
-  | "geral";
+  | "contrato_fechado"
+  | "projeto_finalizado"
+  | "contrato_perdido";
 
 export const TEMPLATE_STAGE_LABELS: Record<TemplateFunnelStage, string> = {
   primeiro_contato:  "Primeiro contato",
   orcamento_enviado: "Orçamento enviado",
-  negociacao:        "Follow-up / Negociação",
-  fechado:           "Contrato fechado",
-  pos_evento:        "Pós-evento",
-  geral:             "Geral",
+  negociacao:        "Negociação",
+  contrato_fechado:  "Contrato fechado",
+  projeto_finalizado:"Projeto finalizado",
+  contrato_perdido:  "Contrato perdido",
 };
 
 export interface MessageTemplate {

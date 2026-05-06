@@ -1,4 +1,5 @@
 
+import { formatDate } from '@/utils/dates';
 import React from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { Client, SalesFunnelStage, ClientStatus } from "@/utils/types";
@@ -229,7 +230,7 @@ export function KanbanBoard({ clients }: KanbanBoardProps) {
                                       </div>
                                       {client.weddingDate && (
                                         <div className="text-xs text-gray-500">
-                                          {new Date(client.weddingDate).toLocaleDateString('pt-BR')}
+                                          {formatDate(client.weddingDate)}
                                         </div>
                                       )}
                                     </div>

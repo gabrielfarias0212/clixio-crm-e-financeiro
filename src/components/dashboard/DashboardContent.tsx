@@ -3,7 +3,7 @@ import { useAlerts } from "@/hooks/useAlerts";
 import { useBusinessMetrics } from "@/hooks/useBusinessMetrics";
 import { useState, useMemo, useEffect } from "react";
 import { differenceInDays, isToday, isPast, parseISO, startOfMonth, endOfMonth } from "date-fns";
-import { stringToDate } from "@/utils/dates";
+import { stringToDate, formatDate } from "@/utils/dates";
 import { isFullyPaid } from "@/utils/clientUtils";
 import { Client } from "@/utils/types";
 import { useNavigate } from "react-router-dom";
@@ -20,7 +20,7 @@ const fmt = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 }).format(v);
 
 const fmtDate = (d: string | Date | null) =>
-  d ? new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) : "—";
+  d ? formatDate(d, "dd/MM") : "—";
 
 const initials = (name: string) =>
   name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();

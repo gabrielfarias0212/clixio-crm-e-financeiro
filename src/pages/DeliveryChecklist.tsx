@@ -1,3 +1,4 @@
+import { formatDate } from '@/utils/dates';
 import { useMemo } from "react";
 import { useClients } from "@/contexts/ClientsContext";
 import { Package, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
@@ -95,7 +96,7 @@ export default function DeliveryChecklist() {
                     <span className={`text-xs ${
                       isUrgent ? "text-red-500 font-medium" : "text-gray-400"
                     }`}>
-                      {new Date(client.weddingDate!).toLocaleDateString("pt-BR")} · {days} dias atrás
+                      {formatDate(client.weddingDate)} · {days} dias atrás
                     </span>
                   </div>
                 </div>

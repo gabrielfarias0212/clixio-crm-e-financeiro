@@ -1,4 +1,5 @@
 
+import { formatDate } from '@/utils/dates';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -169,7 +170,7 @@ export function PersonalTransactionsList({
                     {getCategoryBadge(transaction.category)}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(transaction.date).toLocaleDateString('pt-BR')}
+                    {formatDate(transaction.date)}
                   </p>
                 </div>
               </div>

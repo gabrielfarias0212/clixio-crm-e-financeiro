@@ -1,5 +1,6 @@
 // src/components/crm/CRMClientDialog.tsx
 
+import { formatDate } from '@/utils/dates';
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Client, SalesFunnelStage, ClientStatus } from "@/utils/types";
@@ -59,7 +60,7 @@ const formatCurrency = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 }).format(v);
 
 const formatDate = (d: string | Date | null) =>
-  d ? new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
+  d ? formatDate(d) : "—";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);

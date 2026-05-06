@@ -1,3 +1,4 @@
+import { formatDate } from '@/utils/dates';
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -105,7 +106,7 @@ export function LeadOriginDetailDialog({
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
                             <span>
-                              {format(new Date(client.weddingDate), "dd/MM/yyyy", { locale: ptBR })}
+                              {formatDate(client.weddingDate)}
                             </span>
                           </div>
                         )}

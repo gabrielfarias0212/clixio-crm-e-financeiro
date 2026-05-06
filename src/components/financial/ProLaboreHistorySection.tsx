@@ -1,4 +1,5 @@
 
+import { formatDate } from '@/utils/dates';
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -234,7 +235,7 @@ export function ProLaboreHistorySection() {
                             <div>
                               <p className="font-medium">Retirada #{index + 1}</p>
                               <p className="text-sm text-gray-600">
-                                {new Date(record.date).toLocaleDateString('pt-BR')}
+                                {formatDate(record.date)}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">

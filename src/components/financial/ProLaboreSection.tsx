@@ -1,3 +1,4 @@
+import { formatDate } from '@/utils/dates';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -233,7 +234,7 @@ export function ProLaboreSection() {
                   <div>
                     <p className="font-medium">Retirada #{index + 1}</p>
                     <p className="text-sm text-gray-600">
-                      {new Date(record.date).toLocaleDateString('pt-BR')}
+                      {formatDate(record.date)}
                     </p>
                     <p className="text-xs text-gray-500">
                       ID: {record.id.substring(0, 8)}...

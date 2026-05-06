@@ -1,3 +1,4 @@
+import { formatDate } from '@/utils/dates';
 import React from 'react';
 import { Budget } from '@/types/budget';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -91,7 +92,7 @@ export function BudgetCard({
         {budget.event_date && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4" />
-            <span>Evento: {format(new Date(budget.event_date), 'dd/MM/yyyy', { locale: ptBR })}</span>
+            <span>Evento: {formatDate(budget.event_date)}</span>
           </div>
         )}
 

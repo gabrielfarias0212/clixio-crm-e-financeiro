@@ -1,5 +1,6 @@
 // src/components/crm/WhatsAppMessageDialog.tsx
 
+import { formatDate } from '@/utils/dates';
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -30,7 +31,7 @@ const MESSAGE_TEMPLATES: MessageTemplate[] = [
     emoji: "👋",
     color: "bg-blue-100 text-blue-800 border-blue-200",
     generate: (c) =>
-      `Oi ${c.name}! Tudo bem? 😊\n\nPassando para saber se você ainda tem interesse em fechar nosso pacote de fotografia para o seu ${c.eventCategory?.toLowerCase() ?? "evento"}${c.weddingDate ? ` em ${new Date(c.weddingDate).toLocaleDateString("pt-BR")}` : ""}.\n\nQualquer dúvida estou à disposição! 📸`,
+      `Oi ${c.name}! Tudo bem? 😊\n\nPassando para saber se você ainda tem interesse em fechar nosso pacote de fotografia para o seu ${c.eventCategory?.toLowerCase() ?? "evento"}${c.weddingDate ? ` em ${formatDate(c.weddingDate)}` : ""}.\n\nQualquer dúvida estou à disposição! 📸`,
   },
   {
     type: "cobranca",
@@ -43,7 +44,7 @@ const MESSAGE_TEMPLATES: MessageTemplate[] = [
         ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pending.amount)
         : "um valor pendente";
       const venc = pending?.due_date
-        ? new Date(pending.due_date).toLocaleDateString("pt-BR")
+        ? formatDate(pending.due_date)
         : null;
       return `Oi ${c.name}! Tudo bem? 😊\n\nPassando para lembrar que temos ${valor}${venc ? ` com vencimento em ${venc}` : ""} em aberto.\n\nQualquer dúvida ou se precisar combinar outra data, é só me avisar! 🙏`;
     },

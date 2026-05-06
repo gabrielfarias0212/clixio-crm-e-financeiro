@@ -1,4 +1,5 @@
 
+import { formatDate } from '@/utils/dates';
 import React from 'react';
 import { Payment, Client } from "@/utils/types";
 import { formatCurrency } from "@/utils/currency";
@@ -144,7 +145,7 @@ export function PaymentReceiptTemplate({
           {client.weddingDate && (
             <div className="flex justify-between py-2">
               <span className="font-medium text-gray-600">Data do Evento:</span>
-              <span className="text-gray-800">{new Date(client.weddingDate).toLocaleDateString('pt-BR')}</span>
+              <span className="text-gray-800">{formatDate(client.weddingDate)}</span>
             </div>
           )}
           {client.eventLocation && (

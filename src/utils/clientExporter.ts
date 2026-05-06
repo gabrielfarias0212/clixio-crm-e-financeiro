@@ -1,3 +1,4 @@
+import { formatDate } from '@/utils/dates';
 import * as XLSX from 'xlsx';
 import { Client, ClientStatus } from '@/utils/types';
 import { format } from 'date-fns';
@@ -52,7 +53,7 @@ function formatCurrency(value: number): string {
 function formatDate(dateString: string | null): string {
   if (!dateString) return '';
   try {
-    return format(new Date(dateString), 'dd/MM/yyyy', { locale: ptBR });
+    return formatDate(dateString);
   } catch {
     return dateString;
   }

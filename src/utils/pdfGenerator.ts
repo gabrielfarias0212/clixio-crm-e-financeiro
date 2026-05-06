@@ -1,3 +1,4 @@
+import { formatDate } from '@/utils/dates';
 import jsPDF from 'jspdf';
 import { BudgetWithItems } from '@/types/budget';
 import { formatCurrency } from '@/utils/currency';
@@ -164,7 +165,7 @@ export async function generateBudgetPDF(budget: BudgetWithItems, companyInfo?: C
 
   // Right column with proper alignment
   if (budget.event_date) {
-    const eventDate = format(new Date(budget.event_date), 'dd/MM/yyyy', { locale: ptBR });
+    const eventDate = formatDate(budget.event_date);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(100, 116, 139);
     doc.text('Data do Evento:', rightCol, rightY);

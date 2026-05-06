@@ -1,3 +1,4 @@
+import { formatDate } from '@/utils/dates';
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -372,7 +373,7 @@ export function PaymentReceiptDialog({
                 ${client.weddingDate ? `
                 <div class="info-item">
                     <span class="info-label">Data do Evento:</span>
-                    <span class="info-value">${new Date(client.weddingDate).toLocaleDateString('pt-BR')}</span>
+                    <span class="info-value">${formatDate(client.weddingDate)}</span>
                 </div>
                 ` : ''}
                 ${client.eventLocation ? `

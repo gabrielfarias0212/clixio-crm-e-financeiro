@@ -1,4 +1,5 @@
 
+import { formatDate } from '@/utils/dates';
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Download, Edit, Trash2, Eye } from 'lucide-react';
@@ -225,7 +226,7 @@ export default function BudgetDetail() {
                   <div>
                     <h4 className="font-medium">Data do Evento</h4>
                     <p className="text-muted-foreground">
-                      {format(new Date(budget.event_date), 'dd/MM/yyyy', { locale: ptBR })}
+                      {formatDate(budget.event_date)}
                     </p>
                   </div>
                 )}

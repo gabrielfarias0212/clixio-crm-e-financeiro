@@ -1,4 +1,5 @@
 
+import { formatDate } from '@/utils/dates';
 import React from "react";
 import { Client } from "@/utils/types";
 import {
@@ -166,7 +167,7 @@ export function ContractsDetailContent({
                         <p className="font-medium">{client.name}</p>
                         <p className="text-sm text-muted-foreground">Status: {client.status}</p>
                         {client.weddingDate && (
-                          <p className="text-sm text-muted-foreground">Data: {new Date(client.weddingDate).toLocaleDateString('pt-BR')}</p>
+                          <p className="text-sm text-muted-foreground">Data: {formatDate(client.weddingDate)}</p>
                         )}
                       </div>
                       {client.contractValue && (

@@ -1,4 +1,5 @@
 
+import { formatDate } from '@/utils/dates';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,7 @@ export function FutureContractsDetailModal({ open, onClose, type }: FutureContra
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    return formatDate(dateString);
   };
 
   const getStatusColor = (status: string) => {

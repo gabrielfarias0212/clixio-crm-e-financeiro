@@ -188,7 +188,7 @@ export function DashboardContent() {
     const reminderDays = goals.pre_wedding_reminder_days != null ? Number(goals.pre_wedding_reminder_days) : 90;
     return clients.filter(c => {
       if (!c.hasPreWedding) return false;
-      if (c.status !== "fechado") return false;
+      if (c.salesFunnelStage !== "contrato_fechado") return false;
       if (c.preWeddingScheduled) return false;
       if (!c.weddingDate) return false;
       const d = stringToDate(c.weddingDate);
@@ -212,7 +212,7 @@ export function DashboardContent() {
     return clients
       .filter(c => {
         if (!c.weddingDate) return false;
-        if (c.status === "contrato_perdido") return false;
+        if (c.salesFunnelStage === "contrato_perdido") return false;
         const d = stringToDate(c.weddingDate);
         if (!d) return false;
         const diff = differenceInDays(d, now);
@@ -570,18 +570,30 @@ export function DashboardContent() {
               ))}
             </div>
             <Divider />
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              {[
-                { label: "Conversão", value: `${metrics.conversionRate.toFixed(1)}%`, color: "#3B6D11" },
-                { label: "Ticket médio", value: fmt(metrics.activeContracts > 0 ? metrics.totalRevenue / metrics.activeContracts : 0), color: "var(--color-text-primary)" },
-                { label: "Perdidos", value: `${funnelData.find(f => f.label === "Perdido")?.count || 0}`, color: "#A32D2D" },
-              ].map(m => (
-                <div key={m.label} style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 10, color: "var(--color-text-secondary)" }}>{m.label}</div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: m.color }}>{m.value}</div>
+            {(() => {
+              const fechados  = funnelData.find(f => f.stage === "contrato_fechado")?.count || 0;
+              const finalizados = clients.filter(c => c.salesFunnelStage === "projeto_finalizado").length;
+              const totalFunnel = funnelData.reduce((s, f) => s + (f.stage !== "contrato_perdido" ? f.count : 0), 0) + finalizados;
+              const convRate = totalFunnel > 0 ? ((fechados + finalizados) / totalFunnel * 100).toFixed(1) : "0.0";
+              const ticketClients = clients.filter(c => c.salesFunnelStage === "contrato_fechado" || c.salesFunnelStage === "projeto_finalizado");
+              const totalContratado = ticketClients.reduce((s, c) => s + (c.contractValue || 0), 0);
+              const ticket = ticketClients.length > 0 ? totalContratado / ticketClients.length : 0;
+              const perdidos = funnelData.find(f => f.stage === "contrato_perdido")?.count || 0;
+              return (
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  {[
+                    { label: "Conversão", value: `${convRate}%`, color: "#3B6D11" },
+                    { label: "Ticket médio", value: fmt(ticket), color: "var(--color-text-primary)" },
+                    { label: "Perdidos", value: `${perdidos}`, color: "#A32D2D" },
+                  ].map(m => (
+                    <div key={m.label} style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "var(--color-text-secondary)" }}>{m.label}</div>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: m.color }}>{m.value}</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </SectionCard>
         </div>
 

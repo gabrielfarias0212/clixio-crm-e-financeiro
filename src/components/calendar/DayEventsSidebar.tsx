@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Calendar as CalendarIcon, Edit, ExternalLink, PlusCircle, Trash2, User, Camera } from "lucide-react";
 import { format } from "date-fns";
@@ -31,6 +32,10 @@ const getEventColorClass = (color: string) => {
 const fmt = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 }).format(v);
 
+function isConfirmed(client: import("@/utils/types").Client): boolean {
+  return client.salesFunnelStage === "contrato_fechado" || client.salesFunnelStage === "projeto_finalizado";
+}
+
 export function DayEventsSidebar({
   date,
   selectedDayItems,
@@ -41,6 +46,7 @@ export function DayEventsSidebar({
   const { deleteEvent } = useCalendarEvents();
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const formattedDate = date
     ? format(date, "EEEE, d 'de' MMMM", { locale: ptBR })
@@ -58,13 +64,25 @@ export function DayEventsSidebar({
   )];
 
   const isEmpty = totalClients.length === 0 && selectedDayItems.events.length === 0;
+  const hasConflict = !isEmpty;
+
+  const handleAddEvent = () => {
+    if (hasConflict) {
+      toast({
+        title: "⚠️ Data já possui evento(s)",
+        description: "Esta data já tem clientes ou eventos. Você pode adicionar mesmo assim se necessário.",
+        variant: "default",
+      });
+    }
+    setAddEventOpen(true);
+  };
 
   return (
     <Card className="border-none shadow-sm">
       <div className="p-4 border-b">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold capitalize">{formattedDate}</h3>
-          <Button size="sm" variant="outline" onClick={() => setAddEventOpen(true)} className="flex gap-1 items-center">
+          <Button size="sm" variant="outline" onClick={handleAddEvent} className="flex gap-1 items-center">
             <PlusCircle className="h-4 w-4" />
             Adicionar
           </Button>
@@ -76,7 +94,7 @@ export function DayEventsSidebar({
           <div className="text-center text-muted-foreground py-8">
             <CalendarIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
             <p className="text-sm">Nenhum evento para esta data</p>
-            <Button variant="link" onClick={() => setAddEventOpen(true)} className="mt-1 text-xs">
+            <Button variant="link" onClick={handleAddEvent} className="mt-1 text-xs">
               Adicionar evento
             </Button>
           </div>
@@ -88,8 +106,15 @@ export function DayEventsSidebar({
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Eventos de Clientes</p>
                 {totalClients.map(client => {
                   const isPreWedding = !selectedDayItems.clients.find(c => c.id === client.id);
+                  const confirmed = isConfirmed(client);
                   return (
-                    <div key={client.id} className={`p-3 border rounded-lg ${isPreWedding ? "bg-amber-50 border-amber-100" : "bg-orange-50 border-orange-100"}`}>
+                    <div key={client.id} className={`p-3 rounded-lg ${
+                      isPreWedding
+                        ? "bg-amber-50 border border-amber-100"
+                        : confirmed
+                          ? "bg-orange-50 border border-orange-200"
+                          : "bg-gray-50 border-2 border-dashed border-gray-300"
+                    }`}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
@@ -97,6 +122,12 @@ export function DayEventsSidebar({
                             <p className="font-semibold text-sm truncate">{client.name}</p>
                             {isPreWedding && (
                               <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 rounded-full shrink-0">Pré-Wedding</span>
+                            )}
+                            {!isPreWedding && !confirmed && (
+                              <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 rounded-full shrink-0">Pré-agendamento</span>
+                            )}
+                            {!isPreWedding && confirmed && (
+                              <span className="text-[10px] bg-green-100 text-green-700 px-1.5 rounded-full shrink-0">Confirmado</span>
                             )}
                           </div>
                           <p className="text-xs text-gray-500 mt-0.5">

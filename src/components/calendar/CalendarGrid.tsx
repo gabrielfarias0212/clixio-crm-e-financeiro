@@ -24,12 +24,16 @@ interface CalendarGridProps {
 // Color per event category
 function categoryColor(cat: string): string {
   const c = (cat || "").toLowerCase();
-  if (c.includes("casamento")) return "bg-rose-400";
-  if (c.includes("ensaio"))    return "bg-blue-400";
-  if (c.includes("pre") || c.includes("pré")) return "bg-amber-400";
-  if (c.includes("debutante")) return "bg-purple-400";
-  if (c.includes("aniversar")) return "bg-green-400";
-  return "bg-gray-400";
+  if (c.includes("casamento")) return "rose";
+  if (c.includes("ensaio"))    return "blue";
+  if (c.includes("pre") || c.includes("pré")) return "amber";
+  if (c.includes("debutante")) return "purple";
+  if (c.includes("aniversar")) return "green";
+  return "gray";
+}
+
+function isConfirmed(client: Client): boolean {
+  return client.salesFunnelStage === "contrato_fechado" || client.salesFunnelStage === "projeto_finalizado";
 }
 
 export function CalendarGrid({
@@ -78,9 +82,13 @@ export function CalendarGrid({
           <span>{d.getDate()}</span>
           {count > 0 && (
             <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center max-w-[36px]">
-              {dayClients.slice(0, 3).map((c, i) => (
-                <span key={i} className={`w-1.5 h-1.5 rounded-full ${categoryColor(c.eventCategory)}`} />
-              ))}
+              {dayClients.slice(0, 3).map((c, i) => {
+                const col = categoryColor(c.eventCategory);
+                const confirmed = isConfirmed(c);
+                return confirmed
+                  ? <span key={i} className={`w-2 h-2 rounded-full bg-${col}-400`} />
+                  : <span key={i} className={`w-2 h-2 rounded-full border-2 border-${col}-400 bg-white`} />;
+              })}
               {count > 3 && (
                 <span className="text-[8px] text-gray-500 leading-none">+{count - 3}</span>
               )}
@@ -127,6 +135,10 @@ export function CalendarGrid({
               {l.label}
             </span>
           ))}
+          <span className="flex items-center gap-1 border-l pl-3 border-gray-200">
+            <span className="w-2 h-2 rounded-full border-2 border-gray-400 bg-white" />
+            Pré-agendamento (não fechado)
+          </span>
         </div>
 
         {view === "month" && (

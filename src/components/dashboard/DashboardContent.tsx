@@ -12,8 +12,8 @@ import { fetchAllPendingFollowups, completeFollowup, CRMFollowup } from "@/utils
 import { fetchCompanySettings, CompanySettings } from "@/utils/supabase/settings";
 import {
   TrendingUp, AlertTriangle, CheckCircle2,
-  ChevronRight, DollarSign, Users,
-  Bell, Target, Check
+  Calendar, ChevronRight, DollarSign, Users,
+  Bell, Check
 } from "lucide-react";
 
 const fmt = (v: number) =>

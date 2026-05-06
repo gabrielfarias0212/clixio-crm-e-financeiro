@@ -4,6 +4,7 @@ import { Client, SalesFunnelStage } from '../types';
 import { formatDateForSupabase } from './base';
 import { parseClient } from './client-parsers';
 import { createCalendarEvent } from './calendar-events';
+import { scheduleAutoFollowup } from './crm-activities';
 import { v4 as uuidv4 } from 'uuid';
 
 // Function to map client status to sales funnel stage
@@ -71,6 +72,14 @@ export const createClient = async (clientData: Omit<Client, 'id' | 'createdAt' |
     }
 
     const newClient = parseClient(data);
+
+    // Auto follow-up para leads em primeiro contato ou orçamento enviado
+    if (['primeiro_contato', 'orcamento_enviado'].includes(salesFunnelStage)) {
+      const desc = salesFunnelStage === 'orcamento_enviado'
+        ? 'Follow-up do orçamento enviado'
+        : 'Primeiro follow-up do lead';
+      scheduleAutoFollowup(newClient.id, desc).catch(() => {});
+    }
 
     // Create calendar event for wedding if date is provided
     if (newClient.weddingDate && newClient.eventCategory) {

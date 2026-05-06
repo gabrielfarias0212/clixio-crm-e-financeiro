@@ -13,6 +13,7 @@ import {
   Phone, Mail, Calendar, AlertCircle,
 } from "lucide-react";
 import { useContractClosed } from "@/hooks/useContractClosed";
+import { scheduleAutoFollowup } from "@/utils/supabase/crm-activities";
 import { ContractClosedDialog } from "@/components/ContractClosedDialog";
 import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
@@ -181,6 +182,12 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
         toast.success(
           `Cliente movido para ${funnelStages.find((s) => s.key === newStage)?.label}`
         );
+        if (newStage === "primeiro_contato" || newStage === "orcamento_enviado") {
+          const desc = newStage === "orcamento_enviado"
+            ? "Follow-up do orçamento enviado"
+            : "Primeiro follow-up do lead";
+          scheduleAutoFollowup(clientId, desc).catch(() => {});
+        }
       } else {
         toast.error("Erro ao mover cliente");
       }

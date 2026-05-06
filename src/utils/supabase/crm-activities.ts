@@ -114,3 +114,43 @@ export async function deleteFollowup(id: string): Promise<void> {
   const { error } = await supabase.from("crm_followups").delete().eq("id", id);
   if (error) throw error;
 }
+
+// ── Auto follow-up ────────────────────────────────────────────
+/**
+ * Agenda um follow-up automático 3 dias à frente se não existir
+ * nenhum follow-up pendente nos próximos 7 dias para este cliente.
+ */
+export async function scheduleAutoFollowup(
+  clientId: string,
+  description = "Follow-up automático"
+): Promise<void> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.id) return;
+
+    // Verifica se já existe follow-up pendente nos próximos 7 dias
+    const in7days = new Date();
+    in7days.setDate(in7days.getDate() + 7);
+    const { data: existing } = await supabase
+      .from("crm_followups")
+      .select("id")
+      .eq("client_id", clientId)
+      .eq("completed", false)
+      .lte("scheduled_date", in7days.toISOString().split("T")[0])
+      .limit(1);
+
+    if (existing && existing.length > 0) return; // já tem — não duplica
+
+    const due = new Date();
+    due.setDate(due.getDate() + 3);
+    await supabase.from("crm_followups").insert({
+      client_id: clientId,
+      user_id: user.id,
+      scheduled_date: due.toISOString().split("T")[0],
+      description,
+      completed: false,
+    });
+  } catch {
+    // silencioso — não deve bloquear o fluxo principal
+  }
+}

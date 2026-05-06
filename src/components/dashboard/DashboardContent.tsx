@@ -155,7 +155,7 @@ export function DashboardContent() {
     [aReceberClients]);
 
   const pipelineClients = useMemo(() =>
-    clients.filter(c => ["primeiro_contato", "orçamento enviado", "negociacao"].includes(c.status)),
+    clients.filter(c => ["primeiro_contato", "orcamento_enviado", "negociacao"].includes(c.salesFunnelStage ?? "")),
     [clients]);
 
   const pipelineValue = useMemo(() =>
@@ -228,13 +228,14 @@ export function DashboardContent() {
 
   // ── Funnel ──
   const funnelData = useMemo(() => {
+    // Usa salesFunnelStage — mesma fonte do CRM Kanban
     return [
-      { label: "Leads", count: clients.filter(c => c.status === "primeiro_contato").length, color: "#85B7EB", clientList: clients.filter(c => c.status === "primeiro_contato") },
-      { label: "Orçamento", count: clients.filter(c => c.status === "orçamento enviado").length, color: "#FAC775", clientList: clients.filter(c => c.status === "orçamento enviado") },
-      { label: "Follow-up", count: clients.filter(c => c.status === "negociacao").length, color: "#EF9F27", clientList: clients.filter(c => c.status === "negociacao") },
-      { label: "Fechado", count: clients.filter(c => c.status === "fechado").length, color: "#97C459", clientList: clients.filter(c => c.status === "fechado") },
-      { label: "Perdido", count: clients.filter(c => c.status === "contrato_perdido").length, color: "#E24B4A", clientList: clients.filter(c => c.status === "contrato_perdido") },
-    ];
+      { label: "Leads",      color: "#85B7EB", stage: "primeiro_contato",  clientList: clients.filter(c => c.salesFunnelStage === "primeiro_contato") },
+      { label: "Orçamento",  color: "#FAC775", stage: "orcamento_enviado", clientList: clients.filter(c => c.salesFunnelStage === "orcamento_enviado") },
+      { label: "Follow-up",  color: "#EF9F27", stage: "negociacao",        clientList: clients.filter(c => c.salesFunnelStage === "negociacao") },
+      { label: "Fechado",    color: "#97C459", stage: "contrato_fechado",  clientList: clients.filter(c => c.salesFunnelStage === "contrato_fechado") },
+      { label: "Perdido",    color: "#E24B4A", stage: "contrato_perdido",  clientList: clients.filter(c => c.salesFunnelStage === "contrato_perdido") },
+    ].map(f => ({ ...f, count: f.clientList.length }));
   }, [clients]);
 
   const maxFunnel = Math.max(...funnelData.map(f => f.count), 1);

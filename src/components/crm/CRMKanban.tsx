@@ -120,12 +120,20 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
       maximumFractionDigits: 0,
     }).format(value);
 
-  const formatDate = (date: string | Date) =>
-    new Date(date).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "2-digit",
-    });
+  const formatDate = (date: string | Date): string => {
+    const str = typeof date === "string" ? date : date.toISOString().slice(0, 10);
+    // YYYY-MM-DD → DD/MM/YY sem conversão de timezone
+    if (str.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [y, m, d] = str.split("-");
+      return `${d}/${m}/${y.slice(2)}`;
+    }
+    // DD/MM/YYYY já formatado
+    if (str.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+      const [d, m, y] = str.split("/");
+      return `${d}/${m}/${y.slice(2)}`;
+    }
+    return str;
+  };
 
   const daysSinceContact = (dateStr?: string | null): number => {
     if (!dateStr) return 0;

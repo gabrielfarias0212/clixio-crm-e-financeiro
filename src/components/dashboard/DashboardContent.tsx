@@ -1,16 +1,19 @@
 import { useClients } from "@/contexts/ClientsContext";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useBusinessMetrics } from "@/hooks/useBusinessMetrics";
-import { useState, useMemo } from "react";
-import { startOfMonth, endOfMonth, isWithinInterval, differenceInDays } from "date-fns";
+import { useState, useMemo, useEffect } from "react";
+import { startOfMonth, endOfMonth, isWithinInterval, differenceInDays, isToday, isPast, parseISO } from "date-fns";
 import { stringToDate } from "@/utils/dates";
 import { isFullyPaid } from "@/utils/clientUtils";
 import { Client } from "@/utils/types";
 import { useNavigate } from "react-router-dom";
 import { DashboardCardModal } from "./DashboardCardModal";
+import { fetchAllPendingFollowups, completeFollowup, CRMFollowup } from "@/utils/supabase/crm-activities";
+import { fetchCompanySettings, CompanySettings } from "@/utils/supabase/settings";
 import {
   TrendingUp, AlertTriangle, Clock, CheckCircle2,
-  Calendar, ChevronRight, DollarSign, Users, Zap, Package2
+  Calendar, ChevronRight, DollarSign, Users, Zap, Package2,
+  Bell, MessageCircle, Phone, Mail, FileText, Target, Check
 } from "lucide-react";
 
 const fmt = (v: number) =>
@@ -50,6 +53,14 @@ const STAGE_COLORS: Record<string, { bg: string; color: string }> = {
   entrega_fisica:   { bg: "#FBEAF0", color: "#993556" },
   album_em_andamento: { bg: "#FBEAF0", color: "#993556" },
   projeto_finalizado: { bg: "#F1EFE8", color: "#5F5E5A" },
+};
+
+const ACTIVITY_ICON: Record<string, React.ReactNode> = {
+  whatsapp: <MessageCircle size={12} />,
+  call:     <Phone size={12} />,
+  email:    <Mail size={12} />,
+  meeting:  <Users size={12} />,
+  note:     <FileText size={12} />,
 };
 
 function Avatar({ name, size = 28 }: { name: string; size?: number }) {
@@ -115,6 +126,14 @@ export function DashboardContent() {
   const navigate = useNavigate();
 
   const [modal, setModal] = useState<{ title: string; clients: Client[]; type: "leads" | "contracts" | "delivered" | "pending" | "monthly-events" } | null>(null);
+  const [followups, setFollowups] = useState<CRMFollowup[]>([]);
+  const [goals, setGoals] = useState<CompanySettings>({});
+  const [completingId, setCompletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchAllPendingFollowups().then(setFollowups).catch(() => {});
+    fetchCompanySettings().then(s => { if (s) setGoals(s); }).catch(() => {});
+  }, []);
 
   const now = new Date();
   const monthStart = startOfMonth(now);
@@ -151,7 +170,31 @@ export function DashboardContent() {
 
   const totalAlerts = alerts.editTasks.length + alerts.deliverTasks.length + alerts.payments.length;
 
-  // ── Upcoming events (próximos 90 dias, sorted by date) ──
+  // ── Follow-ups do dia ──
+  const todayFollowups = useMemo(() => {
+    return followups.filter(f => {
+      const d = parseISO(f.due_date);
+      return isToday(d) || isPast(d);
+    }).sort((a, b) => parseISO(a.due_date).getTime() - parseISO(b.due_date).getTime());
+  }, [followups]);
+
+  const handleCompleteFollowup = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCompletingId(id);
+    try {
+      await completeFollowup(id);
+      setFollowups(prev => prev.filter(f => f.id !== id));
+    } finally {
+      setCompletingId(null);
+    }
+  };
+
+  // ── Meta financeira ──
+  const monthlyGoal = goals.monthly_revenue_goal ? Number(goals.monthly_revenue_goal) : 0;
+  const metaPct = monthlyGoal > 0 ? Math.min(100, (receitaConfirmada / monthlyGoal) * 100) : 0;
+  const metaColor = receitaConfirmada >= monthlyGoal && monthlyGoal > 0 ? "#639922" : metaPct >= 70 ? "#EF9F27" : monthlyGoal > 0 ? "#E24B4A" : "#639922";
+
+  // ── Upcoming events ──
   const upcomingEvents = useMemo(() => {
     return clients
       .filter(c => {
@@ -172,7 +215,6 @@ export function DashboardContent() {
 
   // ── Funnel ──
   const funnelData = useMemo(() => {
-    const total = clients.filter(c => c.status !== "contrato_perdido").length || 1;
     return [
       { label: "Leads", count: clients.filter(c => c.status === "primeiro_contato").length, color: "#85B7EB", clientList: clients.filter(c => c.status === "primeiro_contato") },
       { label: "Orçamento", count: clients.filter(c => c.status === "orçamento enviado").length, color: "#FAC775", clientList: clients.filter(c => c.status === "orçamento enviado") },
@@ -184,7 +226,7 @@ export function DashboardContent() {
 
   const maxFunnel = Math.max(...funnelData.map(f => f.count), 1);
 
-  // ── Production by stage ──
+  // ── Production ──
   const productionStages = useMemo(() => {
     const workflowClients = clients.filter(c => c.status === "fechado" || c.status === "projeto_finalizado");
     const stageCounts: Record<string, Client[]> = {};
@@ -214,7 +256,7 @@ export function DashboardContent() {
       {/* ── Row 1: 4 financial cards ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
 
-        {/* Receita confirmada */}
+        {/* Receita confirmada + Meta */}
         <SectionCard style={{ borderTop: "2px solid #639922", cursor: "pointer" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
             <span style={{ fontSize: 11, color: "var(--color-text-secondary)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".04em" }}>Receita confirmada</span>
@@ -222,18 +264,30 @@ export function DashboardContent() {
           </div>
           <div style={{ fontSize: 22, fontWeight: 500, lineHeight: 1 }}>{fmt(receitaConfirmada)}</div>
           <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 4 }}>pagamentos recebidos</div>
-          <div style={{ height: 4, background: "var(--color-background-secondary)", borderRadius: 2, overflow: "hidden", marginTop: 8 }}>
-            <div style={{ height: "100%", width: `${Math.min(100, (receitaConfirmada / Math.max(receitaConfirmada + aReceber, 1)) * 100)}%`, background: "#639922", borderRadius: 2 }} />
-          </div>
-          <div style={{ fontSize: 10, color: "var(--color-text-secondary)", marginTop: 4 }}>
-            {Math.round((receitaConfirmada / Math.max(receitaConfirmada + aReceber, 1)) * 100)}% do total contratado
-          </div>
+          {monthlyGoal > 0 ? (
+            <>
+              <div style={{ height: 4, background: "var(--color-background-secondary)", borderRadius: 2, overflow: "hidden", marginTop: 8 }}>
+                <div style={{ height: "100%", width: `${metaPct}%`, background: metaColor, borderRadius: 2, transition: "width .4s" }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--color-text-secondary)", marginTop: 3 }}>
+                <span style={{ color: metaColor, fontWeight: 500 }}>{Math.round(metaPct)}% da meta</span>
+                <span>Meta: {fmt(monthlyGoal)}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ height: 4, background: "var(--color-background-secondary)", borderRadius: 2, overflow: "hidden", marginTop: 8 }}>
+                <div style={{ height: "100%", width: `${Math.min(100, (receitaConfirmada / Math.max(receitaConfirmada + aReceber, 1)) * 100)}%`, background: "#639922", borderRadius: 2 }} />
+              </div>
+              <div style={{ fontSize: 10, color: "var(--color-text-secondary)", marginTop: 3 }}>
+                {Math.round((receitaConfirmada / Math.max(receitaConfirmada + aReceber, 1)) * 100)}% do total contratado
+              </div>
+            </>
+          )}
         </SectionCard>
 
         {/* A receber */}
-        <SectionCard
-          style={{ borderTop: "2px solid #EF9F27", cursor: "pointer" }}
-        >
+        <SectionCard style={{ borderTop: "2px solid #EF9F27", cursor: "pointer" }}>
           <div onClick={() => setModal({ title: "A Receber — Contratos Pendentes", clients: aReceberClients, type: "pending" })}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
               <span style={{ fontSize: 11, color: "var(--color-text-secondary)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".04em" }}>A receber</span>
@@ -248,9 +302,7 @@ export function DashboardContent() {
         </SectionCard>
 
         {/* Pipeline */}
-        <SectionCard
-          style={{ borderTop: "2px solid #378ADD", cursor: "pointer" }}
-        >
+        <SectionCard style={{ borderTop: "2px solid #378ADD", cursor: "pointer" }}>
           <div onClick={() => setModal({ title: "Pipeline — Leads em Negociação", clients: pipelineClients, type: "leads" })}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
               <span style={{ fontSize: 11, color: "var(--color-text-secondary)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".04em" }}>Pipeline aberto</span>
@@ -290,7 +342,101 @@ export function DashboardContent() {
         </SectionCard>
       </div>
 
-      {/* ── Row 2: Events + Funnel | Alerts + Production ── */}
+      {/* ── Row 2: Follow-ups do dia ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
+        <SectionCard style={{ borderLeft: todayFollowups.length > 0 ? "3px solid #EF9F27" : "3px solid var(--color-border-tertiary)" }}>
+          <SectionHeader title="Follow-ups do dia" badge={
+            todayFollowups.length > 0
+              ? <span style={{ fontSize: 11, background: "#FAEEDA", color: "#854F0B", padding: "2px 8px", borderRadius: 20, fontWeight: 500 }}>
+                  {todayFollowups.length} pendente{todayFollowups.length > 1 ? "s" : ""}
+                </span>
+              : <span style={{ fontSize: 11, background: "#EAF3DE", color: "#3B6D11", padding: "2px 8px", borderRadius: 20, fontWeight: 500 }}>em dia</span>
+          } />
+          {todayFollowups.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "16px 0", color: "var(--color-text-secondary)", fontSize: 13 }}>
+              <CheckCircle2 size={20} style={{ margin: "0 auto 6px", color: "#639922" }} />
+              Nenhum follow-up pendente para hoje
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+              {todayFollowups.slice(0, 5).map(f => {
+                const clientName = (f as any).wedding_clients?.name ?? "Cliente";
+                const dDate = parseISO(f.due_date);
+                const isOverdue = isPast(dDate) && !isToday(dDate);
+                return (
+                  <div key={f.id} style={{
+                    display: "flex", alignItems: "center", gap: 10, padding: "7px 0",
+                    borderBottom: "0.5px solid var(--color-border-tertiary)",
+                  }}>
+                    <div style={{
+                      width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
+                      background: isOverdue ? "#FCEBEB" : "#FAEEDA",
+                      color: isOverdue ? "#A32D2D" : "#854F0B",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      {ACTIVITY_ICON[f.type] ?? <Bell size={12} />}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{clientName}</div>
+                      {f.note && <div style={{ fontSize: 11, color: "var(--color-text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.note}</div>}
+                    </div>
+                    <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                      {isOverdue && <Chip label="atrasado" bg="#FCEBEB" color="#A32D2D" />}
+                      {!isOverdue && <Chip label="hoje" bg="#FAEEDA" color="#854F0B" />}
+                      <button
+                        onClick={e => handleCompleteFollowup(f.id, e)}
+                        disabled={completingId === f.id}
+                        style={{
+                          width: 24, height: 24, borderRadius: "50%", border: "1.5px solid #639922",
+                          background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                          color: "#639922", opacity: completingId === f.id ? 0.5 : 1,
+                        }}
+                        title="Marcar como concluído"
+                      >
+                        <Check size={12} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+              {todayFollowups.length > 5 && (
+                <div style={{ fontSize: 11, color: "#185FA5", padding: "6px 0", cursor: "pointer" }}
+                  onClick={() => navigate("/crm")}>
+                  +{todayFollowups.length - 5} mais → ver no CRM
+                </div>
+              )}
+            </div>
+          )}
+        </SectionCard>
+
+        {/* Resumo do dia */}
+        <SectionCard>
+          <SectionHeader title="Resumo do dia" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {[
+              { icon: <Calendar size={14} />, label: "Eventos este mês", value: upcomingEvents.filter(c => {
+                const d = stringToDate(c.weddingDate!);
+                return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+              }).length, color: "#185FA5", bg: "#E6F1FB" },
+              { icon: <Users size={14} />, label: "Em negociação", value: pipelineClients.length, color: "#854F0B", bg: "#FAEEDA" },
+              { icon: <Bell size={14} />, label: "Follow-ups pendentes", value: followups.length, color: "#854F0B", bg: "#FAEEDA" },
+              { icon: <AlertTriangle size={14} />, label: "Alertas totais", value: totalAlerts, color: "#A32D2D", bg: "#FCEBEB" },
+            ].map(item => (
+              <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: item.bg, color: item.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  {item.icon}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>{item.label}</div>
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: item.value > 0 ? item.color : "var(--color-text-secondary)" }}>{item.value}</div>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+      </div>
+
+      {/* ── Row 3: Events + Funnel | Alerts + Production ── */}
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
 
         {/* Left column */}

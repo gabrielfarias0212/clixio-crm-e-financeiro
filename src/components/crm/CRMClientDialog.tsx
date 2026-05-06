@@ -15,6 +15,8 @@ import {
 import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
 import { WhatsAppMessageDialog } from "@/components/crm/WhatsAppMessageDialog";
+import { CRMActivityPanel } from "@/components/crm/CRMActivityPanel";
+import { History } from "lucide-react";
 import {
   Phone, Mail, Calendar, DollarSign, Tag, Zap,
   FileText, ExternalLink, Copy, Check, User,
@@ -232,6 +234,16 @@ export function CRMClientDialog({ client, open, onOpenChange }: CRMClientDialogP
               </p>
             </div>
           )}
+
+          {/* Histórico & Follow-ups */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide flex items-center gap-1">
+              <History className="h-3.5 w-3.5" /> Histórico & Follow-ups
+            </h3>
+            <div className="rounded-xl border border-stone-200 overflow-hidden">
+              <CRMActivityPanel clientId={client.id} clientName={client.name} />
+            </div>
+          </div>
 
           {/* Mover etapa */}
           <div className="space-y-2">

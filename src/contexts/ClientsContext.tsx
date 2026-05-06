@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Client } from '@/utils/types';
 import { fetchClients, invalidateClientsCache } from '@/utils/supabase/client-fetch';
+import { supabase } from '@/integrations/supabase/client';
 import { createClient, updateClient, deleteClient } from '@/utils/supabaseUtils';
 import { toast } from 'sonner';
 
@@ -116,6 +117,23 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refreshClients();
+
+    // Realtime: sincroniza automaticamente qualquer mudança em wedding_clients
+    const channel = supabase
+      .channel('wedding_clients_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'wedding_clients' },
+        () => {
+          invalidateClientsCache();
+          refreshClients();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (

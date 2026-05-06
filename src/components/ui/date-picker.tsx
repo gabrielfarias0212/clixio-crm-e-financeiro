@@ -74,7 +74,28 @@ export function DatePicker({
             selected={dateValue || undefined}
             onSelect={handleDateChange}
             initialFocus
-            className="p-4 pointer-events-auto"
+            className="p-3 pointer-events-auto"
+            classNames={{
+              months: "flex flex-col",
+              month: "space-y-3",
+              caption: "flex justify-center pt-1 relative items-center mb-2",
+              caption_label: "text-sm font-semibold text-gray-900",
+              nav: "space-x-1 flex items-center",
+              nav_button: "h-7 w-7 bg-transparent p-0 opacity-60 hover:opacity-100 hover:bg-gray-100 rounded-md border-0 flex items-center justify-center transition-opacity",
+              nav_button_previous: "absolute left-1",
+              nav_button_next: "absolute right-1",
+              table: "w-full border-collapse",
+              head_row: "flex",
+              head_cell: "text-gray-400 w-9 font-normal text-[0.8rem] text-center",
+              row: "flex w-full mt-1",
+              cell: "relative h-9 w-9 p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-blue-50 rounded-md",
+              day: "h-9 w-9 p-0 font-normal text-sm rounded-md hover:bg-gray-100 transition-colors duration-100 flex items-center justify-center mx-auto aria-selected:opacity-100",
+              day_selected: "bg-blue-600 text-white hover:bg-blue-700 focus:bg-blue-700 rounded-md font-medium",
+              day_today: "bg-orange-100 text-orange-700 font-semibold border border-orange-200 rounded-md",
+              day_outside: "text-gray-300 opacity-50",
+              day_disabled: "text-gray-300 opacity-40 cursor-not-allowed",
+              day_hidden: "invisible",
+            }}
           />
         </div>
       </PopoverContent>

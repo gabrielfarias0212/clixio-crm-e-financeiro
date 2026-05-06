@@ -2,7 +2,7 @@ import { useClients } from "@/contexts/ClientsContext";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useBusinessMetrics } from "@/hooks/useBusinessMetrics";
 import { useState, useMemo, useEffect } from "react";
-import { differenceInDays, isToday, isPast, parseISO } from "date-fns";
+import { differenceInDays, isToday, isPast, parseISO, startOfMonth, endOfMonth } from "date-fns";
 import { stringToDate } from "@/utils/dates";
 import { isFullyPaid } from "@/utils/clientUtils";
 import { Client } from "@/utils/types";

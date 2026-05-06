@@ -16,6 +16,7 @@ export interface CompanySettings {
   deadline_physical_delivery?: number | null;
   deadline_album?: number | null;
   deadline_pre_wedding?: number | null;
+  pre_wedding_reminder_days?: number | null;
 }
 
 export async function fetchCompanySettings(): Promise<CompanySettings | null> {

@@ -12,6 +12,7 @@ interface DeadlineForm {
   deadline_physical_delivery: string;
   deadline_album:             string;
   deadline_pre_wedding:       string;
+  pre_wedding_reminder_days:  string;
 }
 
 const EMPTY: DeadlineForm = {
@@ -20,6 +21,7 @@ const EMPTY: DeadlineForm = {
   deadline_physical_delivery: "",
   deadline_album:             "",
   deadline_pre_wedding:       "",
+  pre_wedding_reminder_days:  "",
 };
 
 const FIELDS: { key: keyof DeadlineForm; label: string; hint: string }[] = [
@@ -28,6 +30,7 @@ const FIELDS: { key: keyof DeadlineForm; label: string; hint: string }[] = [
   { key: "deadline_physical_delivery", label: "Entrega física (box)",    hint: "Dias após aprovação do álbum" },
   { key: "deadline_album",             label: "Pedido de álbum",         hint: "Dias após entrega digital" },
   { key: "deadline_pre_wedding",       label: "Edição do pré-wedding",   hint: "Dias após a data do ensaio" },
+  { key: "pre_wedding_reminder_days",  label: "Lembrete de ensaio pré",  hint: "Dias antes do evento para alertar sobre ensaios não agendados (padrão: 90)" },
 ];
 
 export function DeadlinesTab() {
@@ -45,6 +48,7 @@ export function DeadlinesTab() {
           deadline_physical_delivery: d.deadline_physical_delivery != null ? String(d.deadline_physical_delivery) : "",
           deadline_album:             d.deadline_album             != null ? String(d.deadline_album)             : "",
           deadline_pre_wedding:       d.deadline_pre_wedding       != null ? String(d.deadline_pre_wedding)       : "",
+          pre_wedding_reminder_days:  d.pre_wedding_reminder_days  != null ? String(d.pre_wedding_reminder_days)  : "",
         });
       })
       .catch(e => toast({ title: "Erro ao carregar prazos", description: e.message, variant: "destructive" }))
@@ -63,6 +67,7 @@ export function DeadlinesTab() {
         deadline_physical_delivery: parseInt(form.deadline_physical_delivery) || (null as any),
         deadline_album:             parseInt(form.deadline_album)             || (null as any),
         deadline_pre_wedding:       parseInt(form.deadline_pre_wedding)       || (null as any),
+        pre_wedding_reminder_days:  parseInt(form.pre_wedding_reminder_days)  || (null as any),
       });
       toast({ title: "Prazos salvos com sucesso" });
     } catch (e: any) {

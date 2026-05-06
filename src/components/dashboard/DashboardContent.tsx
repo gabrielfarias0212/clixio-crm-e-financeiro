@@ -13,7 +13,7 @@ import { fetchCompanySettings, CompanySettings } from "@/utils/supabase/settings
 import {
   TrendingUp, AlertTriangle, CheckCircle2,
   Calendar, ChevronRight, DollarSign, Users,
-  Bell, Check
+  Bell, Check, Camera
 } from "lucide-react";
 
 const fmt = (v: number) =>
@@ -182,6 +182,25 @@ export function DashboardContent() {
       setCompletingId(null);
     }
   };
+
+  // ── Ensaios pré não agendados ──
+  const ensaiosPendentes = useMemo(() => {
+    const reminderDays = goals.pre_wedding_reminder_days != null ? Number(goals.pre_wedding_reminder_days) : 90;
+    return clients.filter(c => {
+      if (!c.hasPreWedding) return false;
+      if (c.status !== "fechado") return false;
+      if (c.preWeddingScheduled) return false;
+      if (!c.weddingDate) return false;
+      const d = stringToDate(c.weddingDate);
+      if (!d) return false;
+      const diff = differenceInDays(d, now);
+      return diff >= 0 && diff <= reminderDays;
+    }).sort((a, b) => {
+      const da = stringToDate(a.weddingDate!) ?? new Date(0);
+      const db = stringToDate(b.weddingDate!) ?? new Date(0);
+      return da.getTime() - db.getTime();
+    });
+  }, [clients, goals]);
 
   // ── Meta financeira ──
   const monthlyGoal = goals.monthly_revenue_goal ? Number(goals.monthly_revenue_goal) : 0;
@@ -414,6 +433,7 @@ export function DashboardContent() {
               }).length, color: "#185FA5", bg: "#E6F1FB" },
               { icon: <Users size={14} />, label: "Em negociação", value: pipelineClients.length, color: "#854F0B", bg: "#FAEEDA" },
               { icon: <Bell size={14} />, label: "Follow-ups pendentes", value: followups.length, color: "#854F0B", bg: "#FAEEDA" },
+              { icon: <Camera size={14} />, label: "Ensaios pré a agendar", value: ensaiosPendentes.length, color: "#534AB7", bg: "#EEEDFE" },
               { icon: <AlertTriangle size={14} />, label: "Alertas totais", value: totalAlerts, color: "#A32D2D", bg: "#FCEBEB" },
             ].map(item => (
               <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -429,6 +449,64 @@ export function DashboardContent() {
           </div>
         </SectionCard>
       </div>
+
+      {/* ── Ensaios pré não agendados ── */}
+      {ensaiosPendentes.length > 0 && (
+        <SectionCard style={{ borderLeft: "3px solid #7C3AED" }}>
+          <SectionHeader
+            title="Ensaios pré a agendar"
+            badge={
+              <span style={{ fontSize: 11, background: "#EEEDFE", color: "#534AB7", padding: "2px 8px", borderRadius: 20, fontWeight: 500 }}>
+                {ensaiosPendentes.length} pendente{ensaiosPendentes.length > 1 ? "s" : ""}
+              </span>
+            }
+          />
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            {ensaiosPendentes.map(c => {
+              const reminderDays = goals.pre_wedding_reminder_days != null ? Number(goals.pre_wedding_reminder_days) : 90;
+              const d = stringToDate(c.weddingDate!);
+              const diff = d ? differenceInDays(d, now) : 0;
+              const urgent = diff <= 30;
+              return (
+                <div key={c.id} style={{
+                  display: "flex", alignItems: "center", gap: 10, padding: "8px 0",
+                  borderBottom: "0.5px solid var(--color-border-tertiary)", cursor: "pointer",
+                }}
+                  onClick={() => navigate(`/clients/${c.id}`)}
+                  onMouseEnter={e => (e.currentTarget.style.background = "var(--color-background-secondary)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                >
+                  <div style={{
+                    width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                    background: urgent ? "#FCEBEB" : "#EEEDFE",
+                    color: urgent ? "#A32D2D" : "#534AB7",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Camera size={13} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
+                    <div style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>
+                      Evento: {fmtDate(c.weddingDate)} · {diff} dias restantes
+                    </div>
+                  </div>
+                  <Chip
+                    label={urgent ? "urgente" : `${diff}d`}
+                    bg={urgent ? "#FCEBEB" : "#EEEDFE"}
+                    color={urgent ? "#A32D2D" : "#534AB7"}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 8 }}>
+            Clique no cliente para agendar o ensaio. Configure o prazo em{" "}
+            <span style={{ color: "#534AB7", cursor: "pointer" }} onClick={() => navigate("/settings")}>
+              Configurações → Prazos
+            </span>
+          </div>
+        </SectionCard>
+      )}
 
       {/* ── Row 3: Events + Funnel | Alerts + Production ── */}
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>

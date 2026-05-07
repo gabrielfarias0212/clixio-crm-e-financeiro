@@ -138,7 +138,7 @@ export function DashboardContent() {
     return clients
       .filter(c => c.status === "fechado" || c.status === "projeto_finalizado")
       .reduce((s, c) => {
-        const pago = c.payments?.reduce((sp, p) => sp + (p.amount || 0), 0) ?? 0;
+        const pago = c.payments?.filter(p => p.payment_status === 'pago').reduce((sp, p) => sp + (p.amount || 0), 0) ?? 0;
         return s + pago;
       }, 0);
   }, [clients]);
@@ -149,7 +149,7 @@ export function DashboardContent() {
 
   const aReceber = useMemo(() =>
     aReceberClients.reduce((s, c) => {
-      const pago = c.payments?.reduce((sp, p) => sp + (p.amount || 0), 0) ?? 0;
+      const pago = c.payments?.filter(p => p.payment_status === 'pago').reduce((sp, p) => sp + (p.amount || 0), 0) ?? 0;
       return s + Math.max(0, (c.contractValue || 0) - pago);
     }, 0),
     [aReceberClients]);

@@ -297,6 +297,9 @@ export function DashboardContent() {
         {/* Left column */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
 
+          {/* Meu Dia — alertas gerais */}
+          <DashboardAlertsPanel />
+
           {/* Próximos eventos */}
           <SectionCard>
             <SectionHeader title="Próximos eventos" badge={
@@ -471,9 +474,6 @@ export function DashboardContent() {
               </div>
             ))}
           </SectionCard>
-
-          {/* Meu Dia — alertas gerais */}
-          <DashboardAlertsPanel />
         </div>
       </div>
 

@@ -1,82 +1,484 @@
-
-import { DashboardStats } from "./DashboardStats";
-import { FinancialSummary } from "./FinancialSummary";
-import { UpcomingEvents } from "@/components/UpcomingEvents";
-import { EventCategoryChart } from "./EventCategoryChart";
 import { useClients } from "@/contexts/ClientsContext";
-import { BusinessMetrics } from "./BusinessMetrics";
-import { ProductionIndicators } from "./ProductionIndicators";
-import { AlertsReminders } from "./AlertsReminders";
-import { FutureContractsOverview } from "./FutureContractsOverview";
-import { ContractProjections } from "./ContractProjections";
-import { Suspense } from "react";
+import { useAlerts } from "@/hooks/useAlerts";
+import { useBusinessMetrics } from "@/hooks/useBusinessMetrics";
+import { useState, useMemo } from "react";
+import { startOfMonth, endOfMonth, isWithinInterval, differenceInDays } from "date-fns";
+import { stringToDate } from "@/utils/dates";
+import { isFullyPaid } from "@/utils/clientUtils";
+import { Client, AlertItem } from "@/utils/types";
+import { useNavigate } from "react-router-dom";
+import { DashboardCardModal } from "./DashboardCardModal";
+import {
+  TrendingUp, AlertTriangle, Clock, CheckCircle2,
+  Calendar, ChevronRight, DollarSign, Users, Zap, Package2
+} from "lucide-react";
 
-// Skeleton components para lazy loading
-const ComponentSkeleton = ({ className = "" }: { className?: string }) => (
-  <div className={`animate-pulse bg-gray-200 rounded-lg ${className}`} />
-);
+const fmt = (v: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 }).format(v);
+
+const fmtDate = (d: string | Date | null) =>
+  d ? new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) : "—";
+
+const initials = (name: string) =>
+  name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+
+const AVATAR_COLORS = [
+  { bg: "#EEEDFE", color: "#534AB7" }, { bg: "#E6F1FB", color: "#185FA5" },
+  { bg: "#EAF3DE", color: "#3B6D11" }, { bg: "#FBEAF0", color: "#993556" },
+  { bg: "#FAEEDA", color: "#854F0B" }, { bg: "#E1F5EE", color: "#0F6E56" },
+];
+const avatarColor = (name: string) => AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
+
+const STAGE_LABELS: Record<string, string> = {
+  evento_ensaio: "Evento", copia: "Cópia", backup: "Backup",
+  curadoria: "Curadoria", edicao: "Edição", edicao_base: "Ed. Base",
+  edicao_final: "Ed. Final", link_pronto: "Link pronto",
+  link_enviado: "Link enviado", entrega_fisica: "Entrega física",
+  album_em_andamento: "Álbum", projeto_finalizado: "Finalizado",
+};
+
+const STAGE_COLORS: Record<string, { bg: string; color: string }> = {
+  evento_ensaio:    { bg: "#E6F1FB", color: "#185FA5" },
+  copia:            { bg: "#FAEEDA", color: "#854F0B" },
+  backup:           { bg: "#FAEEDA", color: "#854F0B" },
+  curadoria:        { bg: "#E6F1FB", color: "#185FA5" },
+  edicao:           { bg: "#FAEEDA", color: "#854F0B" },
+  edicao_base:      { bg: "#FAEEDA", color: "#854F0B" },
+  edicao_final:     { bg: "#FAEEDA", color: "#854F0B" },
+  link_pronto:      { bg: "#EAF3DE", color: "#3B6D11" },
+  link_enviado:     { bg: "#EAF3DE", color: "#3B6D11" },
+  entrega_fisica:   { bg: "#FBEAF0", color: "#993556" },
+  album_em_andamento: { bg: "#FBEAF0", color: "#993556" },
+  projeto_finalizado: { bg: "#F1EFE8", color: "#5F5E5A" },
+};
+
+function Avatar({ name, size = 28 }: { name: string; size?: number }) {
+  const c = avatarColor(name);
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%", background: c.bg, color: c.color,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: size * 0.38, fontWeight: 500, flexShrink: 0,
+    }}>{initials(name)}</div>
+  );
+}
+
+function Chip({ label, bg, color }: { label: string; bg: string; color: string }) {
+  return (
+    <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 10, background: bg, color, fontWeight: 500, whiteSpace: "nowrap" }}>
+      {label}
+    </span>
+  );
+}
+
+function SectionCard({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <div style={{
+      background: "var(--color-background-primary)",
+      border: "0.5px solid var(--color-border-tertiary)",
+      borderRadius: "var(--border-radius-lg)",
+      padding: "14px 16px",
+      ...style,
+    }}>{children}</div>
+  );
+}
+
+function SectionHeader({ title, badge }: { title: string; badge?: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+      <span style={{ fontSize: 11, fontWeight: 500, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: ".04em" }}>{title}</span>
+      {badge}
+    </div>
+  );
+}
+
+function Divider() {
+  return <div style={{ height: "0.5px", background: "var(--color-border-tertiary)", margin: "8px 0" }} />;
+}
+
+function ModalTriggerRow({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+  return (
+    <div onClick={onClick} style={{
+      display: "flex", alignItems: "center", gap: 10, padding: "7px 0",
+      borderBottom: "0.5px solid var(--color-border-tertiary)", cursor: "pointer",
+    }}
+      onMouseEnter={e => (e.currentTarget.style.background = "var(--color-background-secondary)")}
+      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+    >{children}</div>
+  );
+}
 
 export function DashboardContent() {
   const { clients, loading } = useClients();
+  const alerts = useAlerts(clients);
+  const metrics = useBusinessMetrics();
+  const navigate = useNavigate();
+
+  const [modal, setModal] = useState<{ title: string; clients: Client[]; type: "leads" | "contracts" | "delivered" | "pending" | "monthly-events"; customData?: AlertItem[] } | null>(null);
+
+  const now = new Date();
+  const monthStart = startOfMonth(now);
+  const monthEnd = endOfMonth(now);
+
+  // ── Financial data ──
+  const receitaConfirmada = useMemo(() => {
+    return clients
+      .filter(c => c.status === "fechado" || c.status === "projeto_finalizado")
+      .reduce((s, c) => {
+        const pago = c.payments?.reduce((sp, p) => sp + (p.amount || 0), 0) ?? 0;
+        return s + pago;
+      }, 0);
+  }, [clients]);
+
+  const aReceberClients = useMemo(() =>
+    clients.filter(c => (c.status === "fechado") && !isFullyPaid(c)),
+    [clients]);
+
+  const aReceber = useMemo(() =>
+    aReceberClients.reduce((s, c) => {
+      const pago = c.payments?.reduce((sp, p) => sp + (p.amount || 0), 0) ?? 0;
+      return s + Math.max(0, (c.contractValue || 0) - pago);
+    }, 0),
+    [aReceberClients]);
+
+  const pipelineClients = useMemo(() =>
+    clients.filter(c => ["primeiro_contato", "orçamento enviado", "negociacao"].includes(c.status)),
+    [clients]);
+
+  const pipelineValue = useMemo(() =>
+    pipelineClients.reduce((s, c) => s + (c.contractValue || 0), 0),
+    [pipelineClients]);
+
+  const totalAlerts = alerts.editTasks.length + alerts.deliverTasks.length + alerts.payments.length;
+
+  // ── Upcoming events (próximos 90 dias, sorted by date) ──
+  const upcomingEvents = useMemo(() => {
+    return clients
+      .filter(c => {
+        if (!c.weddingDate) return false;
+        if (c.status === "contrato_perdido") return false;
+        const d = stringToDate(c.weddingDate);
+        if (!d) return false;
+        const diff = differenceInDays(d, now);
+        return diff >= -7 && diff <= 180;
+      })
+      .sort((a, b) => {
+        const da = stringToDate(a.weddingDate!) ?? new Date(0);
+        const db = stringToDate(b.weddingDate!) ?? new Date(0);
+        return da.getTime() - db.getTime();
+      })
+      .slice(0, 6);
+  }, [clients]);
+
+  // ── Funnel ──
+  const funnelData = useMemo(() => {
+    const total = clients.filter(c => c.status !== "contrato_perdido").length || 1;
+    return [
+      { label: "Leads", count: clients.filter(c => c.status === "primeiro_contato").length, color: "#85B7EB", clientList: clients.filter(c => c.status === "primeiro_contato") },
+      { label: "Orçamento", count: clients.filter(c => c.status === "orçamento enviado").length, color: "#FAC775", clientList: clients.filter(c => c.status === "orçamento enviado") },
+      { label: "Follow-up", count: clients.filter(c => c.status === "negociacao").length, color: "#EF9F27", clientList: clients.filter(c => c.status === "negociacao") },
+      { label: "Fechado", count: clients.filter(c => c.status === "fechado").length, color: "#97C459", clientList: clients.filter(c => c.status === "fechado") },
+      { label: "Perdido", count: clients.filter(c => c.status === "contrato_perdido").length, color: "#E24B4A", clientList: clients.filter(c => c.status === "contrato_perdido") },
+    ];
+  }, [clients]);
+
+  const maxFunnel = Math.max(...funnelData.map(f => f.count), 1);
+
+  // ── Production by stage ──
+  const productionStages = useMemo(() => {
+    const workflowClients = clients.filter(c => c.status === "fechado" || c.status === "projeto_finalizado");
+    const stageCounts: Record<string, Client[]> = {};
+    workflowClients.forEach(c => {
+      const s = c.workflowStage || "evento_ensaio";
+      if (!stageCounts[s]) stageCounts[s] = [];
+      stageCounts[s].push(c);
+    });
+    const order = ["curadoria", "edicao", "edicao_base", "edicao_final", "link_pronto", "link_enviado", "entrega_fisica", "album_em_andamento"];
+    return order.map(key => ({ key, label: STAGE_LABELS[key] || key, clients: stageCounts[key] || [], color: STAGE_COLORS[key]?.bg || "#E6F1FB", textColor: STAGE_COLORS[key]?.color || "#185FA5" }))
+      .filter(s => s.clients.length > 0);
+  }, [clients]);
+
+  const maxProd = Math.max(...productionStages.map(s => s.clients.length), 1);
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {[1, 2, 3].map(i => <div key={i} style={{ height: 96, background: "var(--color-background-secondary)", borderRadius: "var(--border-radius-lg)", animation: "pulse 1.5s infinite" }} />)}
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
-      {/* Estatísticas principais - prioridade alta */}
-      <Suspense fallback={<ComponentSkeleton className="h-32" />}>
-        <DashboardStats />
-      </Suspense>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-      {/* Métricas de negócio - carregamento otimizado */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Suspense fallback={<ComponentSkeleton className="h-64" />}>
-          <BusinessMetrics />
-        </Suspense>
-        <Suspense fallback={<ComponentSkeleton className="h-64" />}>
-          <ProductionIndicators />
-        </Suspense>
-      </div>
+      {/* ── Row 1: 4 financial cards ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
 
-      {/* Seção de contratos futuros - lazy load */}
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Visão Estratégica - Contratos e Eventos Futuros</h2>
-          <Suspense fallback={<ComponentSkeleton className="h-48" />}>
-            <FutureContractsOverview />
-          </Suspense>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <Suspense fallback={<ComponentSkeleton className="h-64" />}>
-              <ContractProjections />
-            </Suspense>
+        {/* Receita confirmada */}
+        <SectionCard style={{ borderTop: "2px solid #639922", cursor: "pointer" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 11, color: "var(--color-text-secondary)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".04em" }}>Receita confirmada</span>
+            <TrendingUp size={14} style={{ color: "#639922", flexShrink: 0 }} />
           </div>
+          <div style={{ fontSize: 22, fontWeight: 500, lineHeight: 1 }}>{fmt(receitaConfirmada)}</div>
+          <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 4 }}>pagamentos recebidos</div>
+          <div style={{ height: 4, background: "var(--color-background-secondary)", borderRadius: 2, overflow: "hidden", marginTop: 8 }}>
+            <div style={{ height: "100%", width: `${Math.min(100, (receitaConfirmada / Math.max(receitaConfirmada + aReceber, 1)) * 100)}%`, background: "#639922", borderRadius: 2 }} />
+          </div>
+          <div style={{ fontSize: 10, color: "var(--color-text-secondary)", marginTop: 4 }}>
+            {Math.round((receitaConfirmada / Math.max(receitaConfirmada + aReceber, 1)) * 100)}% do total contratado
+          </div>
+        </SectionCard>
+
+        {/* A receber */}
+        <SectionCard
+          style={{ borderTop: "2px solid #EF9F27", cursor: "pointer" }}
+        >
+          <div onClick={() => setModal({ title: "A Receber — Contratos Pendentes", clients: aReceberClients, type: "pending" })}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ fontSize: 11, color: "var(--color-text-secondary)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".04em" }}>A receber</span>
+              <DollarSign size={14} style={{ color: "#EF9F27", flexShrink: 0 }} />
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 500, lineHeight: 1 }}>{fmt(aReceber)}</div>
+            <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 4 }}>{aReceberClients.length} contratos pendentes</div>
+            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#185FA5" }}>
+              <span>Ver detalhes</span><ChevronRight size={12} />
+            </div>
+          </div>
+        </SectionCard>
+
+        {/* Pipeline */}
+        <SectionCard
+          style={{ borderTop: "2px solid #378ADD", cursor: "pointer" }}
+        >
+          <div onClick={() => setModal({ title: "Pipeline — Leads em Negociação", clients: pipelineClients, type: "leads" })}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ fontSize: 11, color: "var(--color-text-secondary)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".04em" }}>Pipeline aberto</span>
+              <Users size={14} style={{ color: "#378ADD", flexShrink: 0 }} />
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 500, lineHeight: 1 }}>{fmt(pipelineValue)}</div>
+            <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 4 }}>{pipelineClients.length} leads ativos</div>
+            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#185FA5" }}>
+              <span>Ver leads</span><ChevronRight size={12} />
+            </div>
+          </div>
+        </SectionCard>
+
+        {/* Alertas */}
+        <SectionCard style={{ borderTop: "2px solid #E24B4A", cursor: "pointer" }}
+          onClick={() => setModal({ title: "Alertas — Pagamentos Pendentes", clients: [], type: "pending", customData: alerts.payments })}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 11, color: "var(--color-text-secondary)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".04em" }}>Alertas</span>
+            <AlertTriangle size={14} style={{ color: "#E24B4A", flexShrink: 0 }} />
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 500, lineHeight: 1, color: "#A32D2D" }}>{totalAlerts}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+              <span style={{ color: "var(--color-text-secondary)" }}>Pagamentos</span>
+              <span style={{ color: "#A32D2D", fontWeight: 500 }}>{alerts.payments.length}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+              <span style={{ color: "var(--color-text-secondary)" }}>Edições</span>
+              <span style={{ color: "#854F0B", fontWeight: 500 }}>{alerts.editTasks.length}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+              <span style={{ color: "var(--color-text-secondary)" }}>Entregas</span>
+              <span style={{ color: "#185FA5", fontWeight: 500 }}>{alerts.deliverTasks.length}</span>
+            </div>
+          </div>
+        </SectionCard>
+      </div>
+
+      {/* ── Row 2: Events + Funnel | Alerts + Production ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
+
+        {/* Left column */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+
+          {/* Próximos eventos */}
+          <SectionCard>
+            <SectionHeader title="Próximos eventos" badge={
+              <span style={{ fontSize: 11, background: "#E6F1FB", color: "#185FA5", padding: "2px 8px", borderRadius: 20, fontWeight: 500 }}>
+                {upcomingEvents.length} eventos
+              </span>
+            } />
+            {upcomingEvents.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "20px 0", color: "var(--color-text-secondary)", fontSize: 13 }}>Nenhum evento próximo</div>
+            ) : upcomingEvents.map(client => {
+              const stage = client.workflowStage || "evento_ensaio";
+              const stageColor = STAGE_COLORS[stage] || { bg: "#E6F1FB", color: "#185FA5" };
+              const diff = differenceInDays(stringToDate(client.weddingDate!) ?? now, now);
+              const isLate = diff < -1;
+              return (
+                <div key={client.id}
+                  onClick={() => navigate(`/clients/${client.id}`)}
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: "0.5px solid var(--color-border-tertiary)", cursor: "pointer" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "var(--color-background-secondary)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                >
+                  <Avatar name={client.name} size={30} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{client.name}</div>
+                    <div style={{ fontSize: 11, color: "var(--color-text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {client.eventCategory}{client.coupleName ? ` · ${client.coupleName}` : ""}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: isLate ? "#A32D2D" : "var(--color-text-primary)" }}>{fmtDate(client.weddingDate)}</div>
+                    <Chip label={STAGE_LABELS[stage] || stage} bg={stageColor.bg} color={stageColor.color} />
+                  </div>
+                </div>
+              );
+            })}
+          </SectionCard>
+
+          {/* Funil de conversão */}
+          <SectionCard>
+            <SectionHeader title="Funil de conversão" badge={
+              <span style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>{new Date().getFullYear()}</span>
+            } />
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-end", height: 72, marginBottom: 8 }}>
+              {funnelData.map(f => (
+                <div key={f.label}
+                  onClick={() => setModal({ title: `${f.label} — Clientes`, clients: f.clientList, type: "leads" })}
+                  style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", gap: 3, cursor: "pointer" }}
+                >
+                  <div style={{ width: "100%", background: f.color, borderRadius: "4px 4px 0 0", height: `${Math.max(8, (f.count / maxFunnel) * 72)}px`, transition: "height .2s" }} />
+                  <div style={{ fontSize: 10, color: "var(--color-text-secondary)", textAlign: "center" }}>{f.label}</div>
+                  <div style={{ fontSize: 11, fontWeight: 500 }}>{f.count}</div>
+                </div>
+              ))}
+            </div>
+            <Divider />
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              {[
+                { label: "Conversão", value: `${metrics.conversionRate.toFixed(1)}%`, color: "#3B6D11" },
+                { label: "Ticket médio", value: fmt(metrics.activeContracts > 0 ? metrics.totalRevenue / metrics.activeContracts : 0), color: "var(--color-text-primary)" },
+                { label: "Perdidos", value: `${funnelData.find(f => f.label === "Perdido")?.count || 0}`, color: "#A32D2D" },
+              ].map(m => (
+                <div key={m.label} style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 10, color: "var(--color-text-secondary)" }}>{m.label}</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: m.color }}>{m.value}</div>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+        </div>
+
+        {/* Right column */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+
+          {/* Alertas urgentes */}
+          <SectionCard>
+            <SectionHeader title="Alertas urgentes" badge={
+              totalAlerts > 0
+                ? <span style={{ fontSize: 11, background: "#FCEBEB", color: "#A32D2D", padding: "2px 8px", borderRadius: 20, fontWeight: 500 }}>{totalAlerts} pendentes</span>
+                : <span style={{ fontSize: 11, background: "#EAF3DE", color: "#3B6D11", padding: "2px 8px", borderRadius: 20, fontWeight: 500 }}>tudo ok</span>
+            } />
+
+            {alerts.payments.length > 0 && (
+              <>
+                <div style={{ fontSize: 10, fontWeight: 500, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 4 }}>Pagamentos</div>
+                {alerts.payments.slice(0, 3).map((a, i) => (
+                  <div key={i}
+                    onClick={() => a.client && navigate(`/clients/${a.client.id}`)}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "0.5px solid var(--color-border-tertiary)", cursor: "pointer" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "var(--color-background-secondary)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#E24B4A", flexShrink: 0 }} />
+                    <div style={{ flex: 1, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.client?.name || "—"}</div>
+                    <Chip label="vencido" bg="#FCEBEB" color="#A32D2D" />
+                  </div>
+                ))}
+                {alerts.payments.length > 3 && (
+                  <div onClick={() => setModal({ title: "Alertas — Pagamentos Pendentes", clients: [], type: "pending", customData: alerts.payments })}
+                    style={{ fontSize: 11, color: "#185FA5", cursor: "pointer", padding: "4px 0", textAlign: "right" }}>
+                    +{alerts.payments.length - 3} mais
+                  </div>
+                )}
+              </>
+            )}
+
+            {alerts.editTasks.length > 0 && (
+              <>
+                <div style={{ fontSize: 10, fontWeight: 500, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: ".04em", margin: "8px 0 4px" }}>Edições</div>
+                {alerts.editTasks.slice(0, 3).map((a, i) => (
+                  <div key={i}
+                    onClick={() => a.client && navigate(`/clients/${a.client.id}`)}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "0.5px solid var(--color-border-tertiary)", cursor: "pointer" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "var(--color-background-secondary)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#EF9F27", flexShrink: 0 }} />
+                    <div style={{ flex: 1, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.client?.name || "—"}</div>
+                    <Chip label="editar" bg="#FAEEDA" color="#854F0B" />
+                  </div>
+                ))}
+              </>
+            )}
+
+            {alerts.deliverTasks.length > 0 && (
+              <>
+                <div style={{ fontSize: 10, fontWeight: 500, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: ".04em", margin: "8px 0 4px" }}>Entregas</div>
+                {alerts.deliverTasks.slice(0, 3).map((a, i) => (
+                  <div key={i}
+                    onClick={() => a.client && navigate(`/clients/${a.client.id}`)}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "0.5px solid var(--color-border-tertiary)", cursor: "pointer" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "var(--color-background-secondary)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#378ADD", flexShrink: 0 }} />
+                    <div style={{ flex: 1, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.client?.name || "—"}</div>
+                    <Chip label="entregar" bg="#E6F1FB" color="#185FA5" />
+                  </div>
+                ))}
+              </>
+            )}
+
+            {totalAlerts === 0 && (
+              <div style={{ textAlign: "center", padding: "16px 0", color: "var(--color-text-secondary)", fontSize: 13 }}>
+                <CheckCircle2 size={20} style={{ margin: "0 auto 6px", color: "#639922" }} />
+                Tudo em dia!
+              </div>
+            )}
+          </SectionCard>
+
+          {/* Produção atual */}
+          <SectionCard>
+            <SectionHeader title="Produção atual" />
+            {productionStages.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "16px 0", color: "var(--color-text-secondary)", fontSize: 13 }}>Nenhum projeto em produção</div>
+            ) : productionStages.map(s => (
+              <div key={s.key}
+                onClick={() => setModal({ title: `Projetos — ${s.label}`, clients: s.clients, type: "delivered" })}
+                style={{ marginBottom: 8, cursor: "pointer" }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
+                  <span>{s.label}</span>
+                  <span style={{ fontWeight: 500 }}>{s.clients.length}</span>
+                </div>
+                <div style={{ height: 4, background: "var(--color-background-secondary)", borderRadius: 2, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${(s.clients.length / maxProd) * 100}%`, background: s.textColor, borderRadius: 2 }} />
+                </div>
+              </div>
+            ))}
+          </SectionCard>
         </div>
       </div>
 
-      {/* Alertas e lembretes - lazy load após dados de clientes */}
-      <div className="grid grid-cols-1 gap-8">
-        <Suspense fallback={<ComponentSkeleton className="h-48" />}>
-          <AlertsReminders clients={clients} />
-        </Suspense>
-      </div>
-
-      {/* Resumo financeiro - lazy load */}
-      <div className="grid grid-cols-1 gap-8">
-        <Suspense fallback={<ComponentSkeleton className="h-64" />}>
-          <FinancialSummary />
-        </Suspense>
-      </div>
-
-      {/* Eventos e gráficos - menor prioridade */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Suspense fallback={<ComponentSkeleton className="h-64" />}>
-          <UpcomingEvents clients={clients} loading={loading} />
-        </Suspense>
-        <Suspense fallback={<ComponentSkeleton className="h-64" />}>
-          <EventCategoryChart />
-        </Suspense>
-      </div>
+      {/* Modal */}
+      {modal && (
+        <DashboardCardModal
+          title={modal.title}
+          open={!!modal}
+          onClose={() => setModal(null)}
+          clients={modal.clients}
+          type={modal.type}
+          customData={modal.customData}
+        />
+      )}
     </div>
   );
 }

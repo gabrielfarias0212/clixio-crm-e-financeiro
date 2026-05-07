@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { QuickProjectForm } from "@/components/workflow/QuickProjectForm";
+import { ProjectDetailDialog } from "@/components/workflow/ProjectDetailDialog";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { useNavigate } from "react-router-dom";
@@ -363,6 +364,8 @@ export default function WorkflowPage() {
   const [filterYear, setFilterYear] = useState<number | "all">("all");
   const [filterStage, setFilterStage] = useState<string>("all");
   const [showQuickForm, setShowQuickForm] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
   const workflowClients = useMemo(() => {
     return clients.filter(c => {
@@ -572,7 +575,7 @@ export default function WorkflowPage() {
                     key={client.id}
                     client={client}
                     onToggleStep={handleToggleStep}
-                    onClick={() => navigate(`/clients/${client.id}`)}
+                    onClick={() => { setSelectedClient(client); setIsDetailDialogOpen(true); }}
                   />
                 ))}
               </div>
@@ -589,6 +592,12 @@ export default function WorkflowPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ProjectDetailDialog
+        client={selectedClient}
+        isOpen={isDetailDialogOpen}
+        onClose={() => { setIsDetailDialogOpen(false); setSelectedClient(null); }}
+      />
     </Layout>
   );
 }

@@ -341,7 +341,19 @@ export function WorkflowReportDialog({ open, onClose, clients }: Props) {
   const selectedClient = activeClients.find(c => c.id === selectedClientId) ?? null;
 
   const handlePrint = () => {
+    const printArea = document.getElementById("print-area");
+    if (!printArea) return;
+
+    // Clone the print area into a top-level wrapper so it's in normal document flow
+    const wrapper = document.createElement("div");
+    wrapper.className = "print-wrapper";
+    wrapper.appendChild(printArea.cloneNode(true));
+    document.body.appendChild(wrapper);
+
     window.print();
+
+    // Clean up after printing
+    document.body.removeChild(wrapper);
   };
 
   return (

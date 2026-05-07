@@ -387,9 +387,14 @@ export function DashboardContent() {
                     onMouseEnter={e => (e.currentTarget.style.background = "var(--color-background-secondary)")}
                     onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                   >
-                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#E24B4A", flexShrink: 0 }} />
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: a.isOverdue || a.title?.toLowerCase().includes("atrasado") ? "#E24B4A" : "#F59E0B", flexShrink: 0 }} />
                     <div style={{ flex: 1, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.client?.name || "—"}</div>
-                    <Chip label="vencido" bg="#FCEBEB" color="#A32D2D" />
+                    {a.isOverdue || a.title?.toLowerCase().includes("atrasado")
+                      ? <Chip label="vencido" bg="#FCEBEB" color="#A32D2D" />
+                      : a.urgency === "high"
+                        ? <Chip label="vence em breve" bg="#FFF4E5" color="#B45309" />
+                        : <Chip label="pendente" bg="#EFF6FF" color="#1D4ED8" />
+                    }
                   </div>
                 ))}
                 {alerts.payments.length > 3 && (

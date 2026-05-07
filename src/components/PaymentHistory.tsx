@@ -74,8 +74,14 @@ export function PaymentHistory({
     } else if (payment.payment_status === "pendente") {
       // Check if past due date
       if (payment.due_date) {
-        const dueDate = new Date(parseDate(payment.due_date) || '');
-        if (isBefore(dueDate, new Date())) {
+        // Comparar como string YYYY-MM-DD para evitar bug de timezone/locale
+        const dueDateStr = payment.due_date.match(/^\d{4}-\d{2}-\d{2}$/)
+          ? payment.due_date
+          : payment.due_date.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+            ? `${payment.due_date.slice(6)}-${payment.due_date.slice(3,5)}-${payment.due_date.slice(0,2)}`
+            : null;
+        const todayStr = new Date().toISOString().slice(0, 10);
+        if (dueDateStr && dueDateStr < todayStr) {
           return (
             <div className="flex items-center">
               <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300 flex items-center">

@@ -41,7 +41,10 @@ export function FinancialInfo({ client }: FinancialInfoProps) {
     let orphanedTransactions = 0;
     
     // First, sum all payments from the payments table
-    const paymentsTotal = client.payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
+    // Somar apenas pagamentos efetivamente pagos (não pendentes nem atrasados)
+    const paymentsTotal = client.payments
+      .filter(p => p.payment_status === "pago")
+      .reduce((sum, payment) => sum + Number(payment.amount), 0);
     console.log(`Total de pagamentos diretos: ${paymentsTotal}`);
     
     // Then, find transactions that don't have a corresponding payment

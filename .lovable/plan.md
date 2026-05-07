@@ -1,33 +1,51 @@
-Vou corrigir o problema na aba `/workflow` sem duplicar lógica e sem aumentar complexidade desnecessária.
 
-Plano de correção:
+# Corrigir PDF do Relatório de Fluxo de Trabalho
 
-1. Ajustar atualização parcial de clientes
-- Corrigir `src/utils/supabase/client-update.ts` para montar o payload de update apenas com campos realmente enviados.
-- Isso evita que ao clicar em uma etapa do workflow o sistema envie `wedding_date: null` e apague a data do evento.
-- Também evita apagar outros campos do cliente quando a atualização é apenas de progresso.
+## Problema
 
-2. Manter compatibilidade dos campos de Cópia/Backup e Curadoria
-- Garantir que `backupCompleted` e `curationCompleted` sejam os campos principais usados pelo `/workflow`.
-- Quando necessário, manter sincronizados os campos legados do banco (`backup_done` e `curadoria_done`) para não quebrar telas antigas ou dados já existentes.
+O relatório usa `window.print()` com CSS `@media print` para gerar o PDF. O CSS atual tem problemas:
 
-3. Corrigir cálculo visual no card do `/workflow`
-- Fazer o card considerar corretamente Cópia/Backup e Curadoria como concluídos.
-- Assim, ao clicar nesses botões:
-  - o botão passa a assumir a cor de concluído;
-  - o contador `x/y etapas` aumenta;
-  - a barra de progresso evolui;
-  - a data do evento permanece intacta.
+1. **`position: fixed`** no `#print-area` — impede paginação correta, todo conteúdo fica sobreposto na primeira página
+2. **`visibility: hidden` em `body *`** — esconde tudo, mas o `#print-area` com `position: fixed` não respeita o fluxo natural do documento
+3. **Falta de estilos de impressão adequados** — sem controle de quebra de página, margens, e dimensionamento
 
-4. Melhorar robustez do estado após update
-- Preservar no estado local do contexto os dados atuais do cliente quando a resposta do update vier parcial ou quando o payload for parcial.
-- Evitar que campos não relacionados ao update desapareçam da interface.
+## Solução
 
-Validação após aplicar:
-- Rodar verificação TypeScript/build para garantir que não há erro de tipo.
-- Conferir especificamente o fluxo: clicar em “Cópia/Backup” e “Curadoria” na aba `/workflow` e confirmar que progresso, cor do botão e data do evento permanecem corretos.
+Reescrever o CSS de impressão (`PRINT_CSS`) para:
 
-Arquivos previstos:
-- `src/utils/supabase/client-update.ts`
-- `src/utils/supabase/client-parsers.ts` se necessário para compatibilidade dos campos legados
-- `src/pages/Workflow.tsx` somente se precisar ajustar o fallback visual dos botões
+- Usar `display: none` em vez de `visibility: hidden` para esconder elementos fora do `#print-area`
+- Remover `position: fixed` do `#print-area` — deixar no fluxo normal para permitir paginação
+- Adicionar regras de quebra de página (`page-break-inside: avoid`) nos cards e linhas de tabela
+- Garantir que o `#print-area` ocupe toda a largura com fundo branco
+- Ajustar `@page` com margens adequadas
+
+## Arquivo alterado
+
+- `src/components/workflow/WorkflowReportDialog.tsx` — apenas o bloco `PRINT_CSS` (linhas 66-73)
+
+## Detalhes técnicos
+
+```css
+@media print {
+  /* Esconder tudo exceto o conteúdo do relatório */
+  body > *:not(#print-area) { display: none !important; }
+  [role="dialog"] { position: static !important; }
+  [role="dialog"] > *:not(:has(#print-area)) { display: none !important; }
+  
+  #print-area {
+    position: static !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+  }
+  
+  /* Controle de quebra de página */
+  #print-area table tr { page-break-inside: avoid; }
+  
+  @page { margin: 1.5cm; size: A4; }
+}
+```
+
+A abordagem correta é: clonar o `#print-area` para um container temporário no `body`, esconder todo o resto, imprimir, e restaurar. Isso garante que o conteúdo fique no fluxo normal do documento e a paginação funcione corretamente.

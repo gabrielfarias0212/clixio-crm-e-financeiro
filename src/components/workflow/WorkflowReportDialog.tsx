@@ -65,9 +65,37 @@ function getStageKey(client: Client): string {
 
 const PRINT_CSS = `
   @media print {
-    body * { visibility: hidden !important; }
-    #print-area, #print-area * { visibility: visible !important; }
-    #print-area { position: fixed; inset: 0; padding: 24px; background: white; z-index: 9999; }
+    /* Hide everything except the print area */
+    body > *:not(.print-wrapper) { display: none !important; }
+    .print-wrapper { display: block !important; }
+
+    /* Dialog and overlay: hide */
+    [role="dialog"], [data-radix-portal], [class*="DialogOverlay"],
+    [class*="DialogContent"], .fixed, .absolute { display: none !important; }
+
+    /* Print wrapper sits in normal flow for proper pagination */
+    .print-wrapper {
+      position: static !important;
+      width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      background: white !important;
+      overflow: visible !important;
+      color: #111 !important;
+    }
+
+    .print-wrapper * {
+      visibility: visible !important;
+      color: inherit !important;
+    }
+
+    /* Page break control */
+    .print-wrapper [style*="breakInside"], .print-wrapper [style*="pageBreakInside"] {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+    }
+    .print-wrapper table tr { break-inside: avoid; page-break-inside: avoid; }
+
     @page { margin: 1.5cm; size: A4; }
   }
 `;

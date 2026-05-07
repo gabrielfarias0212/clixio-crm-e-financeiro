@@ -8,6 +8,7 @@ import { isFullyPaid } from "@/utils/clientUtils";
 import { Client, AlertItem } from "@/utils/types";
 import { useNavigate } from "react-router-dom";
 import { DashboardCardModal } from "./DashboardCardModal";
+import { DashboardAlertsPanel } from "./DashboardAlertsPanel";
 import {
   TrendingUp, AlertTriangle, Clock, CheckCircle2,
   Calendar, ChevronRight, DollarSign, Users, Zap, Package2
@@ -470,6 +471,9 @@ export function DashboardContent() {
               </div>
             ))}
           </SectionCard>
+
+          {/* Meu Dia — alertas gerais */}
+          <DashboardAlertsPanel />
         </div>
       </div>
 

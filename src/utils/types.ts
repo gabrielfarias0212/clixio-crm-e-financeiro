@@ -48,7 +48,8 @@ export type EventCategory =
   | "Ensaio Estudio"
   | "Ensaio externo"
   | "Evento Corporativo"
-  | "15 anos";
+  | "15 anos"
+  | "Outros";
 
 export type PaymentStatus = "pendente" | "pago" | "atrasado";
 

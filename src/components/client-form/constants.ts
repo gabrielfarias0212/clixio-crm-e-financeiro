@@ -9,4 +9,5 @@ export const EVENT_CATEGORIES: EventCategory[] = [
   "Ensaio externo",
   "Evento Corporativo",
   "15 anos",
+  "Outros",
 ];

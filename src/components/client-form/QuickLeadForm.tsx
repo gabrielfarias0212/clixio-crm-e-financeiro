@@ -14,7 +14,8 @@ import { EventCategory } from "@/utils/types";
 const eventCategories: EventCategory[] = [
   "Casamento",
   "15 anos", 
-  "Aniversario"
+  "Aniversario",
+  "Outros"
 ];
 
 const leadSources = [

@@ -1,26 +1,23 @@
 import { useClients } from "@/contexts/ClientsContext";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useBusinessMetrics } from "@/hooks/useBusinessMetrics";
-import { useState, useMemo, useEffect } from "react";
-import { differenceInDays, isToday, isPast, parseISO, startOfMonth, endOfMonth } from "date-fns";
-import { stringToDate, formatDate } from "@/utils/dates";
+import { useState, useMemo } from "react";
+import { startOfMonth, endOfMonth, isWithinInterval, differenceInDays } from "date-fns";
+import { stringToDate } from "@/utils/dates";
 import { isFullyPaid } from "@/utils/clientUtils";
-import { Client } from "@/utils/types";
+import { Client, AlertItem } from "@/utils/types";
 import { useNavigate } from "react-router-dom";
 import { DashboardCardModal } from "./DashboardCardModal";
-import { fetchAllPendingFollowups, completeFollowup, CRMFollowup } from "@/utils/supabase/crm-activities";
-import { fetchCompanySettings, CompanySettings } from "@/utils/supabase/settings";
 import {
-  TrendingUp, AlertTriangle, CheckCircle2,
-  Calendar, ChevronRight, DollarSign, Users,
-  Bell, Check, Camera
+  TrendingUp, AlertTriangle, Clock, CheckCircle2,
+  Calendar, ChevronRight, DollarSign, Users, Zap, Package2
 } from "lucide-react";
 
 const fmt = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 }).format(v);
 
 const fmtDate = (d: string | Date | null) =>
-  d ? formatDate(d, "dd/MM") : "—";
+  d ? new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) : "—";
 
 const initials = (name: string) =>
   name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
@@ -55,8 +52,6 @@ const STAGE_COLORS: Record<string, { bg: string; color: string }> = {
   projeto_finalizado: { bg: "#F1EFE8", color: "#5F5E5A" },
 };
 
-
-
 function Avatar({ name, size = 28 }: { name: string; size?: number }) {
   const c = avatarColor(name);
   return (
@@ -76,7 +71,7 @@ function Chip({ label, bg, color }: { label: string; bg: string; color: string }
   );
 }
 
-function SectionCard({ children, style, onClick }: { children: React.ReactNode; style?: React.CSSProperties; onClick?: () => void }) {
+function SectionCard({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <div style={{
       background: "var(--color-background-primary)",
@@ -84,7 +79,7 @@ function SectionCard({ children, style, onClick }: { children: React.ReactNode; 
       borderRadius: "var(--border-radius-lg)",
       padding: "14px 16px",
       ...style,
-    }} onClick={onClick}>{children}</div>
+    }}>{children}</div>
   );
 }
 
@@ -119,15 +114,7 @@ export function DashboardContent() {
   const metrics = useBusinessMetrics();
   const navigate = useNavigate();
 
-  const [modal, setModal] = useState<{ title: string; clients: Client[]; type: "leads" | "contracts" | "delivered" | "pending" | "monthly-events" } | null>(null);
-  const [followups, setFollowups] = useState<CRMFollowup[]>([]);
-  const [goals, setGoals] = useState<CompanySettings>({});
-  const [completingId, setCompletingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchAllPendingFollowups().then(setFollowups).catch(() => {});
-    fetchCompanySettings().then(s => { if (s) setGoals(s); }).catch(() => {});
-  }, []);
+  const [modal, setModal] = useState<{ title: string; clients: Client[]; type: "leads" | "contracts" | "delivered" | "pending" | "monthly-events"; customData?: AlertItem[] } | null>(null);
 
   const now = new Date();
   const monthStart = startOfMonth(now);
@@ -138,7 +125,7 @@ export function DashboardContent() {
     return clients
       .filter(c => c.status === "fechado" || c.status === "projeto_finalizado")
       .reduce((s, c) => {
-        const pago = c.payments?.filter(p => p.payment_status === 'pago').reduce((sp, p) => sp + (p.amount || 0), 0) ?? 0;
+        const pago = c.payments?.reduce((sp, p) => sp + (p.amount || 0), 0) ?? 0;
         return s + pago;
       }, 0);
   }, [clients]);
@@ -149,13 +136,13 @@ export function DashboardContent() {
 
   const aReceber = useMemo(() =>
     aReceberClients.reduce((s, c) => {
-      const pago = c.payments?.filter(p => p.payment_status === 'pago').reduce((sp, p) => sp + (p.amount || 0), 0) ?? 0;
+      const pago = c.payments?.reduce((sp, p) => sp + (p.amount || 0), 0) ?? 0;
       return s + Math.max(0, (c.contractValue || 0) - pago);
     }, 0),
     [aReceberClients]);
 
   const pipelineClients = useMemo(() =>
-    clients.filter(c => ["primeiro_contato", "orcamento_enviado", "negociacao"].includes(c.salesFunnelStage ?? "")),
+    clients.filter(c => ["primeiro_contato", "orçamento enviado", "negociacao"].includes(c.status)),
     [clients]);
 
   const pipelineValue = useMemo(() =>
@@ -164,55 +151,12 @@ export function DashboardContent() {
 
   const totalAlerts = alerts.editTasks.length + alerts.deliverTasks.length + alerts.payments.length;
 
-  // ── Follow-ups do dia ──
-  const todayFollowups = useMemo(() => {
-    return followups.filter(f => {
-      const d = parseISO(f.scheduled_date);
-      return isToday(d) || isPast(d);
-    }).sort((a, b) => parseISO(a.scheduled_date).getTime() - parseISO(b.scheduled_date).getTime());
-  }, [followups]);
-
-  const handleCompleteFollowup = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCompletingId(id);
-    try {
-      await completeFollowup(id);
-      setFollowups(prev => prev.filter(f => f.id !== id));
-    } finally {
-      setCompletingId(null);
-    }
-  };
-
-  // ── Ensaios pré não agendados ──
-  const ensaiosPendentes = useMemo(() => {
-    const reminderDays = goals.pre_wedding_reminder_days != null ? Number(goals.pre_wedding_reminder_days) : 90;
-    return clients.filter(c => {
-      if (!c.hasPreWedding) return false;
-      if (c.salesFunnelStage !== "contrato_fechado") return false;
-      if (c.preWeddingScheduled) return false;
-      if (!c.weddingDate) return false;
-      const d = stringToDate(c.weddingDate);
-      if (!d) return false;
-      const diff = differenceInDays(d, now);
-      return diff >= 0 && diff <= reminderDays;
-    }).sort((a, b) => {
-      const da = stringToDate(a.weddingDate!) ?? new Date(0);
-      const db = stringToDate(b.weddingDate!) ?? new Date(0);
-      return da.getTime() - db.getTime();
-    });
-  }, [clients, goals]);
-
-  // ── Meta financeira ──
-  const monthlyGoal = goals.monthly_revenue_goal ? Number(goals.monthly_revenue_goal) : 0;
-  const metaPct = monthlyGoal > 0 ? Math.min(100, (receitaConfirmada / monthlyGoal) * 100) : 0;
-  const metaColor = receitaConfirmada >= monthlyGoal && monthlyGoal > 0 ? "#639922" : metaPct >= 70 ? "#EF9F27" : monthlyGoal > 0 ? "#E24B4A" : "#639922";
-
-  // ── Upcoming events ──
+  // ── Upcoming events (próximos 90 dias, sorted by date) ──
   const upcomingEvents = useMemo(() => {
     return clients
       .filter(c => {
         if (!c.weddingDate) return false;
-        if (c.salesFunnelStage === "contrato_perdido") return false;
+        if (c.status === "contrato_perdido") return false;
         const d = stringToDate(c.weddingDate);
         if (!d) return false;
         const diff = differenceInDays(d, now);
@@ -228,19 +172,19 @@ export function DashboardContent() {
 
   // ── Funnel ──
   const funnelData = useMemo(() => {
-    // Usa salesFunnelStage — mesma fonte do CRM Kanban
+    const total = clients.filter(c => c.status !== "contrato_perdido").length || 1;
     return [
-      { label: "Leads",      color: "#85B7EB", stage: "primeiro_contato",  clientList: clients.filter(c => c.salesFunnelStage === "primeiro_contato") },
-      { label: "Orçamento",  color: "#FAC775", stage: "orcamento_enviado", clientList: clients.filter(c => c.salesFunnelStage === "orcamento_enviado") },
-      { label: "Follow-up",  color: "#EF9F27", stage: "negociacao",        clientList: clients.filter(c => c.salesFunnelStage === "negociacao") },
-      { label: "Fechado",    color: "#97C459", stage: "contrato_fechado",  clientList: clients.filter(c => c.salesFunnelStage === "contrato_fechado") },
-      { label: "Perdido",    color: "#E24B4A", stage: "contrato_perdido",  clientList: clients.filter(c => c.salesFunnelStage === "contrato_perdido") },
-    ].map(f => ({ ...f, count: f.clientList.length }));
+      { label: "Leads", count: clients.filter(c => c.status === "primeiro_contato").length, color: "#85B7EB", clientList: clients.filter(c => c.status === "primeiro_contato") },
+      { label: "Orçamento", count: clients.filter(c => c.status === "orçamento enviado").length, color: "#FAC775", clientList: clients.filter(c => c.status === "orçamento enviado") },
+      { label: "Follow-up", count: clients.filter(c => c.status === "negociacao").length, color: "#EF9F27", clientList: clients.filter(c => c.status === "negociacao") },
+      { label: "Fechado", count: clients.filter(c => c.status === "fechado").length, color: "#97C459", clientList: clients.filter(c => c.status === "fechado") },
+      { label: "Perdido", count: clients.filter(c => c.status === "contrato_perdido").length, color: "#E24B4A", clientList: clients.filter(c => c.status === "contrato_perdido") },
+    ];
   }, [clients]);
 
   const maxFunnel = Math.max(...funnelData.map(f => f.count), 1);
 
-  // ── Production ──
+  // ── Production by stage ──
   const productionStages = useMemo(() => {
     const workflowClients = clients.filter(c => c.status === "fechado" || c.status === "projeto_finalizado");
     const stageCounts: Record<string, Client[]> = {};
@@ -270,7 +214,7 @@ export function DashboardContent() {
       {/* ── Row 1: 4 financial cards ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
 
-        {/* Receita confirmada + Meta */}
+        {/* Receita confirmada */}
         <SectionCard style={{ borderTop: "2px solid #639922", cursor: "pointer" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
             <span style={{ fontSize: 11, color: "var(--color-text-secondary)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".04em" }}>Receita confirmada</span>
@@ -278,30 +222,18 @@ export function DashboardContent() {
           </div>
           <div style={{ fontSize: 22, fontWeight: 500, lineHeight: 1 }}>{fmt(receitaConfirmada)}</div>
           <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 4 }}>pagamentos recebidos</div>
-          {monthlyGoal > 0 ? (
-            <>
-              <div style={{ height: 4, background: "var(--color-background-secondary)", borderRadius: 2, overflow: "hidden", marginTop: 8 }}>
-                <div style={{ height: "100%", width: `${metaPct}%`, background: metaColor, borderRadius: 2, transition: "width .4s" }} />
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--color-text-secondary)", marginTop: 3 }}>
-                <span style={{ color: metaColor, fontWeight: 500 }}>{Math.round(metaPct)}% da meta</span>
-                <span>Meta: {fmt(monthlyGoal)}</span>
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ height: 4, background: "var(--color-background-secondary)", borderRadius: 2, overflow: "hidden", marginTop: 8 }}>
-                <div style={{ height: "100%", width: `${Math.min(100, (receitaConfirmada / Math.max(receitaConfirmada + aReceber, 1)) * 100)}%`, background: "#639922", borderRadius: 2 }} />
-              </div>
-              <div style={{ fontSize: 10, color: "var(--color-text-secondary)", marginTop: 3 }}>
-                {Math.round((receitaConfirmada / Math.max(receitaConfirmada + aReceber, 1)) * 100)}% do total contratado
-              </div>
-            </>
-          )}
+          <div style={{ height: 4, background: "var(--color-background-secondary)", borderRadius: 2, overflow: "hidden", marginTop: 8 }}>
+            <div style={{ height: "100%", width: `${Math.min(100, (receitaConfirmada / Math.max(receitaConfirmada + aReceber, 1)) * 100)}%`, background: "#639922", borderRadius: 2 }} />
+          </div>
+          <div style={{ fontSize: 10, color: "var(--color-text-secondary)", marginTop: 4 }}>
+            {Math.round((receitaConfirmada / Math.max(receitaConfirmada + aReceber, 1)) * 100)}% do total contratado
+          </div>
         </SectionCard>
 
         {/* A receber */}
-        <SectionCard style={{ borderTop: "2px solid #EF9F27", cursor: "pointer" }}>
+        <SectionCard
+          style={{ borderTop: "2px solid #EF9F27", cursor: "pointer" }}
+        >
           <div onClick={() => setModal({ title: "A Receber — Contratos Pendentes", clients: aReceberClients, type: "pending" })}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
               <span style={{ fontSize: 11, color: "var(--color-text-secondary)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".04em" }}>A receber</span>
@@ -316,7 +248,9 @@ export function DashboardContent() {
         </SectionCard>
 
         {/* Pipeline */}
-        <SectionCard style={{ borderTop: "2px solid #378ADD", cursor: "pointer" }}>
+        <SectionCard
+          style={{ borderTop: "2px solid #378ADD", cursor: "pointer" }}
+        >
           <div onClick={() => setModal({ title: "Pipeline — Leads em Negociação", clients: pipelineClients, type: "leads" })}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
               <span style={{ fontSize: 11, color: "var(--color-text-secondary)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".04em" }}>Pipeline aberto</span>
@@ -332,7 +266,7 @@ export function DashboardContent() {
 
         {/* Alertas */}
         <SectionCard style={{ borderTop: "2px solid #E24B4A", cursor: "pointer" }}
-          onClick={() => setModal({ title: "Alertas — Pagamentos Pendentes", clients: alerts.payments.map(a => a.client!).filter(Boolean) as Client[], type: "pending" })}
+          onClick={() => setModal({ title: "Alertas — Pagamentos Pendentes", clients: [], type: "pending", customData: alerts.payments })}
         >
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
             <span style={{ fontSize: 11, color: "var(--color-text-secondary)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".04em" }}>Alertas</span>
@@ -356,160 +290,7 @@ export function DashboardContent() {
         </SectionCard>
       </div>
 
-      {/* ── Row 2: Follow-ups do dia ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
-        <SectionCard style={{ borderLeft: todayFollowups.length > 0 ? "3px solid #EF9F27" : "3px solid var(--color-border-tertiary)" }}>
-          <SectionHeader title="Follow-ups do dia" badge={
-            todayFollowups.length > 0
-              ? <span style={{ fontSize: 11, background: "#FAEEDA", color: "#854F0B", padding: "2px 8px", borderRadius: 20, fontWeight: 500 }}>
-                  {todayFollowups.length} pendente{todayFollowups.length > 1 ? "s" : ""}
-                </span>
-              : <span style={{ fontSize: 11, background: "#EAF3DE", color: "#3B6D11", padding: "2px 8px", borderRadius: 20, fontWeight: 500 }}>em dia</span>
-          } />
-          {todayFollowups.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "16px 0", color: "var(--color-text-secondary)", fontSize: 13 }}>
-              <CheckCircle2 size={20} style={{ margin: "0 auto 6px", color: "#639922" }} />
-              Nenhum follow-up pendente para hoje
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-              {todayFollowups.slice(0, 5).map(f => {
-                const clientName = (f as any).wedding_clients?.name ?? "Cliente";
-                const dDate = parseISO(f.scheduled_date);
-                const isOverdue = isPast(dDate) && !isToday(dDate);
-                return (
-                  <div key={f.id} style={{
-                    display: "flex", alignItems: "center", gap: 10, padding: "7px 0",
-                    borderBottom: "0.5px solid var(--color-border-tertiary)",
-                  }}>
-                    <div style={{
-                      width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
-                      background: isOverdue ? "#FCEBEB" : "#FAEEDA",
-                      color: isOverdue ? "#A32D2D" : "#854F0B",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      <Bell size={12} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{clientName}</div>
-                      {f.description && <div style={{ fontSize: 11, color: "var(--color-text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.description}</div>}
-                    </div>
-                    <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                      {isOverdue && <Chip label="atrasado" bg="#FCEBEB" color="#A32D2D" />}
-                      {!isOverdue && <Chip label="hoje" bg="#FAEEDA" color="#854F0B" />}
-                      <button
-                        onClick={e => handleCompleteFollowup(f.id, e)}
-                        disabled={completingId === f.id}
-                        style={{
-                          width: 24, height: 24, borderRadius: "50%", border: "1.5px solid #639922",
-                          background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                          color: "#639922", opacity: completingId === f.id ? 0.5 : 1,
-                        }}
-                        title="Marcar como concluído"
-                      >
-                        <Check size={12} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-              {todayFollowups.length > 5 && (
-                <div style={{ fontSize: 11, color: "#185FA5", padding: "6px 0", cursor: "pointer" }}
-                  onClick={() => navigate("/crm")}>
-                  +{todayFollowups.length - 5} mais → ver no CRM
-                </div>
-              )}
-            </div>
-          )}
-        </SectionCard>
-
-        {/* Resumo do dia */}
-        <SectionCard>
-          <SectionHeader title="Resumo do dia" />
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {[
-              { icon: <Calendar size={14} />, label: "Eventos este mês", value: upcomingEvents.filter(c => {
-                const d = stringToDate(c.weddingDate!);
-                return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-              }).length, color: "#185FA5", bg: "#E6F1FB" },
-              { icon: <Users size={14} />, label: "Em negociação", value: pipelineClients.length, color: "#854F0B", bg: "#FAEEDA" },
-              { icon: <Bell size={14} />, label: "Follow-ups pendentes", value: followups.length, color: "#854F0B", bg: "#FAEEDA" },
-              { icon: <Camera size={14} />, label: "Ensaios pré a agendar", value: ensaiosPendentes.length, color: "#534AB7", bg: "#EEEDFE" },
-              { icon: <AlertTriangle size={14} />, label: "Alertas totais", value: totalAlerts, color: "#A32D2D", bg: "#FCEBEB" },
-            ].map(item => (
-              <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: item.bg, color: item.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  {item.icon}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>{item.label}</div>
-                </div>
-                <div style={{ fontSize: 16, fontWeight: 600, color: item.value > 0 ? item.color : "var(--color-text-secondary)" }}>{item.value}</div>
-              </div>
-            ))}
-          </div>
-        </SectionCard>
-      </div>
-
-      {/* ── Ensaios pré não agendados ── */}
-      {ensaiosPendentes.length > 0 && (
-        <SectionCard style={{ borderLeft: "3px solid #7C3AED" }}>
-          <SectionHeader
-            title="Ensaios pré a agendar"
-            badge={
-              <span style={{ fontSize: 11, background: "#EEEDFE", color: "#534AB7", padding: "2px 8px", borderRadius: 20, fontWeight: 500 }}>
-                {ensaiosPendentes.length} pendente{ensaiosPendentes.length > 1 ? "s" : ""}
-              </span>
-            }
-          />
-          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-            {ensaiosPendentes.map(c => {
-              const reminderDays = goals.pre_wedding_reminder_days != null ? Number(goals.pre_wedding_reminder_days) : 90;
-              const d = stringToDate(c.weddingDate!);
-              const diff = d ? differenceInDays(d, now) : 0;
-              const urgent = diff <= 30;
-              return (
-                <div key={c.id} style={{
-                  display: "flex", alignItems: "center", gap: 10, padding: "8px 0",
-                  borderBottom: "0.5px solid var(--color-border-tertiary)", cursor: "pointer",
-                }}
-                  onClick={() => navigate(`/clients/${c.id}`)}
-                  onMouseEnter={e => (e.currentTarget.style.background = "var(--color-background-secondary)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                >
-                  <div style={{
-                    width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                    background: urgent ? "#FCEBEB" : "#EEEDFE",
-                    color: urgent ? "#A32D2D" : "#534AB7",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <Camera size={13} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
-                    <div style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>
-                      Evento: {fmtDate(c.weddingDate)} · {diff} dias restantes
-                    </div>
-                  </div>
-                  <Chip
-                    label={urgent ? "urgente" : `${diff}d`}
-                    bg={urgent ? "#FCEBEB" : "#EEEDFE"}
-                    color={urgent ? "#A32D2D" : "#534AB7"}
-                  />
-                </div>
-              );
-            })}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 8 }}>
-            Clique no cliente para agendar o ensaio. Configure o prazo em{" "}
-            <span style={{ color: "#534AB7", cursor: "pointer" }} onClick={() => navigate("/settings")}>
-              Configurações → Prazos
-            </span>
-          </div>
-        </SectionCard>
-      )}
-
-      {/* ── Row 3: Events + Funnel | Alerts + Production ── */}
+      {/* ── Row 2: Events + Funnel | Alerts + Production ── */}
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
 
         {/* Left column */}
@@ -570,30 +351,18 @@ export function DashboardContent() {
               ))}
             </div>
             <Divider />
-            {(() => {
-              const fechados  = funnelData.find(f => f.stage === "contrato_fechado")?.count || 0;
-              const finalizados = clients.filter(c => c.salesFunnelStage === "projeto_finalizado").length;
-              const totalFunnel = funnelData.reduce((s, f) => s + (f.stage !== "contrato_perdido" ? f.count : 0), 0) + finalizados;
-              const convRate = totalFunnel > 0 ? ((fechados + finalizados) / totalFunnel * 100).toFixed(1) : "0.0";
-              const ticketClients = clients.filter(c => c.salesFunnelStage === "contrato_fechado" || c.salesFunnelStage === "projeto_finalizado");
-              const totalContratado = ticketClients.reduce((s, c) => s + (c.contractValue || 0), 0);
-              const ticket = ticketClients.length > 0 ? totalContratado / ticketClients.length : 0;
-              const perdidos = funnelData.find(f => f.stage === "contrato_perdido")?.count || 0;
-              return (
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  {[
-                    { label: "Conversão", value: `${convRate}%`, color: "#3B6D11" },
-                    { label: "Ticket médio", value: fmt(ticket), color: "var(--color-text-primary)" },
-                    { label: "Perdidos", value: `${perdidos}`, color: "#A32D2D" },
-                  ].map(m => (
-                    <div key={m.label} style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 10, color: "var(--color-text-secondary)" }}>{m.label}</div>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: m.color }}>{m.value}</div>
-                    </div>
-                  ))}
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              {[
+                { label: "Conversão", value: `${metrics.conversionRate.toFixed(1)}%`, color: "#3B6D11" },
+                { label: "Ticket médio", value: fmt(metrics.activeContracts > 0 ? metrics.totalRevenue / metrics.activeContracts : 0), color: "var(--color-text-primary)" },
+                { label: "Perdidos", value: `${funnelData.find(f => f.label === "Perdido")?.count || 0}`, color: "#A32D2D" },
+              ].map(m => (
+                <div key={m.label} style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 10, color: "var(--color-text-secondary)" }}>{m.label}</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: m.color }}>{m.value}</div>
                 </div>
-              );
-            })()}
+              ))}
+            </div>
           </SectionCard>
         </div>
 
@@ -624,7 +393,7 @@ export function DashboardContent() {
                   </div>
                 ))}
                 {alerts.payments.length > 3 && (
-                  <div onClick={() => setModal({ title: "Pagamentos Pendentes", clients: alerts.payments.map(a => a.client!).filter(Boolean) as Client[], type: "pending" })}
+                  <div onClick={() => setModal({ title: "Alertas — Pagamentos Pendentes", clients: [], type: "pending", customData: alerts.payments })}
                     style={{ fontSize: 11, color: "#185FA5", cursor: "pointer", padding: "4px 0", textAlign: "right" }}>
                     +{alerts.payments.length - 3} mais
                   </div>
@@ -707,6 +476,7 @@ export function DashboardContent() {
           onClose={() => setModal(null)}
           clients={modal.clients}
           type={modal.type}
+          customData={modal.customData}
         />
       )}
     </div>

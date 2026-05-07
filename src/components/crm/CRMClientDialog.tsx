@@ -59,7 +59,7 @@ const STATUS_MAP: Record<SalesFunnelStage, ClientStatus> = {
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 }).format(v);
 
-const formatDate = (d: string | Date | null) =>
+const displayDate = (d: string | Date | null) =>
   d ? formatDate(d) : "—";
 
 function CopyButton({ text }: { text: string }) {
@@ -172,7 +172,7 @@ export function CRMClientDialog({ client, open, onOpenChange }: CRMClientDialogP
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-muted/40 rounded-lg p-3">
                 <p className="text-xs text-muted-foreground mb-0.5">Data</p>
-                <p className="text-sm font-medium">{formatDate(client.weddingDate)}</p>
+                <p className="text-sm font-medium">{displayDate(client.weddingDate)}</p>
               </div>
               <div className="bg-muted/40 rounded-lg p-3">
                 <p className="text-xs text-muted-foreground mb-0.5">Categoria</p>

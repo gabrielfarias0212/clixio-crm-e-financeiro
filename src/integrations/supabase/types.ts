@@ -328,6 +328,69 @@ export type Database = {
         }
         Relationships: []
       }
+      company_settings: {
+        Row: {
+          annual_revenue_goal: number | null
+          city: string | null
+          cnpj: string | null
+          company_name: string | null
+          created_at: string | null
+          deadline_album: number | null
+          deadline_digital_delivery: number | null
+          deadline_editing: number | null
+          deadline_physical_delivery: number | null
+          deadline_pre_wedding: number | null
+          email: string | null
+          id: string
+          monthly_events_goal: number | null
+          monthly_revenue_goal: number | null
+          phone: string | null
+          pre_wedding_reminder_days: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          annual_revenue_goal?: number | null
+          city?: string | null
+          cnpj?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          deadline_album?: number | null
+          deadline_digital_delivery?: number | null
+          deadline_editing?: number | null
+          deadline_physical_delivery?: number | null
+          deadline_pre_wedding?: number | null
+          email?: string | null
+          id?: string
+          monthly_events_goal?: number | null
+          monthly_revenue_goal?: number | null
+          phone?: string | null
+          pre_wedding_reminder_days?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          annual_revenue_goal?: number | null
+          city?: string | null
+          cnpj?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          deadline_album?: number | null
+          deadline_digital_delivery?: number | null
+          deadline_editing?: number | null
+          deadline_physical_delivery?: number | null
+          deadline_pre_wedding?: number | null
+          email?: string | null
+          id?: string
+          monthly_events_goal?: number | null
+          monthly_revenue_goal?: number | null
+          phone?: string | null
+          pre_wedding_reminder_days?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       contract_form_submissions: {
         Row: {
           accepts_terms: boolean
@@ -629,6 +692,106 @@ export type Database = {
           },
         ]
       }
+      crm_activities: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          description: string
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          description: string
+          id?: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_activities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_followups: {
+        Row: {
+          client_id: string
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          scheduled_date: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          scheduled_date: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          scheduled_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_followups_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_categories: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       financial_alerts: {
         Row: {
           alert_type: string
@@ -715,6 +878,95 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      message_templates: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          stage: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          stage?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          stage?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      package_categories: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      package_costs: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string | null
+          description: string
+          id: string
+          package_id: string
+          supplier: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category?: string
+          created_at?: string | null
+          description: string
+          id?: string
+          package_id: string
+          supplier?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          package_id?: string
+          supplier?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_costs_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "service_packages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       packages: {
         Row: {
@@ -1122,6 +1374,42 @@ export type Database = {
         }
         Relationships: []
       }
+      project_cost_templates: {
+        Row: {
+          active: boolean | null
+          amount: number
+          category: string
+          condition: string
+          created_at: string | null
+          description: string
+          id: string
+          supplier: string | null
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          amount: number
+          category: string
+          condition?: string
+          created_at?: string | null
+          description: string
+          id?: string
+          supplier?: string | null
+          user_id: string
+        }
+        Update: {
+          active?: boolean | null
+          amount?: number
+          category?: string
+          condition?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          supplier?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       project_costs: {
         Row: {
           amount: number
@@ -1222,6 +1510,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      service_packages: {
+        Row: {
+          active: boolean | null
+          category_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          price: number
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          price?: number
+          user_id: string
+        }
+        Update: {
+          active?: boolean | null
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          price?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_packages_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "package_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sessions: {
         Row: {
@@ -1378,6 +1707,7 @@ export type Database = {
           name: string
           next_action: string | null
           notes: string | null
+          package_id: string | null
           phone: string | null
           pre_wedding_completed: boolean | null
           pre_wedding_date: string | null
@@ -1434,6 +1764,7 @@ export type Database = {
           name: string
           next_action?: string | null
           notes?: string | null
+          package_id?: string | null
           phone?: string | null
           pre_wedding_completed?: boolean | null
           pre_wedding_date?: string | null
@@ -1490,6 +1821,7 @@ export type Database = {
           name?: string
           next_action?: string | null
           notes?: string | null
+          package_id?: string | null
           phone?: string | null
           pre_wedding_completed?: boolean | null
           pre_wedding_date?: string | null
@@ -1512,7 +1844,15 @@ export type Database = {
             | null
           workflow_updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wedding_clients_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "service_packages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wedding_payments: {
         Row: {

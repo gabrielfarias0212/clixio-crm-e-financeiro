@@ -1,7 +1,19 @@
 import jsPDF from 'jspdf';
 import { Client, WorkflowStage } from '@/utils/types';
-import { format, differenceInDays, parseISO } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+// Parse YYYY-MM-DD sem shift de timezone
+function parseDateSafe(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  // YYYY-MM-DD → local midnight
+  const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  // DD/MM/YYYY
+  const m2 = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (m2) return new Date(Number(m2[3]), Number(m2[2]) - 1, Number(m2[1]));
+  return null;
+}
 
 interface WorkflowReportOptions {
   stages: WorkflowStage[];
@@ -44,12 +56,9 @@ function getClientWorkflowStage(client: Client): WorkflowStage {
 // Calcular dias desde o evento
 function getDaysSinceEvent(client: Client): number | null {
   if (!client.weddingDate) return null;
-  try {
-    const eventDate = parseISO(client.weddingDate);
-    return differenceInDays(new Date(), eventDate);
-  } catch {
-    return null;
-  }
+  const eventDate = parseDateSafe(client.weddingDate);
+  if (!eventDate) return null;
+  return differenceInDays(new Date(), eventDate);
 }
 
 // Determinar prioridade baseada no tempo desde o evento
@@ -164,7 +173,7 @@ export function generateWorkflowReport(
   if (urgentCount > 0 || highCount > 0) {
     doc.setFont(undefined, 'bold');
     doc.setTextColor(220, 38, 38);
-    doc.text(`⚠️ Atenção: ${urgentCount} urgente(s), ${highCount} prioridade alta`, pageMargin, yPosition);
+    doc.text(`! Atencao: ${urgentCount} urgente(s), ${highCount} prioridade alta`, pageMargin, yPosition);
     yPosition += 6;
   }
 
@@ -267,7 +276,8 @@ export function generateWorkflowReport(
 
       // Data do evento
       if (item.client.weddingDate) {
-        const eventDate = format(parseISO(item.client.weddingDate), 'dd/MM/yyyy', { locale: ptBR });
+        const d = parseDateSafe(item.client.weddingDate);
+        const eventDate = d ? format(d, 'dd/MM/yyyy', { locale: ptBR }) : '-';
         doc.text(eventDate, pageMargin + 95, yPosition);
       } else {
         doc.text('-', pageMargin + 95, yPosition);

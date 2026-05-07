@@ -21,15 +21,19 @@ interface CalendarGridProps {
   eventTypeFilter: string;
 }
 
-// Color per event category
-function categoryColor(cat: string): string {
+// Cores fixas para categorias conhecidas; hash para categorias customizadas
+function categoryColorHex(cat: string): string {
   const c = (cat || "").toLowerCase();
-  if (c.includes("casamento")) return "rose";
-  if (c.includes("ensaio"))    return "blue";
-  if (c.includes("pre") || c.includes("pré")) return "amber";
-  if (c.includes("debutante")) return "purple";
-  if (c.includes("aniversar")) return "green";
-  return "gray";
+  if (c.includes("casamento")) return "#fb7185";  // rose-400
+  if (c.includes("ensaio"))    return "#60a5fa";  // blue-400
+  if (c.includes("pre") || c.includes("pré")) return "#fbbf24"; // amber-400
+  if (c.includes("debutante")) return "#c084fc";  // purple-400
+  if (c.includes("aniversar")) return "#4ade80";  // green-400
+  // Cor consistente por hash para categorias customizadas
+  const palette = ["#f97316","#06b6d4","#8b5cf6","#ec4899","#14b8a6","#f59e0b","#6366f1","#84cc16"];
+  let hash = 0;
+  for (let i = 0; i < cat.length; i++) hash = (hash * 31 + cat.charCodeAt(i)) >>> 0;
+  return palette[hash % palette.length];
 }
 
 function isConfirmed(client: Client): boolean {
@@ -82,11 +86,11 @@ export function CalendarGrid({
           {count > 0 && (
             <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center max-w-[36px]">
               {dayClients.slice(0, 3).map((c, i) => {
-                const col = categoryColor(c.eventCategory);
+                const hex = categoryColorHex(c.eventCategory);
                 const confirmed = isConfirmed(c);
                 return confirmed
-                  ? <span key={i} className={`w-2 h-2 rounded-full bg-${col}-400`} />
-                  : <span key={i} className={`w-2 h-2 rounded-full border-2 border-${col}-400 bg-white`} />;
+                  ? <span key={i} style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: hex, display: "inline-block", flexShrink: 0 }} />
+                  : <span key={i} style={{ width: 8, height: 8, borderRadius: "50%", border: `2px solid ${hex}`, backgroundColor: "white", display: "inline-block", flexShrink: 0 }} />;
               })}
               {count > 3 && (
                 <span className="text-[8px] text-gray-500 leading-none">+{count - 3}</span>
@@ -123,19 +127,19 @@ export function CalendarGrid({
         {/* Legend */}
         <div className="flex gap-3 flex-wrap px-4 pt-3 pb-1 text-xs text-gray-500">
           {[
-            { label: "Casamento",   color: "bg-rose-400"   },
-            { label: "Ensaio",      color: "bg-blue-400"   },
-            { label: "Pré-Wedding", color: "bg-amber-400"  },
-            { label: "Debutante",   color: "bg-purple-400" },
-            { label: "Aniversário", color: "bg-green-400"  },
+            { label: "Casamento",   hex: "#fb7185" },
+            { label: "Ensaio",      hex: "#60a5fa" },
+            { label: "Pré-Wedding", hex: "#fbbf24" },
+            { label: "Debutante",   hex: "#c084fc" },
+            { label: "Aniversário", hex: "#4ade80" },
           ].map(l => (
             <span key={l.label} className="flex items-center gap-1">
-              <span className={`w-2 h-2 rounded-full ${l.color}`} />
+              <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: l.hex, display: "inline-block" }} />
               {l.label}
             </span>
           ))}
           <span className="flex items-center gap-1 border-l pl-3 border-gray-200">
-            <span className="w-2 h-2 rounded-full border-2 border-gray-400 bg-white" />
+            <span style={{ width: 8, height: 8, borderRadius: "50%", border: "2px solid #94a3b8", backgroundColor: "white", display: "inline-block" }} />
             Pré-agendamento (não fechado)
           </span>
         </div>

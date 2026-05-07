@@ -12,7 +12,14 @@ import { Client } from "@/utils/types";
 
 function parseBR(d?: string | null): Date | null {
   if (!d) return null;
+  // YYYY-MM-DD (banco de dados)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+    const [y, m, day] = d.split("-").map(Number);
+    return new Date(y, m - 1, day);
+  }
+  // DD/MM/YYYY
   const [day, m, y] = d.split("/").map(Number);
+  if (!y) return null;
   return new Date(y, m - 1, day);
 }
 function fmtDate(d?: string | null) {

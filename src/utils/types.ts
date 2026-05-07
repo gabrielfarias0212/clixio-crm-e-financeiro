@@ -41,15 +41,8 @@ export type TransactionCategory =
   | "pró-labore"
   | string;
 
-export type EventCategory = 
-  | "Casamento"
-  | "Aniversario"
-  | "Civil"
-  | "Ensaio Estudio"
-  | "Ensaio externo"
-  | "Evento Corporativo"
-  | "15 anos"
-  | "Outros";
+// Categorias são dinâmicas (tabela event_categories no banco)
+export type EventCategory = string;
 
 export type PaymentStatus = "pendente" | "pago" | "atrasado";
 

@@ -46,11 +46,6 @@ export interface ContractClosedFormData {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
-const EVENT_CATEGORIES = [
-  "Casamento", "Aniversario", "Civil", "Ensaio Estudio",
-  "Ensaio externo", "Evento Corporativo", "15 anos", "Outros"
-];
-
 export function ContractClosedDialog({
   open,
   client,
@@ -172,16 +167,7 @@ export function ContractClosedDialog({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label>Categoria</Label>
-                <Select value={form.eventCategory} onValueChange={v => set("eventCategory", v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EVENT_CATEGORIES.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CategorySelect value={form.eventCategory} onChange={v => set("eventCategory", v)} />
               </div>
               <div className="space-y-1">
                 <Label>Data do Evento</Label>

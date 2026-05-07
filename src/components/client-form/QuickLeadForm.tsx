@@ -9,14 +9,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { quickLeadSchema, QuickLeadValues, QuickLeadFormProps } from "./quickLeadTypes";
-import { EventCategory } from "@/utils/types";
-
-const eventCategories: EventCategory[] = [
-  "Casamento",
-  "15 anos", 
-  "Aniversario",
-  "Outros"
-];
+import { CategorySelect } from "@/components/ui/CategorySelect";
 
 const leadSources = [
   "Facebook",
@@ -145,20 +138,9 @@ export function QuickLeadForm({ onSubmit, isSubmitting = false, onCancel }: Quic
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-foreground">Tipo de Evento</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="border-border">
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {eventCategories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <CategorySelect value={field.value} onChange={field.onChange} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

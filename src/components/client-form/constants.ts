@@ -1,9 +1,7 @@
-
-import { EventCategory } from "@/utils/types";
-
-export const EVENT_CATEGORIES: EventCategory[] = [
+// Fallback estático — a fonte real é a tabela event_categories no banco
+export const EVENT_CATEGORIES = [
   "Casamento",
-  "Aniversario", 
+  "Aniversario",
   "Civil",
   "Ensaio Estudio",
   "Ensaio externo",

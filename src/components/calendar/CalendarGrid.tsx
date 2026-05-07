@@ -54,8 +54,7 @@ export function CalendarGrid({
       if (!c.weddingDate) return;
       // apply event type filter
       if (eventTypeFilter !== "all") {
-        const cat = (c.eventCategory || "").toLowerCase();
-        if (!cat.includes(eventTypeFilter.replace("_", " "))) return;
+        if ((c.eventCategory || "") !== eventTypeFilter) return;
       }
       const key = normalizeDate(stringToDate(c.weddingDate) || new Date());
       if (!map[key]) map[key] = [];

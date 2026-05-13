@@ -27,11 +27,11 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       setError(null);
-      
+
       const startTime = performance.now();
       const data = await fetchClients();
       const endTime = performance.now();
-      
+
       console.log(`Clients loaded in ${Math.round(endTime - startTime)}ms`);
       setClients(data);
     } catch (err) {
@@ -40,6 +40,17 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
       toast.error('Falha ao carregar os clientes');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Refresh silencioso usado pelo Realtime — não altera `loading` para não desmontar a UI
+  const silentRefresh = async () => {
+    try {
+      invalidateClientsCache();
+      const data = await fetchClients();
+      setClients(data);
+    } catch (err) {
+      console.error('Error on silent refresh:', err);
     }
   };
 
@@ -119,14 +130,14 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
     refreshClients();
 
     // Realtime: sincroniza automaticamente qualquer mudança em wedding_clients
+    // Usa silentRefresh para não disparar o spinner de loading e desmontar a UI
     const channel = supabase
       .channel('wedding_clients_changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'wedding_clients' },
         () => {
-          invalidateClientsCache();
-          refreshClients();
+          silentRefresh();
         }
       )
       .subscribe();

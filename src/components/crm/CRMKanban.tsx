@@ -3,11 +3,8 @@
 import React, { useState } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { Client, SalesFunnelStage, ClientStatus } from "@/utils/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Bell } from "lucide-react";
 import {
   Users, Send, MessageCircle, FileCheck, Archive, XCircle,
   Phone, Mail, Calendar, AlertCircle,
@@ -20,114 +17,122 @@ import { toast } from "sonner";
 import { WhatsAppMessageDialog } from "@/components/crm/WhatsAppMessageDialog";
 import { CRMClientDialog } from "@/components/crm/CRMClientDialog";
 import { CRMActivityPanel } from "@/components/crm/CRMActivityPanel";
-import { FollowUpBanner } from "@/components/crm/FollowUpBanner";
-import { Bell } from "lucide-react";
 
-interface CRMKanbanProps {
-  clients: Client[];
-}
+// ── Design tokens ─────────────────────────────────────────────────────────────
 
-const funnelStages: Array<{
+const C = {
+  text:       "#1a1a1a",
+  textSub:    "#9A9590",
+  divider:    "#F0EDE8",
+  itemBg:     "#FAFAF8",
+  navy:       "#1E3A5F",
+  navyBg:     "#E8EEF6",
+  amber:      "#E8A838",
+  amberBg:    "#FEF3DC",
+  success:    "#52C97A",
+  successBg:  "#E6F9EE",
+  danger:     "#E05252",
+  dangerBg:   "#FEE8E8",
+  gray:       "#9A9590",
+  grayBg:     "#F0EDE8",
+};
+
+const CARD_SHADOW = "0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.06)";
+
+// ── Stage definitions ─────────────────────────────────────────────────────────
+
+interface StageConfig {
   key: SalesFunnelStage;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  bgColor: string;
-  borderColor: string;
+  icon: React.ComponentType<{ style?: React.CSSProperties }>;
+  accent: string;
+  accentBg: string;
   statusMapping: ClientStatus[];
-}> = [
+}
+
+const funnelStages: StageConfig[] = [
   {
     key: "primeiro_contato",
     label: "Primeiro Contato",
     icon: Users,
-    color: "text-blue-600",
-    bgColor: "bg-blue-50",
-    borderColor: "border-blue-200",
+    accent: C.navy,
+    accentBg: C.navyBg,
     statusMapping: ["primeiro_contato"],
   },
   {
     key: "orcamento_enviado",
     label: "Orçamento Enviado",
     icon: Send,
-    color: "text-orange-600",
-    bgColor: "bg-orange-50",
-    borderColor: "border-orange-200",
+    accent: C.amber,
+    accentBg: C.amberBg,
     statusMapping: ["orçamento enviado"],
   },
   {
     key: "negociacao",
     label: "Follow-up",
     icon: MessageCircle,
-    color: "text-yellow-600",
-    bgColor: "bg-yellow-50",
-    borderColor: "border-yellow-200",
+    accent: C.amber,
+    accentBg: C.amberBg,
     statusMapping: ["negociacao"],
   },
   {
     key: "contrato_fechado",
     label: "Contrato Fechado",
     icon: FileCheck,
-    color: "text-green-600",
-    bgColor: "bg-green-50",
-    borderColor: "border-green-200",
+    accent: C.success,
+    accentBg: C.successBg,
     statusMapping: ["fechado"],
   },
   {
     key: "projeto_finalizado",
     label: "Projeto Finalizado",
     icon: Archive,
-    color: "text-gray-600",
-    bgColor: "bg-gray-50",
-    borderColor: "border-gray-200",
+    accent: C.gray,
+    accentBg: C.grayBg,
     statusMapping: ["projeto_finalizado"],
   },
 ];
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+interface CRMKanbanProps {
+  clients: Client[];
+}
+
 export function CRMKanban({ clients }: CRMKanbanProps) {
   const { updateClient } = useClients();
-  const {
-    openContractDialog,
-    dialogOpen,
-    pendingClient,
-    handleConfirm,
-    handleLater,
-    handleCancel,
-  } = useContractClosed();
+  const { openContractDialog, dialogOpen, pendingClient, handleConfirm, handleLater, handleCancel } = useContractClosed();
 
-  // Estado do dialog de mensagem
   const [messageDialogClient, setMessageDialogClient] = useState<Client | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [clientDialogOpen, setClientDialogOpen] = useState(false);
 
   const toggleCardExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setExpandedCards(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setExpandedCards(prev => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
   };
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [clientDialogOpen, setClientDialogOpen] = useState(false);
 
   const getClientsInStage = (stage: SalesFunnelStage) =>
     clients.filter((c) => c.salesFunnelStage === stage);
 
-  const getTotalValue = (clientsInStage: Client[]) =>
-    clientsInStage.reduce((t, c) => t + (c.contractValue || 0), 0);
+  const getTotalValue = (list: Client[]) =>
+    list.reduce((t, c) => t + (c.contractValue || 0), 0);
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
+  const fmt = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v);
 
   const formatDate = (date: string | Date): string => {
     const str = typeof date === "string" ? date : date.toISOString().slice(0, 10);
-    // YYYY-MM-DD → DD/MM/YY sem conversão de timezone
     if (str.match(/^\d{4}-\d{2}-\d{2}$/)) {
       const [y, m, d] = str.split("-");
       return `${d}/${m}/${y.slice(2)}`;
     }
-    // DD/MM/YYYY já formatado
     if (str.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
       const [d, m, y] = str.split("/");
       return `${d}/${m}/${y.slice(2)}`;
@@ -137,25 +142,24 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
 
   const daysSinceContact = (dateStr?: string | null): number => {
     if (!dateStr) return 0;
-    const d = new Date(dateStr);
-    return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  const contactBadgeStyle = (days: number) => {
-    if (days <= 3)  return { bg: "bg-green-50",  text: "text-green-700",  border: "border-green-200" };
-    if (days <= 7)  return { bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200" };
-    if (days <= 14) return { bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" };
-    return          { bg: "bg-red-50",    text: "text-red-700",    border: "border-red-200" };
+  const contactBadgeColors = (days: number) => {
+    if (days <= 3)  return { color: C.success, bg: C.successBg };
+    if (days <= 7)  return { color: C.amber,   bg: C.amberBg };
+    if (days <= 14) return { color: "#D07820", bg: "#FEF3DC" };
+    return                 { color: C.danger,  bg: C.dangerBg };
   };
 
   const mapFunnelStageToStatus = (stage: SalesFunnelStage): ClientStatus => {
     switch (stage) {
-      case "primeiro_contato": return "primeiro_contato";
-      case "orcamento_enviado": return "orçamento enviado";
-      case "negociacao": return "negociacao";
-      case "contrato_fechado": return "fechado";
+      case "primeiro_contato":   return "primeiro_contato";
+      case "orcamento_enviado":  return "orçamento enviado";
+      case "negociacao":         return "negociacao";
+      case "contrato_fechado":   return "fechado";
       case "projeto_finalizado": return "projeto_finalizado";
-      case "contrato_perdido": return "contrato_perdido";
+      case "contrato_perdido":   return "contrato_perdido";
       default: return "primeiro_contato";
     }
   };
@@ -166,237 +170,310 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
     if (!destination) return;
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    )
-      return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-    const clientId = draggableId;
     const newStage = destination.droppableId as SalesFunnelStage;
     const newStatus = mapFunnelStageToStatus(newStage);
 
     if (newStage === "contrato_fechado") {
-      const dialogOpened = openContractDialog(clientId);
+      const dialogOpened = openContractDialog(draggableId);
       if (dialogOpened) return;
     }
 
     try {
-      const success = await updateClient(clientId, {
-        salesFunnelStage: newStage,
-        status: newStatus,
-      });
+      const success = await updateClient(draggableId, { salesFunnelStage: newStage, status: newStatus });
       if (success) {
-        toast.success(
-          `Cliente movido para ${funnelStages.find((s) => s.key === newStage)?.label}`
-        );
+        toast.success(`Cliente movido para ${funnelStages.find((s) => s.key === newStage)?.label}`);
         if (newStage === "primeiro_contato" || newStage === "orcamento_enviado") {
-          const desc = newStage === "orcamento_enviado"
-            ? "Follow-up do orçamento enviado"
-            : "Primeiro follow-up do lead";
-          scheduleAutoFollowup(clientId, desc).catch(() => {});
+          const desc = newStage === "orcamento_enviado" ? "Follow-up do orçamento enviado" : "Primeiro follow-up do lead";
+          scheduleAutoFollowup(draggableId, desc).catch(() => {});
         }
       } else {
         toast.error("Erro ao mover cliente");
       }
-    } catch (error) {
-      console.error("Error updating client stage:", error);
+    } catch {
       toast.error("Erro ao mover cliente");
     }
   };
 
+  // ── Render ──────────────────────────────────────────────────────────────────
+
+  const archivedClients = clients.filter(c => c.salesFunnelStage === "contrato_perdido" || c.status === "contrato_perdido");
+
   return (
     <>
-      <div className="space-y-6">
-        <FollowUpBanner />
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+        {/* ── Kanban columns ── */}
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="w-full overflow-x-auto pb-4">
-            <div className="flex gap-4" style={{ minWidth: `${funnelStages.length * 280}px` }}>
+          <div style={{ width: "100%", overflowX: "auto", paddingBottom: 8 }}>
+            <div style={{ display: "flex", gap: 12, minWidth: `${funnelStages.length * 270}px` }}>
+
               {funnelStages.map((stage) => {
                 const clientsInStage = getClientsInStage(stage.key);
                 const totalValue = getTotalValue(clientsInStage);
                 const Icon = stage.icon;
 
                 return (
-                  <div key={stage.key} className="flex-1 min-w-[260px] max-w-xs overflow-hidden flex flex-col">
-                    <Card className={`flex flex-col border-t-2 ${stage.borderColor} shadow-sm`} style={{height: "calc(100vh - 280px)", minHeight: "400px"}}>
-                      <CardHeader className="pb-2 pt-3 px-3">
-                        <div className="flex items-center gap-2">
-                          <div className={`p-1.5 rounded-md ${stage.bgColor}`}>
-                            <Icon className={`h-3.5 w-3.5 ${stage.color}`} />
+                  <div
+                    key={stage.key}
+                    style={{ flex: 1, minWidth: 250, maxWidth: 300, display: "flex", flexDirection: "column" }}
+                  >
+                    {/* Column card */}
+                    <div style={{
+                      background: "#FFFFFF",
+                      borderRadius: 14,
+                      boxShadow: CARD_SHADOW,
+                      borderTop: `3px solid ${stage.accent}`,
+                      display: "flex",
+                      flexDirection: "column",
+                      height: "calc(100vh - 280px)",
+                      minHeight: 400,
+                      overflow: "hidden",
+                    }}>
+                      {/* Column header */}
+                      <div style={{ padding: "14px 14px 10px 14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{
+                            width: 28, height: 28, borderRadius: 8,
+                            background: stage.accentBg,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            flexShrink: 0,
+                          }}>
+                            <Icon style={{ width: 13, height: 13, color: stage.accent }} />
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <CardTitle className="text-xs font-semibold text-gray-800 truncate">
-                              {stage.label}
-                            </CardTitle>
-                          </div>
-                          <span className={`text-xs font-bold rounded-full px-2 py-0.5 ${stage.bgColor} ${stage.color}`}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: C.text, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {stage.label}
+                          </span>
+                          <span style={{
+                            fontSize: 10, fontWeight: 700,
+                            background: stage.accentBg, color: stage.accent,
+                            borderRadius: 999, padding: "2px 7px",
+                          }}>
                             {clientsInStage.length}
                           </span>
                         </div>
-                        <div className={`text-sm font-bold ${stage.color} mt-1`}>
-                          {formatCurrency(totalValue)}
+                        <div style={{ fontSize: 13, fontWeight: 700, color: stage.accent, marginTop: 6 }}>
+                          {fmt(totalValue)}
                         </div>
-                      </CardHeader>
+                      </div>
 
-                      <CardContent className="pt-0 px-2 pb-2 flex-1 overflow-hidden flex flex-col">
-                        <Droppable droppableId={stage.key}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.droppableProps}
-                              style={{maxHeight: "100%", overflowY: "auto"}} className={`min-h-40 space-y-3 p-3 rounded-lg transition-all duration-200 flex-1 ${
-                                snapshot.isDraggingOver
-                                  ? `${stage.bgColor} border-2 ${stage.borderColor} border-dashed`
-                                  : "bg-gray-50/50"
-                              }`}
-                            >
-                              {clientsInStage.map((client, index) => (
-                                <Draggable
-                                  key={client.id}
-                                  draggableId={client.id}
-                                  index={index}
-                                >
-                                  {(provided, snapshot) => (
-                                    <div
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                      className={`bg-white rounded-lg shadow-sm border hover:shadow-md transition-all duration-200 cursor-pointer ${
-                                        snapshot.isDragging
-                                          ? "shadow-lg rotate-1 scale-105"
-                                          : ""
-                                      } ${
-                                        stage.key === "contrato_perdido"
-                                          ? "border-red-200 bg-red-50"
-                                          : "border-gray-200"
-                                      }`}
-                                      onClick={() => {
-                                        if (!snapshot.isDragging) {
-                                          setSelectedClient(client);
-                                          setClientDialogOpen(true);
-                                        }
-                                      }}
-                                    >
-                                      <div className="p-3">
-                                        {/* Alerta cadastro pendente */}
-                                        {hasPendingRegistration(client) && (
-                                          <div className="flex items-center gap-1 text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md px-2 py-1 mb-2">
-                                            <AlertCircle className="h-3 w-3 shrink-0" />
-                                            Cadastro pendente
-                                          </div>
-                                        )}
+                      {/* Droppable area */}
+                      <Droppable droppableId={stage.key}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                            style={{
+                              flex: 1,
+                              overflowY: "auto",
+                              padding: "6px 10px 10px",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 8,
+                              minHeight: 120,
+                              background: snapshot.isDraggingOver ? stage.accentBg : "transparent",
+                              borderRadius: snapshot.isDraggingOver ? "0 0 14px 14px" : undefined,
+                              transition: "background 0.15s",
+                            }}
+                          >
+                            {clientsInStage.map((client, index) => (
+                              <Draggable key={client.id} draggableId={client.id} index={index}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    style={{
+                                      ...provided.draggableProps.style,
+                                      background: "#FFFFFF",
+                                      borderRadius: 10,
+                                      border: `1px solid ${C.divider}`,
+                                      boxShadow: snapshot.isDragging
+                                        ? "0 8px 24px rgba(0,0,0,0.12)"
+                                        : "0 1px 3px rgba(0,0,0,0.04)",
+                                      transform: snapshot.isDragging
+                                        ? `${provided.draggableProps.style?.transform} rotate(1deg)`
+                                        : provided.draggableProps.style?.transform,
+                                      cursor: "grab",
+                                      transition: snapshot.isDragging ? undefined : "box-shadow 0.15s",
+                                    }}
+                                    onClick={() => {
+                                      if (!snapshot.isDragging) {
+                                        setSelectedClient(client);
+                                        setClientDialogOpen(true);
+                                      }
+                                    }}
+                                  >
+                                    <div style={{ padding: "10px 12px" }}>
 
-                                        {/* Avatar + nome */}
-                                        <div className="flex items-center gap-2.5 mb-2.5">
-                                          <Avatar className="h-9 w-9 shrink-0">
-                                            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${client.name}`} />
-                                            <AvatarFallback className="text-xs font-semibold">
-                                              {client.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                                            </AvatarFallback>
-                                          </Avatar>
-                                          <div className="min-w-0">
-                                            <p className={`font-semibold text-sm leading-tight truncate ${stage.key === "contrato_perdido" ? "text-red-700" : "text-gray-900"}`}>
-                                              {client.name}
-                                            </p>
-                                            {client.coupleName && (
-                                              <p className="text-xs text-muted-foreground truncate leading-tight">
-                                                & {client.coupleName}
-                                              </p>
-                                            )}
-                                          </div>
+                                      {/* Pending registration alert */}
+                                      {hasPendingRegistration(client) && (
+                                        <div style={{
+                                          display: "flex", alignItems: "center", gap: 5,
+                                          fontSize: 11, color: "#A07010",
+                                          background: C.amberBg, border: `1px solid #F8DCAA`,
+                                          borderRadius: 6, padding: "4px 8px", marginBottom: 8,
+                                        }}>
+                                          <AlertCircle style={{ width: 11, height: 11, flexShrink: 0 }} />
+                                          Cadastro pendente
                                         </div>
+                                      )}
 
-                                        {/* Dias desde o contato — só para leads em negociação */}
-                                        {["primeiro_contato", "orcamento_enviado", "negociacao"].includes(stage.key) && (() => {
-                                          const days = daysSinceContact(client.createdAt);
-                                          const style = contactBadgeStyle(days);
-                                          return (
-                                            <div className={`flex items-center justify-between text-xs rounded-md px-2 py-1 mb-2 border ${style.bg} ${style.border}`}>
-                                              <span className={`font-medium ${style.text}`}>
-                                                {days === 0 ? "Hoje" : days === 1 ? "1 dia atrás" : `${days} dias atrás`}
-                                              </span>
-                                              <span className={`${style.text} opacity-70`}>
-                                                {new Date(client.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
-                                              </span>
-                                            </div>
-                                          );
-                                        })()}
-
-                                        {/* Contato */}
-                                        <div className="space-y-1 mb-2.5">
-                                          {client.email && (
-                                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
-                                              <Mail className="h-3 w-3 shrink-0" />
-                                              <span className="truncate">{client.email}</span>
-                                            </div>
-                                          )}
-                                          {client.phone && (
-                                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
-                                              <Phone className="h-3 w-3 shrink-0" />
-                                              <span className="truncate">{client.phone}</span>
+                                      {/* Avatar + name */}
+                                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                                        <Avatar style={{ width: 34, height: 34, flexShrink: 0 }}>
+                                          <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${client.name}`} />
+                                          <AvatarFallback style={{ fontSize: 11, fontWeight: 700 }}>
+                                            {client.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <div style={{ minWidth: 0 }}>
+                                          <div style={{
+                                            fontSize: 13, fontWeight: 600, color: C.text,
+                                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                                          }}>
+                                            {client.name}
+                                          </div>
+                                          {client.coupleName && (
+                                            <div style={{
+                                              fontSize: 11, color: C.textSub,
+                                              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                                            }}>
+                                              & {client.coupleName}
                                             </div>
                                           )}
                                         </div>
-
-                                        {/* Rodapé: valor + tags */}
-                                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100">
-                                          <span className={`text-xs font-bold ${stage.key === "contrato_perdido" ? "text-red-600" : "text-green-600"}`}>
-                                            {formatCurrency(client.contractValue)}
-                                          </span>
-                                          <div className="flex items-center gap-1 flex-wrap justify-end">
-                                            {client.weddingDate && (
-                                              <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground bg-gray-100 rounded px-1.5 py-0.5">
-                                                <Calendar className="h-2.5 w-2.5" />
-                                                {formatDate(client.weddingDate)}
-                                              </span>
-                                            )}
-                                            <span className={`text-xs rounded px-1.5 py-0.5 font-medium ${stage.key === "contrato_perdido" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
-                                              {client.eventCategory}
-                                            </span>
-                                          </div>
-                                        </div>
-
-                                        {/* Expand: histórico + follow-up */}
-                                        <button
-                                          onClick={e => toggleCardExpand(client.id, e)}
-                                          className="w-full flex items-center justify-center gap-1 mt-2 py-1 rounded-md text-xs text-stone-400 hover:text-stone-600 hover:bg-stone-50 transition-colors border border-transparent hover:border-stone-100"
-                                        >
-                                          <Bell size={11} />
-                                          {expandedCards.has(client.id) ? "Fechar" : "Histórico & Follow-up"}
-                                          {expandedCards.has(client.id) ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-                                        </button>
                                       </div>
 
-                                      {/* Activity Panel */}
-                                      {expandedCards.has(client.id) && (
-                                        <CRMActivityPanel
-                                          clientId={client.id}
-                                          clientName={client.name}
-                                        />
-                                      )}
+                                      {/* Days since contact badge */}
+                                      {["primeiro_contato", "orcamento_enviado", "negociacao"].includes(stage.key) && (() => {
+                                        const days = daysSinceContact(client.createdAt);
+                                        const bc = contactBadgeColors(days);
+                                        return (
+                                          <div style={{
+                                            display: "flex", alignItems: "center", justifyContent: "space-between",
+                                            background: bc.bg, borderRadius: 6,
+                                            padding: "4px 8px", marginBottom: 8,
+                                          }}>
+                                            <span style={{ fontSize: 11, fontWeight: 600, color: bc.color }}>
+                                              {days === 0 ? "Hoje" : days === 1 ? "1 dia atrás" : `${days} dias atrás`}
+                                            </span>
+                                            <span style={{ fontSize: 10, color: bc.color, opacity: 0.75 }}>
+                                              {new Date(client.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                                            </span>
+                                          </div>
+                                        );
+                                      })()}
+
+                                      {/* Contact info */}
+                                      <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 8 }}>
+                                        {client.email && (
+                                          <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                                            <Mail style={{ width: 11, height: 11, color: C.textSub, flexShrink: 0 }} />
+                                            <span style={{ fontSize: 11, color: C.textSub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                              {client.email}
+                                            </span>
+                                          </div>
+                                        )}
+                                        {client.phone && (
+                                          <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                                            <Phone style={{ width: 11, height: 11, color: C.textSub, flexShrink: 0 }} />
+                                            <span style={{ fontSize: 11, color: C.textSub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                              {client.phone}
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Footer: value + date + category */}
+                                      <div style={{
+                                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                                        paddingTop: 8, borderTop: `1px solid ${C.divider}`, gap: 6,
+                                      }}>
+                                        <span style={{ fontSize: 12, fontWeight: 700, color: stage.accent, flexShrink: 0 }}>
+                                          {fmt(client.contractValue)}
+                                        </span>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" as const, justifyContent: "flex-end" }}>
+                                          {client.weddingDate && (
+                                            <span style={{
+                                              display: "inline-flex", alignItems: "center", gap: 3,
+                                              fontSize: 10, color: C.textSub,
+                                              background: C.itemBg, borderRadius: 4,
+                                              padding: "2px 6px",
+                                            }}>
+                                              <Calendar style={{ width: 9, height: 9 }} />
+                                              {formatDate(client.weddingDate)}
+                                            </span>
+                                          )}
+                                          <span style={{
+                                            fontSize: 10, fontWeight: 600,
+                                            background: C.itemBg, color: C.textSub,
+                                            borderRadius: 4, padding: "2px 6px",
+                                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const,
+                                            maxWidth: 80,
+                                          }}>
+                                            {client.eventCategory}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      {/* Expand button */}
+                                      <button
+                                        onClick={e => toggleCardExpand(client.id, e)}
+                                        style={{
+                                          width: "100%", display: "flex", alignItems: "center",
+                                          justifyContent: "center", gap: 4,
+                                          marginTop: 8, padding: "5px 0", borderRadius: 6,
+                                          border: `1px solid transparent`, background: "none",
+                                          fontSize: 11, color: C.textSub, cursor: "pointer",
+                                        }}
+                                        onMouseEnter={e => {
+                                          (e.currentTarget as HTMLButtonElement).style.background = C.itemBg;
+                                          (e.currentTarget as HTMLButtonElement).style.borderColor = C.divider;
+                                          (e.currentTarget as HTMLButtonElement).style.color = C.text;
+                                        }}
+                                        onMouseLeave={e => {
+                                          (e.currentTarget as HTMLButtonElement).style.background = "none";
+                                          (e.currentTarget as HTMLButtonElement).style.borderColor = "transparent";
+                                          (e.currentTarget as HTMLButtonElement).style.color = C.textSub;
+                                        }}
+                                      >
+                                        <Bell style={{ width: 10, height: 10 }} />
+                                        {expandedCards.has(client.id) ? "Fechar" : "Histórico & Follow-up"}
+                                        {expandedCards.has(client.id)
+                                          ? <ChevronUp style={{ width: 10, height: 10 }} />
+                                          : <ChevronDown style={{ width: 10, height: 10 }} />}
+                                      </button>
                                     </div>
-                                  )}
-                                </Draggable>
-                              ))}
-                              {provided.placeholder}
-                              {clientsInStage.length === 0 && (
-                                <div className="text-center text-muted-foreground text-sm py-12 border-2 border-dashed border-gray-200 rounded-lg">
-                                  <Icon
-                                    className={`h-8 w-8 mx-auto mb-2 ${stage.color} opacity-50`}
-                                  />
-                                  <p>
-                                    {stage.key === "contrato_perdido"
-                                      ? "Nenhum contrato perdido"
-                                      : "Arraste leads aqui"}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </Droppable>
-                      </CardContent>
-                    </Card>
+
+                                    {/* Activity panel */}
+                                    {expandedCards.has(client.id) && (
+                                      <CRMActivityPanel clientId={client.id} clientName={client.name} />
+                                    )}
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+
+                            {provided.placeholder}
+
+                            {/* Empty state */}
+                            {clientsInStage.length === 0 && (
+                              <div style={{
+                                display: "flex", flexDirection: "column", alignItems: "center",
+                                justifyContent: "center", padding: "32px 16px",
+                                border: `2px dashed ${C.divider}`, borderRadius: 10,
+                                color: C.textSub, gap: 8,
+                              }}>
+                                <Icon style={{ width: 24, height: 24, opacity: 0.4 }} />
+                                <span style={{ fontSize: 12 }}>Arraste leads aqui</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </Droppable>
+                    </div>
                   </div>
                 );
               })}
@@ -404,78 +481,112 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
           </div>
         </DragDropContext>
 
-        {/* ── Seção Arquivados (Contrato Perdido) ── */}
-        {(() => {
-          const archivedClients = clients.filter(c => c.salesFunnelStage === "contrato_perdido" || c.status === "contrato_perdido");
-          const archivedTotal = getTotalValue(archivedClients);
-          return (
-            <div className="mt-6 border border-red-100 rounded-xl overflow-hidden">
-              <button
-                onClick={() => setShowArchived(v => !v)}
-                className="w-full flex items-center justify-between px-5 py-3 bg-red-50 hover:bg-red-100 transition-colors text-red-700"
-              >
-                <div className="flex items-center gap-2">
-                  <XCircle className="h-4 w-4" />
-                  <span className="font-semibold text-sm">Arquivados — Contratos Perdidos</span>
-                  <span className="ml-2 bg-red-200 text-red-800 text-xs font-medium px-2 py-0.5 rounded-full">
-                    {archivedClients.length}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-red-600">{formatCurrency(archivedTotal)}</span>
-                  {showArchived ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </div>
-              </button>
+        {/* ── Archived section ── */}
+        <div style={{
+          border: `1px solid #FECDCD`,
+          borderRadius: 14,
+          overflow: "hidden",
+        }}>
+          <button
+            onClick={() => setShowArchived(v => !v)}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "12px 18px", background: C.dangerBg,
+              border: "none", cursor: "pointer",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <XCircle style={{ width: 15, height: 15, color: C.danger }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.danger }}>Arquivados — Contratos Perdidos</span>
+              <span style={{
+                fontSize: 10, fontWeight: 700,
+                background: "#FECDCD", color: "#B02222",
+                borderRadius: 999, padding: "1px 7px",
+              }}>
+                {archivedClients.length}
+              </span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.danger }}>
+                {fmt(getTotalValue(archivedClients))}
+              </span>
+              {showArchived
+                ? <ChevronUp style={{ width: 15, height: 15, color: C.danger }} />
+                : <ChevronDown style={{ width: 15, height: 15, color: C.danger }} />}
+            </div>
+          </button>
 
-              {showArchived && (
-                <div className="p-4 bg-white">
-                  {archivedClients.length === 0 ? (
-                    <p className="text-center text-sm text-muted-foreground py-6">Nenhum contrato perdido</p>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                      {archivedClients.map(client => (
-                        <div key={client.id} className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-2 opacity-80">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-7 w-7">
-                                <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${client.name}`} />
-                                <AvatarFallback className="text-xs">{client.name.split(" ").map(n => n[0]).join("").slice(0,2)}</AvatarFallback>
-                              </Avatar>
-                              <span className="font-semibold text-sm text-red-700 truncate">{client.name}</span>
-                            </div>
-                            <Badge variant="destructive" className="text-xs shrink-0">{client.eventCategory}</Badge>
-                          </div>
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span className="font-bold text-red-600">{formatCurrency(client.contractValue)}</span>
-                            {client.weddingDate && (
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {formatDate(client.weddingDate)}
-                              </div>
-                            )}
-                          </div>
-                          {client.phone && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                              onClick={() => setMessageDialogClient(client)}
-                            >
-                              Enviar mensagem
-                            </Button>
-                          )}
+          {showArchived && (
+            <div style={{ padding: 16, background: "#FFFFFF" }}>
+              {archivedClients.length === 0 ? (
+                <div style={{ textAlign: "center", fontSize: 13, color: C.textSub, padding: "20px 0" }}>
+                  Nenhum contrato perdido
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 10 }}>
+                  {archivedClients.map(client => (
+                    <div key={client.id} style={{
+                      background: C.dangerBg, border: `1px solid #FECDCD`,
+                      borderRadius: 10, padding: 14, opacity: 0.85,
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                          <Avatar style={{ width: 28, height: 28, flexShrink: 0 }}>
+                            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${client.name}`} />
+                            <AvatarFallback style={{ fontSize: 10 }}>
+                              {client.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span style={{
+                            fontSize: 12, fontWeight: 600, color: C.danger,
+                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                          }}>
+                            {client.name}
+                          </span>
                         </div>
-                      ))}
+                        <span style={{
+                          fontSize: 10, fontWeight: 600,
+                          background: "#FECDCD", color: "#B02222",
+                          borderRadius: 4, padding: "2px 6px", flexShrink: 0,
+                        }}>
+                          {client.eventCategory}
+                        </span>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: C.danger }}>
+                          {fmt(client.contractValue)}
+                        </span>
+                        {client.weddingDate && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: C.textSub }}>
+                            <Calendar style={{ width: 10, height: 10 }} />
+                            {formatDate(client.weddingDate)}
+                          </div>
+                        )}
+                      </div>
+
+                      {client.phone && (
+                        <button
+                          onClick={() => setMessageDialogClient(client)}
+                          style={{
+                            width: "100%", padding: "6px 0", borderRadius: 6,
+                            border: `1px solid ${C.successBg}`, background: C.successBg,
+                            fontSize: 11, fontWeight: 600, color: "#2A8050", cursor: "pointer",
+                          }}
+                        >
+                          Enviar mensagem
+                        </button>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
               )}
             </div>
-          );
-        })()}
+          )}
+        </div>
       </div>
 
-      {/* Dialog de cadastro ao fechar contrato */}
+      {/* Dialogs */}
       {pendingClient && (
         <ContractClosedDialog
           open={dialogOpen}
@@ -486,14 +597,12 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
         />
       )}
 
-      {/* Dialog de detalhes do cliente */}
       <CRMClientDialog
         client={selectedClient}
         open={clientDialogOpen}
         onOpenChange={(open) => { setClientDialogOpen(open); if (!open) setSelectedClient(null); }}
       />
 
-      {/* Dialog de mensagem WhatsApp (legado, mantido para compatibilidade) */}
       {messageDialogClient && (
         <WhatsAppMessageDialog
           open={!!messageDialogClient}

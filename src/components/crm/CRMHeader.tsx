@@ -1,140 +1,111 @@
 import React, { useMemo } from "react";
 import { Client } from "@/utils/types";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Users, MessageCircle, CheckCircle, XCircle, Archive } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, MessageCircle, CheckCircle, XCircle } from "lucide-react";
 
 interface CRMHeaderProps {
   clients: Client[];
 }
 
+const fmt = (v: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 }).format(v);
+
 export function CRMHeader({ clients }: CRMHeaderProps) {
   const stats = useMemo(() => {
-    // Filter out workflow projects (leadSource === "Projeto Direto") from CRM stats
-    const crmClients = clients.filter(c => c.leadSource !== "Projeto Direto");
-    
-    const opportunities = crmClients.filter(c => 
-      ["primeiro_contato", "orcamento_enviado", "negociacao"].includes(c.salesFunnelStage || c.status)
-    ).length;
-    
-    const inContact = crmClients.filter(c => 
-      c.salesFunnelStage === "primeiro_contato" || c.status === "primeiro_contato"
-    ).length;
-    
-    const closed = crmClients.filter(c => 
-      c.salesFunnelStage === "contrato_fechado" || c.status === "fechado"
-    ).length;
-    
-    const lost = crmClients.filter(c => 
-      c.salesFunnelStage === "contrato_perdido" || c.status === "contrato_perdido"
-    ).length;
-    
-    const finished = crmClients.filter(c => 
-      c.salesFunnelStage === "projeto_finalizado" || c.status === "projeto_finalizado"
-    ).length;
-
-    const totalValue = crmClients
-      .filter(c => c.salesFunnelStage === "contrato_fechado" || c.status === "fechado")
-      .reduce((total, client) => total + (client.contractValue || 0), 0);
-
-    const pipelineValue = crmClients
-      .filter(c => ["primeiro_contato", "orcamento_enviado", "negociacao"].includes(c.salesFunnelStage || c.status))
-      .reduce((total, client) => total + (client.contractValue || 0), 0);
-
-    // Conversão correta: de todos os leads que chegaram a uma decisão final
-    // (fecharam contrato ou foram perdidos), quantos % converteram?
-    const totalDecided = closed + finished + lost;
-    const conversionRate = totalDecided > 0 ? (((closed + finished) / totalDecided) * 100) : 0;
-
-    return {
-      opportunities,
-      inContact,
-      closed,
-      lost,
-      finished,
-      totalValue,
-      pipelineValue,
-      conversionRate
-    };
+    const crm = clients.filter(c => c.leadSource !== "Projeto Direto");
+    const opportunities = crm.filter(c => ["primeiro_contato", "orcamento_enviado", "negociacao"].includes(c.salesFunnelStage || c.status)).length;
+    const inContact     = crm.filter(c => c.salesFunnelStage === "primeiro_contato" || c.status === "primeiro_contato").length;
+    const closed        = crm.filter(c => c.salesFunnelStage === "contrato_fechado" || c.status === "fechado").length;
+    const lost          = crm.filter(c => c.salesFunnelStage === "contrato_perdido" || c.status === "contrato_perdido").length;
+    const finished      = crm.filter(c => c.salesFunnelStage === "projeto_finalizado" || c.status === "projeto_finalizado").length;
+    const totalValue    = crm.filter(c => c.salesFunnelStage === "contrato_fechado" || c.status === "fechado").reduce((s, c) => s + (c.contractValue || 0), 0);
+    const pipelineValue = crm.filter(c => ["primeiro_contato", "orcamento_enviado", "negociacao"].includes(c.salesFunnelStage || c.status)).reduce((s, c) => s + (c.contractValue || 0), 0);
+    const totalDecided  = closed + finished + lost;
+    const conversionRate = totalDecided > 0 ? ((closed + finished) / totalDecided) * 100 : 0;
+    return { opportunities, inContact, closed, lost, totalValue, pipelineValue, conversionRate };
   }, [clients]);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { 
-      style: 'currency', 
-      currency: 'BRL',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  };
-
-  const statCards = [
+  const cards = [
     {
       title: "Oportunidades",
       value: stats.opportunities,
+      sub: fmt(stats.pipelineValue),
       icon: Users,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
-      description: formatCurrency(stats.pipelineValue)
+      accent: "#1E3A5F",
+      iconBg: "#E8EEF6",
     },
     {
       title: "Em Contato",
       value: stats.inContact,
+      sub: "primeiros contatos",
       icon: MessageCircle,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50",
-      description: "primeiros contatos"
+      accent: "#E8A838",
+      iconBg: "#FEF3DC",
     },
     {
       title: "Fechados",
       value: stats.closed,
+      sub: fmt(stats.totalValue),
       icon: CheckCircle,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-      description: formatCurrency(stats.totalValue)
+      accent: "#52C97A",
+      iconBg: "#E6F9EE",
     },
     {
       title: "Perdidos",
       value: stats.lost,
+      sub: "não convertidos",
       icon: XCircle,
-      color: "text-red-600",
-      bgColor: "bg-red-50",
-      description: "não convertidos"
+      accent: "#E05252",
+      iconBg: "#FEE8E8",
     },
     {
       title: "Conversão",
       value: `${stats.conversionRate.toFixed(1)}%`,
+      sub: "taxa de sucesso",
       icon: stats.conversionRate >= 20 ? TrendingUp : TrendingDown,
-      color: stats.conversionRate >= 20 ? "text-green-600" : "text-red-600",
-      bgColor: stats.conversionRate >= 20 ? "bg-green-50" : "bg-red-50",
-      description: "taxa de sucesso"
-    }
+      accent: stats.conversionRate >= 20 ? "#52C97A" : "#E05252",
+      iconBg: stats.conversionRate >= 20 ? "#E6F9EE" : "#FEE8E8",
+    },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-      {statCards.map((stat, index) => {
-        const Icon = stat.icon;
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 12 }}>
+      {cards.map((c) => {
+        const Icon = c.icon;
         return (
-          <Card key={index} className="relative overflow-hidden hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
-                  </p>
-                  <p className="text-2xl font-bold">
-                    {stat.value}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {stat.description}
-                  </p>
-                </div>
-                <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                  <Icon className={`h-6 w-6 ${stat.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div
+            key={c.title}
+            style={{
+              background: "#FFFFFF",
+              borderRadius: 14,
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
+              borderTop: `3px solid ${c.accent}`,
+              padding: "16px 18px",
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 10,
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase" as const, color: "#9A9590" }}>
+                {c.title}
+              </span>
+              <span style={{ fontSize: 26, fontWeight: 700, color: "#1a1a1a", lineHeight: 1 }}>
+                {c.value}
+              </span>
+              <span style={{ fontSize: 11, color: "#9A9590", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                {c.sub}
+              </span>
+            </div>
+            <div style={{
+              width: 36, height: 36, borderRadius: "50%",
+              background: c.iconBg,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}>
+              <Icon style={{ width: 16, height: 16, color: c.accent }} />
+            </div>
+          </div>
         );
       })}
     </div>

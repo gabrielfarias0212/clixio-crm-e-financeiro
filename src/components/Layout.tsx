@@ -1,6 +1,10 @@
+// src/components/Layout.tsx
+// Melhoria #2: FollowUpBanner adicionado logo abaixo da Navbar,
+// aparece em todas as páginas sem alterar nada no layout existente.
 
 import { ReactNode } from "react";
 import { Navbar } from "./Navbar";
+import { FollowUpBanner } from "@/components/crm/FollowUpBanner";
 import { cn } from "@/lib/utils";
 
 interface LayoutProps {
@@ -12,6 +16,7 @@ export default function Layout({ children, className }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col md:pl-14">
       <Navbar />
+      <FollowUpBanner />
       <main className={cn("flex-1 pb-12", className)}>
         {children}
       </main>

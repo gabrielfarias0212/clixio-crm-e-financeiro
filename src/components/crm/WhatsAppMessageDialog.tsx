@@ -1,12 +1,13 @@
 // src/components/crm/WhatsAppMessageDialog.tsx
+// Melhoria #1: busca templates salvos em Configurações → Templates
+// e interpola [Nome], [DATA], [LINK] com dados reais do cliente.
+// Fallback para 5 templates padrão se o usuário não tiver nenhum salvo.
 
 import { formatDate } from '@/utils/dates';
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,66 +15,83 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Client, ClientMessage, MessageType } from "@/utils/types";
 import { saveClientMessage, fetchClientMessages } from "@/utils/supabase/client-messages";
-import { MessageCircle, Clock, Send, CheckCheck } from "lucide-react";
+import { fetchMessageTemplates, MessageTemplate as SavedTemplate, TEMPLATE_STAGE_LABELS } from "@/utils/supabase/message-templates";
+import { MessageCircle, Clock, Send, CheckCheck, Settings, Loader2 } from "lucide-react";
 
-interface MessageTemplate {
-  type: MessageType;
-  label: string;
-  emoji: string;
-  color: string;
-  generate: (client: Client) => string;
+// ── Variáveis interpoláveis ───────────────────────────────────────────────────
+function interpolate(text: string, client: Client): string {
+  const weddingDate = client.weddingDate ? formatDate(client.weddingDate) : "";
+  const pending = client.payments?.find((p) => p.payment_status === "pendente");
+  const valorPendente = pending
+    ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pending.amount)
+    : "";
+
+  return text
+    .replace(/\[Nome\]/gi, client.name)
+    .replace(/\[DATA\]/gi, weddingDate)
+    .replace(/\[LINK\]/gi, client.contractLink ?? "")
+    .replace(/\[VALOR\]/gi, valorPendente)
+    .replace(/\[EVENTO\]/gi, client.eventCategory ?? "");
 }
 
-const MESSAGE_TEMPLATES: MessageTemplate[] = [
+// ── Templates padrão (fallback quando não há templates salvos) ────────────────
+interface FallbackTemplate {
+  id: string;
+  label: string;
+  emoji: string;
+  type: MessageType;
+  generate: (c: Client) => string;
+}
+
+const FALLBACK_TEMPLATES: FallbackTemplate[] = [
   {
+    id: "__follow_up",
     type: "follow_up",
     label: "Follow-up",
     emoji: "👋",
-    color: "bg-blue-100 text-blue-800 border-blue-200",
     generate: (c) =>
-      `Oi ${c.name}! Tudo bem? 😊\n\nPassando para saber se você ainda tem interesse em fechar nosso pacote de fotografia para o seu ${c.eventCategory?.toLowerCase() ?? "evento"}${c.weddingDate ? ` em ${formatDate(c.weddingDate)}` : ""}.\n\nQualquer dúvida estou à disposição! 📸`,
+      `Oi ${c.name}! Tudo bem? 😊\n\nPassando para saber se você ainda tem interesse em fechar nosso pacote para o seu ${c.eventCategory?.toLowerCase() ?? "evento"}${c.weddingDate ? ` em ${formatDate(c.weddingDate)}` : ""}.\n\nQualquer dúvida estou à disposição! 📸`,
   },
   {
+    id: "__cobranca",
     type: "cobranca",
     label: "Cobrança educada",
     emoji: "💰",
-    color: "bg-orange-100 text-orange-800 border-orange-200",
     generate: (c) => {
       const pending = c.payments?.find((p) => p.payment_status === "pendente");
       const valor = pending
         ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pending.amount)
         : "um valor pendente";
-      const venc = pending?.due_date
-        ? formatDate(pending.due_date)
-        : null;
-      return `Oi ${c.name}! Tudo bem? 😊\n\nPassando para lembrar que temos ${valor}${venc ? ` com vencimento em ${venc}` : ""} em aberto.\n\nQualquer dúvida ou se precisar combinar outra data, é só me avisar! 🙏`;
+      const venc = pending?.due_date ? formatDate(pending.due_date) : null;
+      return `Oi ${c.name}! Tudo bem? 😊\n\nPassando para lembrar que temos ${valor}${venc ? ` com vencimento em ${venc}` : ""} em aberto.\n\nQualquer dúvida, é só me avisar! 🙏`;
     },
   },
   {
+    id: "__contrato",
     type: "contrato",
     label: "Envio de contrato",
     emoji: "📄",
-    color: "bg-purple-100 text-purple-800 border-purple-200",
     generate: (c) =>
       `Oi ${c.name}! Tudo bem? 😊\n\nSegue o link do contrato para revisão e assinatura:\n${c.contractLink ?? "[inserir link aqui]"}\n\nQualquer dúvida estou aqui! ✍️`,
   },
   {
+    id: "__boas_vindas",
     type: "boas_vindas",
     label: "Boas-vindas",
     emoji: "🎉",
-    color: "bg-green-100 text-green-800 border-green-200",
     generate: (c) =>
-      `Oi ${c.name}! Seja muito bem-vindo(a)! 🎉\n\nEstou super feliz em fotografar o seu ${c.eventCategory?.toLowerCase() ?? "evento"}! Vou cuidar de cada detalhe para que as memórias fiquem incríveis. 📸\n\nQualquer dúvida pode me chamar a qualquer hora!`,
+      `Oi ${c.name}! Seja muito bem-vindo(a)! 🎉\n\nEstou super feliz em fotografar o seu ${c.eventCategory?.toLowerCase() ?? "evento"}! Vou cuidar de cada detalhe para que as memórias fiquem incríveis. 📸`,
   },
   {
+    id: "__personalizada",
     type: "personalizada",
     label: "Personalizada",
     emoji: "✏️",
-    color: "bg-gray-100 text-gray-800 border-gray-200",
     generate: (c) => `Oi ${c.name}! `,
   },
 ];
 
+// ── Labels histórico ──────────────────────────────────────────────────────────
 const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
   follow_up: "Follow-up",
   cobranca: "Cobrança",
@@ -82,59 +100,99 @@ const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
   personalizada: "Personalizada",
 };
 
+// ── Cores por etapa do funil ──────────────────────────────────────────────────
+const STAGE_COLORS: Record<string, string> = {
+  primeiro_contato:   "bg-blue-50 text-blue-700 border-blue-200",
+  orcamento_enviado:  "bg-orange-50 text-orange-700 border-orange-200",
+  negociacao:         "bg-yellow-50 text-yellow-700 border-yellow-200",
+  contrato_fechado:   "bg-green-50 text-green-700 border-green-200",
+  projeto_finalizado: "bg-purple-50 text-purple-700 border-purple-200",
+  contrato_perdido:   "bg-red-50 text-red-700 border-red-200",
+};
+
+// ── Props ─────────────────────────────────────────────────────────────────────
 interface WhatsAppMessageDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   client: Client;
 }
 
-export function WhatsAppMessageDialog({
-  open,
-  onOpenChange,
-  client,
-}: WhatsAppMessageDialogProps) {
-  const [selectedType, setSelectedType] = useState<MessageType | null>(null);
-  const [messageText, setMessageText] = useState("");
-  const [sending, setSending] = useState(false);
-  const [history, setHistory] = useState<ClientMessage[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+// ── Componente ────────────────────────────────────────────────────────────────
+export function WhatsAppMessageDialog({ open, onOpenChange, client }: WhatsAppMessageDialogProps) {
+  const navigate = useNavigate();
 
+  const [selectedId, setSelectedId]       = useState<string | null>(null);
+  const [selectedType, setSelectedType]   = useState<MessageType>("personalizada");
+  const [messageText, setMessageText]     = useState("");
+  const [sending, setSending]             = useState(false);
+
+  // Templates salvos pelo usuário
+  const [savedTemplates, setSavedTemplates]       = useState<SavedTemplate[]>([]);
+  const [loadingTemplates, setLoadingTemplates]   = useState(false);
+
+  // Histórico de mensagens enviadas
+  const [history, setHistory]             = useState<ClientMessage[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [showHistory, setShowHistory]     = useState(false);
+
+  // ── carrega ao abrir ────────────────────────────────────────────────────────
   useEffect(() => {
-    if (open) {
-      setSelectedType(null);
-      setMessageText("");
-      loadHistory();
-    }
+    if (!open) return;
+    setSelectedId(null);
+    setMessageText("");
+    loadSavedTemplates();
+    loadHistory();
   }, [open, client.id]);
 
-  const loadHistory = async () => {
+  async function loadSavedTemplates() {
+    setLoadingTemplates(true);
+    try {
+      const data = await fetchMessageTemplates();
+      setSavedTemplates(data);
+    } catch {
+      setSavedTemplates([]);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  }
+
+  async function loadHistory() {
     setLoadingHistory(true);
     const msgs = await fetchClientMessages(client.id);
     setHistory(msgs);
     setLoadingHistory(false);
-  };
+  }
 
-  const handleSelectTemplate = (template: MessageTemplate) => {
-    setSelectedType(template.type);
-    setMessageText(template.generate(client));
-  };
+  // ── Seleção de template ─────────────────────────────────────────────────────
+  function handleSelectSaved(tpl: SavedTemplate) {
+    setSelectedId(tpl.id);
+    setSelectedType("personalizada");
+    setMessageText(interpolate(tpl.body, client));
+  }
 
-  const getWhatsAppLink = (phone: string, text: string) => {
-    const cleanPhone = phone.replace(/\D/g, "");
-    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
-  };
+  function handleSelectFallback(tpl: FallbackTemplate) {
+    setSelectedId(tpl.id);
+    setSelectedType(tpl.type);
+    setMessageText(tpl.generate(client));
+  }
 
-  const handleSend = async () => {
-    if (!selectedType || !messageText.trim()) return;
+  // ── WhatsApp link ───────────────────────────────────────────────────────────
+  function getWhatsAppLink(phone: string, text: string) {
+    let clean = phone.replace(/\D/g, "");
+    if (!clean.startsWith("55")) clean = "55" + clean;
+    return `https://wa.me/${clean}?text=${encodeURIComponent(text)}`;
+  }
+
+  // ── Envio ───────────────────────────────────────────────────────────────────
+  async function handleSend() {
+    if (!selectedId || !messageText.trim()) return;
     if (!client.phone) {
       toast.error("Este cliente não tem telefone cadastrado.");
       return;
     }
 
-    // Open WhatsApp immediately (in the click context) to avoid popup blocker
-    const whatsappUrl = getWhatsAppLink(client.phone, messageText.trim());
-    window.open(whatsappUrl, "_blank");
+    // Abre WhatsApp imediatamente (evita bloqueio de popup)
+    window.open(getWhatsAppLink(client.phone, messageText.trim()), "_blank");
 
     setSending(true);
     try {
@@ -143,29 +201,30 @@ export function WhatsAppMessageDialog({
         selectedType,
         messageText.trim()
       );
-
       if (saved) {
-        toast.success("Mensagem registrada e WhatsApp aberto! ✅");
+        toast.success("WhatsApp aberto e mensagem registrada! ✅");
         setHistory((prev) => [saved, ...prev]);
-        setSelectedType(null);
+        setSelectedId(null);
         setMessageText("");
       } else {
-        toast.error(`Erro ao registrar: ${errorMessage ?? "Tente novamente."}`);
+        toast.warning(`WhatsApp aberto. Falha ao registrar: ${errorMessage ?? "verifique o console."}`);
       }
     } finally {
       setSending(false);
     }
-  };
+  }
 
-  const formatSentAt = (dateStr: string) =>
-    new Date(dateStr).toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  // ── Helpers de exibição ─────────────────────────────────────────────────────
+  const formatSentAt = (d: string) =>
+    new Date(d).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
 
+  const usingSaved = savedTemplates.length > 0;
+
+  // Filtra templates da etapa atual do cliente (se houver), senão mostra todos
+  const stageTemplates = savedTemplates.filter(t => t.stage === client.salesFunnelStage);
+  const otherTemplates = savedTemplates.filter(t => t.stage !== client.salesFunnelStage);
+
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -179,34 +238,109 @@ export function WhatsAppMessageDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Seleção de template */}
+
+          {/* ── Seleção de template ─────────────────────────────────────── */}
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">
-              Escolha o tipo de mensagem:
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {MESSAGE_TEMPLATES.map((tpl) => (
-                <button
-                  key={tpl.type}
-                  onClick={() => handleSelectTemplate(tpl)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all
-                    ${selectedType === tpl.type
-                      ? `${tpl.color} border-current ring-2 ring-offset-1 ring-current/30`
-                      : "bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700"
-                    }`}
-                >
-                  <span>{tpl.emoji}</span>
-                  {tpl.label}
-                </button>
-              ))}
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-gray-700">
+                {usingSaved ? "Seus templates:" : "Templates padrão:"}
+              </p>
+              <button
+                onClick={() => { onOpenChange(false); navigate("/settings"); }}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <Settings className="h-3 w-3" />
+                Gerenciar templates
+              </button>
             </div>
+
+            {loadingTemplates ? (
+              <div className="flex items-center justify-center py-6 text-gray-400">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <span className="text-sm">Carregando templates...</span>
+              </div>
+            ) : usingSaved ? (
+              <div className="space-y-3">
+                {/* Templates da etapa atual em destaque */}
+                {stageTemplates.length > 0 && (
+                  <div>
+                    <p className="text-xs text-gray-400 mb-1.5">
+                      Etapa atual: <span className="font-medium">{TEMPLATE_STAGE_LABELS[client.salesFunnelStage as keyof typeof TEMPLATE_STAGE_LABELS] ?? client.salesFunnelStage}</span>
+                    </p>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {stageTemplates.map((tpl) => (
+                        <button
+                          key={tpl.id}
+                          onClick={() => handleSelectSaved(tpl)}
+                          className={`flex items-center justify-between px-3 py-2 rounded-lg border text-sm font-medium text-left transition-all ${
+                            selectedId === tpl.id
+                              ? "bg-green-50 border-green-300 text-green-800 ring-2 ring-green-200"
+                              : "bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700"
+                          }`}
+                        >
+                          <span>{tpl.title}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full border ${STAGE_COLORS[tpl.stage] ?? "bg-gray-50 text-gray-600 border-gray-200"}`}>
+                            {TEMPLATE_STAGE_LABELS[tpl.stage]}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Demais templates */}
+                {otherTemplates.length > 0 && (
+                  <div>
+                    {stageTemplates.length > 0 && (
+                      <p className="text-xs text-gray-400 mb-1.5">Outros templates:</p>
+                    )}
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {otherTemplates.map((tpl) => (
+                        <button
+                          key={tpl.id}
+                          onClick={() => handleSelectSaved(tpl)}
+                          className={`flex items-center justify-between px-3 py-2 rounded-lg border text-sm font-medium text-left transition-all ${
+                            selectedId === tpl.id
+                              ? "bg-green-50 border-green-300 text-green-800 ring-2 ring-green-200"
+                              : "bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700"
+                          }`}
+                        >
+                          <span>{tpl.title}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full border ${STAGE_COLORS[tpl.stage] ?? "bg-gray-50 text-gray-600 border-gray-200"}`}>
+                            {TEMPLATE_STAGE_LABELS[tpl.stage]}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Fallback: templates padrão
+              <div className="grid grid-cols-2 gap-2">
+                {FALLBACK_TEMPLATES.map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    onClick={() => handleSelectFallback(tpl)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                      selectedId === tpl.id
+                        ? "bg-green-50 border-green-300 text-green-800 ring-2 ring-green-200"
+                        : "bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700"
+                    }`}
+                  >
+                    <span>{tpl.emoji}</span>
+                    {tpl.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Editor da mensagem */}
-          {selectedType && (
+          {/* ── Editor da mensagem ──────────────────────────────────────── */}
+          {selectedId && (
             <div className="space-y-2">
               <p className="text-sm font-medium text-gray-700">
-                Edite a mensagem antes de enviar:
+                Edite antes de enviar:
               </p>
               <Textarea
                 value={messageText}
@@ -225,7 +359,7 @@ export function WhatsAppMessageDialog({
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => { setSelectedType(null); setMessageText(""); }}
+                  onClick={() => { setSelectedId(null); setMessageText(""); }}
                 >
                   Cancelar
                 </Button>
@@ -233,7 +367,7 @@ export function WhatsAppMessageDialog({
             </div>
           )}
 
-          {/* Histórico */}
+          {/* ── Histórico ───────────────────────────────────────────────── */}
           <div>
             <button
               onClick={() => setShowHistory((v) => !v)}
@@ -242,9 +376,7 @@ export function WhatsAppMessageDialog({
               <Clock className="h-3.5 w-3.5" />
               {showHistory ? "Ocultar" : "Ver"} histórico de mensagens
               {history.length > 0 && (
-                <Badge variant="secondary" className="ml-1 text-xs">
-                  {history.length}
-                </Badge>
+                <Badge variant="secondary" className="ml-1 text-xs">{history.length}</Badge>
               )}
             </button>
 
@@ -253,18 +385,13 @@ export function WhatsAppMessageDialog({
                 {loadingHistory ? (
                   <p className="text-sm text-gray-400 text-center py-4">Carregando...</p>
                 ) : history.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-4">
-                    Nenhuma mensagem enviada ainda.
-                  </p>
+                  <p className="text-sm text-gray-400 text-center py-4">Nenhuma mensagem enviada ainda.</p>
                 ) : (
                   history.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-1"
-                    >
+                    <div key={msg.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-1">
                       <div className="flex items-center justify-between">
                         <Badge variant="outline" className="text-xs">
-                          {MESSAGE_TYPE_LABELS[msg.message_type]}
+                          {MESSAGE_TYPE_LABELS[msg.message_type] ?? msg.message_type}
                         </Badge>
                         <span className="text-xs text-gray-400 flex items-center gap-1">
                           <CheckCheck className="h-3 w-3 text-green-500" />
@@ -280,6 +407,7 @@ export function WhatsAppMessageDialog({
               </div>
             )}
           </div>
+
         </div>
       </DialogContent>
     </Dialog>

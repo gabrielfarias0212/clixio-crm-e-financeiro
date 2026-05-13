@@ -1,7 +1,18 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
 import { CalendarPlus, CalendarCheck, LayoutGrid, Tag } from "lucide-react";
 import { useEventCategories } from "@/hooks/useEventCategories";
+
+const C = {
+  text:    "#1a1a1a",
+  textSub: "#9A9590",
+  divider: "#F0EDE8",
+  itemBg:  "#FAFAF8",
+  navy:    "#1E3A5F",
+  navyBg:  "#E8EEF6",
+  border:  "#E8E4DE",
+  amber:   "#E8A838",
+  amberBg: "#FEF3DC",
+};
 
 interface CalendarHeaderProps {
   currentMonthYear: string;
@@ -25,43 +36,64 @@ export function CalendarHeader({
   const { categories } = useEventCategories();
 
   return (
-    <div className="flex flex-col gap-3 mb-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-        <h1 className="text-2xl font-bold">Calendário de Eventos</h1>
-        <div className="flex gap-2 flex-wrap">
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-white border-gray-200 hover:bg-gray-50"
+    <div style={{
+      background: "#FFFFFF",
+      borderRadius: 14,
+      boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
+      padding: "18px 22px",
+      marginBottom: 20,
+      display: "flex",
+      flexDirection: "column" as const,
+      gap: 14,
+    }}>
+      {/* Top row: title + buttons */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" as const, gap: 10 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: C.text, margin: 0 }}>
+          Calendário de Eventos
+        </h1>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
             onClick={onGoToToday}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 5,
+              padding: "8px 14px", borderRadius: 8,
+              border: `1px solid ${C.border}`, background: C.itemBg,
+              fontSize: 12, fontWeight: 600, color: C.text, cursor: "pointer",
+            }}
           >
-            <CalendarCheck className="mr-2 h-4 w-4 text-gray-500" />
+            <CalendarCheck style={{ width: 13, height: 13, color: C.textSub }} />
             Hoje
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-white border-gray-200 hover:bg-gray-50"
+          </button>
+          <button
             onClick={() => setAddEventOpen(true)}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 5,
+              padding: "8px 16px", borderRadius: 8,
+              border: "none", background: C.navy,
+              fontSize: 12, fontWeight: 700, color: "#FFFFFF", cursor: "pointer",
+            }}
           >
-            <CalendarPlus className="mr-2 h-4 w-4 text-orange-500" />
+            <CalendarPlus style={{ width: 13, height: 13 }} />
             Cadastrar Evento
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* Filter pills — dinâmico via banco */}
-      <div className="flex gap-1.5 flex-wrap">
+      {/* Filter pills */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" as const }}>
         {/* Todos */}
         <button
           onClick={() => setEventTypeFilter("all")}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-            eventTypeFilter === "all"
-              ? "bg-gray-900 text-white border-gray-900"
-              : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-          }`}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 4,
+            padding: "5px 12px", borderRadius: 999,
+            fontSize: 11, fontWeight: 600, cursor: "pointer",
+            border: eventTypeFilter === "all" ? `1px solid ${C.navy}40` : `1px solid ${C.border}`,
+            background: eventTypeFilter === "all" ? C.navyBg : C.itemBg,
+            color: eventTypeFilter === "all" ? C.navy : C.textSub,
+          }}
         >
-          <LayoutGrid className="h-3 w-3" />
+          <LayoutGrid style={{ width: 11, height: 11 }} />
           Todos
         </button>
 
@@ -69,13 +101,16 @@ export function CalendarHeader({
           <button
             key={cat.id}
             onClick={() => setEventTypeFilter(cat.name)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-              eventTypeFilter === cat.name
-                ? "bg-gray-900 text-white border-gray-900"
-                : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-            }`}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 4,
+              padding: "5px 12px", borderRadius: 999,
+              fontSize: 11, fontWeight: 600, cursor: "pointer",
+              border: eventTypeFilter === cat.name ? `1px solid ${C.navy}40` : `1px solid ${C.border}`,
+              background: eventTypeFilter === cat.name ? C.navyBg : C.itemBg,
+              color: eventTypeFilter === cat.name ? C.navy : C.textSub,
+            }}
           >
-            <Tag className="h-3 w-3" />
+            <Tag style={{ width: 10, height: 10 }} />
             {cat.name}
           </button>
         ))}

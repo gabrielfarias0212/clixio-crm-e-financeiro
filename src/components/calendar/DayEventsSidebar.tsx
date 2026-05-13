@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Card } from "@/components/ui/card";
-import { Calendar as CalendarIcon, Edit, ExternalLink, PlusCircle, Trash2, User, Camera } from "lucide-react";
+import { CalendarIcon, Edit, ExternalLink, PlusCircle, Trash2, Camera } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Client, CalendarEvent } from "@/utils/types";
@@ -10,30 +8,43 @@ import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { useNavigate } from "react-router-dom";
 import { normalizeDate, stringToDate } from "@/utils/dates";
 
+const C = {
+  text:      "#1a1a1a",
+  textSub:   "#9A9590",
+  divider:   "#F0EDE8",
+  itemBg:    "#FAFAF8",
+  navy:      "#1E3A5F",
+  navyBg:    "#E8EEF6",
+  border:    "#E8E4DE",
+  success:   "#52C97A",
+  successBg: "#E6F9EE",
+  amber:     "#E8A838",
+  amberBg:   "#FEF3DC",
+  danger:    "#E05252",
+  dangerBg:  "#FEE8E8",
+};
+
+const EVENT_COLORS: Record<string, string> = {
+  blue:   "#3B82F6",
+  green:  "#52C97A",
+  red:    "#E05252",
+  yellow: "#E8A838",
+  purple: "#8B5CF6",
+};
+
+const fmt = (v: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 }).format(v);
+
+function isConfirmed(client: Client): boolean {
+  return client.salesFunnelStage === "contrato_fechado" || client.salesFunnelStage === "projeto_finalizado";
+}
+
 interface DayEventsSidebarProps {
   date: Date | undefined;
   selectedDayItems: { clients: Client[]; events: CalendarEvent[] };
   setAddEventOpen: (open: boolean) => void;
   openEditEvent?: (event: CalendarEvent) => void;
   allClients: Client[];
-}
-
-const getEventColorClass = (color: string) => {
-  switch (color) {
-    case "blue":   return "bg-blue-500";
-    case "green":  return "bg-green-500";
-    case "red":    return "bg-red-500";
-    case "yellow": return "bg-amber-500";
-    case "purple": return "bg-purple-500";
-    default:       return "bg-gray-500";
-  }
-};
-
-const fmt = (v: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 }).format(v);
-
-function isConfirmed(client: import("@/utils/types").Client): boolean {
-  return client.salesFunnelStage === "contrato_fechado" || client.salesFunnelStage === "projeto_finalizado";
 }
 
 export function DayEventsSidebar({
@@ -52,105 +63,140 @@ export function DayEventsSidebar({
     ? format(date, "EEEE, d 'de' MMMM", { locale: ptBR })
     : "";
 
-  // Also show pre-wedding events on this date
   const preWeddingClients = allClients.filter(c => {
     if (!c.hasPreWedding || !c.preWeddingDate || !date) return false;
-    const key = normalizeDate(stringToDate(c.preWeddingDate) || new Date());
-    return key === normalizeDate(date);
+    return normalizeDate(stringToDate(c.preWeddingDate) || new Date()) === normalizeDate(date);
   });
 
-  const totalClients = [...selectedDayItems.clients, ...preWeddingClients.filter(
-    pw => !selectedDayItems.clients.find(c => c.id === pw.id)
-  )];
+  const totalClients = [
+    ...selectedDayItems.clients,
+    ...preWeddingClients.filter(pw => !selectedDayItems.clients.find(c => c.id === pw.id)),
+  ];
 
   const isEmpty = totalClients.length === 0 && selectedDayItems.events.length === 0;
-  const hasConflict = !isEmpty;
 
   const handleAddEvent = () => {
-    if (hasConflict) {
+    if (!isEmpty) {
       toast({
         title: "⚠️ Data já possui evento(s)",
         description: "Esta data já tem clientes ou eventos. Você pode adicionar mesmo assim se necessário.",
-        variant: "default",
       });
     }
     setAddEventOpen(true);
   };
 
   return (
-    <Card className="border-none shadow-sm">
-      <div className="p-4 border-b">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold capitalize">{formattedDate}</h3>
-          <Button size="sm" variant="outline" onClick={handleAddEvent} className="flex gap-1 items-center">
-            <PlusCircle className="h-4 w-4" />
-            Adicionar
-          </Button>
-        </div>
+    <div style={{
+      background: "#FFFFFF",
+      borderRadius: 14,
+      boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
+      overflow: "hidden",
+    }}>
+      {/* Header */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "14px 16px", borderBottom: `1px solid ${C.divider}`,
+      }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: C.text, textTransform: "capitalize" as const }}>
+          {formattedDate || "Selecione um dia"}
+        </span>
+        <button
+          onClick={handleAddEvent}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 4,
+            padding: "6px 10px", borderRadius: 8,
+            border: `1px solid ${C.border}`, background: C.itemBg,
+            fontSize: 11, fontWeight: 600, color: C.text, cursor: "pointer",
+          }}
+        >
+          <PlusCircle style={{ width: 12, height: 12 }} />
+          Adicionar
+        </button>
       </div>
 
-      <div className="p-4 space-y-4 max-h-[520px] overflow-y-auto">
+      {/* Content */}
+      <div style={{ padding: "14px 16px", maxHeight: 520, overflowY: "auto", display: "flex", flexDirection: "column", gap: 16 }}>
         {isEmpty ? (
-          <div className="text-center text-muted-foreground py-8">
-            <CalendarIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">Nenhum evento para esta data</p>
-            <Button variant="link" onClick={handleAddEvent} className="mt-1 text-xs">
+          <div style={{ textAlign: "center", padding: "32px 0", color: C.textSub }}>
+            <CalendarIcon style={{ width: 36, height: 36, margin: "0 auto 10px", opacity: 0.25 }} />
+            <div style={{ fontSize: 13 }}>Nenhum evento para esta data</div>
+            <button
+              onClick={handleAddEvent}
+              style={{ marginTop: 8, background: "none", border: "none", fontSize: 12, color: C.navy, cursor: "pointer", fontWeight: 600 }}
+            >
               Adicionar evento
-            </Button>
+            </button>
           </div>
         ) : (
           <>
             {/* Client events */}
             {totalClients.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Eventos de Clientes</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: C.textSub }}>
+                  Eventos de Clientes
+                </div>
                 {totalClients.map(client => {
                   const isPreWedding = !selectedDayItems.clients.find(c => c.id === client.id);
                   const confirmed = isConfirmed(client);
+                  const bg    = isPreWedding ? C.amberBg : confirmed ? C.successBg : C.itemBg;
+                  const bord  = isPreWedding ? "#F8DCAA"  : confirmed ? "#B8EDD0" : C.border;
                   return (
-                    <div key={client.id} className={`p-3 rounded-lg ${
-                      isPreWedding
-                        ? "bg-amber-50 border border-amber-100"
-                        : confirmed
-                          ? "bg-orange-50 border border-orange-200"
-                          : "bg-gray-50 border-2 border-dashed border-gray-300"
-                    }`}>
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <Camera className="h-3.5 w-3.5 shrink-0 text-gray-500" />
-                            <p className="font-semibold text-sm truncate">{client.name}</p>
+                    <div key={client.id} style={{
+                      padding: "10px 12px", borderRadius: 10,
+                      background: bg, border: `1px solid ${bord}`,
+                      borderStyle: !isPreWedding && !confirmed ? "dashed" : "solid",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" as const }}>
+                            <Camera style={{ width: 11, height: 11, color: C.textSub, flexShrink: 0 }} />
+                            <span style={{ fontSize: 12, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                              {client.name}
+                            </span>
                             {isPreWedding && (
-                              <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 rounded-full shrink-0">Pré-Wedding</span>
+                              <span style={{ fontSize: 9, fontWeight: 700, background: C.amberBg, color: "#A07010", borderRadius: 999, padding: "1px 6px" }}>
+                                Pré-Wedding
+                              </span>
                             )}
                             {!isPreWedding && !confirmed && (
-                              <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 rounded-full shrink-0">Pré-agendamento</span>
+                              <span style={{ fontSize: 9, fontWeight: 700, background: C.itemBg, color: C.textSub, borderRadius: 999, padding: "1px 6px" }}>
+                                Pré-agendamento
+                              </span>
                             )}
                             {!isPreWedding && confirmed && (
-                              <span className="text-[10px] bg-green-100 text-green-700 px-1.5 rounded-full shrink-0">Confirmado</span>
+                              <span style={{ fontSize: 9, fontWeight: 700, background: C.successBg, color: "#2A8050", borderRadius: 999, padding: "1px 6px" }}>
+                                Confirmado
+                              </span>
                             )}
                           </div>
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <div style={{ fontSize: 11, color: C.textSub, marginTop: 2 }}>
                             {isPreWedding ? "Pré-Wedding" : client.eventCategory}
                             {(isPreWedding ? client.preWeddingStartTime : client.weddingStartTime) && (
-                              <> • {isPreWedding ? client.preWeddingStartTime : client.weddingStartTime}</>
+                              <> · {isPreWedding ? client.preWeddingStartTime : client.weddingStartTime}</>
                             )}
-                          </p>
+                          </div>
                           {client.eventLocation && (
-                            <p className="text-xs text-gray-400 mt-0.5 truncate">{client.eventLocation}</p>
+                            <div style={{ fontSize: 11, color: C.textSub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                              {client.eventLocation}
+                            </div>
                           )}
                           {client.contractValue > 0 && (
-                            <p className="text-xs font-medium text-green-700 mt-1">{fmt(client.contractValue)}</p>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: C.success, marginTop: 3 }}>
+                              {fmt(client.contractValue)}
+                            </div>
                           )}
                         </div>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 shrink-0 text-gray-400 hover:text-gray-700"
+                        <button
                           onClick={() => navigate(`/clients/${client.id}`)}
+                          style={{
+                            width: 28, height: 28, borderRadius: 6,
+                            border: `1px solid ${C.border}`, background: "#FFFFFF",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            cursor: "pointer", flexShrink: 0,
+                          }}
                         >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </Button>
+                          <ExternalLink style={{ width: 11, height: 11, color: C.textSub }} />
+                        </button>
                       </div>
                     </div>
                   );
@@ -158,47 +204,89 @@ export function DayEventsSidebar({
               </div>
             )}
 
-            {/* Calendar events */}
+            {/* Manual events */}
             {selectedDayItems.events.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Eventos Manuais</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: C.textSub }}>
+                  Eventos Manuais
+                </div>
                 {selectedDayItems.events.map(event => (
-                  <div key={event.id} className="p-3 border rounded-lg bg-white">
+                  <div key={event.id} style={{
+                    padding: "10px 12px", borderRadius: 10,
+                    background: C.itemBg, border: `1px solid ${C.border}`,
+                  }}>
                     {deletingId === event.id ? (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-red-700">Excluir <strong>{event.title}</strong>?</p>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="destructive" className="h-7 text-xs"
-                            onClick={() => { deleteEvent(event.id); setDeletingId(null); }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <div style={{ fontSize: 12, color: C.danger, fontWeight: 600 }}>
+                          Excluir <strong>{event.title}</strong>?
+                        </div>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button
+                            onClick={() => { deleteEvent(event.id); setDeletingId(null); }}
+                            style={{
+                              padding: "5px 10px", borderRadius: 6,
+                              background: C.dangerBg, border: `1px solid #FECDCD`,
+                              fontSize: 11, fontWeight: 700, color: C.danger, cursor: "pointer",
+                            }}
+                          >
                             Sim, excluir
-                          </Button>
-                          <Button size="sm" variant="outline" className="h-7 text-xs"
-                            onClick={() => setDeletingId(null)}>
+                          </button>
+                          <button
+                            onClick={() => setDeletingId(null)}
+                            style={{
+                              padding: "5px 10px", borderRadius: 6,
+                              background: C.itemBg, border: `1px solid ${C.border}`,
+                              fontSize: 11, fontWeight: 600, color: C.textSub, cursor: "pointer",
+                            }}
+                          >
                             Cancelar
-                          </Button>
+                          </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${getEventColorClass(event.color)}`} />
-                            <p className="font-medium text-sm truncate">{event.title}</p>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{
+                              width: 10, height: 10, borderRadius: "50%", flexShrink: 0,
+                              background: EVENT_COLORS[event.color] ?? C.textSub,
+                            }} />
+                            <span style={{ fontSize: 12, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                              {event.title}
+                            </span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-0.5">{event.startTime} – {event.endTime}</p>
+                          <div style={{ fontSize: 11, color: C.textSub, marginTop: 2 }}>
+                            {event.startTime} – {event.endTime}
+                          </div>
                           {event.description && (
-                            <p className="text-xs text-gray-400 mt-0.5 truncate">{event.description}</p>
+                            <div style={{ fontSize: 11, color: C.textSub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                              {event.description}
+                            </div>
                           )}
                         </div>
-                        <div className="flex gap-1 shrink-0">
-                          <Button size="icon" variant="ghost" className="h-7 w-7"
-                            onClick={() => openEditEvent?.(event)}>
-                            <Edit className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50"
-                            onClick={() => setDeletingId(event.id)}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                          <button
+                            onClick={() => openEditEvent?.(event)}
+                            style={{
+                              width: 28, height: 28, borderRadius: 6,
+                              border: `1px solid ${C.border}`, background: C.itemBg,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <Edit style={{ width: 11, height: 11, color: C.textSub }} />
+                          </button>
+                          <button
+                            onClick={() => setDeletingId(event.id)}
+                            style={{
+                              width: 28, height: 28, borderRadius: 6,
+                              border: `1px solid #FECDCD`, background: C.dangerBg,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <Trash2 style={{ width: 11, height: 11, color: C.danger }} />
+                          </button>
                         </div>
                       </div>
                     )}
@@ -209,6 +297,6 @@ export function DayEventsSidebar({
           </>
         )}
       </div>
-    </Card>
+    </div>
   );
 }

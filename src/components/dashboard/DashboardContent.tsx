@@ -9,6 +9,7 @@ import { Client, AlertItem } from "@/utils/types";
 import { useNavigate } from "react-router-dom";
 import { DashboardCardModal } from "./DashboardCardModal";
 import { DashboardAlertsPanel } from "./DashboardAlertsPanel";
+import { FollowUpBanner } from "@/components/crm/FollowUpBanner";
 import {
   TrendingUp, AlertTriangle, Clock, CheckCircle2,
   Calendar, ChevronRight, DollarSign, Users, Zap, Package2
@@ -211,6 +212,9 @@ export function DashboardContent() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+      {/* Banner de follow-ups pendentes — só aparece no Dashboard */}
+      <FollowUpBanner />
 
       {/* ── Row 1: 4 financial cards ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>

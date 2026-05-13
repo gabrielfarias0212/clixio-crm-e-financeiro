@@ -201,9 +201,9 @@ export function DashboardAlertsPanel() {
 
   return (
     <div style={{
-      background: "var(--color-background-secondary)",
-      border: "1px solid var(--color-border-secondary)",
-      borderRadius: 12, padding: "16px 18px",
+      background: "#FFFFFF",
+      boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
+      borderRadius: 14, padding: "18px 20px",
       display: "flex", flexDirection: "column", gap: 18,
     }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>

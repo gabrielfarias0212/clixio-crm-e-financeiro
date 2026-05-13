@@ -1,13 +1,10 @@
-
 import { useState, useEffect, useMemo, Suspense } from "react";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
-import { Button } from "@/components/ui/button";
 import { PlusCircle, TrendingUp, Settings, Calendar } from "lucide-react";
 import { Transaction, TransactionType } from "@/utils/types";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WeeklyControls } from "@/components/WeeklyControls";
 import { useWeeklyFilter } from "@/hooks/useWeeklyFilter";
 import { useFinancialCategories } from "@/hooks/useFinancialCategories";
@@ -20,6 +17,28 @@ import { TransactionImporter } from "@/components/transaction-importer/Transacti
 import { BusinessFixedExpensesManager } from "@/components/financial/BusinessFixedExpensesManager";
 import { FixedExpensesAlerts } from "@/components/financial/FixedExpensesAlerts";
 
+// ── Design tokens ─────────────────────────────────────────────────────────────
+
+const C = {
+  text:    "#1a1a1a",
+  textSub: "#9A9590",
+  divider: "#F0EDE8",
+  itemBg:  "#FAFAF8",
+  navy:    "#1E3A5F",
+  navyBg:  "#E8EEF6",
+  border:  "#E8E4DE",
+};
+
+const CARD = {
+  background: "#FFFFFF",
+  borderRadius: 14,
+  boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
+} as const;
+
+type TabKey = "transactions" | "projections" | "fixed-expenses";
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const { clients, refreshClients } = useClients();
@@ -27,158 +46,127 @@ export default function CashFlow() {
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
   const [weeklyBalance, setWeeklyBalance] = useState(0);
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
-  
-  // Estados para pesquisa e filtro mensal das transações
+  const [activeTab, setActiveTab] = useState<TabKey>("transactions");
+
   const [searchQuery, setSearchQuery] = useState("");
   const currentDate = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(String(currentDate.getMonth() + 1).padStart(2, '0'));
+  const [selectedMonth, setSelectedMonth] = useState(String(currentDate.getMonth() + 1).padStart(2, "0"));
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
   const { categories, loading: loadingCategories, addCategory, removeCategory } = useFinancialCategories();
-  
-  // Hook para filtro semanal
   const weeklyFilter = useWeeklyFilter();
 
   useEffect(() => {
-    document.title = "Financeiro | Wedding CRM";
-    
-    // Ensure we have the latest data when the page loads
+    document.title = "Financeiro | GCLIXIO";
     refreshTransactions();
     refreshClients();
   }, [refreshTransactions, refreshClients]);
 
-  // Filtrar transações por tipo, pesquisa e mês
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
-
-    // Filtro por tipo
-    if (typeFilter !== "all") {
-      filtered = filtered.filter(t => t.type === typeFilter);
-    }
-
-    // Filtro por pesquisa
+    if (typeFilter !== "all") filtered = filtered.filter(t => t.type === typeFilter);
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(t => 
-        t.description.toLowerCase().includes(query) ||
-        t.category.toLowerCase().includes(query) ||
-        (t.clientId && clients.find(c => c.id === t.clientId)?.name.toLowerCase().includes(query))
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(t =>
+        t.description.toLowerCase().includes(q) ||
+        t.category.toLowerCase().includes(q) ||
+        (t.clientId && clients.find(c => c.id === t.clientId)?.name.toLowerCase().includes(q))
       );
     }
-
-    // Filtro por mês/ano
-    filtered = filtered.filter(transaction => {
-      let transactionDate: Date;
+    filtered = filtered.filter(t => {
       try {
-        if (transaction.date.includes('/')) {
-          const [day, month, year] = transaction.date.split('/').map(Number);
-          transactionDate = new Date(year, month - 1, day);
+        let d: Date;
+        if (t.date.includes("/")) {
+          const [day, month, year] = t.date.split("/").map(Number);
+          d = new Date(year, month - 1, day);
         } else {
-          transactionDate = new Date(transaction.date);
+          d = new Date(t.date);
         }
-        
-        if (isNaN(transactionDate.getTime())) {
-          return false;
-        }
-      } catch (err) {
-        return false;
-      }
-
-      const transactionMonth = String(transactionDate.getMonth() + 1).padStart(2, '0');
-      const transactionYear = transactionDate.getFullYear();
-      
-      return transactionMonth === selectedMonth && transactionYear === selectedYear;
+        if (isNaN(d.getTime())) return false;
+        return String(d.getMonth() + 1).padStart(2, "0") === selectedMonth && d.getFullYear() === selectedYear;
+      } catch { return false; }
     });
-
     return filtered;
   }, [transactions, typeFilter, searchQuery, selectedMonth, selectedYear, clients]);
 
   const handleAddTransaction = async (newTransaction: Omit<Transaction, "id" | "createdAt">) => {
     const result = await addTransaction(newTransaction);
-    
     if (result) {
       setShowAddTransaction(false);
-      
-      // If this transaction is linked to a client and is an income, refresh clients data
-      // to update the client's payment history
       if (result.clientId && result.type === "entrada") {
         toast.success("Transação registrada e adicionada ao histórico do cliente!");
         refreshClients();
       } else {
         toast.success("Transação registrada com sucesso!");
       }
-      
-      // Refresh transactions to update all views that depend on transaction data
       refreshTransactions();
     }
   };
 
   const handleUpdateTransaction = async (id: string, updates: Partial<Omit<Transaction, "id" | "createdAt">>) => {
     const result = await updateTransaction(id, updates);
-    
     if (result) {
-      // If this transaction is linked to a client, refresh clients data
-      if (result.clientId) {
-        refreshClients();
-      }
-      
-      // Refresh transactions to update all views
+      if (result.clientId) refreshClients();
       refreshTransactions();
     }
-    
     return result;
   };
 
   const handleDeleteTransaction = async (transactionId: string) => {
     await deleteTransaction(transactionId);
-    
-    // Refresh client data to update payment history
     refreshClients();
-    
-    // Also refresh transactions to update all views
     refreshTransactions();
   };
 
-  const handleMonthChange = (month: string, year: number) => {
-    setSelectedMonth(month);
-    setSelectedYear(year);
-  };
-
-  const handleImportComplete = () => {
-    // Refresh data after import
-    refreshTransactions();
-    refreshClients();
-    toast.success("Dados atualizados após importação!");
-  };
+  const tabs: { key: TabKey; label: string; icon?: typeof TrendingUp }[] = [
+    { key: "transactions",    label: "Transações" },
+    { key: "projections",     label: "Projeções & Pró-Labore", icon: TrendingUp },
+    { key: "fixed-expenses",  label: "Despesas Fixas",         icon: Calendar },
+  ];
 
   return (
     <Layout>
-      <div className="max-w-screen-lg mx-auto px-4 py-8 animate-fade-in">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-          <h1 className="text-2xl font-bold">Financeiro</h1>
-          <div className="flex items-center gap-2">
-            <Button 
+      <div style={{ maxWidth: 1024, margin: "0 auto", padding: "24px 16px", display: "flex", flexDirection: "column", gap: 20 }}>
+
+        {/* Page header */}
+        <div style={{ ...CARD, padding: "18px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" as const, gap: 12 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: C.text, margin: 0 }}>Financeiro</h1>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const, alignItems: "center" }}>
+            <button
               onClick={() => setShowAddTransaction(true)}
               disabled={showAddTransaction}
-              className="gap-2"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                padding: "8px 16px", borderRadius: 8,
+                background: C.navy, border: "none",
+                fontSize: 12, fontWeight: 700, color: "#FFFFFF",
+                cursor: showAddTransaction ? "not-allowed" : "pointer",
+                opacity: showAddTransaction ? 0.6 : 1,
+              }}
             >
-              <PlusCircle className="h-4 w-4" />
+              <PlusCircle style={{ width: 13, height: 13 }} />
               Nova Transação
-            </Button>
-            <TransactionImporter onImportComplete={handleImportComplete} />
-            <Button
-              variant="outline"
-              size="sm"
+            </button>
+
+            <TransactionImporter onImportComplete={() => { refreshTransactions(); refreshClients(); toast.success("Dados atualizados!"); }} />
+
+            <button
               onClick={() => setIsCategoryManagerOpen(true)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                padding: "8px 12px", borderRadius: 8,
+                border: `1px solid ${C.border}`, background: C.itemBg,
+                fontSize: 12, fontWeight: 600, color: C.text, cursor: "pointer",
+              }}
             >
-              <Settings className="h-4 w-4 mr-2" />
+              <Settings style={{ width: 13, height: 13 }} />
               Categorias
-            </Button>
+            </button>
           </div>
         </div>
 
-        {/* Controles de Filtro Semanal */}
-        <Suspense fallback={<Skeleton className="h-16 mb-6" />}>
+        {/* Weekly controls */}
+        <Suspense fallback={<Skeleton className="h-14" />}>
           <WeeklyControls
             periodType={weeklyFilter.periodType}
             currentWeek={weeklyFilter.currentWeek}
@@ -189,29 +177,43 @@ export default function CashFlow() {
           />
         </Suspense>
 
-        <OptimizedFinancialSummary 
-          transactions={transactions} 
-          className="mb-6"
+        {/* Summary KPIs */}
+        <OptimizedFinancialSummary
+          transactions={transactions}
           periodType={weeklyFilter.periodType}
           currentWeek={weeklyFilter.currentWeek}
           onWeeklyBalanceChange={setWeeklyBalance}
         />
 
-        {/* Tabs para separar Transações, Projeções e Despesas Fixas */}
-        <Tabs defaultValue="transactions" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="transactions">Transações</TabsTrigger>
-            <TabsTrigger value="projections" className="gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Projeções & Pró-Labore
-            </TabsTrigger>
-            <TabsTrigger value="fixed-expenses" className="gap-2">
-              <Calendar className="h-4 w-4" />
-              Despesas Fixas
-            </TabsTrigger>
-          </TabsList>
+        {/* Tabs */}
+        <div>
+          {/* Tab bar */}
+          <div style={{ display: "flex", borderBottom: `2px solid ${C.divider}`, marginBottom: 18 }}>
+            {tabs.map(tab => {
+              const Icon = tab.icon;
+              const active = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 5,
+                    padding: "10px 18px", border: "none", background: "none",
+                    fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    color: active ? C.navy : C.textSub,
+                    borderBottom: active ? `2px solid ${C.navy}` : "2px solid transparent",
+                    marginBottom: -2,
+                  }}
+                >
+                  {Icon && <Icon style={{ width: 13, height: 13 }} />}
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
 
-          <TabsContent value="transactions" className="space-y-6">
+          {/* Tab content */}
+          {activeTab === "transactions" && (
             <Suspense fallback={<Skeleton className="h-96" />}>
               <TransactionSection
                 showAddTransaction={showAddTransaction}
@@ -231,25 +233,28 @@ export default function CashFlow() {
                 onSearchChange={setSearchQuery}
                 selectedMonth={selectedMonth}
                 selectedYear={selectedYear}
-                onMonthChange={handleMonthChange}
+                onMonthChange={(month, year) => { setSelectedMonth(month); setSelectedYear(year); }}
               />
             </Suspense>
-          </TabsContent>
+          )}
 
-          <TabsContent value="projections">
+          {activeTab === "projections" && (
             <Suspense fallback={<Skeleton className="h-96" />}>
               <ProjectionsSection />
             </Suspense>
-          </TabsContent>
+          )}
 
-          <TabsContent value="fixed-expenses" className="space-y-6">
+          {activeTab === "fixed-expenses" && (
             <Suspense fallback={<Skeleton className="h-96" />}>
-              <FixedExpensesAlerts />
-              <BusinessFixedExpensesManager />
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                <FixedExpensesAlerts />
+                <BusinessFixedExpensesManager />
+              </div>
             </Suspense>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
+
       <FinancialCategoryManager
         isOpen={isCategoryManagerOpen}
         onClose={() => setIsCategoryManagerOpen(false)}

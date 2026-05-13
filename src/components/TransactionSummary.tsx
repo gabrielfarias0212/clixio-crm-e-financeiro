@@ -1,13 +1,31 @@
-
-
 import { useEffect, useState } from "react";
 import { Transaction } from "@/utils/types";
-import { Card, CardContent } from "@/components/ui/card";
 import { ArrowDownCircle, ArrowUpCircle, TrendingDown, TrendingUp, Wallet } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { isTransactionInWeek, WeekInfo } from "@/utils/dates/weekUtils";
 import { fetchCompanySettings, CompanySettings } from "@/utils/supabase/settings";
 import { PeriodType } from "@/hooks/useWeeklyFilter";
+
+// ── Design tokens ──────────────────────────────────────────────────────────
+
+const C = {
+  text:      "#1a1a1a",
+  textSub:   "#9A9590",
+  divider:   "#F0EDE8",
+  itemBg:    "#FAFAF8",
+  navy:      "#1E3A5F",
+  navyBg:    "#E8EEF6",
+  success:   "#52C97A",
+  successBg: "#E6F9EE",
+  danger:    "#E05252",
+  dangerBg:  "#FEE8E8",
+  amber:     "#E8A838",
+  amberBg:   "#FEF3DC",
+};
+
+const fmt = (v: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 }).format(v);
+
+// ──────────────────────────────────────────────────────────────────────────
 
 interface TransactionSummaryProps {
   transactions: Transaction[];
@@ -22,226 +40,177 @@ export function TransactionSummary({
   className,
   periodType = "monthly",
   currentWeek,
-  onWeeklyBalanceChange
+  onWeeklyBalanceChange,
 }: TransactionSummaryProps) {
   const [goals, setGoals] = useState<CompanySettings | null>(null);
-
   const [summary, setSummary] = useState({
-    totalIncome: 0,
-    totalExpenses: 0,
-    balance: 0,
-    periodIncome: 0,
-    periodExpenses: 0,
-    periodBalance: 0
+    totalIncome: 0, totalExpenses: 0, balance: 0,
+    periodIncome: 0, periodExpenses: 0, periodBalance: 0,
   });
 
   useEffect(() => {
-    console.log(`=== TransactionSummary: Calculando resumo (${periodType}) ===`);
-    console.log("Total de transações recebidas:", transactions.length);
-    
     const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    
-    const totals = transactions.reduce((acc, transaction) => {
-      const amount = Number(transaction.amount);
-      
-      if (isNaN(amount)) {
-        console.log("Valor inválido:", transaction.amount, "para transação:", transaction.id);
-        return acc;
-      }
-
-      // Parse transaction date
+    const totals = transactions.reduce((acc, t) => {
+      const amount = Number(t.amount);
+      if (isNaN(amount)) return acc;
       let transactionDate: Date;
       try {
-        if (transaction.date.includes('/')) {
-          const [day, month, year] = transaction.date.split('/').map(Number);
+        if (t.date.includes("/")) {
+          const [day, month, year] = t.date.split("/").map(Number);
           transactionDate = new Date(year, month - 1, day);
         } else {
-          transactionDate = new Date(transaction.date);
+          transactionDate = new Date(t.date);
         }
-        
-        if (isNaN(transactionDate.getTime())) {
-          console.log("Data inválida:", transaction.date);
-          return acc;
-        }
-      } catch (err) {
-        console.log("Erro ao processar data:", transaction.date, err);
-        return acc;
-      }
+        if (isNaN(transactionDate.getTime())) return acc;
+      } catch { return acc; }
 
-      // Determinar se a transação está no período atual
-      let isInCurrentPeriod = false;
-      
+      let isInPeriod = false;
       if (periodType === "monthly") {
-        const transactionMonth = transactionDate.getMonth();
-        const transactionYear = transactionDate.getFullYear();
-        isInCurrentPeriod = transactionMonth === currentMonth && transactionYear === currentYear;
+        isInPeriod = transactionDate.getMonth() === now.getMonth() && transactionDate.getFullYear() === now.getFullYear();
       } else if (periodType === "weekly" && currentWeek) {
-        isInCurrentPeriod = isTransactionInWeek(transaction.date, currentWeek);
+        isInPeriod = isTransactionInWeek(t.date, currentWeek);
       }
 
-      if (transaction.type === "entrada") {
+      if (t.type === "entrada") {
         acc.totalIncome += amount;
-        if (isInCurrentPeriod) {
-          acc.periodIncome += amount;
-        }
-      } else if (transaction.type === "saída") {
+        if (isInPeriod) acc.periodIncome += amount;
+      } else if (t.type === "saída") {
         acc.totalExpenses += amount;
-        if (isInCurrentPeriod) {
-          acc.periodExpenses += amount;
-        }
+        if (isInPeriod) acc.periodExpenses += amount;
       }
-      
       return acc;
-    }, {
-      totalIncome: 0,
-      totalExpenses: 0,
-      periodIncome: 0,
-      periodExpenses: 0
-    });
+    }, { totalIncome: 0, totalExpenses: 0, periodIncome: 0, periodExpenses: 0 });
 
-    const newSummary = {
+    const next = {
       ...totals,
       balance: totals.totalIncome - totals.totalExpenses,
-      periodBalance: totals.periodIncome - totals.periodExpenses
+      periodBalance: totals.periodIncome - totals.periodExpenses,
     };
-    
-    console.log("=== Resumo Final ===");
-    console.log("Total entradas:", totals.totalIncome);
-    console.log("Total saídas:", totals.totalExpenses);
-    console.log(`${periodType === "monthly" ? "Mês" : "Semana"} - Entradas:`, totals.periodIncome);
-    console.log(`${periodType === "monthly" ? "Mês" : "Semana"} - Saídas:`, totals.periodExpenses);
-    console.log(`Saldo do ${periodType === "monthly" ? "mês" : "semana"}:`, newSummary.periodBalance);
-    
-    setSummary(newSummary);
-    
-    // Notificar o componente pai sobre mudanças no saldo semanal
-    if (periodType === "weekly" && onWeeklyBalanceChange) {
-      onWeeklyBalanceChange(newSummary.periodBalance);
-    }
+    setSummary(next);
+    if (periodType === "weekly" && onWeeklyBalanceChange) onWeeklyBalanceChange(next.periodBalance);
   }, [transactions, periodType, currentWeek, onWeeklyBalanceChange]);
 
-  useEffect(() => {
-    fetchCompanySettings().then(d => setGoals(d)).catch(() => {});
-  }, []);
+  useEffect(() => { fetchCompanySettings().then(d => setGoals(d)).catch(() => {}); }, []);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
+  const periodLabel = periodType === "monthly" ? "Mês Atual" : "Período Selecionado";
 
-  const periodLabel = periodType === "monthly" ? "Mês Atual" : "Semana Selecionada";
+  const kpis = [
+    {
+      label: "Entradas Totais",
+      value: fmt(summary.totalIncome),
+      sub: `${periodLabel}: ${fmt(summary.periodIncome)}`,
+      icon: ArrowUpCircle,
+      accent: C.success,
+      accentBg: C.successBg,
+    },
+    {
+      label: "Saídas Totais",
+      value: fmt(summary.totalExpenses),
+      sub: `${periodLabel}: ${fmt(summary.periodExpenses)}`,
+      icon: ArrowDownCircle,
+      accent: C.danger,
+      accentBg: C.dangerBg,
+    },
+    {
+      label: "Saldo Geral",
+      value: fmt(summary.balance),
+      sub: `${summary.periodBalance >= 0 ? "+" : ""}${fmt(summary.periodBalance)} no período`,
+      icon: summary.balance >= 0 ? TrendingUp : TrendingDown,
+      accent: summary.balance >= 0 ? C.success : C.danger,
+      accentBg: summary.balance >= 0 ? C.successBg : C.dangerBg,
+    },
+    {
+      label: `Saldo do ${periodLabel}`,
+      value: fmt(summary.periodBalance),
+      sub: summary.periodBalance >= 0 ? "Período positivo ✓" : "Período negativo",
+      icon: Wallet,
+      accent: summary.periodBalance >= 0 ? C.navy : C.danger,
+      accentBg: summary.periodBalance >= 0 ? C.navyBg : C.dangerBg,
+    },
+  ];
+
+  // compute revenue goal progress
+  const goal = goals?.monthly_revenue_goal ? Number(goals.monthly_revenue_goal) : null;
+  const goalPct = goal ? Math.min(100, (summary.periodIncome / goal) * 100) : null;
+  const goalBarColor = goalPct !== null
+    ? goalPct >= 100 ? C.success : goalPct >= 70 ? C.amber : C.danger
+    : C.gray;
 
   return (
-    <Card className={cn("", className)}>
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Balance */}
-          <div className="md:col-span-3 flex flex-col sm:flex-row justify-between gap-4 mb-2">
-            <div className="space-y-1">
-              <h3 className="text-sm font-medium text-gray-500">Saldo Geral</h3>
-              <div className="flex items-center">
-                <Wallet className="h-5 w-5 mr-2 text-gray-700" />
-                <span className={`text-xl font-bold ${summary.balance >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {formatCurrency(summary.balance)}
-                </span>
-              </div>
-            </div>
-            
-            <div className="space-y-1">
-              <h3 className="text-sm font-medium text-gray-500">Saldo do {periodLabel}</h3>
-              <div className="flex items-center">
-                {summary.periodBalance >= 0 ? <TrendingUp className="h-5 w-5 mr-2 text-green-500" /> : <TrendingDown className="h-5 w-5 mr-2 text-red-500" />}
-                <span className={`text-xl font-bold ${summary.periodBalance >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {formatCurrency(summary.periodBalance)}
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Total Income */}
-          <div className="space-y-1">
-            <h3 className="text-sm font-medium text-gray-500">Total de Entradas</h3>
-            <div className="flex items-center">
-              <ArrowUpCircle className="h-5 w-5 mr-2 text-green-500" />
-              <span className="text-lg font-medium text-green-600">
-                {formatCurrency(summary.totalIncome)}
-              </span>
-            </div>
-            <div className="text-sm text-gray-500">
-              {periodLabel}: {formatCurrency(summary.periodIncome)}
-            </div>
-          </div>
-          
-          {/* Total Expenses */}
-          <div className="space-y-1">
-            <h3 className="text-sm font-medium text-gray-500">Total de Saídas</h3>
-            <div className="flex items-center">
-              <ArrowDownCircle className="h-5 w-5 mr-2 text-red-500" />
-              <span className="text-red-600 text-lg font-extrabold">
-                {formatCurrency(summary.totalExpenses)}
-              </span>
-            </div>
-            <div className="text-sm text-gray-500">
-              {periodLabel}: {formatCurrency(summary.periodExpenses)}
-            </div>
-          </div>
-          
-          {/* Balance */}
-          <div className="space-y-1">
-            <h3 className="text-sm font-medium text-gray-500">Saldo Total</h3>
-            <div className="flex items-center">
-              <Wallet className="h-5 w-5 mr-2 text-gray-700" />
-              <span className={`text-lg font-medium ${summary.balance >= 0 ? "text-green-600" : "text-red-600"}`}>
-                {formatCurrency(summary.balance)}
-              </span>
-            </div>
-            <div className={`text-sm ${summary.periodBalance >= 0 ? "text-green-500" : "text-red-500"}`}>
-              {summary.periodBalance >= 0 ? "+" : ""}
-              {formatCurrency(summary.periodBalance)} no {periodType === "monthly" ? "mês atual" : "período"}
-            </div>
-          </div>
-
-        {/* Metas financeiras */}
-        {periodType === 'monthly' && goals && (goals.monthly_revenue_goal || goals.monthly_events_goal) && (
-          <div className="border-t pt-4 mt-2 space-y-3">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Progresso das Metas</p>
-            {goals.monthly_revenue_goal && (() => {
-              const goal = Number(goals.monthly_revenue_goal);
-              const pct = Math.min(100, (summary.periodIncome / goal) * 100);
-              const barColor = summary.periodIncome >= goal
-                ? 'bg-green-500'
-                : pct >= 70
-                ? 'bg-amber-400'
-                : 'bg-red-400';
-              return (
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">Receita do mês</span>
-                    <span className="text-xs font-medium text-gray-700">
-                      {formatCurrency(summary.periodIncome)} / {formatCurrency(goal)}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                    <div
-                      className={`h-2 rounded-full transition-all ${barColor}`}
-                      style={{ width: `${pct.toFixed(1)}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400">
-                    {pct.toFixed(0)}% da meta mensal atingida
-                  </p>
+    <div
+      className={className}
+      style={{
+        background: "#FFFFFF",
+        borderRadius: 14,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
+        padding: "18px 20px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
+      }}
+    >
+      {/* KPI grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 12 }}>
+        {kpis.map(k => {
+          const Icon = k.icon;
+          return (
+            <div
+              key={k.label}
+              style={{
+                background: C.itemBg,
+                borderRadius: 10,
+                borderTop: `3px solid ${k.accent}`,
+                padding: "12px 14px",
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 8,
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: C.textSub, marginBottom: 4 }}>
+                  {k.label}
                 </div>
-              );
-            })()}
+                <div style={{ fontSize: 20, fontWeight: 800, color: k.accent, lineHeight: 1.1, marginBottom: 3 }}>
+                  {k.value}
+                </div>
+                <div style={{ fontSize: 11, color: C.textSub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                  {k.sub}
+                </div>
+              </div>
+              <div style={{
+                width: 32, height: 32, borderRadius: "50%",
+                background: k.accentBg,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>
+                <Icon style={{ width: 15, height: 15, color: k.accent }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Goal progress */}
+      {periodType === "monthly" && goal !== null && goalPct !== null && (
+        <div style={{ borderTop: `1px solid ${C.divider}`, paddingTop: 14 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: C.textSub, marginBottom: 8 }}>
+            Progresso da Meta
           </div>
-        )}
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+            <span style={{ fontSize: 12, color: C.textSub }}>Receita do mês</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: C.text }}>
+              {fmt(summary.periodIncome)} / {fmt(goal)}
+            </span>
+          </div>
+          <div style={{ width: "100%", height: 6, background: C.itemBg, borderRadius: 999, overflow: "hidden" }}>
+            <div style={{ height: 6, borderRadius: 999, background: goalBarColor, width: `${goalPct.toFixed(1)}%`, transition: "width 0.4s" }} />
+          </div>
+          <div style={{ fontSize: 11, color: C.textSub, marginTop: 4 }}>
+            {goalPct.toFixed(0)}% da meta mensal atingida
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
-

@@ -1,9 +1,20 @@
-
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { TransactionType } from "@/utils/types";
 import { SearchInput } from "@/components/SearchInput";
 import { MonthFilter } from "@/components/financial/MonthFilter";
+
+const C = {
+  text:      "#1a1a1a",
+  textSub:   "#9A9590",
+  divider:   "#F0EDE8",
+  itemBg:    "#FAFAF8",
+  navy:      "#1E3A5F",
+  navyBg:    "#E8EEF6",
+  success:   "#52C97A",
+  successBg: "#E6F9EE",
+  danger:    "#E05252",
+  dangerBg:  "#FEE8E8",
+  border:    "#E8E4DE",
+};
 
 interface TransactionFiltersProps {
   typeFilter: TransactionType | "all";
@@ -22,13 +33,27 @@ export function TransactionFilters({
   onSearchChange,
   selectedMonth,
   selectedYear,
-  onMonthChange
+  onMonthChange,
 }: TransactionFiltersProps) {
+  const types = [
+    { key: "all",    label: "Todas",   color: C.navy,    bg: C.navyBg    },
+    { key: "entrada",label: "Entradas",color: C.success, bg: C.successBg },
+    { key: "saída",  label: "Saídas",  color: C.danger,  bg: C.dangerBg  },
+  ] as const;
+
   return (
-    <div className="space-y-4">
-      {/* Barra de pesquisa */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
+    <div style={{
+      background: "#FFFFFF",
+      borderRadius: 14,
+      boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
+      padding: "14px 18px",
+      display: "flex",
+      flexDirection: "column" as const,
+      gap: 10,
+    }}>
+      {/* Search + month */}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" as const, alignItems: "center" }}>
+        <div style={{ flex: 1, minWidth: 200 }}>
           <SearchInput
             value={searchQuery}
             onChange={onSearchChange}
@@ -36,40 +61,34 @@ export function TransactionFilters({
             className="w-full"
           />
         </div>
+        <MonthFilter
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+          onMonthChange={onMonthChange}
+        />
       </div>
 
-      {/* Filtro mensal */}
-      <MonthFilter
-        selectedMonth={selectedMonth}
-        selectedYear={selectedYear}
-        onMonthChange={onMonthChange}
-      />
-
-      {/* Filtros de tipo */}
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant={typeFilter === "all" ? "default" : "outline"}
-          onClick={() => onTypeFilterChange("all")}
-          size="sm"
-        >
-          Todas
-        </Button>
-        <Button
-          variant={typeFilter === "entrada" ? "default" : "outline"}
-          onClick={() => onTypeFilterChange("entrada")}
-          size="sm"
-          className="text-green-700 bg-green-100 hover:bg-green-200 border-green-200"
-        >
-          Entradas
-        </Button>
-        <Button
-          variant={typeFilter === "saída" ? "default" : "outline"}
-          onClick={() => onTypeFilterChange("saída")}
-          size="sm"
-          className="text-red-700 bg-red-100 hover:bg-red-200 border-red-200"
-        >
-          Saídas
-        </Button>
+      {/* Type filter pills */}
+      <div style={{ display: "flex", gap: 6 }}>
+        {types.map(t => {
+          const active = typeFilter === t.key;
+          return (
+            <button
+              key={t.key}
+              onClick={() => onTypeFilterChange(t.key)}
+              style={{
+                padding: "6px 14px", borderRadius: 8,
+                fontSize: 12, fontWeight: 600, cursor: "pointer",
+                border: active ? `1px solid ${t.color}40` : `1px solid ${C.border}`,
+                background: active ? t.bg : C.itemBg,
+                color: active ? t.color : C.textSub,
+                transition: "all 0.1s",
+              }}
+            >
+              {t.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

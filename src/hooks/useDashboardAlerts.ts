@@ -134,11 +134,16 @@ export function useDashboardAlerts() {
   // ── Mutations ────────────────────────────────────────────────────────────
 
   const addTask = useCallback(async (text: string) => {
-    const { data } = await supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error } = await supabase
       .from("dashboard_tasks")
-      .insert({ text })
+      .insert({ text, user_id: user?.id ?? null })
       .select()
       .single();
+    if (error) {
+      console.error("Erro ao salvar tarefa:", error);
+      return;
+    }
     if (data) {
       setTasks((prev) => [{ id: data.id, text: data.text, completed: false, createdAt: data.created_at }, ...prev]);
     }

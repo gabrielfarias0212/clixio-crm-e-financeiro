@@ -6,37 +6,60 @@ import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { useNavigate } from "react-router-dom";
 import { Client } from "@/utils/types";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Camera, HardDrive, Scissors, Sliders, Link, Package,
-  BookOpen, AlertTriangle, CheckCircle2, Clock, Search, ChevronRight, Plus, FileText
+  BookOpen, AlertTriangle, CheckCircle2, Clock, Search,
+  ChevronRight, Plus, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 
+// ─── Design tokens ────────────────────────────────────────────────────────────
+
+const C = {
+  text:       "#1a1a1a",
+  textSub:    "#9A9590",
+  divider:    "#F0EDE8",
+  itemBg:     "#FAFAF8",
+  border:     "#E8E4DE",
+  navy:       "#1E3A5F",
+  navyBg:     "#E8EEF6",
+  amber:      "#E8A838",
+  amberBg:    "#FEF3DC",
+  success:    "#52C97A",
+  successBg:  "#E6F9EE",
+  danger:     "#E05252",
+  dangerBg:   "#FEE8E8",
+  gray:       "#9A9590",
+  grayBg:     "#F0EDE8",
+};
+
+const CARD = {
+  background: "#FFFFFF",
+  borderRadius: 14,
+  boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
+} as const;
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
+
 function isDelivered(client: any): boolean {
   if (client.status === "projeto_finalizado") return true;
   if (client.semEntregaFisica) return !!client.linkSent;
   return !!client.boxDelivered;
 }
-
 function isInProgress(client: any): boolean {
   return !!client.weddingPhotographed && !isDelivered(client);
 }
-
 function isAwaiting(client: any): boolean {
   return !client.weddingPhotographed && !isDelivered(client);
 }
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
+// ─── Workflow steps ───────────────────────────────────────────────────────────
 
 interface WorkflowStep {
   key: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ style?: React.CSSProperties }>;
   color: string;
   bgColor: string;
   field: keyof Client;
@@ -45,103 +68,78 @@ interface WorkflowStep {
 }
 
 const WORKFLOW_STEPS: WorkflowStep[] = [
-  { key: "wedding_photographed", label: "Fotografado", icon: Camera, color: "text-purple-600", bgColor: "bg-purple-50", field: "weddingPhotographed", description: "Evento realizado" },
-  { key: "backup_completed", label: "Cópia/Backup", icon: HardDrive, color: "text-gray-600", bgColor: "bg-gray-50", field: "backupCompleted", description: "RAW + JPG copiados para o SSD" },
-  { key: "curation_completed", label: "Curadoria", icon: Scissors, color: "text-yellow-600", bgColor: "bg-yellow-50", field: "curationCompleted", description: "Seleção no Aftershoot" },
-  { key: "in_editing", label: "Edição Final", icon: Sliders, color: "text-blue-600", bgColor: "bg-blue-50", field: "inEditing", description: "Lightroom — ajustes finais" },
-  { key: "link_sent", label: "Link Enviado", icon: Link, color: "text-green-600", bgColor: "bg-green-50", field: "linkSent", description: "Galeria Wfolio enviada ao cliente" },
-  { key: "box_delivered", label: "Entrega Física", icon: Package, color: "text-orange-600", bgColor: "bg-orange-50", field: "boxDelivered", description: "Pen drive entregue" },
+  { key: "wedding_photographed", label: "Fotografado",    icon: Camera,      color: "#7C3AED", bgColor: "#F3EFFE", field: "weddingPhotographed", description: "Evento realizado" },
+  { key: "backup_completed",     label: "Cópia/Backup",  icon: HardDrive,   color: C.gray,    bgColor: C.grayBg,  field: "backupCompleted",     description: "RAW + JPG copiados" },
+  { key: "curation_completed",   label: "Curadoria",     icon: Scissors,    color: C.amber,   bgColor: C.amberBg, field: "curationCompleted",   description: "Seleção no Aftershoot" },
+  { key: "in_editing",           label: "Edição Final",  icon: Sliders,     color: "#2563EB", bgColor: "#EFF6FF",  field: "inEditing",           description: "Lightroom — ajustes finais" },
+  { key: "link_sent",            label: "Link Enviado",  icon: Link,        color: C.success, bgColor: C.successBg, field: "linkSent",          description: "Galeria enviada" },
+  { key: "box_delivered",        label: "Entrega Física",icon: Package,     color: "#D97706", bgColor: "#FEF3C7",  field: "boxDelivered",        description: "Pen drive entregue" },
 ];
 
 const ALBUM_STEPS: WorkflowStep[] = [
-  { key: "album_link_sent", label: "Link p/ Escolha", icon: Link, color: "text-indigo-600", bgColor: "bg-indigo-50", field: "albumLinkSent", description: "Link enviado para cliente escolher fotos", albumStep: true },
-  { key: "album_client_chose", label: "Cliente Escolheu", icon: CheckCircle2, color: "text-indigo-600", bgColor: "bg-indigo-50", field: "albumClientChose", description: "Cliente selecionou as fotos", albumStep: true },
-  { key: "album_diagrammed", label: "Diagramado", icon: BookOpen, color: "text-indigo-600", bgColor: "bg-indigo-50", field: "albumDiagrammed", description: "Álbum diagramado", albumStep: true },
-  { key: "album_client_approved", label: "Aprovado", icon: CheckCircle2, color: "text-indigo-600", bgColor: "bg-indigo-50", field: "albumClientApproved", description: "Cliente aprovou o layout", albumStep: true },
-  { key: "album_ordered", label: "Pedido Feito", icon: Package, color: "text-indigo-600", bgColor: "bg-indigo-50", field: "albumOrdered", description: "Álbum enviado para produção", albumStep: true },
+  { key: "album_link_sent",       label: "Link p/ Escolha",   icon: Link,         color: "#4F46E5", bgColor: "#EEF2FF", field: "albumLinkSent",       description: "Link enviado para escolha", albumStep: true },
+  { key: "album_client_chose",    label: "Cliente Escolheu",  icon: CheckCircle2, color: "#4F46E5", bgColor: "#EEF2FF", field: "albumClientChose",    description: "Cliente selecionou as fotos", albumStep: true },
+  { key: "album_diagrammed",      label: "Diagramado",        icon: BookOpen,     color: "#4F46E5", bgColor: "#EEF2FF", field: "albumDiagrammed",     description: "Álbum diagramado", albumStep: true },
+  { key: "album_client_approved", label: "Aprovado",          icon: CheckCircle2, color: "#4F46E5", bgColor: "#EEF2FF", field: "albumClientApproved", description: "Cliente aprovou o layout", albumStep: true },
+  { key: "album_ordered",         label: "Pedido Feito",      icon: Package,      color: "#4F46E5", bgColor: "#EEF2FF", field: "albumOrdered",        description: "Enviado para produção", albumStep: true },
 ];
 
 const MONTHS = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// Normaliza data para evitar problema de fuso UTC→local
 function parseDate(dateStr?: string | null): Date | null {
   if (!dateStr) return null;
-  const normalized = dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00`;
+  const normalized = dateStr.includes("T") ? dateStr : `${dateStr}T12:00:00`;
   return new Date(normalized);
 }
-
 function daysSince(dateStr?: string | null): number {
   const d = parseDate(dateStr);
   if (!d) return 0;
   return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
 }
-
 function formatDate(dateStr?: string | null): string {
   const d = parseDate(dateStr);
   if (!d) return "—";
   return d.toLocaleDateString("pt-BR");
 }
-
 function getClientField(client: any, field: string): boolean {
   return !!client[field];
 }
-
 function calcProgress(client: any) {
   let steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
-  if (client.semEntregaFisica) steps = steps.filter(s => s.field !== 'boxDelivered');
+  if (client.semEntregaFisica) steps = steps.filter(s => s.field !== "boxDelivered");
   const done = steps.filter(s => getClientField(client, s.field as string)).length;
   const total = steps.length;
   const pct = Math.round((done / total) * 100);
   const current = steps.find(s => !getClientField(client, s.field as string));
   return { done, total, pct, currentStep: current?.label ?? "Finalizado" };
 }
-
-// Retorna a chave da etapa atual (próxima pendente) de um cliente
 function isFutureEvent(client: any): boolean {
   const d = parseDate(client.weddingDate);
   if (!d) return false;
   return d.getTime() > Date.now();
 }
-
-// Retorna a ÚLTIMA etapa concluída (onde o cliente está agora)
-// Assim "Cópia/Backup" no filtro = quem fez backup mas ainda não fez curadoria
 function getCurrentStageKey(client: any): string {
   if (client.status === "projeto_finalizado") return "finalizado";
-
-  // Evento futuro sem nenhuma etapa feita → aguardando
-  if (isFutureEvent(client) && !getClientField(client, "weddingPhotographed")) {
-    return "aguardando_evento";
-  }
-
-  // Retorna a última etapa concluída (percorre de trás pra frente)
+  if (isFutureEvent(client) && !getClientField(client, "weddingPhotographed")) return "aguardando_evento";
   let steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
-  if (client.semEntregaFisica) steps = steps.filter((s: any) => s.field !== 'boxDelivered');
-
-  // Acha a última etapa concluída (mais avançada)
+  if (client.semEntregaFisica) steps = steps.filter((s: any) => s.field !== "boxDelivered");
   for (let i = steps.length - 1; i >= 0; i--) {
-    if (getClientField(client, steps[i].field as string)) {
-      return steps[i].key;
-    }
+    if (getClientField(client, steps[i].field as string)) return steps[i].key;
   }
-
-  // Nenhuma etapa concluída e evento já passou → aguardando (sem data ou evento recente)
   return "aguardando_evento";
 }
 
-// Lista única de etapas (workflow + álbum + finalizado) para o filtro
 const ALL_STAGE_OPTIONS: { key: string; label: string }[] = [
   { key: "aguardando_evento", label: "Aguardando Evento" },
   ...WORKFLOW_STEPS.map(s => ({ key: s.key, label: s.label })),
   ...ALBUM_STEPS.map(s => ({ key: s.key, label: `Álbum: ${s.label}` })),
   { key: "finalizado", label: "Finalizado" },
 ];
-
-// Mapa rápido: chave → label legível para o badge do card
 const STAGE_LABEL: Record<string, string> = {
   aguardando_evento: "Aguardando Evento",
   ...Object.fromEntries(WORKFLOW_STEPS.map(s => [s.key, s.label])),
@@ -149,11 +147,17 @@ const STAGE_LABEL: Record<string, string> = {
   finalizado: "Finalizado",
 };
 
-function urgencyColor(days: number, linkSent: boolean): string {
-  if (linkSent) return "text-green-600";
-  if (days > 60) return "text-red-600";
-  if (days > 30) return "text-orange-500";
-  return "text-gray-500";
+// ─── StatusPill ───────────────────────────────────────────────────────────────
+
+function StatusPill({ label, color, bg }: { label: string; color: string; bg: string }) {
+  return (
+    <span style={{
+      fontSize: 10, fontWeight: 700, borderRadius: 999, padding: "2px 8px",
+      color, background: bg, whiteSpace: "nowrap" as const,
+    }}>
+      {label}
+    </span>
+  );
 }
 
 // ─── ProjectCard ──────────────────────────────────────────────────────────────
@@ -169,77 +173,102 @@ function ProjectCard({ client, onToggleStep, onClick }: {
   const days = daysSince(client.weddingDate);
   const isFuture = isFutureEvent(client);
   const isFinished = client.status === "projeto_finalizado";
+  const isDelayed = !isFinished && !client.linkSent && days > 60;
   let steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
-  if (client.semEntregaFisica) steps = steps.filter(s => s.field !== 'boxDelivered');
+  if (client.semEntregaFisica) steps = steps.filter(s => s.field !== "boxDelivered");
 
   const dateLabel = client.weddingDate
     ? isFuture
-      ? `${formatDate(client.weddingDate)} · em ${Math.abs(days)} dias`
+      ? `${formatDate(client.weddingDate)} · em ${Math.abs(days)}d`
       : `${formatDate(client.weddingDate)} · ${days}d atrás`
     : "Data não definida";
 
+  const dateColor = isFuture ? C.navy : isDelayed ? C.danger : C.textSub;
+
   return (
     <div
-      className={`bg-white border rounded-xl p-5 space-y-4 hover:shadow-md transition-all cursor-pointer ${
-        isFinished ? "opacity-60 border-gray-100" : "border-gray-200"
-      }`}
+      style={{
+        ...CARD,
+        padding: "16px",
+        display: "flex", flexDirection: "column", gap: 12,
+        cursor: "pointer",
+        opacity: isFinished ? 0.65 : 1,
+        borderTop: isDelayed ? `3px solid ${C.danger}` : isFinished ? `3px solid ${C.success}` : `3px solid ${C.navy}`,
+        transition: "box-shadow 0.15s",
+      }}
       onClick={onClick}
+      onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 16px rgba(0,0,0,0.10)"}
+      onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.boxShadow = CARD.boxShadow}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1">
-            <h3 className="font-semibold text-gray-900 truncate">{client.name}</h3>
-            <ChevronRight className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+              {client.name}
+            </span>
+            <ChevronRight style={{ width: 12, height: 12, color: C.textSub, flexShrink: 0 }} />
           </div>
           {client.coupleName && (
-            <p className="text-xs text-muted-foreground truncate">{client.coupleName}</p>
+            <div style={{ fontSize: 11, color: C.textSub, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+              {client.coupleName}
+            </div>
           )}
-          <p className={`text-xs mt-0.5 ${isFuture ? "text-blue-600" : urgencyColor(days, client.linkSent)}`}>
-            {dateLabel}
-          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
+            <span style={{ fontSize: 11, color: dateColor, fontWeight: isDelayed ? 600 : 400 }}>
+              {dateLabel}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col items-end gap-1 shrink-0">
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
           {isFinished ? (
-            <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">Finalizado</Badge>
+            <StatusPill label="Finalizado" color="#2A8050" bg={C.successBg} />
           ) : isFuture && !client.weddingPhotographed ? (
-            <Badge className="bg-sky-100 text-sky-700 border-sky-200 text-xs">Aguardando Evento</Badge>
-          ) : days > 60 && !client.linkSent ? (
-            <Badge className="bg-red-100 text-red-800 border-red-200 text-xs flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3" /> Atrasado
-            </Badge>
+            <StatusPill label="Aguardando Evento" color={C.navy} bg={C.navyBg} />
+          ) : isDelayed ? (
+            <StatusPill label="⚠ Atrasado" color={C.danger} bg={C.dangerBg} />
           ) : (
-            <Badge className="bg-blue-50 text-blue-700 border-blue-100 text-xs">{stageLabel}</Badge>
+            <StatusPill label={stageLabel} color={C.navy} bg={C.navyBg} />
           )}
           {client.hasAlbum && (
-            <Badge className="bg-indigo-50 text-indigo-700 border-indigo-100 text-xs">📖 Álbum</Badge>
+            <StatusPill label="📖 Álbum" color="#4F46E5" bg="#EEF2FF" />
           )}
         </div>
       </div>
 
+      {/* Progress */}
       <div>
-        <div className="flex justify-between text-xs text-muted-foreground mb-1">
-          <span>{done}/{total} etapas</span>
-          <span>{pct}%</span>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+          <span style={{ fontSize: 11, color: C.textSub }}>{done}/{total} etapas</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: pct === 100 ? C.success : C.navy }}>{pct}%</span>
         </div>
         <Progress value={pct} className="h-1.5" />
       </div>
 
-      <div className="flex flex-wrap gap-1.5" onClick={e => e.stopPropagation()}>
+      {/* Step buttons */}
+      <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 5 }} onClick={e => e.stopPropagation()}>
         {steps.map(step => {
           const isDone = getClientField(client, step.field as string);
           const Icon = step.icon;
           return (
             <button
               key={step.key}
-              title={step.label}
+              title={step.description}
               onClick={() => onToggleStep(client.id, step.field as string, !isDone)}
-              className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border transition-all ${
-                isDone
-                  ? `${step.bgColor} ${step.color} border-current/20`
-                  : "bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100"
-              } ${step.albumStep ? "border-dashed" : ""}`}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 4,
+                padding: "4px 8px", borderRadius: 6,
+                fontSize: 11, fontWeight: 600, cursor: "pointer",
+                border: isDone
+                  ? `1px solid ${step.color}30`
+                  : `1px solid ${C.divider}`,
+                background: isDone ? step.bgColor : C.itemBg,
+                color: isDone ? step.color : C.textSub,
+                borderStyle: step.albumStep ? "dashed" : "solid",
+                transition: "all 0.1s",
+              }}
             >
-              <Icon className="h-3 w-3" />
+              <Icon style={{ width: 10, height: 10 }} />
               {step.label}
             </button>
           );
@@ -263,143 +292,143 @@ function DeliveryQueue({ clients, onToggleStep, onNavigate }: {
   const pending = useMemo(() =>
     clients
       .filter(c => c.linkSent && !c.boxDelivered)
-      .sort((a, b) => {
-        const da = parseDate(a.weddingDate)?.getTime() ?? 0;
-        const db = parseDate(b.weddingDate)?.getTime() ?? 0;
-        return da - db;
-      }),
+      .sort((a, b) => (parseDate(a.weddingDate)?.getTime() ?? 0) - (parseDate(b.weddingDate)?.getTime() ?? 0)),
     [clients]
   );
-
   const years = useMemo(() => {
     const ys = new Set(pending.map(c => parseDate(c.weddingDate)?.getFullYear()).filter(Boolean));
     return Array.from(ys).sort() as number[];
   }, [pending]);
 
-  const filtered = useMemo(() => {
-    return pending.filter(c => {
-      const d = parseDate(c.weddingDate);
-      if (filterMonth !== "all" && d?.getMonth() !== filterMonth) return false;
-      if (filterYear !== "all" && d?.getFullYear() !== filterYear) return false;
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        return c.name.toLowerCase().includes(q) ||
-          (c.coupleName ?? "").toLowerCase().includes(q) ||
-          (c.weddingDate ?? "").includes(q);
-      }
-      return true;
-    });
-  }, [pending, filterMonth, filterYear, search]);
+  const filtered = useMemo(() => pending.filter(c => {
+    const d = parseDate(c.weddingDate);
+    if (filterMonth !== "all" && d?.getMonth() !== filterMonth) return false;
+    if (filterYear !== "all" && d?.getFullYear() !== filterYear) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      return c.name.toLowerCase().includes(q) || (c.coupleName ?? "").toLowerCase().includes(q);
+    }
+    return true;
+  }), [pending, filterMonth, filterYear, search]);
 
   if (pending.length === 0) {
     return (
-      <div className="text-center py-16 text-muted-foreground">
-        <Package className="h-12 w-12 mx-auto mb-3 opacity-30" />
-        <p className="font-medium">Nenhuma entrega pendente</p>
-        <p className="text-sm">Tudo entregue! 🎉</p>
+      <div style={{ textAlign: "center", padding: "60px 0", color: C.textSub }}>
+        <Package style={{ width: 48, height: 48, margin: "0 auto 12px", opacity: 0.25 }} />
+        <div style={{ fontSize: 14, fontWeight: 600 }}>Nenhuma entrega pendente</div>
+        <div style={{ fontSize: 12, marginTop: 4 }}>Tudo entregue! 🎉</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* Alerta */}
-      <div className="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-        <AlertTriangle className="h-4 w-4 text-orange-600 shrink-0" />
-        <p className="text-sm text-orange-800">
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* Alert */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8,
+        padding: "10px 14px", borderRadius: 10,
+        background: C.amberBg, border: `1px solid #F8DCAA`,
+      }}>
+        <AlertTriangle style={{ width: 14, height: 14, color: C.amber, flexShrink: 0 }} />
+        <span style={{ fontSize: 13, color: "#9A5A00", fontWeight: 500 }}>
           <strong>{pending.length} entrega{pending.length > 1 ? "s" : ""} pendente{pending.length > 1 ? "s" : ""}</strong>
           {filtered.length !== pending.length && ` · mostrando ${filtered.length}`}
           {" "}— ordenadas do mais antigo
-        </p>
+        </span>
       </div>
 
-      {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        {/* Pesquisa */}
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      {/* Filters */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const }}>
+        <div style={{ position: "relative" as const, flex: 1, minWidth: 200 }}>
+          <Search style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 13, height: 13, color: C.textSub }} />
           <input
-            type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar nome, casal, data..."
-            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
+            placeholder="Buscar nome, casal..."
+            style={{
+              width: "100%", boxSizing: "border-box" as const,
+              padding: "8px 12px 8px 30px", border: `1.5px solid ${C.border}`,
+              borderRadius: 8, background: C.itemBg, fontSize: 12, color: C.text, outline: "none",
+            }}
           />
         </div>
-
-        {/* Filtro Ano */}
         <select
           value={filterYear}
           onChange={e => setFilterYear(e.target.value === "all" ? "all" : Number(e.target.value))}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
+          style={{ padding: "8px 10px", border: `1.5px solid ${C.border}`, borderRadius: 8, background: C.itemBg, fontSize: 12, color: C.text, outline: "none" }}
         >
           <option value="all">Todos os anos</option>
           {years.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
-
-        {/* Filtro Mês */}
         <select
           value={filterMonth}
           onChange={e => setFilterMonth(e.target.value === "all" ? "all" : Number(e.target.value))}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
+          style={{ padding: "8px 10px", border: `1.5px solid ${C.border}`, borderRadius: 8, background: C.itemBg, fontSize: 12, color: C.text, outline: "none" }}
         >
           <option value="all">Todos os meses</option>
           {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
         </select>
       </div>
 
-      {/* Lista */}
+      {/* List */}
       {filtered.length === 0 ? (
-        <p className="text-center text-sm text-muted-foreground py-8">Nenhum resultado para os filtros selecionados.</p>
+        <div style={{ textAlign: "center", padding: "32px 0", fontSize: 13, color: C.textSub }}>
+          Nenhum resultado para os filtros selecionados.
+        </div>
       ) : (
-        <div className="space-y-2">
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {filtered.map((client, index) => {
             const days = daysSince(client.weddingDate);
             const isUrgent = days > 90;
-
             return (
               <div
                 key={client.id}
-                className={`bg-white border rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:shadow-sm transition-all ${
-                  isUrgent ? "border-red-200 bg-red-50/20" : "border-gray-200"
-                }`}
+                style={{
+                  ...CARD,
+                  padding: "14px 16px",
+                  display: "flex", alignItems: "center", gap: 14,
+                  cursor: "pointer",
+                  borderLeft: `4px solid ${isUrgent ? C.danger : C.divider}`,
+                  borderRadius: 12,
+                }}
                 onClick={() => onNavigate(client.id)}
+                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 16px rgba(0,0,0,0.10)"}
+                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.boxShadow = CARD.boxShadow}
               >
-                <div className={`text-2xl font-bold w-8 text-center shrink-0 ${
-                  isUrgent ? "text-red-400" : "text-gray-200"
-                }`}>
+                <span style={{ fontSize: 22, fontWeight: 800, color: isUrgent ? C.danger : C.divider, flexShrink: 0, minWidth: 28, textAlign: "center" as const }}>
                   {index + 1}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1">
-                    <p className="font-semibold text-gray-900 truncate">
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
                       {client.coupleName || client.name}
-                    </p>
-                    <ChevronRight className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                    </span>
+                    <ChevronRight style={{ width: 11, height: 11, color: C.textSub, flexShrink: 0 }} />
                   </div>
                   {client.coupleName && (
-                    <p className="text-xs text-gray-400 truncate">{client.name}</p>
+                    <div style={{ fontSize: 11, color: C.textSub }}>{client.name}</div>
                   )}
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <Clock className={`h-3 w-3 shrink-0 ${isUrgent ? "text-red-500" : "text-gray-400"}`} />
-                    <span className={`text-xs ${isUrgent ? "text-red-500 font-medium" : "text-gray-400"}`}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                    <Clock style={{ width: 11, height: 11, color: isUrgent ? C.danger : C.textSub }} />
+                    <span style={{ fontSize: 11, color: isUrgent ? C.danger : C.textSub, fontWeight: isUrgent ? 600 : 400 }}>
                       {formatDate(client.weddingDate)} · {days} dias atrás
                     </span>
                     {client.hasAlbum && !client.albumOrdered && (
-                      <span className="text-xs text-indigo-600 ml-2">📖 Álbum pendente</span>
+                      <span style={{ fontSize: 11, color: "#4F46E5", marginLeft: 4 }}>📖 Álbum pendente</span>
                     )}
                   </div>
                 </div>
-
                 <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    onToggleStep(client.id, "boxDelivered", true);
+                  onClick={e => { e.stopPropagation(); onToggleStep(client.id, "boxDelivered", true); }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 5,
+                    padding: "7px 12px", borderRadius: 8,
+                    background: C.navy, border: "none",
+                    fontSize: 12, fontWeight: 700, color: "#FFFFFF", cursor: "pointer",
+                    flexShrink: 0,
                   }}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-gray-900 hover:bg-gray-700 active:scale-95 text-white text-xs font-medium rounded-lg transition-all"
                 >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <CheckCircle2 style={{ width: 13, height: 13 }} />
                   Entregue
                 </button>
               </div>
@@ -425,23 +454,18 @@ export default function WorkflowPage() {
   const [showReports, setShowReports] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"projetos" | "entregas">("projetos");
 
-  const workflowClients = useMemo(() => {
-    return clients.filter(c => {
-      // Finalizado sempre aparece
-      if (c.status === "projeto_finalizado") return true;
-      // Apenas clientes com contrato fechado entram no fluxo
-      // (inclui eventos futuros — aparecem na coluna Evento/Ensaio)
-      return c.status === "fechado";
-    });
-  }, [clients]);
+  const workflowClients = useMemo(() =>
+    clients.filter(c => c.status === "projeto_finalizado" || c.status === "fechado"),
+    [clients]
+  );
 
   const years = useMemo(() => {
     const ys = new Set(workflowClients.map(c => parseDate(c.weddingDate)?.getFullYear()).filter(Boolean));
     return Array.from(ys).sort() as number[];
   }, [workflowClients]);
 
-  // Contagem por etapa para mostrar quantos projetos estão em cada uma
   const stageCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     workflowClients.forEach(c => {
@@ -453,7 +477,7 @@ export default function WorkflowPage() {
 
   const filtered = useMemo(() => {
     let list = workflowClients;
-    if (filterStatus === "active") list = list.filter(c => isInProgress(c));
+    if (filterStatus === "active")   list = list.filter(c => isInProgress(c));
     if (filterStatus === "finished") list = list.filter(c => isDelivered(c));
     if (filterStatus === "awaiting") list = list.filter(c => isAwaiting(c));
     if (filterStage !== "all") list = list.filter(c => getCurrentStageKey(c) === filterStage);
@@ -472,12 +496,12 @@ export default function WorkflowPage() {
   }, [workflowClients, filterStatus, filterStage, filterMonth, filterYear, searchTerm]);
 
   const stats = useMemo(() => ({
-    ativos: workflowClients.filter(c => isInProgress(c)).length,
-    aguardando: workflowClients.filter(c => isAwaiting(c)).length,
-    entregaFisicaPendente: workflowClients.filter(c => c.linkSent && !c.boxDelivered && !c.semEntregaFisica).length,
-    linkEnviado: workflowClients.filter(c => c.linkSent).length,
-    finalizados: workflowClients.filter(c => isDelivered(c)).length,
-    atrasados: workflowClients.filter(c => isInProgress(c) && !c.linkSent && daysSince(c.weddingDate) > 60).length,
+    ativos:               workflowClients.filter(c => isInProgress(c)).length,
+    aguardando:           workflowClients.filter(c => isAwaiting(c)).length,
+    entregaFisicaPendente:workflowClients.filter(c => c.linkSent && !c.boxDelivered && !c.semEntregaFisica).length,
+    linkEnviado:          workflowClients.filter(c => c.linkSent).length,
+    finalizados:          workflowClients.filter(c => isDelivered(c)).length,
+    atrasados:            workflowClients.filter(c => isInProgress(c) && !c.linkSent && daysSince(c.weddingDate) > 60).length,
   }), [workflowClients]);
 
   const handleToggleStep = async (clientId: string, field: string, value: boolean) => {
@@ -495,40 +519,67 @@ export default function WorkflowPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-64">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 256 }}>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
       </Layout>
     );
   }
 
+  const statCards = [
+    { label: "Em Andamento",      value: stats.ativos,                accent: C.navy,    accentBg: C.navyBg },
+    { label: "Aguardando Evento", value: stats.aguardando,            accent: "#2563EB", accentBg: "#EFF6FF" },
+    { label: "Entrega Pendente",  value: stats.entregaFisicaPendente, accent: stats.entregaFisicaPendente > 0 ? "#D97706" : C.gray, accentBg: stats.entregaFisicaPendente > 0 ? "#FEF3C7" : C.grayBg },
+    { label: "Atrasados",         value: stats.atrasados,             accent: stats.atrasados > 0 ? C.danger : C.gray, accentBg: stats.atrasados > 0 ? C.dangerBg : C.grayBg },
+    { label: "Finalizados",       value: stats.finalizados,           accent: C.success, accentBg: C.successBg },
+  ];
+
+  const filterStatusOptions = [
+    { key: "all",      label: "Todos" },
+    { key: "active",   label: "Em andamento", count: stats.ativos },
+    { key: "awaiting", label: "Aguardando",   count: stats.aguardando },
+    { key: "finished", label: "Finalizados" },
+  ] as const;
+
   return (
     <Layout>
-      <div className="container mx-auto p-6 space-y-6">
+      <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 20 }}>
 
-        <div className="flex items-center justify-between">
+        {/* Page header */}
+        <div style={{ ...CARD, padding: "18px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" as const, gap: 12 }}>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Fluxo de Trabalho</h1>
-            <p className="text-gray-500 text-sm mt-0.5">Acompanhe cada projeto do evento até a entrega</p>
+            <h1 style={{ fontSize: 20, fontWeight: 700, color: C.text, margin: 0 }}>Fluxo de Trabalho</h1>
+            <p style={{ fontSize: 12, color: C.textSub, marginTop: 3 }}>Acompanhe cada projeto do evento até a entrega</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div style={{ display: "flex", gap: 8 }}>
             <button
               onClick={() => setShowReports(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "8px 14px", borderRadius: 8,
+                border: `1px solid ${C.divider}`, background: C.itemBg,
+                fontSize: 12, fontWeight: 600, color: C.text, cursor: "pointer",
+              }}
             >
-              <FileText className="h-4 w-4" />
+              <FileText style={{ width: 13, height: 13 }} />
               Relatórios
             </button>
             <button
               onClick={() => setShowQuickForm(prev => !prev)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "8px 16px", borderRadius: 8,
+                border: "none", background: C.navy,
+                fontSize: 12, fontWeight: 700, color: "#FFFFFF", cursor: "pointer",
+              }}
             >
-              <Plus className="h-4 w-4" />
+              <Plus style={{ width: 13, height: 13 }} />
               Novo Projeto
             </button>
           </div>
         </div>
 
+        {/* Quick form */}
         {showQuickForm && (
           <QuickProjectForm
             onSubmit={() => setShowQuickForm(false)}
@@ -536,142 +587,163 @@ export default function WorkflowPage() {
           />
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          {[
-            { label: "Em Andamento", value: stats.ativos, color: "text-blue-600" },
-            { label: "Aguardando Evento", value: stats.aguardando, color: "text-sky-500" },
-            { label: "Entrega Pendente", value: stats.entregaFisicaPendente, color: stats.entregaFisicaPendente > 0 ? "text-orange-600" : "text-gray-400" },
-            { label: "Atrasados", value: stats.atrasados, color: stats.atrasados > 0 ? "text-red-600" : "text-gray-400" },
-            { label: "Finalizados", value: stats.finalizados, color: "text-purple-600" },
-          ].map(s => (
-            <div key={s.label} className="bg-white border rounded-xl p-4">
-              <p className="text-xs text-gray-500">{s.label}</p>
-              <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+        {/* Stat cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0,1fr))", gap: 12 }}>
+          {statCards.map(s => (
+            <div key={s.label} style={{ ...CARD, borderTop: `3px solid ${s.accent}`, padding: "14px 16px" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: C.textSub, marginBottom: 6 }}>
+                {s.label}
+              </div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: s.accent, lineHeight: 1 }}>
+                {s.value}
+              </div>
             </div>
           ))}
         </div>
 
-        <Tabs defaultValue="projetos">
-          <TabsList>
-            <TabsTrigger value="projetos">Todos os Projetos</TabsTrigger>
-            <TabsTrigger value="entregas" className="relative">
-              Fila de Entregas
-              {stats.entregaFisicaPendente > 0 && (
-                <span className="ml-1.5 bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5">
-                  {stats.entregaFisicaPendente}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
+        {/* Tabs */}
+        <div>
+          {/* Tab buttons */}
+          <div style={{ display: "flex", gap: 0, borderBottom: `2px solid ${C.divider}`, marginBottom: 16 }}>
+            {(["projetos", "entregas"] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  padding: "10px 20px", border: "none", background: "none",
+                  fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  color: activeTab === tab ? C.navy : C.textSub,
+                  borderBottom: activeTab === tab ? `2px solid ${C.navy}` : "2px solid transparent",
+                  marginBottom: -2,
+                  display: "flex", alignItems: "center", gap: 6,
+                }}
+              >
+                {tab === "projetos" ? "Todos os Projetos" : "Fila de Entregas"}
+                {tab === "entregas" && stats.entregaFisicaPendente > 0 && (
+                  <span style={{
+                    background: "#D97706", color: "#FFFFFF",
+                    fontSize: 9, fontWeight: 700, borderRadius: 999, padding: "1px 5px",
+                  }}>
+                    {stats.entregaFisicaPendente}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
 
           {/* Tab: Projetos */}
-          <TabsContent value="projetos" className="space-y-4 mt-4">
-            {/* Filtros */}
-            <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
-              {/* Pesquisa */}
-              <div className="relative flex-1 min-w-48">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  placeholder="Buscar nome, casal, local..."
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
-                />
-              </div>
+          {activeTab === "projetos" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {/* Filter bar */}
+              <div style={{ ...CARD, padding: "14px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const, alignItems: "center" }}>
+                  {/* Search */}
+                  <div style={{ position: "relative" as const, flex: 1, minWidth: 180 }}>
+                    <Search style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 13, height: 13, color: C.textSub }} />
+                    <input
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      placeholder="Buscar nome, casal, local..."
+                      style={{
+                        width: "100%", boxSizing: "border-box" as const,
+                        padding: "7px 12px 7px 30px",
+                        border: `1.5px solid ${C.border}`, borderRadius: 8,
+                        background: C.itemBg, fontSize: 12, color: C.text, outline: "none",
+                      }}
+                    />
+                  </div>
 
-              {/* Status */}
-              <div className="flex gap-1.5 flex-wrap">
-                {([
-                  { key: "all",      label: "Todos" },
-                  { key: "active",   label: "Em andamento" },
-                  { key: "awaiting", label: "Aguardando" },
-                  { key: "finished", label: "Finalizados" },
-                ] as const).map(f => (
-                  <button
-                    key={f.key}
-                    onClick={() => setFilterStatus(f.key)}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
-                      filterStatus === f.key
-                        ? "bg-gray-900 text-white border-gray-900"
-                        : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                    }`}
+                  {/* Status pills */}
+                  <div style={{ display: "flex", gap: 5, flexWrap: "wrap" as const }}>
+                    {filterStatusOptions.map(f => (
+                      <button
+                        key={f.key}
+                        onClick={() => setFilterStatus(f.key)}
+                        style={{
+                          display: "inline-flex", alignItems: "center", gap: 4,
+                          padding: "6px 10px", borderRadius: 8,
+                          fontSize: 11, fontWeight: 600, cursor: "pointer",
+                          border: filterStatus === f.key ? `1px solid ${C.navy}` : `1px solid ${C.divider}`,
+                          background: filterStatus === f.key ? C.navyBg : C.itemBg,
+                          color: filterStatus === f.key ? C.navy : C.textSub,
+                        }}
+                      >
+                        {f.label}
+                        {"count" in f && f.count > 0 && (
+                          <span style={{ background: C.navy, color: "#FFFFFF", fontSize: 9, borderRadius: 999, padding: "1px 5px" }}>
+                            {f.count}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Year */}
+                  <select
+                    value={filterYear}
+                    onChange={e => setFilterYear(e.target.value === "all" ? "all" : Number(e.target.value))}
+                    style={{ padding: "7px 10px", border: `1.5px solid ${C.border}`, borderRadius: 8, background: C.itemBg, fontSize: 12, color: C.text, outline: "none" }}
                   >
-                    {f.label}
-                    {f.key === "active" && stats.ativos > 0 && (
-                      <span className="ml-1.5 bg-blue-500 text-white text-xs rounded-full px-1.5 py-0">{stats.ativos}</span>
-                    )}
-                    {f.key === "awaiting" && stats.aguardando > 0 && (
-                      <span className="ml-1.5 bg-sky-400 text-white text-xs rounded-full px-1.5 py-0">{stats.aguardando}</span>
-                    )}
-                  </button>
-                ))}
+                    <option value="all">Todos os anos</option>
+                    {years.map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+
+                  {/* Month */}
+                  <select
+                    value={filterMonth}
+                    onChange={e => setFilterMonth(e.target.value === "all" ? "all" : Number(e.target.value))}
+                    style={{ padding: "7px 10px", border: `1.5px solid ${C.border}`, borderRadius: 8, background: C.itemBg, fontSize: 12, color: C.text, outline: "none" }}
+                  >
+                    <option value="all">Todos os meses</option>
+                    {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                  </select>
+
+                  {/* Stage */}
+                  <select
+                    value={filterStage}
+                    onChange={e => setFilterStage(e.target.value)}
+                    style={{ padding: "7px 10px", border: `1.5px solid ${C.border}`, borderRadius: 8, background: C.itemBg, fontSize: 12, color: C.text, outline: "none" }}
+                  >
+                    <option value="all">Todas as etapas</option>
+                    {ALL_STAGE_OPTIONS.map(opt => (
+                      <option key={opt.key} value={opt.key}>
+                        {opt.label} ({stageCounts[opt.key] ?? 0})
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              {/* Ano */}
-              <select
-                value={filterYear}
-                onChange={e => setFilterYear(e.target.value === "all" ? "all" : Number(e.target.value))}
-                className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
-              >
-                <option value="all">Todos os anos</option>
-                {years.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-
-              {/* Mês */}
-              <select
-                value={filterMonth}
-                onChange={e => setFilterMonth(e.target.value === "all" ? "all" : Number(e.target.value))}
-                className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
-              >
-                <option value="all">Todos os meses</option>
-                {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
-              </select>
-
-              {/* Etapa */}
-              <select
-                value={filterStage}
-                onChange={e => setFilterStage(e.target.value)}
-                className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-200"
-              >
-                <option value="all">Todas as etapas</option>
-                {ALL_STAGE_OPTIONS.map(opt => (
-                  <option key={opt.key} value={opt.key}>
-                    {opt.label} ({stageCounts[opt.key] ?? 0})
-                  </option>
-                ))}
-              </select>
+              {/* Project grid */}
+              {filtered.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "60px 0", color: C.textSub }}>
+                  <Camera style={{ width: 48, height: 48, margin: "0 auto 12px", opacity: 0.25 }} />
+                  <div style={{ fontSize: 14 }}>Nenhum projeto encontrado</div>
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
+                  {filtered.map(client => (
+                    <ProjectCard
+                      key={client.id}
+                      client={client}
+                      onToggleStep={handleToggleStep}
+                      onClick={() => { setSelectedClient(client); setIsDetailDialogOpen(true); }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-
-            {filtered.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground">
-                <Camera className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p>Nenhum projeto encontrado</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filtered.map(client => (
-                  <ProjectCard
-                    key={client.id}
-                    client={client}
-                    onToggleStep={handleToggleStep}
-                    onClick={() => { setSelectedClient(client); setIsDetailDialogOpen(true); }}
-                  />
-                ))}
-              </div>
-            )}
-          </TabsContent>
+          )}
 
           {/* Tab: Fila de Entregas */}
-          <TabsContent value="entregas" className="mt-4">
+          {activeTab === "entregas" && (
             <DeliveryQueue
               clients={workflowClients}
               onToggleStep={handleToggleStep}
               onNavigate={id => navigate(`/clients/${id}`)}
             />
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
 
       <ProjectDetailDialog

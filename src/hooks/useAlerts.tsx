@@ -4,9 +4,18 @@ import { stringToDate } from "@/utils/dates";
 import { differenceInDays, isBefore, isAfter, startOfDay, addDays } from "date-fns";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { isFullyPaid } from "@/utils/clientUtils";
+import { fetchCompanySettings } from "@/utils/supabase/settings";
+import { useState, useEffect } from "react";
 
 export function useAlerts(clients: Client[] = []) {
   const { events } = useCalendarEvents();
+  const [preWeddingReminderDays, setPreWeddingReminderDays] = useState(90);
+
+  useEffect(() => {
+    fetchCompanySettings().then(s => {
+      if (s?.pre_wedding_reminder_days) setPreWeddingReminderDays(s.pre_wedding_reminder_days);
+    }).catch(() => {});
+  }, []);
   
   const alerts = useMemo(() => {
     const now = new Date();
@@ -374,7 +383,7 @@ export function useAlerts(clients: Client[] = []) {
         // Timeframe: Wedding within 120 days OR no date defined
         const weddingDate = client.weddingDate ? stringToDate(client.weddingDate) : null;
         const daysUntilWedding = weddingDate ? differenceInDays(weddingDate, now) : null;
-        const isWithinTimeframe = daysUntilWedding === null || daysUntilWedding <= 120;
+        const isWithinTimeframe = daysUntilWedding === null || daysUntilWedding <= preWeddingReminderDays;
         
         return needsPreWedding && notScheduled && hasConfirmedStatus && isWithinTimeframe;
       })
@@ -424,7 +433,7 @@ export function useAlerts(clients: Client[] = []) {
       payments: allPaymentAlerts as AlertItem[],
       preWedding: preWeddingAlerts as AlertItem[]
     };
-  }, [clients, events]);
+  }, [clients, events, preWeddingReminderDays]);
 
   return alerts;
 }

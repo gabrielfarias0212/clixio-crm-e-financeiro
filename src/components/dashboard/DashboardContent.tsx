@@ -172,7 +172,7 @@ export function DashboardContent() {
     pipelineClients.reduce((s, c) => s + (c.contractValue || 0), 0),
     [pipelineClients]);
 
-  const totalAlerts = alerts.editTasks.length + alerts.deliverTasks.length + alerts.payments.length;
+  const totalAlerts = alerts.editTasks.length + alerts.deliverTasks.length + alerts.payments.length + alerts.preWedding.length;
 
   // Receita % do total contratado
   const totalContratado = receitaConfirmada + aReceber;
@@ -313,6 +313,7 @@ export function DashboardContent() {
               { label: "Pagamentos", count: alerts.payments.length, color: "#E05252" },
               { label: "Edições",    count: alerts.editTasks.length, color: "#E8A838" },
               { label: "Entregas",   count: alerts.deliverTasks.length, color: "#1E3A5F" },
+              { label: "Pré-Wedding", count: alerts.preWedding.length, color: "#7C3AED" },
             ].map(({ label, count, color }) => (
               <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11 }}>
                 <span style={{ color: "#9A9590" }}>{label}</span>
@@ -512,6 +513,24 @@ export function DashboardContent() {
               </>
             )}
 
+            {alerts.preWedding.length > 0 && (
+              <>
+                <div style={{ ...MINI_TITLE, marginBottom: 6, marginTop: (alerts.payments.length > 0 || alerts.editTasks.length > 0 || alerts.deliverTasks.length > 0) ? 10 : 0 }}>Pré-Wedding</div>
+                {alerts.preWedding.slice(0, 3).map((a, i) => (
+                  <div
+                    key={i}
+                    onClick={() => a.client && navigate(`/clients/${a.client.id}`)}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 8px", borderRadius: 8, background: "#FAFAF8", marginBottom: 4, cursor: "pointer" }}
+                  >
+                    <AlertDot color="#7C3AED" />
+                    <div style={{ flex: 1, fontSize: 11, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#3a3530" }}>
+                      {a.client?.name || "—"}
+                    </div>
+                    <Badge label="agendar" bg="#F3EFFB" color="#7C3AED" />
+                  </div>
+                ))}
+              </>
+            )}
             {alerts.deliverTasks.length > 0 && (
               <>
                 <div style={{ ...MINI_TITLE, marginBottom: 6, marginTop: (alerts.payments.length > 0 || alerts.editTasks.length > 0) ? 10 : 0 }}>Entregas</div>

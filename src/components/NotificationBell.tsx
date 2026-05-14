@@ -80,6 +80,7 @@ function TaskItem({ text, completed, onToggle }: {
 export function NotificationBell() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
   const [reminderDays, setReminderDays] = useState(90);
   const ref = useRef<HTMLDivElement>(null);
   const { clients } = useClients();
@@ -160,8 +161,8 @@ export function NotificationBell() {
         {/* Painel */}
         {open && (
           <div style={{
-            position: "fixed", top: 0, left: 56, bottom: 0,
-            width: 320, background: "white",
+            position: "fixed", top: isMobile ? 56 : 0, left: isMobile ? 0 : 56, right: isMobile ? 0 : "auto", bottom: isMobile ? "auto" : 0,
+            width: isMobile ? "100%" : 320, maxHeight: isMobile ? "75vh" : "100vh", overflowY: isMobile ? "auto" : "visible", background: "white",
             borderRight: "1px solid #E5E7EB",
             boxShadow: "4px 0 20px rgba(0,0,0,.08)",
             zIndex: 200, display: "flex", flexDirection: "column",

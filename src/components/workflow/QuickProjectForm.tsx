@@ -136,6 +136,7 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
         hasPreWedding: false,
         storageLocation: data.storageLocation || "",
         workflowStage: "evento_ensaio" as const,
+        nextAction: "nenhuma" as NextAction,
       };
 
       await addClient(clientData);

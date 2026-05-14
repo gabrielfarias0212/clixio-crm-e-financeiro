@@ -527,8 +527,6 @@ export default function WorkflowPage() {
     );
   }
 
-  const isMobile = useIsMobile();
-
   const statCards = [
     { label: "Em Andamento",      value: stats.ativos,                accent: C.navy,    accentBg: C.navyBg },
     { label: "Aguardando Evento", value: stats.aguardando,            accent: "#2563EB", accentBg: "#EFF6FF" },

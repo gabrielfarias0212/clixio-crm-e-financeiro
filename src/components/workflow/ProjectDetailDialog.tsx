@@ -386,7 +386,7 @@ export function ProjectDetailDialog({ client, isOpen, onClose }: ProjectDetailDi
           <Separator />
 
           {/* Link para detalhes */}
-          <Link to={`/clientes/${localClient.id}`} onClick={onClose}>
+          <Link to={`/clients/${localClient.id}`} onClick={onClose}>
             <Button variant="outline" className="w-full">
               <ExternalLink className="h-4 w-4 mr-2" />
               Ver Página Completa do Cliente

@@ -1,6 +1,6 @@
 
 import * as z from "zod";
-import { Client } from "@/utils/types";
+import { Client, NextAction } from "@/utils/types";
 import { isLeadStage } from "./quickLeadTypes";
 
 // Dynamic schema based on client status

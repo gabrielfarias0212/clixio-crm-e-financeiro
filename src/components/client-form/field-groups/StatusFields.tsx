@@ -47,20 +47,6 @@ export function StatusFields({ control }: StatusFieldsProps) {
           </FormItem>
         )}
       />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="responder">Responder</SelectItem>
-                <SelectItem value="enviar proposta">Enviar proposta</SelectItem>
-                <SelectItem value="editar">Editar</SelectItem>
-                <SelectItem value="entregar">Entregar</SelectItem>
-                <SelectItem value="nenhuma">Nenhuma</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
     </>
   );
 }

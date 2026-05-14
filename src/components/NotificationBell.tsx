@@ -6,6 +6,7 @@ import { useClients } from "@/contexts/ClientsContext";
 import { fetchCompanySettings } from "@/utils/supabase/settings";
 import { differenceInDays } from "date-fns";
 import { stringToDate } from "@/utils/dates";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 function fmtCurrency(v: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);

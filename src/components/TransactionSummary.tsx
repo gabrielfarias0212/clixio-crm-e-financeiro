@@ -20,6 +20,7 @@ const C = {
   dangerBg:  "#FEE8E8",
   amber:     "#E8A838",
   amberBg:   "#FEF3DC",
+  gray:      "#9A9590",
 };
 
 const fmt = (v: number) =>

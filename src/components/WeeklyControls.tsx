@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight, Calendar, TrendingUp } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { PeriodType, WeekInfo } from "@/hooks/useWeeklyFilter";
 
 const C = {
@@ -28,12 +29,13 @@ export function WeeklyControls({
   onNextWeek,
   onCurrentWeek,
 }: WeeklyControlsProps) {
+  const isMobile = useIsMobile();
   return (
     <div style={{
       background: "#FFFFFF",
       borderRadius: 14,
       boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
-      padding: "12px 18px",
+      padding: isMobile ? "10px 12px" : "12px 18px",
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",

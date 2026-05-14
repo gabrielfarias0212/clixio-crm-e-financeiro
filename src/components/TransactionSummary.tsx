@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Transaction } from "@/utils/types";
 import { ArrowDownCircle, ArrowUpCircle, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { isTransactionInWeek, WeekInfo } from "@/utils/dates/weekUtils";
@@ -43,6 +44,7 @@ export function TransactionSummary({
   currentWeek,
   onWeeklyBalanceChange,
 }: TransactionSummaryProps) {
+  const isMobile = useIsMobile();
   const [goals, setGoals] = useState<CompanySettings | null>(null);
   const [summary, setSummary] = useState({
     totalIncome: 0, totalExpenses: 0, balance: 0,
@@ -144,14 +146,14 @@ export function TransactionSummary({
         background: "#FFFFFF",
         borderRadius: 14,
         boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
-        padding: "18px 20px",
+        padding: isMobile ? "14px 12px" : "18px 20px",
         display: "flex",
         flexDirection: "column",
         gap: 16,
       }}
     >
       {/* KPI grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, minmax(0,1fr))", gap: isMobile ? 8 : 12 }}>
         {kpis.map(k => {
           const Icon = k.icon;
           return (
@@ -161,7 +163,7 @@ export function TransactionSummary({
                 background: C.itemBg,
                 borderRadius: 10,
                 borderTop: `3px solid ${k.accent}`,
-                padding: "12px 14px",
+                padding: isMobile ? "10px 10px" : "12px 14px",
                 display: "flex",
                 alignItems: "flex-start",
                 justifyContent: "space-between",
@@ -172,13 +174,14 @@ export function TransactionSummary({
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: C.textSub, marginBottom: 4 }}>
                   {k.label}
                 </div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: k.accent, lineHeight: 1.1, marginBottom: 3 }}>
+                <div style={{ fontSize: isMobile ? 15 : 20, fontWeight: 800, color: k.accent, lineHeight: 1.1, marginBottom: 3 }}>
                   {k.value}
                 </div>
                 <div style={{ fontSize: 11, color: C.textSub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
                   {k.sub}
                 </div>
               </div>
+              {!isMobile && (
               <div style={{
                 width: 32, height: 32, borderRadius: "50%",
                 background: k.accentBg,
@@ -187,6 +190,7 @@ export function TransactionSummary({
               }}>
                 <Icon style={{ width: 15, height: 15, color: k.accent }} />
               </div>
+              )}
             </div>
           );
         })}

@@ -167,7 +167,6 @@ export function NotificationBell() {
             borderRight: "1px solid #E5E7EB",
             boxShadow: "4px 0 20px rgba(0,0,0,.08)",
             zIndex: 200, display: "flex", flexDirection: "column",
-            overflowY: "auto",
           }}>
             {/* Header */}
             <div style={{

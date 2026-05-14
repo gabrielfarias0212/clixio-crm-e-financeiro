@@ -4,6 +4,7 @@ import { BarChart, CalendarDays, Users, DollarSign, Workflow, GitBranch, Menu, X
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { UserMenu } from "./UserMenu";
+import { NotificationBell } from "./NotificationBell";
 import {
   Tooltip,
   TooltipContent,
@@ -52,6 +53,7 @@ export function Navbar() {
             />
           </Link>
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <UserMenu />
             <button
               onClick={() => setOpen(!open)}
@@ -120,8 +122,9 @@ export function Navbar() {
           </Tooltip>
         ))}
 
-        {/* UserMenu no rodapé */}
-        <div className="mt-auto">
+        {/* Notificações + UserMenu no rodapé */}
+        <div className="mt-auto flex flex-col items-center gap-1">
+          <NotificationBell />
           <UserMenu />
         </div>
       </aside>

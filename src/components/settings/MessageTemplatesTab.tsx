@@ -67,7 +67,7 @@ export function MessageTemplatesTab() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const [form, setForm] = useState<{ title: string; stage: TemplateFunnelStage; body: string }>({
-    title: "", stage: "geral", body: ""
+    title: "", stage: "primeiro_contato", body: ""
   });
   const [saving, setSaving] = useState(false);
 

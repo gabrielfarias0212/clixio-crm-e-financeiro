@@ -1,4 +1,4 @@
-import { formatDate } from '@/utils/dates';
+// formatDate defined locally below
 import * as XLSX from 'xlsx';
 import { Client, ClientStatus } from '@/utils/types';
 import { format } from 'date-fns';

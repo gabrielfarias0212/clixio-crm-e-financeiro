@@ -33,7 +33,7 @@ export async function fetchMessageTemplates(): Promise<MessageTemplate[]> {
     .order("stage")
     .order("title");
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as MessageTemplate[];
 }
 
 export async function addMessageTemplate(
@@ -47,7 +47,7 @@ export async function addMessageTemplate(
     .select()
     .single();
   if (error) throw error;
-  return data;
+  return data as MessageTemplate;
 }
 
 export async function updateMessageTemplate(

@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, X, Link2, HardDrive } from "lucide-react";
-import { EventCategory, Client } from "@/utils/types";
+import { CategorySelect } from "@/components/ui/CategorySelect";
+import { EventCategory, Client, NextAction } from "@/utils/types";
 import { useClients } from "@/contexts/ClientsContext";
 import { toast } from "sonner";
 
@@ -135,6 +136,7 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
         hasPreWedding: false,
         storageLocation: data.storageLocation || "",
         workflowStage: "evento_ensaio" as const,
+        nextAction: "nenhuma" as NextAction,
       };
 
       await addClient(clientData);

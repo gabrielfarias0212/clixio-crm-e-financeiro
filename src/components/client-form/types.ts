@@ -100,4 +100,6 @@ export interface ClientFormValues {
   hasPreWedding: boolean;
   notes: string;
   leadSource?: string;
+  nextAction?: NextAction;
+  packageId?: string | null;
 }

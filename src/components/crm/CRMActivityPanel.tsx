@@ -10,7 +10,7 @@ import {
   fetchFollowups, addFollowup, completeFollowup, deleteFollowup,
 } from "@/utils/supabase/crm-activities";
 
-const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+const ICONS: Record<string, React.ComponentType<any>> = {
   MessageCircle, Phone, Mail, Users, FileText,
 };
 

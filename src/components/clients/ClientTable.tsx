@@ -87,7 +87,8 @@ export function ClientTable({ clients, sortBy, setSortBy, sortOrder, setSortOrde
       boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
       overflow: "hidden",
     }}>
-      <table style={{ width: "100%", borderCollapse: "collapse" as const }}>
+      <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
+      <table style={{ width: "100%", minWidth: 600, borderCollapse: "collapse" as const }}>
         <thead>
           <tr style={{ background: C.itemBg, borderBottom: `1px solid ${C.divider}` }}>
             <th style={{ padding: "12px 16px", textAlign: "left" as const }}>{thBtn("name", "Nome")}</th>
@@ -192,6 +193,7 @@ export function ClientTable({ clients, sortBy, setSortBy, sortOrder, setSortOrde
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

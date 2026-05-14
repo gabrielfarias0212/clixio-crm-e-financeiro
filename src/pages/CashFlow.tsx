@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, Suspense } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
@@ -41,6 +42,7 @@ type TabKey = "transactions" | "projections" | "fixed-expenses";
 
 export default function CashFlow() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
+  const isMobile = useIsMobile();
   const { clients, refreshClients } = useClients();
   const { transactions, addTransaction, updateTransaction, deleteTransaction, refreshTransactions } = useTransactions();
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
@@ -118,15 +120,15 @@ export default function CashFlow() {
     refreshTransactions();
   };
 
-  const tabs: { key: TabKey; label: string; icon?: typeof TrendingUp }[] = [
-    { key: "transactions",    label: "Transações" },
-    { key: "projections",     label: "Projeções & Pró-Labore", icon: TrendingUp },
-    { key: "fixed-expenses",  label: "Despesas Fixas",         icon: Calendar },
+  const tabs: { key: TabKey; label: string; labelMobile: string; icon?: typeof TrendingUp }[] = [
+    { key: "transactions",    label: "Transações",             labelMobile: "Transações" },
+    { key: "projections",     label: "Projeções & Pró-Labore", labelMobile: "Projeções", icon: TrendingUp },
+    { key: "fixed-expenses",  label: "Despesas Fixas",         labelMobile: "Desp. Fixas", icon: Calendar },
   ];
 
   return (
     <Layout>
-      <div style={{ maxWidth: 1024, margin: "0 auto", padding: "24px 16px", display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ maxWidth: 1024, margin: "0 auto", padding: isMobile ? "14px 10px" : "24px 16px", display: "flex", flexDirection: "column", gap: 20 }}>
 
         {/* Page header */}
         <div style={{ ...CARD, padding: "18px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" as const, gap: 12 }}>
@@ -188,7 +190,7 @@ export default function CashFlow() {
         {/* Tabs */}
         <div>
           {/* Tab bar */}
-          <div style={{ display: "flex", borderBottom: `2px solid ${C.divider}`, marginBottom: 18 }}>
+          <div style={{ display: "flex", borderBottom: `2px solid ${C.divider}`, marginBottom: 18, overflowX: "auto", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
             {tabs.map(tab => {
               const Icon = tab.icon;
               const active = activeTab === tab.key;
@@ -198,15 +200,15 @@ export default function CashFlow() {
                   onClick={() => setActiveTab(tab.key)}
                   style={{
                     display: "inline-flex", alignItems: "center", gap: 5,
-                    padding: "10px 18px", border: "none", background: "none",
-                    fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    padding: isMobile ? "8px 12px" : "10px 18px", border: "none", background: "none",
+                    fontSize: isMobile ? 12 : 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" as const,
                     color: active ? C.navy : C.textSub,
                     borderBottom: active ? `2px solid ${C.navy}` : "2px solid transparent",
                     marginBottom: -2,
                   }}
                 >
                   {Icon && <Icon style={{ width: 13, height: 13 }} />}
-                  {tab.label}
+                  {isMobile ? tab.labelMobile : tab.label}
                 </button>
               );
             })}

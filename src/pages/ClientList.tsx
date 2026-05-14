@@ -102,7 +102,7 @@ export default function ClientList() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 space-y-8">
+      <div className="container mx-auto px-3 py-4 md:px-4 md:py-8 space-y-8">
         <Suspense fallback={<div className="h-16 bg-gray-100 rounded animate-pulse" />}>
           <ClientHeader 
             clients={allClientsFromContext}

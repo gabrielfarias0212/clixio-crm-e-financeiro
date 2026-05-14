@@ -768,6 +768,33 @@ export type Database = {
           },
         ]
       }
+      dashboard_tasks: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          id: string
+          text: string
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          text: string
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          text?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       event_categories: {
         Row: {
           created_at: string | null
@@ -1690,10 +1717,8 @@ export type Database = {
           created_at: string | null
           curadoria_done: boolean | null
           curation_completed: boolean | null
-          days_in_stage: number | null
           down_payment: number | null
           edicao_base_done: boolean | null
-          edicao_final_done: boolean | null
           email: string | null
           event_category: string | null
           event_location: string | null
@@ -1728,7 +1753,6 @@ export type Database = {
           workflow_stage:
             | Database["public"]["Enums"]["workflow_stage_enum"]
             | null
-          workflow_updated_at: string | null
         }
         Insert: {
           album_approved_delivered?: boolean | null
@@ -1747,10 +1771,8 @@ export type Database = {
           created_at?: string | null
           curadoria_done?: boolean | null
           curation_completed?: boolean | null
-          days_in_stage?: number | null
           down_payment?: number | null
           edicao_base_done?: boolean | null
-          edicao_final_done?: boolean | null
           email?: string | null
           event_category?: string | null
           event_location?: string | null
@@ -1785,7 +1807,6 @@ export type Database = {
           workflow_stage?:
             | Database["public"]["Enums"]["workflow_stage_enum"]
             | null
-          workflow_updated_at?: string | null
         }
         Update: {
           album_approved_delivered?: boolean | null
@@ -1804,10 +1825,8 @@ export type Database = {
           created_at?: string | null
           curadoria_done?: boolean | null
           curation_completed?: boolean | null
-          days_in_stage?: number | null
           down_payment?: number | null
           edicao_base_done?: boolean | null
-          edicao_final_done?: boolean | null
           email?: string | null
           event_category?: string | null
           event_location?: string | null
@@ -1842,7 +1861,6 @@ export type Database = {
           workflow_stage?:
             | Database["public"]["Enums"]["workflow_stage_enum"]
             | null
-          workflow_updated_at?: string | null
         }
         Relationships: [
           {
@@ -1961,6 +1979,7 @@ export type Database = {
         Args: { client_id_param: string }
         Returns: string
       }
+      exec_sql: { Args: { query_text: string }; Returns: Json }
       generate_unique_token: { Args: never; Returns: string }
     }
     Enums: {

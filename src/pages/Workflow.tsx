@@ -456,6 +456,7 @@ export default function WorkflowPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"projetos" | "entregas">("projetos");
+  const isMobile = useIsMobile();
 
   const workflowClients = useMemo(() =>
     clients.filter(c => c.status === "projeto_finalizado" || c.status === "fechado"),

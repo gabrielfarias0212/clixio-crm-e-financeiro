@@ -2,7 +2,6 @@
 import { Client } from "@/utils/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "./StatusBadge";
-import { ActionChip } from "./ActionChip";
 import { CalendarIcon, DollarSign, MailIcon, PhoneIcon, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +12,7 @@ interface ClientCardProps {
 }
 
 export function ClientCard({ client, className, onClick }: ClientCardProps) {
-  const { name, coupleName, weddingDate, contractValue, status, nextAction, email, phone } = client;
+  const { name, coupleName, weddingDate, contractValue, status, workflowStage, email, phone } = client;
   
   const formattedValue = new Intl.NumberFormat('pt-BR', { 
     style: 'currency', 
@@ -63,7 +62,11 @@ export function ClientCard({ client, className, onClick }: ClientCardProps) {
               {isPotential ? `Potencial: ${formattedValue}` : formattedValue}
             </span>
           </div>
-          <ActionChip action={nextAction} />
+          {workflowStage && workflowStage !== 'projeto_finalizado' && (
+            <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 99, background: '#EEF2FF', color: '#4F46E5', fontWeight: 600 }}>
+              {({'evento_ensaio':'Evento','copia':'Cópia','backup':'Backup','curadoria':'Curadoria','edicao':'Edição','link_pronto':'Link Pronto','link_enviado':'Link Enviado','entrega_fisica':'Entrega','album_em_andamento':'Álbum'} as Record<string,string>)[workflowStage] ?? workflowStage}
+            </span>
+          )}
         </div>
         
         <div className="mt-4 pt-3 border-t border-gray-100 grid grid-cols-2 gap-2 text-xs text-gray-500">

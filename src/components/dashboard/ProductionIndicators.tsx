@@ -25,7 +25,7 @@ export function ProductionIndicators() {
       return d && isWithinInterval(d, { start: monthStart, end: monthEnd });
     });
 
-    const editing = clients.filter(c => c.nextAction === "editar").length;
+    const editing = clients.filter(c => c.workflowStage === "edicao").length;
     const delivered = clients.filter(c => c.status === "projeto_finalizado").length;
 
     let totalDays = 0;
@@ -57,7 +57,7 @@ export function ProductionIndicators() {
       },
       editing: {
         title: "Eventos em Edição",
-        list: clients.filter(c => c.nextAction === "editar"),
+        list: clients.filter(c => c.workflowStage === "edicao"),
         modal: "contracts",
       },
       delivered: {

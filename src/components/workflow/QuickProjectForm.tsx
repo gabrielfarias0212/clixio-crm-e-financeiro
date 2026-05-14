@@ -116,7 +116,6 @@ export function QuickProjectForm({ onSubmit, onCancel }: QuickProjectFormProps) 
         weddingEndTime: data.weddingEndTime || "",
         notes: data.notes || "",
         status: "fechado" as const,
-        nextAction: "editar" as const,
         contractValue: data.contractValue || 0,
         downPayment: 0,
         salesFunnelStage: "contrato_fechado" as const,

@@ -189,29 +189,21 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         break;
       case 'copia':
         updates.weddingPhotographed = true;
-        // Set nextAction to "editar" for workflow stages that require editing
-        updates.nextAction = "editar";
         break;
       case 'backup':
         updates.weddingPhotographed = true;
         updates.backupCompleted = true;
-        // Set nextAction to "editar" for workflow stages that require editing
-        updates.nextAction = "editar";
         break;
       case 'curadoria':
         updates.weddingPhotographed = true;
         updates.backupCompleted = true;
         updates.curationCompleted = true;
-        // Set nextAction to "editar" for workflow stages that require editing
-        updates.nextAction = "editar";
         break;
       case 'edicao':
         updates.weddingPhotographed = true;
         updates.backupCompleted = true;
         updates.curationCompleted = true;
         updates.inEditing = true;
-        // Set nextAction to "editar" for workflow stages that require editing
-        updates.nextAction = "editar";
         break;
       case 'link_pronto':
         updates.weddingPhotographed = true;
@@ -219,8 +211,6 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         updates.curationCompleted = true;
         updates.inEditing = true;
         updates.linkReady = true;
-        // Set nextAction to "entregar" for delivery stages
-        updates.nextAction = "entregar";
         break;
       case 'link_enviado':
         updates.weddingPhotographed = true;
@@ -229,8 +219,6 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         updates.inEditing = true;
         updates.linkReady = true;
         updates.linkSent = true;
-        // Set nextAction to "entregar" for delivery stages
-        updates.nextAction = "entregar";
         break;
       case 'entrega_fisica':
         updates.weddingPhotographed = true;
@@ -240,8 +228,6 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         updates.linkReady = true;
         updates.linkSent = true;
         updates.boxDelivered = true;
-        // Set nextAction to "entregar" for delivery stages
-        updates.nextAction = "entregar";
         break;
       case 'projeto_finalizado':
         updates.weddingPhotographed = true;
@@ -254,8 +240,6 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         if (!client.semEntregaFisica) updates.boxDelivered = true;
         updates.albumApprovedDelivered = true;
         updates.status = 'projeto_finalizado';
-        // Set nextAction to "nenhuma" when project is finalized
-        updates.nextAction = "nenhuma";
         break;
     }
 
@@ -263,8 +247,6 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
       clientId: client.id, 
       fromStage: client.workflowStage, 
       toStage: newStage,
-      currentNextAction: client.nextAction,
-      newNextAction: updates.nextAction,
       updates: Object.keys(updates).filter(key => updates[key as keyof Client] !== client[key as keyof Client])
     });
 
@@ -319,11 +301,9 @@ export function WorkflowKanban({ clients }: WorkflowKanbanProps) {
         console.log('Client updated successfully:', {
           clientId: updatedClient.id,
           newWorkflowStage: updatedClient.workflowStage,
-          newNextAction: updatedClient.nextAction,
           weddingPhotographed: updatedClient.weddingPhotographed,
           allWorkflowFields: {
             workflowStage: updatedClient.workflowStage,
-            nextAction: updatedClient.nextAction,
             weddingPhotographed: updatedClient.weddingPhotographed,
             backupCompleted: updatedClient.backupCompleted,
             curationCompleted: updatedClient.curationCompleted,

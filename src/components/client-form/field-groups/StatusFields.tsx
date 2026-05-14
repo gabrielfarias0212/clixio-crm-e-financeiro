@@ -47,17 +47,6 @@ export function StatusFields({ control }: StatusFieldsProps) {
           </FormItem>
         )}
       />
-
-      <FormField
-        control={control}
-        name="nextAction"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Próxima Ação</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a próxima ação" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>

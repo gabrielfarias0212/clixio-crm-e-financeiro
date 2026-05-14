@@ -11,9 +11,9 @@ export function useAlerts(clients: Client[] = []) {
   const alerts = useMemo(() => {
     const now = new Date();
     
-    // Edit tasks (clients with nextAction "editar")
+    // Edit tasks — clients in workflow stage 'edicao'
     const editTasks: AlertItem[] = clients
-      .filter(client => client.nextAction === "editar")
+      .filter(client => client.workflowStage === "edicao")
       .map(client => {
         let description = `Cliente: ${client.name}`;
         let urgency: "high" | "medium" | "low" = "medium";
@@ -47,7 +47,7 @@ export function useAlerts(clients: Client[] = []) {
         
         return {
           type: "task" as const,
-          title: `Ação pendente: ${client.nextAction}`,
+          title: `Edição pendente`,
           description,
           client,
           date: now,

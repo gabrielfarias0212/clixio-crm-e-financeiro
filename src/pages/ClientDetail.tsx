@@ -4,7 +4,6 @@ import Layout from "@/components/Layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ActionChip } from "@/components/ActionChip";
 import { DeliveredWorkIndicator } from "@/components/DeliveredWorkIndicator";
 import { ChevronLeft, Edit } from "lucide-react";
 import { useClients } from "@/contexts/ClientsContext";
@@ -95,7 +94,11 @@ export default function ClientDetail() {
         
         <div className="flex flex-wrap gap-2 mb-6">
           <StatusBadge status={client.status} />
-          <ActionChip action={client.nextAction} />
+          {client.workflowStage && client.workflowStage !== 'projeto_finalizado' && (
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: '#EEF2FF', color: '#4F46E5', fontWeight: 600 }}>
+                {({'evento_ensaio':'Evento','copia':'Cópia','backup':'Backup','curadoria':'Curadoria','edicao':'Edição','link_pronto':'Link Pronto','link_enviado':'Link Enviado','entrega_fisica':'Entrega','album_em_andamento':'Álbum'} as Record<string,string>)[client.workflowStage] ?? client.workflowStage}
+              </span>
+            )}
           <Badge variant="outline" className="border-gray-300">
             {client.eventCategory}
           </Badge>

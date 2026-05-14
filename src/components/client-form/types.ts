@@ -26,7 +26,6 @@ export const createFormSchema = (status?: string) => {
       contractValue: z.number().optional().default(0),
       downPayment: z.number().optional().default(0),
       status: z.string(),
-      nextAction: z.string(),
       eventCategory: z.string(),
       eventLocation: z.string().optional(),
       preWeddingDate: z.string().nullable(),
@@ -58,7 +57,6 @@ export const createFormSchema = (status?: string) => {
     contractValue: z.number(),
     downPayment: z.number(),
     status: z.string(),
-    nextAction: z.string(),
     eventCategory: z.string(),
     eventLocation: z.string().optional(),
     preWeddingDate: z.string().nullable(),
@@ -93,7 +91,6 @@ export interface ClientFormValues {
   contractValue: number;
   downPayment: number;
   status: string;
-  nextAction: string;
   eventCategory: string;
   eventLocation: string;
   preWeddingDate: string | null;

@@ -510,7 +510,6 @@ export default function WorkflowPage() {
     if (client && field === "boxDelivered" && value) {
       const albumOk = !client.hasAlbum || client.albumOrdered;
       if (albumOk) updates.status = "projeto_finalizado";
-      updates.nextAction = "nenhuma";
     }
     await updateClient(clientId, updates);
     toast.success("Etapa atualizada!");

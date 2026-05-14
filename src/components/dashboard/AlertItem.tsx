@@ -173,7 +173,7 @@ export function AlertItem({ alert, onStatusUpdate }: AlertItemProps) {
             )}
 
             {/* Ação rápida para marcar como entregue */}
-            {alert.type === "task" && alert.client.nextAction === "entregar" && (
+            {alert.type === "task" && (alert.client.workflowStage === "link_enviado" || alert.client.workflowStage === "entrega_fisica") && (
               <DeliverCompleteAction 
                 client={alert.client} 
                 onStatusUpdate={onStatusUpdate}

@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useForms } from "@/contexts/FormsContext";
 import { useClients } from "@/contexts/ClientsContext";
 import { FormTemplate, FormQuestion, FormInstance, FormQuestionType } from "@/utils/types";
-import { Plus, Trash2, Edit2, Copy, Send, ChevronDown, ChevronUp, GripVertical, Check, X, FileText, LayoutTemplate, Clock, CheckCircle2, Users } from "lucide-react";
+import { Plus, Trash2, Edit2, Copy, Send, ChevronDown, ChevronUp, X, FileText, LayoutTemplate, Clock, CheckCircle2 } from "lucide-react";
+import { ClientSearchSelect } from "@/components/forms/ClientSearchSelect";
+import { fetchResponseByInstance } from "@/utils/forms";
+import { FormResponse } from "@/utils/types";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -391,19 +395,11 @@ function SendFormModal({
             <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.textSub }}>
               Cliente *
             </label>
-            <select
+            <ClientSearchSelect
+              clients={clients}
               value={clientId}
-              onChange={e => setClientId(e.target.value)}
-              style={{
-                padding: "9px 12px", borderRadius: 8, border: `1px solid ${C.border}`,
-                background: C.itemBg, fontSize: 13, color: C.text, cursor: "pointer",
-              }}
-            >
-              <option value="">Selecione o cliente...</option>
-              {clients.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+              onChange={setClientId}
+            />
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -585,17 +581,34 @@ function InstanceRow({
   inst,
   clientName,
   onDelete,
+  onNavigateClient,
 }: {
   inst: FormInstance;
   clientName: string;
   onDelete: () => void;
+  onNavigateClient: () => void;
 }) {
   const { toast } = useToast();
+  const [expanded, setExpanded] = useState(false);
+  const [response, setResponse] = useState<FormResponse | null>(null);
+  const [loadingResp, setLoadingResp] = useState(false);
   const link = getFormLink(inst.token);
 
   const copyLink = () => {
     navigator.clipboard.writeText(link);
     toast({ title: "Link copiado!" });
+  };
+
+  const handleExpand = async () => {
+    if (!expanded && inst.status === "submitted" && !response) {
+      setLoadingResp(true);
+      try {
+        const resp = await fetchResponseByInstance(inst.id);
+        setResponse(resp);
+      } catch { /* noop */ }
+      finally { setLoadingResp(false); }
+    }
+    setExpanded(e => !e);
   };
 
   const statusColor = inst.status === "submitted" ? C.success : inst.status === "expired" ? C.danger : C.amber;
@@ -604,43 +617,134 @@ function InstanceRow({
 
   return (
     <div style={{
-      padding: "10px 14px", background: C.itemBg, borderRadius: 8,
-      border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+      background: "#FFFFFF", borderRadius: 10,
+      border: `1px solid ${C.border}`, overflow: "hidden",
     }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {inst.title}
-        </div>
-        <div style={{ fontSize: 11, color: C.textSub }}>
-          {clientName} · {format(new Date(inst.created_at), "dd/MM/yyyy", { locale: ptBR })}
-        </div>
-      </div>
-      <span style={{
-        fontSize: 10, fontWeight: 700, borderRadius: 999, padding: "2px 8px",
-        background: statusBg, color: statusColor,
+      {/* Main row */}
+      <div style={{
+        padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
       }}>
-        {statusLabel}
-      </span>
-      <button
-        onClick={copyLink}
-        style={{
-          display: "flex", alignItems: "center", gap: 4,
-          padding: "5px 10px", borderRadius: 6, border: `1px solid ${C.border}`,
-          background: "#FFFFFF", fontSize: 11, fontWeight: 600, color: C.text, cursor: "pointer",
-        }}
-      >
-        <Copy style={{ width: 11, height: 11 }} />
-        Copiar link
-      </button>
-      <button
-        onClick={onDelete}
-        style={{
-          width: 26, height: 26, borderRadius: 6, border: `1px solid #FECDCD`,
-          background: C.dangerBg, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-        }}
-      >
-        <Trash2 style={{ width: 10, height: 10, color: C.danger }} />
-      </button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {inst.title}
+          </div>
+          <div style={{ fontSize: 11, color: C.textSub }}>
+            {clientName} · {format(new Date(inst.created_at), "dd/MM/yyyy", { locale: ptBR })}
+          </div>
+        </div>
+        <span style={{
+          fontSize: 10, fontWeight: 700, borderRadius: 999, padding: "2px 8px",
+          background: statusBg, color: statusColor,
+        }}>
+          {statusLabel}
+        </span>
+        {inst.status !== "submitted" && (
+          <button
+            onClick={copyLink}
+            style={{
+              display: "flex", alignItems: "center", gap: 4,
+              padding: "5px 10px", borderRadius: 6, border: `1px solid ${C.border}`,
+              background: C.itemBg, fontSize: 11, fontWeight: 600, color: C.text, cursor: "pointer",
+            }}
+          >
+            <Copy style={{ width: 11, height: 11 }} />
+            Link
+          </button>
+        )}
+        {/* expand/collapse button — only relevant for submitted OR to show link */}
+        <button
+          onClick={handleExpand}
+          style={{
+            width: 28, height: 28, borderRadius: 6, border: `1px solid ${C.border}`,
+            background: C.itemBg, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+          }}
+        >
+          {expanded
+            ? <ChevronUp style={{ width: 12, height: 12, color: C.textSub }} />
+            : <ChevronDown style={{ width: 12, height: 12, color: C.textSub }} />}
+        </button>
+        <button
+          onClick={onDelete}
+          style={{
+            width: 28, height: 28, borderRadius: 6, border: `1px solid #FECDCD`,
+            background: C.dangerBg, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+          }}
+        >
+          <Trash2 style={{ width: 11, height: 11, color: C.danger }} />
+        </button>
+      </div>
+
+      {/* Expanded content */}
+      {expanded && (
+        <div style={{ borderTop: `1px solid ${C.divider}`, padding: "12px 14px", background: C.itemBg }}>
+          {inst.status === "submitted" ? (
+            <>
+              {loadingResp ? (
+                <div style={{ fontSize: 12, color: C.textSub }}>Carregando respostas...</div>
+              ) : response ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: C.textSub }}>
+                      Respostas
+                    </span>
+                    <button
+                      onClick={onNavigateClient}
+                      style={{
+                        fontSize: 11, fontWeight: 600, color: C.navy,
+                        background: "none", border: "none", cursor: "pointer", textDecoration: "underline",
+                      }}
+                    >
+                      Ver no cadastro do cliente →
+                    </button>
+                  </div>
+                  {inst.questions.map((q, i) => {
+                    const val = response.answers[q.id];
+                    const displayVal = val === undefined || val === null || val === ""
+                      ? "—"
+                      : typeof val === "boolean" ? (val ? "Sim" : "Não")
+                      : typeof val === "number" ? `${val} / 5`
+                      : String(val);
+                    return (
+                      <div key={q.id} style={{ padding: "8px 12px", borderRadius: 8, background: "#FFFFFF", border: `1px solid ${C.border}` }}>
+                        <div style={{ fontSize: 11, color: C.textSub, marginBottom: 2 }}>{i + 1}. {q.question}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{displayVal}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ fontSize: 12, color: C.textSub }}>Nenhuma resposta encontrada.</div>
+              )}
+            </>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: C.textSub }}>
+                Link do formulário
+              </div>
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <div style={{
+                  flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`,
+                  background: "#FFFFFF", fontSize: 11, color: C.textSub,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>
+                  {link}
+                </div>
+                <button
+                  onClick={copyLink}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 4,
+                    padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`,
+                    background: "#FFFFFF", fontSize: 11, fontWeight: 700, color: C.navy, cursor: "pointer",
+                  }}
+                >
+                  <Copy style={{ width: 11, height: 11 }} />
+                  Copiar
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -653,6 +757,7 @@ export default function FormsPage() {
   const { templates, instances, loading, addTemplate, editTemplate, removeTemplate, sendForm, removeInstance } = useForms();
   const { clients } = useClients();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [tab, setTab] = useState<Tab>("templates");
   const [builderOpen, setBuilderOpen] = useState(false);
@@ -809,6 +914,7 @@ export default function FormsPage() {
                   inst={inst}
                   clientName={clientMap[inst.client_id] ?? "Cliente"}
                   onDelete={() => removeInstance(inst.id)}
+                  onNavigateClient={() => navigate(`/clients/${inst.client_id}?tab=forms`)}
                 />
               ))
             )}

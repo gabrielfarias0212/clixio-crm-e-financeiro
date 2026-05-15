@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BarChart, CalendarDays, Users, DollarSign, Workflow, GitBranch, Menu, X, Settings2 } from "lucide-react";
+import { BarChart, CalendarDays, Users, DollarSign, Workflow, GitBranch, Menu, X, Settings2, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { UserMenu } from "./UserMenu";
-import { NotificationBell } from "./NotificationBell";
 import {
   Tooltip,
   TooltipContent,
@@ -18,8 +17,9 @@ const navItems = [
   { name: "CRM",               path: "/crm",      icon: Workflow },
   { name: "Fluxo de Trabalho", path: "/workflow", icon: GitBranch },
   { name: "Calendário",        path: "/calendar", icon: CalendarDays },
-  { name: "Financeiro",        path: "/cash-flow",icon: DollarSign },
-  { name: "Configurações",      path: "/settings", icon: Settings2 },
+  { name: "Financeiro",        path: "/cash-flow", icon: DollarSign },
+  { name: "Formulários",       path: "/forms",     icon: FileText },
+  { name: "Configurações",     path: "/settings",  icon: Settings2 },
 ];
 
 export function Navbar() {
@@ -53,7 +53,6 @@ export function Navbar() {
             />
           </Link>
           <div className="flex items-center gap-2">
-            <NotificationBell />
             <UserMenu />
             <button
               onClick={() => setOpen(!open)}
@@ -122,9 +121,8 @@ export function Navbar() {
           </Tooltip>
         ))}
 
-        {/* Notificações + UserMenu no rodapé */}
-        <div className="mt-auto flex flex-col items-center gap-1">
-          <NotificationBell />
+        {/* UserMenu no rodapé */}
+        <div className="mt-auto">
           <UserMenu />
         </div>
       </aside>

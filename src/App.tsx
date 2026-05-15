@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ClientsProvider } from "@/contexts/ClientsContext";
 import { TransactionsProvider } from "@/contexts/TransactionsContext";
+import { FormsProvider } from "@/contexts/FormsContext";
 import { AuthGuard } from "@/components/AuthGuard";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -26,6 +27,8 @@ import CRM from "./pages/CRM";
 import Workflow from "./pages/Workflow";
 import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
+import FormsPage from "./pages/Forms";
+import PublicFormPage from "./pages/PublicForm";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,31 +48,36 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            {/* Public route — no auth required */}
+            <Route path="/f/:token" element={<PublicFormPage />} />
             <Route
               path="/*"
               element={
                 <AuthGuard>
                   <ClientsProvider>
                     <TransactionsProvider>
-                      <Routes>
-                        <Route path="/" element={<Index />} />
-                        <Route path="/clients" element={<ClientList />} />
-                        <Route path="/clients/add" element={<AddClient />} />
-                        <Route path="/clients/:id/edit" element={<EditClient />} />
-                        <Route path="/clients/:id" element={<ClientDetail />} />
-                        <Route path="/clients/import" element={<ImportClients />} />
-                        <Route path="/crm" element={<CRM />} />
-                        <Route path="/workflow" element={<Workflow />} />
-                        <Route path="/cash-flow" element={<CashFlow />} />
-                        <Route path="/personal" element={<PersonalControl />} />
-                        <Route path="/calendar" element={<Calendar />} />
-                        <Route path="/budgets" element={<Budgets />} />
-                        <Route path="/budgets/create" element={<CreateBudget />} />
-                        <Route path="/budgets/:id/edit" element={<EditBudget />} />
-                        <Route path="/budgets/:id" element={<BudgetDetail />} />
-                        <Route path="/settings" element={<Settings />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
+                      <FormsProvider>
+                        <Routes>
+                          <Route path="/" element={<Index />} />
+                          <Route path="/clients" element={<ClientList />} />
+                          <Route path="/clients/add" element={<AddClient />} />
+                          <Route path="/clients/:id/edit" element={<EditClient />} />
+                          <Route path="/clients/:id" element={<ClientDetail />} />
+                          <Route path="/clients/import" element={<ImportClients />} />
+                          <Route path="/crm" element={<CRM />} />
+                          <Route path="/workflow" element={<Workflow />} />
+                          <Route path="/cash-flow" element={<CashFlow />} />
+                          <Route path="/personal" element={<PersonalControl />} />
+                          <Route path="/calendar" element={<Calendar />} />
+                          <Route path="/budgets" element={<Budgets />} />
+                          <Route path="/budgets/create" element={<CreateBudget />} />
+                          <Route path="/budgets/:id/edit" element={<EditBudget />} />
+                          <Route path="/budgets/:id" element={<BudgetDetail />} />
+                          <Route path="/forms" element={<FormsPage />} />
+                          <Route path="/settings" element={<Settings />} />
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </FormsProvider>
                     </TransactionsProvider>
                   </ClientsProvider>
                 </AuthGuard>

@@ -205,3 +205,53 @@ export interface ClientMessage {
   sent_at: string;
   created_at: string;
 }
+
+// ── Forms Feature ──────────────────────────────────────────────────────────────
+
+export type FormQuestionType = "text" | "multiple" | "boolean" | "scale";
+
+export interface FormQuestion {
+  id: string;
+  type: FormQuestionType;
+  question: string;
+  required: boolean;
+  options?: string[];   // only for "multiple"
+  scaleMin?: number;    // for "scale", default 1
+  scaleMax?: number;    // for "scale", default 5
+}
+
+export interface FormTemplate {
+  id: string;
+  user_id: string | null;
+  title: string;
+  description?: string;
+  category?: string;
+  questions: FormQuestion[];
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type FormInstanceStatus = "pending" | "submitted" | "expired";
+
+export interface FormInstance {
+  id: string;
+  user_id: string;
+  client_id: string;
+  template_id?: string;
+  title: string;
+  questions: FormQuestion[];
+  token: string;
+  status: FormInstanceStatus;
+  sent_at?: string;
+  submitted_at?: string;
+  expires_at?: string;
+  created_at: string;
+}
+
+export interface FormResponse {
+  id: string;
+  instance_id: string;
+  answers: Record<string, string | string[] | boolean | number>;
+  submitted_at: string;
+}

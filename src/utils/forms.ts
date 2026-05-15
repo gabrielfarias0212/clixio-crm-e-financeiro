@@ -103,6 +103,12 @@ export async function fetchInstancesByClient(clientId: string): Promise<FormInst
   return (data ?? []).map(mapInstance);
 }
 
+function generateToken(): string {
+  const arr = new Uint8Array(18);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 export async function createFormInstance(payload: {
   client_id: string;
   template_id?: string;
@@ -113,7 +119,12 @@ export async function createFormInstance(payload: {
   const { data: { user } } = await supabase.auth.getUser();
   const { data, error } = await supabase
     .from("form_instances")
-    .insert({ ...payload, user_id: user?.id, sent_at: new Date().toISOString() })
+    .insert({
+      ...payload,
+      user_id: user?.id,
+      token: generateToken(),
+      sent_at: new Date().toISOString(),
+    })
     .select()
     .single();
   if (error) throw error;

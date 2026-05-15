@@ -4,6 +4,7 @@ import Layout from "@/components/Layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ActionChip } from "@/components/ActionChip";
 import { DeliveredWorkIndicator } from "@/components/DeliveredWorkIndicator";
 import { ChevronLeft, Edit } from "lucide-react";
 import { useClients } from "@/contexts/ClientsContext";
@@ -12,6 +13,7 @@ import { DeleteClientDialog } from "@/components/client-detail/DeleteClientDialo
 import { ProjectCosts } from "@/components/client-detail/ProjectCosts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientDetails } from "@/components/client-detail/ClientDetails";
+import { ClientFormsSection } from "@/components/forms/ClientFormsSection";
 
 export default function ClientDetail() {
   const { id } = useParams();
@@ -94,11 +96,7 @@ export default function ClientDetail() {
         
         <div className="flex flex-wrap gap-2 mb-6">
           <StatusBadge status={client.status} />
-          {client.workflowStage && client.workflowStage !== 'projeto_finalizado' && (
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: '#EEF2FF', color: '#4F46E5', fontWeight: 600 }}>
-                {({'evento_ensaio':'Evento','copia':'Cópia','backup':'Backup','curadoria':'Curadoria','edicao':'Edição','link_pronto':'Link Pronto','link_enviado':'Link Enviado','entrega_fisica':'Entrega','album_em_andamento':'Álbum'} as Record<string,string>)[client.workflowStage] ?? client.workflowStage}
-              </span>
-            )}
+          <ActionChip action={client.nextAction} />
           <Badge variant="outline" className="border-gray-300">
             {client.eventCategory}
           </Badge>
@@ -108,14 +106,19 @@ export default function ClientDetail() {
           <TabsList className="mb-6">
             <TabsTrigger value="details">Informações</TabsTrigger>
             <TabsTrigger value="custos">Custos do Projeto</TabsTrigger>
+            <TabsTrigger value="forms">Formulários</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="details">
             <ClientDetails client={client} onUpdate={handleClientUpdate} />
           </TabsContent>
 
           <TabsContent value="custos">
             <ProjectCosts client={client} />
+          </TabsContent>
+
+          <TabsContent value="forms">
+            <ClientFormsSection clientId={client.id} />
           </TabsContent>
         </Tabs>
       </div>

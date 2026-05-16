@@ -185,7 +185,7 @@ export function DashboardContent() {
         const d = stringToDate(c.weddingDate);
         if (!d) return false;
         const diff = differenceInDays(d, now);
-        return diff >= -7 && diff <= 180;
+        return diff >= 0 && diff <= 180;
       })
       .sort((a, b) => {
         const da = stringToDate(a.weddingDate!) ?? new Date(0);

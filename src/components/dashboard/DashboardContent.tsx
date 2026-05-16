@@ -2,7 +2,6 @@ import { useClients } from "@/contexts/ClientsContext";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useBusinessMetrics } from "@/hooks/useBusinessMetrics";
 import { useState, useMemo } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { differenceInDays } from "date-fns";
 import { stringToDate } from "@/utils/dates";
 import { isFullyPaid } from "@/utils/clientUtils";
@@ -10,7 +9,6 @@ import { Client, AlertItem } from "@/utils/types";
 import { useNavigate } from "react-router-dom";
 import { DashboardCardModal } from "./DashboardCardModal";
 import { DashboardAlertsPanel } from "./DashboardAlertsPanel";
-import { FollowUpBanner } from "@/components/crm/FollowUpBanner";
 import {
   TrendingUp, AlertTriangle, DollarSign, Users,
   CheckCircle2, ChevronRight, Calendar,
@@ -37,13 +35,6 @@ const CARD: React.CSSProperties = {
   borderRadius: 14,
   boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
   padding: "18px 20px",
-};
-
-const CARD_MOBILE: React.CSSProperties = {
-  background: "#FFFFFF",
-  borderRadius: 12,
-  boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 4px 14px rgba(0,0,0,0.07)",
-  padding: "12px 14px",
 };
 
 const CARD_SM: React.CSSProperties = {
@@ -146,8 +137,6 @@ export function DashboardContent() {
   const metrics = useBusinessMetrics();
   const navigate = useNavigate();
 
-  const isMobile = useIsMobile();
-
   const [modal, setModal] = useState<{
     title: string; clients: Client[];
     type: "leads" | "contracts" | "delivered" | "pending" | "monthly-events";
@@ -182,7 +171,7 @@ export function DashboardContent() {
     pipelineClients.reduce((s, c) => s + (c.contractValue || 0), 0),
     [pipelineClients]);
 
-  const totalAlerts = alerts.editTasks.length + alerts.deliverTasks.length + alerts.payments.length + alerts.preWedding.length;
+  const totalAlerts = alerts.editTasks.length + alerts.deliverTasks.length + alerts.payments.length;
 
   // Receita % do total contratado
   const totalContratado = receitaConfirmada + aReceber;
@@ -249,41 +238,34 @@ export function DashboardContent() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 
-      {/* Follow-up banner */}
-      <FollowUpBanner />
-
       {/* ── KPI Row ── */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, minmax(0, 1fr))", gap: isMobile ? 10 : 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
 
         {/* Receita Confirmada */}
-        <div style={{ ...(isMobile ? CARD_MOBILE : CARD), borderTop: "3px solid #1E3A5F" }}>
+        <div style={{ ...CARD, borderTop: "3px solid #1E3A5F" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
             <span style={MINI_TITLE}>Receita Confirmada</span>
             <TrendingUp size={14} color="#1E3A5F" />
           </div>
-          <div style={{ fontSize: isMobile ? 18 : 24, fontWeight: 700, color: "#1a1a1a", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {fmt(receitaConfirmada)}
           </div>
-          {!isMobile && (
-          <>
           <div style={{ marginTop: 10, height: 4, borderRadius: 2, background: "#F0EDE8", overflow: "hidden" }}>
             <div style={{ height: "100%", width: `${receitaPct}%`, background: "#1E3A5F", borderRadius: 2, transition: "width .4s" }} />
           </div>
           <div style={{ fontSize: 11, color: "#9A9590", marginTop: 5 }}>{receitaPct}% do total contratado</div>
-          </>
-          )}
         </div>
 
         {/* A Receber */}
         <div
-          style={{ ...(isMobile ? CARD_MOBILE : CARD), borderTop: "3px solid #E8A838", cursor: "pointer" }}
+          style={{ ...CARD, borderTop: "3px solid #E8A838", cursor: "pointer" }}
           onClick={() => setModal({ title: "A Receber — Contratos Pendentes", clients: aReceberClients, type: "pending" })}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
             <span style={MINI_TITLE}>A Receber</span>
             <DollarSign size={14} color="#E8A838" />
           </div>
-          <div style={{ fontSize: isMobile ? 18 : 24, fontWeight: 700, color: "#1a1a1a", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {fmt(aReceber)}
           </div>
           <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>{aReceberClients.length} contratos pendentes</div>
@@ -294,14 +276,14 @@ export function DashboardContent() {
 
         {/* Pipeline */}
         <div
-          style={{ ...(isMobile ? CARD_MOBILE : CARD), borderTop: "3px solid #CBD5E1", cursor: "pointer" }}
+          style={{ ...CARD, borderTop: "3px solid #CBD5E1", cursor: "pointer" }}
           onClick={() => setModal({ title: "Pipeline — Leads em Negociação", clients: pipelineClients, type: "leads" })}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
             <span style={MINI_TITLE}>Pipeline Aberto</span>
             <Users size={14} color="#8A9BB0" />
           </div>
-          <div style={{ fontSize: isMobile ? 18 : 24, fontWeight: 700, color: "#1a1a1a", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {fmt(pipelineValue)}
           </div>
           <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>{pipelineClients.length} leads ativos</div>
@@ -312,23 +294,21 @@ export function DashboardContent() {
 
         {/* Alertas */}
         <div
-          style={{ ...(isMobile ? CARD_MOBILE : CARD), borderTop: "3px solid #E05252", cursor: "pointer" }}
+          style={{ ...CARD, borderTop: "3px solid #E05252", cursor: "pointer" }}
           onClick={() => setModal({ title: "Alertas — Pagamentos Pendentes", clients: [], type: "pending", customData: alerts.payments })}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
             <span style={MINI_TITLE}>Alertas</span>
             <AlertTriangle size={14} color="#E05252" />
           </div>
-          <div style={{ fontSize: isMobile ? 18 : 24, fontWeight: 700, color: totalAlerts > 0 ? "#E05252" : "#1a1a1a", lineHeight: 1 }}>
+          <div style={{ fontSize: 24, fontWeight: 700, color: totalAlerts > 0 ? "#E05252" : "#1a1a1a", lineHeight: 1 }}>
             {totalAlerts}
           </div>
-          {!isMobile && (
           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
             {[
               { label: "Pagamentos", count: alerts.payments.length, color: "#E05252" },
               { label: "Edições",    count: alerts.editTasks.length, color: "#E8A838" },
               { label: "Entregas",   count: alerts.deliverTasks.length, color: "#1E3A5F" },
-              { label: "Pré-Wedding", count: alerts.preWedding.length, color: "#7C3AED" },
             ].map(({ label, count, color }) => (
               <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11 }}>
                 <span style={{ color: "#9A9590" }}>{label}</span>
@@ -336,12 +316,11 @@ export function DashboardContent() {
               </div>
             ))}
           </div>
-          )}
         </div>
       </div>
 
       {/* ── Body: 3 columns ── */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 300px", gap: isMobile ? 10 : 12, alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 300px", gap: 12, alignItems: "start" }}>
 
         {/* ── Col 1: Foco do Dia ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
@@ -433,7 +412,7 @@ export function DashboardContent() {
                       flexShrink: 0,
                     }}>
                       <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1, color: dateBlockColor }}>
-                        {new Date(((client.weddingDate as any) instanceof Date ? client.weddingDate : client.weddingDate + "T12:00:00")).getDate()}
+                        {new Date((client.weddingDate instanceof Date ? client.weddingDate : client.weddingDate + "T12:00:00")).getDate()}
                       </div>
                       <div style={{ fontSize: 8, fontWeight: 600, color: dateBlockMonthColor, letterSpacing: "0.06em", marginTop: 1 }}>
                         {fmtMonth(client.weddingDate)}
@@ -460,7 +439,7 @@ export function DashboardContent() {
         </div>
 
         {/* ── Col 3: Alertas urgentes + Produção ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: isMobile ? "100%" : 300, flexShrink: 0, minWidth: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: 300, flexShrink: 0, minWidth: 0 }}>
 
           {/* Alertas urgentes */}
           <div style={{ ...CARD_SM }}>
@@ -529,24 +508,6 @@ export function DashboardContent() {
               </>
             )}
 
-            {alerts.preWedding.length > 0 && (
-              <>
-                <div style={{ ...MINI_TITLE, marginBottom: 6, marginTop: (alerts.payments.length > 0 || alerts.editTasks.length > 0 || alerts.deliverTasks.length > 0) ? 10 : 0 }}>Pré-Wedding</div>
-                {alerts.preWedding.slice(0, 3).map((a, i) => (
-                  <div
-                    key={i}
-                    onClick={() => a.client && navigate(`/clients/${a.client.id}`)}
-                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 8px", borderRadius: 8, background: "#FAFAF8", marginBottom: 4, cursor: "pointer" }}
-                  >
-                    <AlertDot color="#7C3AED" />
-                    <div style={{ flex: 1, fontSize: 11, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#3a3530" }}>
-                      {a.client?.name || "—"}
-                    </div>
-                    <Badge label="agendar" bg="#F3EFFB" color="#7C3AED" />
-                  </div>
-                ))}
-              </>
-            )}
             {alerts.deliverTasks.length > 0 && (
               <>
                 <div style={{ ...MINI_TITLE, marginBottom: 6, marginTop: (alerts.payments.length > 0 || alerts.editTasks.length > 0) ? 10 : 0 }}>Entregas</div>

@@ -117,7 +117,6 @@ export default function CRM() {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8 space-y-6">
-        <FollowUpBanner />
         {/* Header with title and add lead button */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -154,6 +153,7 @@ export default function CRM() {
           </TabsList>
 
           <TabsContent value="pipeline" className="space-y-4">
+            <FollowUpBanner />
             {/* Search bar above Kanban */}
             <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />

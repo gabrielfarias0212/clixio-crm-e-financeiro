@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { QuickProjectForm } from "@/components/workflow/QuickProjectForm";
 import { WorkflowReportDialog } from "@/components/workflow/WorkflowReportDialog";
 import { ProjectDetailDialog } from "@/components/workflow/ProjectDetailDialog";
@@ -456,7 +455,6 @@ export default function WorkflowPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"projetos" | "entregas">("projetos");
-  const isMobile = useIsMobile();
 
   const workflowClients = useMemo(() =>
     clients.filter(c => c.status === "projeto_finalizado" || c.status === "fechado"),
@@ -512,6 +510,7 @@ export default function WorkflowPage() {
     if (client && field === "boxDelivered" && value) {
       const albumOk = !client.hasAlbum || client.albumOrdered;
       if (albumOk) updates.status = "projeto_finalizado";
+      updates.nextAction = "nenhuma";
     }
     await updateClient(clientId, updates);
     toast.success("Etapa atualizada!");
@@ -544,7 +543,7 @@ export default function WorkflowPage() {
 
   return (
     <Layout>
-      <div style={{ padding: isMobile ? "12px 10px" : "24px", display: "flex", flexDirection: "column", gap: isMobile ? 12 : 20 }}>
+      <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: 20 }}>
 
         {/* Page header */}
         <div style={{ ...CARD, padding: "18px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" as const, gap: 12 }}>
@@ -589,13 +588,13 @@ export default function WorkflowPage() {
         )}
 
         {/* Stat cards */}
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(5, minmax(0,1fr))", gap: isMobile ? 8 : 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0,1fr))", gap: 12 }}>
           {statCards.map(s => (
-            <div key={s.label} style={{ ...CARD, borderTop: `3px solid ${s.accent}`, padding: isMobile ? "10px 10px" : "14px 16px" }}>
+            <div key={s.label} style={{ ...CARD, borderTop: `3px solid ${s.accent}`, padding: "14px 16px" }}>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: C.textSub, marginBottom: 6 }}>
                 {s.label}
               </div>
-              <div style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, color: s.accent, lineHeight: 1 }}>
+              <div style={{ fontSize: 28, fontWeight: 800, color: s.accent, lineHeight: 1 }}>
                 {s.value}
               </div>
             </div>
@@ -605,7 +604,7 @@ export default function WorkflowPage() {
         {/* Tabs */}
         <div>
           {/* Tab buttons */}
-          <div style={{ display: "flex", gap: 0, borderBottom: `2px solid ${C.divider}`, marginBottom: 16, overflowX: "auto" as const }}>
+          <div style={{ display: "flex", gap: 0, borderBottom: `2px solid ${C.divider}`, marginBottom: 16 }}>
             {(["projetos", "entregas"] as const).map(tab => (
               <button
                 key={tab}
@@ -619,7 +618,7 @@ export default function WorkflowPage() {
                   display: "flex", alignItems: "center", gap: 6,
                 }}
               >
-                {tab === "projetos" ? (isMobile ? "Projetos" : "Todos os Projetos") : (isMobile ? "Entregas" : "Fila de Entregas")}
+                {tab === "projetos" ? "Todos os Projetos" : "Fila de Entregas"}
                 {tab === "entregas" && stats.entregaFisicaPendente > 0 && (
                   <span style={{
                     background: "#D97706", color: "#FFFFFF",
@@ -741,7 +740,10 @@ export default function WorkflowPage() {
             <DeliveryQueue
               clients={workflowClients}
               onToggleStep={handleToggleStep}
-              onNavigate={id => navigate(`/clients/${id}`)}
+              onNavigate={id => {
+                const client = workflowClients.find(c => c.id === id);
+                if (client) { setSelectedClient(client); setIsDetailDialogOpen(true); }
+              }}
             />
           )}
         </div>

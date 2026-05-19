@@ -1,6 +1,7 @@
 import { useClients } from "@/contexts/ClientsContext";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useBusinessMetrics } from "@/hooks/useBusinessMetrics";
+import { useFinancialData } from "@/hooks/useFinancialData";
 import { useState, useMemo } from "react";
 import { differenceInDays } from "date-fns";
 import { stringToDate } from "@/utils/dates";
@@ -10,7 +11,8 @@ import { useNavigate } from "react-router-dom";
 import { DashboardCardModal } from "./DashboardCardModal";
 import { DashboardAlertsPanel } from "./DashboardAlertsPanel";
 import {
-  TrendingUp, AlertTriangle, DollarSign, Users,
+  TrendingUp, TrendingDown, ArrowUpCircle, ArrowDownCircle,
+  AlertTriangle, DollarSign, Users,
   CheckCircle2, ChevronRight, Calendar,
 } from "lucide-react";
 
@@ -135,6 +137,7 @@ export function DashboardContent() {
   const { clients, loading } = useClients();
   const alerts = useAlerts(clients);
   const metrics = useBusinessMetrics();
+  const { monthlyTotals } = useFinancialData();
   const navigate = useNavigate();
 
   const [modal, setModal] = useState<{
@@ -241,36 +244,59 @@ export function DashboardContent() {
       {/* ── KPI Row ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
 
-        {/* Receita Confirmada */}
-        <div style={{ ...CARD, borderTop: "3px solid #1E3A5F" }}>
+        {/* Receita do Mês */}
+        <div style={{ ...CARD, borderTop: "3px solid #52C97A" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <span style={MINI_TITLE}>Receita Confirmada</span>
-            <TrendingUp size={14} color="#1E3A5F" />
+            <span style={MINI_TITLE}>Receita do Mês</span>
+            <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#E6F9EE", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <ArrowUpCircle size={13} color="#52C97A" />
+            </div>
           </div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {fmt(receitaConfirmada)}
+          <div style={{ fontSize: 24, fontWeight: 700, color: "#52C97A", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {fmt(monthlyTotals.income)}
           </div>
-          <div style={{ marginTop: 10, height: 4, borderRadius: 2, background: "#F0EDE8", overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${receitaPct}%`, background: "#1E3A5F", borderRadius: 2, transition: "width .4s" }} />
+          <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>
+            {monthlyTotals.income > 0
+              ? `${((monthlyTotals.income / (monthlyTotals.income + Math.max(0, aReceber))) * 100).toFixed(0)}% do contratado recebido`
+              : "Nenhuma entrada este mês"}
           </div>
-          <div style={{ fontSize: 11, color: "#9A9590", marginTop: 5 }}>{receitaPct}% do total contratado</div>
         </div>
 
-        {/* A Receber */}
-        <div
-          style={{ ...CARD, borderTop: "3px solid #E8A838", cursor: "pointer" }}
-          onClick={() => setModal({ title: "A Receber — Contratos Pendentes", clients: aReceberClients, type: "pending" })}
-        >
+        {/* Despesas do Mês */}
+        <div style={{ ...CARD, borderTop: "3px solid #E05252" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <span style={MINI_TITLE}>A Receber</span>
-            <DollarSign size={14} color="#E8A838" />
+            <span style={MINI_TITLE}>Despesas do Mês</span>
+            <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#FEE8E8", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <ArrowDownCircle size={13} color="#E05252" />
+            </div>
           </div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {fmt(aReceber)}
+          <div style={{ fontSize: 24, fontWeight: 700, color: "#E05252", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {fmt(monthlyTotals.expenses)}
           </div>
-          <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>{aReceberClients.length} contratos pendentes</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: "#1E3A5F", marginTop: 8, fontWeight: 500 }}>
-            Ver detalhes <ChevronRight size={11} />
+          <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>
+            {monthlyTotals.income > 0
+              ? `${((monthlyTotals.expenses / monthlyTotals.income) * 100).toFixed(0)}% da receita do mês`
+              : "Nenhuma saída este mês"}
+          </div>
+        </div>
+
+        {/* Lucro Líquido do Mês */}
+        <div style={{ ...CARD, borderTop: `3px solid ${monthlyTotals.balance >= 0 ? "#1E3A5F" : "#E05252"}` }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <span style={MINI_TITLE}>Lucro do Mês</span>
+            <div style={{ width: 26, height: 26, borderRadius: "50%", background: monthlyTotals.balance >= 0 ? "#E8EEF6" : "#FEE8E8", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {monthlyTotals.balance >= 0
+                ? <TrendingUp size={13} color="#1E3A5F" />
+                : <TrendingDown size={13} color="#E05252" />}
+            </div>
+          </div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: monthlyTotals.balance >= 0 ? "#1E3A5F" : "#E05252", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {monthlyTotals.balance >= 0 ? "" : "-"}{fmt(Math.abs(monthlyTotals.balance))}
+          </div>
+          <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>
+            {monthlyTotals.income > 0
+              ? `${((monthlyTotals.balance / monthlyTotals.income) * 100).toFixed(0)}% de margem líquida`
+              : monthlyTotals.balance >= 0 ? "Mês positivo" : "Mês negativo"}
           </div>
         </div>
 
@@ -281,7 +307,9 @@ export function DashboardContent() {
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
             <span style={MINI_TITLE}>Pipeline Aberto</span>
-            <Users size={14} color="#8A9BB0" />
+            <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#F0EDE8", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Users size={13} color="#8A9BB0" />
+            </div>
           </div>
           <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {fmt(pipelineValue)}
@@ -289,32 +317,6 @@ export function DashboardContent() {
           <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>{pipelineClients.length} leads ativos</div>
           <div style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: "#1E3A5F", marginTop: 8, fontWeight: 500 }}>
             Ver leads <ChevronRight size={11} />
-          </div>
-        </div>
-
-        {/* Alertas */}
-        <div
-          style={{ ...CARD, borderTop: "3px solid #E05252", cursor: "pointer" }}
-          onClick={() => setModal({ title: "Alertas — Pagamentos Pendentes", clients: [], type: "pending", customData: alerts.payments })}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <span style={MINI_TITLE}>Alertas</span>
-            <AlertTriangle size={14} color="#E05252" />
-          </div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: totalAlerts > 0 ? "#E05252" : "#1a1a1a", lineHeight: 1 }}>
-            {totalAlerts}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
-            {[
-              { label: "Pagamentos", count: alerts.payments.length, color: "#E05252" },
-              { label: "Edições",    count: alerts.editTasks.length, color: "#E8A838" },
-              { label: "Entregas",   count: alerts.deliverTasks.length, color: "#1E3A5F" },
-            ].map(({ label, count, color }) => (
-              <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11 }}>
-                <span style={{ color: "#9A9590" }}>{label}</span>
-                <span style={{ fontWeight: 600, color: count > 0 ? color : "#9A9590" }}>{count}</span>
-              </div>
-            ))}
           </div>
         </div>
       </div>

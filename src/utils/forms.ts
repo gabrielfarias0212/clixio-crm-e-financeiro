@@ -121,10 +121,11 @@ export async function createFormInstance(payload: {
     .from("form_instances")
     .insert({
       ...payload,
+      questions: payload.questions as any,
       user_id: user?.id,
       token: generateToken(),
       sent_at: new Date().toISOString(),
-    })
+    } as any)
     .select()
     .single();
   if (error) throw error;

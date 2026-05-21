@@ -3,8 +3,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { DayView } from "@/components/calendar/DayView";
 import { WeekView } from "@/components/calendar/WeekView";
 import { ptBR } from "date-fns/locale";
-import { Client } from "@/utils/types";
+import { Client, CalendarEvent } from "@/utils/types";
 import { normalizeDate, stringToDate } from "@/utils/dates";
+import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 
 const C = {
   text:    "#1a1a1a",

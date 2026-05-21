@@ -1,51 +1,25 @@
-
-# Corrigir PDF do Relatório de Fluxo de Trabalho
-
 ## Problema
 
-O relatório usa `window.print()` com CSS `@media print` para gerar o PDF. O CSS atual tem problemas:
+Ao adicionar um evento personalizado sem cliente vinculado na aba Calendário, ele é salvo corretamente no banco (`calendar_events`) e aparece na barra lateral do dia selecionado, mas **não aparece nenhum marcador (dot) no grid mensal**. Isso dá a sensação de que o evento "não aparece no calendário".
 
-1. **`position: fixed`** no `#print-area` — impede paginação correta, todo conteúdo fica sobreposto na primeira página
-2. **`visibility: hidden` em `body *`** — esconde tudo, mas o `#print-area` com `position: fixed` não respeita o fluxo natural do documento
-3. **Falta de estilos de impressão adequados** — sem controle de quebra de página, margens, e dimensionamento
+## Causa
 
-## Solução
+Em `src/components/calendar/CalendarGrid.tsx`, o `DayContent` do calendário mensal monta `clientsByDate` usando apenas a lista `clients` (datas de casamento e pré-wedding). Os eventos manuais vindos de `useCalendarEvents()` são totalmente ignorados, então dias que só têm evento manual ficam sem marcação.
 
-Reescrever o CSS de impressão (`PRINT_CSS`) para:
+O `useCalendarPage` já calcula `eventsByDate` e `eventDates` corretamente, mas esses valores não são passados/usados pelo `CalendarGrid` para desenhar os dots.
 
-- Usar `display: none` em vez de `visibility: hidden` para esconder elementos fora do `#print-area`
-- Remover `position: fixed` do `#print-area` — deixar no fluxo normal para permitir paginação
-- Adicionar regras de quebra de página (`page-break-inside: avoid`) nos cards e linhas de tabela
-- Garantir que o `#print-area` ocupe toda a largura com fundo branco
-- Ajustar `@page` com margens adequadas
+## Correção
 
-## Arquivo alterado
+Atualizar apenas `src/components/calendar/CalendarGrid.tsx`:
 
-- `src/components/workflow/WorkflowReportDialog.tsx` — apenas o bloco `PRINT_CSS` (linhas 66-73)
+1. Consumir os eventos manuais via `useCalendarEvents()` (igual a `WeekView`).
+2. Construir um `eventsByDate` local (respeitando `eventTypeFilter`: quando o filtro for `"all"` ou `"custom"`, incluir os eventos manuais).
+3. No `DayContent`, somar o badge de dots de clientes com um dot adicional para eventos manuais do dia (usando a cor do evento via `EVENT_COLORS`, fallback cinza).
+4. Manter o limite visual atual (3 dots + "+N").
+5. Atualizar a legenda para incluir "Evento personalizado".
 
-## Detalhes técnicos
+Nenhuma mudança de schema, hooks de dados, sidebar, semana ou dia — esses já tratam eventos manuais corretamente.
 
-```css
-@media print {
-  /* Esconder tudo exceto o conteúdo do relatório */
-  body > *:not(#print-area) { display: none !important; }
-  [role="dialog"] { position: static !important; }
-  [role="dialog"] > *:not(:has(#print-area)) { display: none !important; }
-  
-  #print-area {
-    position: static !important;
-    width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    background: white !important;
-    overflow: visible !important;
-  }
-  
-  /* Controle de quebra de página */
-  #print-area table tr { page-break-inside: avoid; }
-  
-  @page { margin: 1.5cm; size: A4; }
-}
-```
+## Arquivos afetados
 
-A abordagem correta é: clonar o `#print-area` para um container temporário no `body`, esconder todo o resto, imprimir, e restaurar. Isso garante que o conteúdo fique no fluxo normal do documento e a paginação funcione corretamente.
+- `src/components/calendar/CalendarGrid.tsx` (única edição)

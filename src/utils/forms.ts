@@ -56,7 +56,7 @@ export async function createFormTemplate(
   const { data: { user } } = await supabase.auth.getUser();
   const { data, error } = await supabase
     .from("form_templates")
-    .insert({ ...payload, user_id: user?.id, is_default: false })
+    .insert({ ...payload, questions: payload.questions as any, user_id: user?.id, is_default: false } as any)
     .select()
     .single();
   if (error) throw error;

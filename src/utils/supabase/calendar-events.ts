@@ -34,6 +34,12 @@ export const createCalendarEvent = async (eventData: CalendarEvent): Promise<Cal
       return null;
     }
 
+    // ✅ CORREÇÃO: garante que clientId inválido nunca chega ao banco
+    const clientId =
+      eventData.clientId && eventData.clientId !== 'none' && eventData.clientId !== ''
+        ? eventData.clientId
+        : null;
+
     const { data, error } = await supabase
       .from('calendar_events')
       .insert({
@@ -45,7 +51,7 @@ export const createCalendarEvent = async (eventData: CalendarEvent): Promise<Cal
         end_time: eventData.endTime,
         type: eventData.type,
         color: eventData.color,
-        client_id: eventData.clientId || null,
+        client_id: clientId,
         is_edited: eventData.isEdited || false,
         is_delivered: eventData.isDelivered || false,
         user_id: userId,
@@ -67,6 +73,12 @@ export const createCalendarEvent = async (eventData: CalendarEvent): Promise<Cal
 
 export const updateCalendarEvent = async (eventData: CalendarEvent): Promise<CalendarEvent | null> => {
   try {
+    // ✅ CORREÇÃO: mesma sanitização no update
+    const clientId =
+      eventData.clientId && eventData.clientId !== 'none' && eventData.clientId !== ''
+        ? eventData.clientId
+        : null;
+
     const { data, error } = await supabase
       .from('calendar_events')
       .update({
@@ -77,10 +89,9 @@ export const updateCalendarEvent = async (eventData: CalendarEvent): Promise<Cal
         end_time: eventData.endTime,
         type: eventData.type,
         color: eventData.color,
-        client_id: eventData.clientId || null,
+        client_id: clientId,
         is_edited: eventData.isEdited || false,
         is_delivered: eventData.isDelivered || false,
-        // user_id não é atualizado — imutável após criação
       })
       .eq('id', eventData.id)
       .select()
@@ -123,7 +134,7 @@ export const updateCalendarEventStatus = async (
     return data ? parseCalendarEvent(data) : null;
   } catch (error) {
     console.error('Exception updating calendar event status:', error);
-    return null;
+    return false;
   }
 };
 

@@ -56,7 +56,7 @@ export async function createFormTemplate(
   const { data: { user } } = await supabase.auth.getUser();
   const { data, error } = await supabase
     .from("form_templates")
-    .insert({ ...payload, user_id: user?.id, is_default: false })
+    .insert({ ...payload, questions: payload.questions as any, user_id: user?.id, is_default: false } as any)
     .select()
     .single();
   if (error) throw error;
@@ -69,7 +69,7 @@ export async function updateFormTemplate(
 ): Promise<void> {
   const { error } = await supabase
     .from("form_templates")
-    .update(payload)
+    .update(payload as any)
     .eq("id", id);
   if (error) throw error;
 }
@@ -121,10 +121,11 @@ export async function createFormInstance(payload: {
     .from("form_instances")
     .insert({
       ...payload,
+      questions: payload.questions as any,
       user_id: user?.id,
       token: generateToken(),
       sent_at: new Date().toISOString(),
-    })
+    } as any)
     .select()
     .single();
   if (error) throw error;

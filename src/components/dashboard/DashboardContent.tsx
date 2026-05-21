@@ -414,7 +414,7 @@ export function DashboardContent() {
                       flexShrink: 0,
                     }}>
                       <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1, color: dateBlockColor }}>
-                        {new Date((client.weddingDate instanceof Date ? client.weddingDate : client.weddingDate + "T12:00:00")).getDate()}
+                        {new Date(((client.weddingDate as any) instanceof Date ? client.weddingDate : client.weddingDate + "T12:00:00") as any).getDate()}
                       </div>
                       <div style={{ fontSize: 8, fontWeight: 600, color: dateBlockMonthColor, letterSpacing: "0.06em", marginTop: 1 }}>
                         {fmtMonth(client.weddingDate)}

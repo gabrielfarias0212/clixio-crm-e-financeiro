@@ -204,6 +204,42 @@ export type Database = {
           },
         ]
       }
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          crm_stage: string | null
+          id: string
+          intent: string | null
+          phone_number: string
+          role: string
+          service_type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          crm_stage?: string | null
+          id?: string
+          intent?: string | null
+          phone_number: string
+          role: string
+          service_type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          crm_stage?: string | null
+          id?: string
+          intent?: string | null
+          phone_number?: string
+          role?: string
+          service_type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       client_credentials: {
         Row: {
           created_at: string | null
@@ -906,6 +942,178 @@ export type Database = {
         }
         Relationships: []
       }
+      form_instances: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          questions: Json
+          sent_at: string | null
+          status: string
+          submitted_at: string | null
+          template_id: string | null
+          title: string
+          token: string
+          user_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          questions?: Json
+          sent_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          template_id?: string | null
+          title: string
+          token?: string
+          user_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          questions?: Json
+          sent_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          template_id?: string | null
+          title?: string
+          token?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_instances_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_instances_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "form_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_responses: {
+        Row: {
+          answers: Json
+          id: string
+          instance_id: string | null
+          ip_address: string | null
+          submitted_at: string
+        }
+        Insert: {
+          answers?: Json
+          id?: string
+          instance_id?: string | null
+          ip_address?: string | null
+          submitted_at?: string
+        }
+        Update: {
+          answers?: Json
+          id?: string
+          instance_id?: string | null
+          ip_address?: string | null
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_responses_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "form_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_submissions: {
+        Row: {
+          answers: Json | null
+          client_id: string | null
+          created_at: string | null
+          id: string
+          submitted_at: string | null
+          template_id: string
+          token: string
+          user_id: string
+          viewed: boolean | null
+        }
+        Insert: {
+          answers?: Json | null
+          client_id?: string | null
+          created_at?: string | null
+          id?: string
+          submitted_at?: string | null
+          template_id: string
+          token?: string
+          user_id: string
+          viewed?: boolean | null
+        }
+        Update: {
+          answers?: Json | null
+          client_id?: string | null
+          created_at?: string | null
+          id?: string
+          submitted_at?: string | null
+          template_id?: string
+          token?: string
+          user_id?: string
+          viewed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_submissions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_templates: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_default: boolean
+          questions: Json
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          questions?: Json
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          questions?: Json
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       message_templates: {
         Row: {
           body: string
@@ -1016,6 +1224,27 @@ export type Database = {
           id?: string
           name?: string
           price?: number
+        }
+        Relationships: []
+      }
+      paused_contacts: {
+        Row: {
+          paused_until: string
+          phone: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          paused_until: string
+          phone: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          paused_until?: string
+          phone?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1538,6 +1767,48 @@ export type Database = {
         }
         Relationships: []
       }
+      proposal_follow_ups: {
+        Row: {
+          contact_name: string | null
+          created_at: string
+          followup_1_sent_at: string | null
+          followup_2_sent_at: string | null
+          id: string
+          phone: string
+          proposal_sent_at: string
+          remote_jid: string
+          service_type: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          contact_name?: string | null
+          created_at?: string
+          followup_1_sent_at?: string | null
+          followup_2_sent_at?: string | null
+          id?: string
+          phone: string
+          proposal_sent_at?: string
+          remote_jid: string
+          service_type?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          contact_name?: string | null
+          created_at?: string
+          followup_1_sent_at?: string | null
+          followup_2_sent_at?: string | null
+          id?: string
+          phone?: string
+          proposal_sent_at?: string
+          remote_jid?: string
+          service_type?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       service_packages: {
         Row: {
           active: boolean | null
@@ -1701,6 +1972,7 @@ export type Database = {
       }
       wedding_clients: {
         Row: {
+          ai_paused_until: string | null
           album_approved_delivered: boolean | null
           album_client_approved: boolean | null
           album_client_chose: boolean | null
@@ -1722,6 +1994,7 @@ export type Database = {
           email: string | null
           event_category: string | null
           event_location: string | null
+          follow_up_at: string | null
           has_album: boolean | null
           has_pre_wedding: boolean | null
           id: string
@@ -1755,6 +2028,7 @@ export type Database = {
             | null
         }
         Insert: {
+          ai_paused_until?: string | null
           album_approved_delivered?: boolean | null
           album_client_approved?: boolean | null
           album_client_chose?: boolean | null
@@ -1776,6 +2050,7 @@ export type Database = {
           email?: string | null
           event_category?: string | null
           event_location?: string | null
+          follow_up_at?: string | null
           has_album?: boolean | null
           has_pre_wedding?: boolean | null
           id?: string
@@ -1809,6 +2084,7 @@ export type Database = {
             | null
         }
         Update: {
+          ai_paused_until?: string | null
           album_approved_delivered?: boolean | null
           album_client_approved?: boolean | null
           album_client_chose?: boolean | null
@@ -1830,6 +2106,7 @@ export type Database = {
           email?: string | null
           event_category?: string | null
           event_location?: string | null
+          follow_up_at?: string | null
           has_album?: boolean | null
           has_pre_wedding?: boolean | null
           id?: string
@@ -1980,6 +2257,18 @@ export type Database = {
         Returns: string
       }
       exec_sql: { Args: { query_text: string }; Returns: Json }
+      find_client_by_phone: {
+        Args: { p_phone: string; p_user_id: string }
+        Returns: {
+          couple_name: string
+          event_location: string
+          id: string
+          name: string
+          sales_funnel_stage: string
+          status: string
+          wedding_date: string
+        }[]
+      }
       generate_unique_token: { Args: never; Returns: string }
     }
     Enums: {

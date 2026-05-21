@@ -44,7 +44,6 @@ export function AddEventDialog({
     }
   });
   
-  // Watch for startTime to validate endTime
   const startTime = watch("startTime");
   
   useEffect(() => {
@@ -71,7 +70,6 @@ export function AddEventDialog({
 
   const onSubmit = (data: CalendarEvent) => {
     try {
-      // Validar que o horário de término é depois do início
       if (data.startTime >= data.endTime) {
         toast({
           title: "Erro de validação",
@@ -81,8 +79,13 @@ export function AddEventDialog({
         return;
       }
 
+      // ✅ CORREÇÃO: sanitiza "none" e string vazia para undefined
+      if (!data.clientId || data.clientId === "none" || data.clientId === "") {
+        data.clientId = undefined;
+      }
+
       if (isEditing) {
-        updateEvent({...data});
+        updateEvent({ ...data });
         toast({
           title: "Evento atualizado",
           description: "O evento foi atualizado com sucesso."

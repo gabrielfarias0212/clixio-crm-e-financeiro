@@ -69,7 +69,7 @@ export async function updateFormTemplate(
 ): Promise<void> {
   const { error } = await supabase
     .from("form_templates")
-    .update(payload)
+    .update(payload as any)
     .eq("id", id);
   if (error) throw error;
 }

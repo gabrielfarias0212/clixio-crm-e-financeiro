@@ -134,7 +134,7 @@ export const updateCalendarEventStatus = async (
     return data ? parseCalendarEvent(data) : null;
   } catch (error) {
     console.error('Exception updating calendar event status:', error);
-    return false;
+    return null;
   }
 };
 

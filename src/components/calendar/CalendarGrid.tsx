@@ -76,6 +76,8 @@ export function CalendarGrid({
   onClientClick,
   eventTypeFilter,
 }: CalendarGridProps) {
+  const { events } = useCalendarEvents();
+
   const clientsByDate = useMemo(() => {
     const map: Record<string, Client[]> = {};
     clients.forEach(c => {
@@ -93,11 +95,26 @@ export function CalendarGrid({
     return map;
   }, [clients, eventTypeFilter]);
 
+  const eventsByDate = useMemo(() => {
+    const map: Record<string, CalendarEvent[]> = {};
+    // Só esconde eventos manuais se o filtro for uma categoria específica de cliente
+    if (eventTypeFilter !== "all" && eventTypeFilter !== "custom") return map;
+    events.forEach(ev => {
+      const d = stringToDate(ev.date);
+      if (!d) return;
+      const key = normalizeDate(d);
+      if (!map[key]) map[key] = [];
+      map[key].push(ev);
+    });
+    return map;
+  }, [events, eventTypeFilter]);
+
   const components = {
     DayContent: ({ date: d }: { date: Date }) => {
       const key = normalizeDate(d);
       const dayClients = clientsByDate[key] || [];
-      const count = dayClients.length;
+      const dayEvents = eventsByDate[key] || [];
+      const count = dayClients.length + dayEvents.length;
       return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
           <span>{d.getDate()}</span>
@@ -107,9 +124,19 @@ export function CalendarGrid({
                 const hex = categoryColorHex(c.eventCategory);
                 const confirmed = isConfirmed(c);
                 return confirmed
-                  ? <span key={i} style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: hex, display: "inline-block", flexShrink: 0 }} />
-                  : <span key={i} style={{ width: 8, height: 8, borderRadius: "50%", border: `2px solid ${hex}`, backgroundColor: "white", display: "inline-block", flexShrink: 0 }} />;
+                  ? <span key={`c-${i}`} style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: hex, display: "inline-block", flexShrink: 0 }} />
+                  : <span key={`c-${i}`} style={{ width: 8, height: 8, borderRadius: "50%", border: `2px solid ${hex}`, backgroundColor: "white", display: "inline-block", flexShrink: 0 }} />;
               })}
+              {dayClients.length < 3 && dayEvents.slice(0, 3 - dayClients.length).map((ev, i) => (
+                <span
+                  key={`e-${i}`}
+                  style={{
+                    width: 8, height: 8, borderRadius: "50%",
+                    backgroundColor: EVENT_COLOR_HEX[ev.color] ?? "#3B82F6",
+                    display: "inline-block", flexShrink: 0,
+                  }}
+                />
+              ))}
               {count > 3 && (
                 <span style={{ fontSize: 8, color: C.textSub, lineHeight: 1 }}>+{count - 3}</span>
               )}

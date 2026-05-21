@@ -54,7 +54,17 @@ const LEGEND = [
   { label: "Pré-Wedding", hex: "#fbbf24" },
   { label: "Debutante",   hex: "#c084fc" },
   { label: "Aniversário", hex: "#4ade80" },
+  { label: "Personalizado", hex: "#3B82F6" },
 ];
+
+const EVENT_COLOR_HEX: Record<string, string> = {
+  blue:   "#3B82F6",
+  green:  "#52C97A",
+  red:    "#E05252",
+  yellow: "#E8A838",
+  purple: "#8B5CF6",
+  gray:   "#9A9590",
+};
 
 export function CalendarGrid({
   date,

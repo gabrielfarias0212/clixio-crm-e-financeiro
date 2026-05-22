@@ -168,14 +168,39 @@ export function AddEventDialog({
               <Controller
                 name="date"
                 control={control}
-                render={({ field }) => (
-                  <DatePicker
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                )}
+                render={({ field }) => {
+                  const dateValue = stringToDate(field.value);
+                  return (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value || "Selecione uma data"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={dateValue || undefined}
+                          onSelect={(d) => field.onChange(d ? dateToString(d) : "")}
+                          locale={ptBR}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  );
+                }}
               />
             </div>
+            
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

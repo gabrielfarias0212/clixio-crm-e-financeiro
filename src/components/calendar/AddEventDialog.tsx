@@ -5,14 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { useForm, Controller } from "react-hook-form";
 import { CalendarEvent } from "@/utils/types";
 import { Client } from "@/utils/types";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { toast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
-import { dateToString } from "@/utils/dates";
+import { dateToString, stringToDate } from "@/utils/dates";
 
 interface AddEventDialogProps {
   open: boolean;

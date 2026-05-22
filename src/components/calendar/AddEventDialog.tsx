@@ -5,14 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { useForm, Controller } from "react-hook-form";
 import { CalendarEvent } from "@/utils/types";
 import { Client } from "@/utils/types";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { toast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
-import { dateToString } from "@/utils/dates";
+import { dateToString, stringToDate } from "@/utils/dates";
 
 interface AddEventDialogProps {
   open: boolean;
@@ -164,14 +168,39 @@ export function AddEventDialog({
               <Controller
                 name="date"
                 control={control}
-                render={({ field }) => (
-                  <DatePicker
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                )}
+                render={({ field }) => {
+                  const dateValue = stringToDate(field.value);
+                  return (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value || "Selecione uma data"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={dateValue || undefined}
+                          onSelect={(d) => field.onChange(d ? dateToString(d) : "")}
+                          locale={ptBR}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  );
+                }}
               />
             </div>
+            
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

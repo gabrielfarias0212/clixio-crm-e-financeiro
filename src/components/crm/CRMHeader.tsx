@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Client } from "@/utils/types";
 import { TrendingUp, TrendingDown, Users, MessageCircle, CheckCircle, XCircle } from "lucide-react";
 
@@ -10,6 +11,7 @@ const fmt = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 }).format(v);
 
 export function CRMHeader({ clients }: CRMHeaderProps) {
+  const isMobile = useIsMobile();
   const stats = useMemo(() => {
     const crm = clients.filter(c => c.leadSource !== "Projeto Direto");
     const opportunities = crm.filter(c => ["primeiro_contato", "orcamento_enviado", "negociacao"].includes(c.salesFunnelStage || c.status)).length;
@@ -68,7 +70,7 @@ export function CRMHeader({ clients }: CRMHeaderProps) {
   ];
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 12 }}>
+    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(5, minmax(0, 1fr))", gap: isMobile ? 10 : 12 }}>
       {cards.map((c) => {
         const Icon = c.icon;
         return (
@@ -79,7 +81,7 @@ export function CRMHeader({ clients }: CRMHeaderProps) {
               borderRadius: 14,
               boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
               borderTop: `3px solid ${c.accent}`,
-              padding: "16px 18px",
+              padding: isMobile ? "12px 14px" : "16px 18px",
               display: "flex",
               alignItems: "flex-start",
               justifyContent: "space-between",
@@ -90,7 +92,7 @@ export function CRMHeader({ clients }: CRMHeaderProps) {
               <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase" as const, color: "#9A9590" }}>
                 {c.title}
               </span>
-              <span style={{ fontSize: 26, fontWeight: 700, color: "#1a1a1a", lineHeight: 1 }}>
+              <span style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, color: "#1a1a1a", lineHeight: 1 }}>
                 {c.value}
               </span>
               <span style={{ fontSize: 11, color: "#9A9590", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>

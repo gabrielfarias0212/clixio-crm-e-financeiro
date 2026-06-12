@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { CRMHeader } from "@/components/crm/CRMHeader";
@@ -20,6 +21,7 @@ import { EventCategory } from "@/utils/types";
 export default function CRM() {
   const navigate = useNavigate();
   const { clients, loading, addClient } = useClients();
+  const isMobile = useIsMobile();
   const [showQuickForm, setShowQuickForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [timeFilter, setTimeFilter] = useState("all");
@@ -116,10 +118,10 @@ export default function CRM() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className="container mx-auto px-3 py-4 md:px-4 md:py-8 space-y-6">
         {/* Header with title and add lead button */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-3xl font-bold text-gray-900">CRM</h1>
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-gray-500" />
@@ -155,7 +157,7 @@ export default function CRM() {
           <TabsContent value="pipeline" className="space-y-4">
             <FollowUpBanner />
             {/* Search bar above Kanban */}
-            <div className="relative max-w-sm">
+            <div className="relative w-full md:max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <Input
                 placeholder="Pesquisar cliente por nome..."

@@ -3,6 +3,7 @@ import { useAlerts } from "@/hooks/useAlerts";
 import { useBusinessMetrics } from "@/hooks/useBusinessMetrics";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { useState, useMemo } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { differenceInDays } from "date-fns";
 import { stringToDate } from "@/utils/dates";
 import { isFullyPaid } from "@/utils/clientUtils";
@@ -37,6 +38,13 @@ const CARD: React.CSSProperties = {
   borderRadius: 14,
   boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
   padding: "18px 20px",
+};
+
+const CARD_MOBILE: React.CSSProperties = {
+  background: "#FFFFFF",
+  borderRadius: 12,
+  boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 4px 14px rgba(0,0,0,0.07)",
+  padding: "12px 14px",
 };
 
 const CARD_SM: React.CSSProperties = {
@@ -139,6 +147,7 @@ export function DashboardContent() {
   const metrics = useBusinessMetrics();
   const { monthlyTotals } = useFinancialData();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const [modal, setModal] = useState<{
     title: string; clients: Client[];
@@ -242,7 +251,7 @@ export function DashboardContent() {
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 
       {/* ── KPI Row ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, minmax(0, 1fr))", gap: isMobile ? 10 : 12 }}>
 
         {/* Receita do Mês */}
         <div style={{ ...CARD, borderTop: "3px solid #52C97A" }}>
@@ -322,7 +331,7 @@ export function DashboardContent() {
       </div>
 
       {/* ── Body: 3 columns ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 300px", gap: 12, alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 300px", gap: isMobile ? 10 : 12, alignItems: "start" }}>
 
         {/* ── Col 1: Foco do Dia ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
@@ -441,7 +450,7 @@ export function DashboardContent() {
         </div>
 
         {/* ── Col 3: Alertas urgentes + Produção ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: 300, flexShrink: 0, minWidth: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: isMobile ? "100%" : 300, flexShrink: 0, minWidth: 0 }}>
 
           {/* Alertas urgentes */}
           <div style={{ ...CARD_SM }}>

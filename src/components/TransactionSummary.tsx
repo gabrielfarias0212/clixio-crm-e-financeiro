@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Transaction } from "@/utils/types";
 import {
   ArrowDownCircle, ArrowUpCircle, TrendingDown, TrendingUp,
@@ -48,6 +49,7 @@ export function TransactionSummary({
   currentWeek,
   onWeeklyBalanceChange,
 }: TransactionSummaryProps) {
+  const isMobile = useIsMobile();
   const [goals, setGoals] = useState<CompanySettings | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [summary, setSummary] = useState({

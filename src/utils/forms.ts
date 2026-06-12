@@ -154,17 +154,17 @@ export async function submitFormResponse(
   instanceId: string,
   answers: FormResponse["answers"]
 ): Promise<void> {
-  // Insert response
+  // Insert response — this is the critical operation
   const { error: respErr } = await supabase
     .from("form_responses")
     .insert({ instance_id: instanceId, answers });
   if (respErr) throw respErr;
-  // Mark instance as submitted
+  // Mark instance as submitted — non-critical, log but don't throw
   const { error: instErr } = await supabase
     .from("form_instances")
     .update({ status: "submitted", submitted_at: new Date().toISOString() })
     .eq("id", instanceId);
-  if (instErr) throw instErr;
+  if (instErr) console.warn("Could not update instance status:", instErr.message);
 }
 
 // ── Responses ─────────────────────────────────────────────────────────────────

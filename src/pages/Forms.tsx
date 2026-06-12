@@ -4,7 +4,7 @@ import Layout from "@/components/Layout";
 import { useForms } from "@/contexts/FormsContext";
 import { useClients } from "@/contexts/ClientsContext";
 import { FormTemplate, FormQuestion, FormInstance, FormQuestionType } from "@/utils/types";
-import { Plus, Trash2, Edit2, Copy, Send, ChevronDown, ChevronUp, X, FileText, LayoutTemplate, Clock, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, Edit2, Copy, Send, ChevronDown, ChevronUp, X, FileText, LayoutTemplate, Clock, CheckCircle2, RefreshCw } from "lucide-react";
 import { ClientSearchSelect } from "@/components/forms/ClientSearchSelect";
 import { fetchResponseByInstance } from "@/utils/forms";
 import { FormResponse } from "@/utils/types";
@@ -754,12 +754,13 @@ function InstanceRow({
 type Tab = "templates" | "enviados";
 
 export default function FormsPage() {
-  const { templates, instances, loading, addTemplate, editTemplate, removeTemplate, sendForm, removeInstance } = useForms();
+  const { templates, instances, loading, addTemplate, editTemplate, removeTemplate, sendForm, removeInstance, refreshInstances } = useForms();
   const { clients } = useClients();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const [tab, setTab] = useState<Tab>("templates");
+  const [refreshing, setRefreshing] = useState(false);
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<FormTemplate | null>(null);
   const [sendingTemplate, setSendingTemplate] = useState<FormTemplate | null>(null);
@@ -771,6 +772,18 @@ export default function FormsPage() {
   }, []);
 
   const clientMap = Object.fromEntries(clients.map(c => [c.id, c.name]));
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshInstances();
+    setRefreshing(false);
+  };
+
+  // Auto-refresh when switching to "enviados" tab
+  const handleTabChange = (newTab: Tab) => {
+    setTab(newTab);
+    if (newTab === "enviados") refreshInstances();
+  };
 
   const handleSaveTemplate = async (payload: Pick<FormTemplate, "title" | "description" | "category" | "questions">) => {
     if (editingTemplate) {
@@ -793,7 +806,7 @@ export default function FormsPage() {
     setSendingTemplate(null);
     if (inst) {
       setSentLinkInst(inst);
-      setTab("enviados");
+      handleTabChange("enviados");
     }
   };
 
@@ -902,6 +915,23 @@ export default function FormsPage() {
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* Refresh button */}
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 5,
+                  padding: "6px 12px", borderRadius: 8,
+                  border: `1px solid ${C.border}`, background: C.itemBg,
+                  fontSize: 12, fontWeight: 600, color: C.textSub, cursor: "pointer",
+                  opacity: refreshing ? 0.5 : 1,
+                }}
+              >
+                <RefreshCw style={{ width: 12, height: 12 }} />
+                {refreshing ? "Atualizando..." : "Atualizar"}
+              </button>
+            </div>
             {instances.length === 0 ? (
               <div style={{ textAlign: "center", padding: "40px 0", color: C.textSub }}>
                 <Send style={{ width: 36, height: 36, margin: "0 auto 10px", opacity: 0.25 }} />

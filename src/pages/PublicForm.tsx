@@ -215,7 +215,8 @@ export default function PublicFormPage() {
     try {
       await submitFormResponse(instance.id, answers);
       setStatus("submitted");
-    } catch {
+    } catch (err) {
+      console.error("Form submission error:", err);
       setStatus("error");
     } finally {
       setSubmitting(false);
@@ -232,7 +233,7 @@ export default function PublicFormPage() {
     );
   }
 
-  if (status === "not_found" || status === "error") {
+  if (status === "not_found") {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: C.itemBg, padding: 20 }}>
         <div style={{ textAlign: "center", maxWidth: 360 }}>
@@ -241,6 +242,29 @@ export default function PublicFormPage() {
           <div style={{ fontSize: 14, color: C.textSub }}>
             Este link pode ter expirado ou não existe. Entre em contato com seu fotógrafo para solicitar um novo link.
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: C.itemBg, padding: 20 }}>
+        <div style={{ textAlign: "center", maxWidth: 360 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 8 }}>Erro ao enviar</div>
+          <div style={{ fontSize: 14, color: C.textSub, marginBottom: 20 }}>
+            Ocorreu um erro ao salvar suas respostas. Por favor, tente novamente.
+          </div>
+          <button
+            onClick={() => setStatus("found")}
+            style={{
+              padding: "10px 24px", borderRadius: 8, border: "none",
+              background: C.navy, color: "#FFF", fontSize: 14, fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            Tentar novamente
+          </button>
         </div>
       </div>
     );

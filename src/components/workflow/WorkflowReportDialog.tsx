@@ -5,8 +5,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Printer, FileText, ListChecks, User } from "lucide-react";
-import { Client } from "@/utils/types";
+import { Download, FileText, ListChecks, User } from "lucide-react";
+import { Client, WorkflowStage } from "@/utils/types";
+import { downloadWorkflowReport } from "@/utils/workflowReportGenerator";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -350,29 +351,42 @@ export function WorkflowReportDialog({ open, onClose, clients }: Props) {
   const activeClients = clients.filter(c => c.status === "fechado" || c.status === "projeto_finalizado");
   const selectedClient = activeClients.find(c => c.id === selectedClientId) ?? null;
 
-  const handlePrint = () => {
-    const printArea = document.getElementById("print-area");
-    if (!printArea) return;
+  // Map dialog stage keys → WorkflowStage enum values
+  const STAGE_KEY_MAP: Record<string, WorkflowStage> = {
+    aguardando_evento:    "evento_ensaio",
+    wedding_photographed: "copia",
+    backup_completed:     "backup",
+    curation_completed:   "curadoria",
+    previas_sent:         "previas_enviadas",
+    in_editing:           "edicao",
+    link_sent:            "link_enviado",
+    box_delivered:        "entrega_fisica",
+  };
 
-    // Clone the print area into a top-level wrapper so it's in normal document flow
-    const wrapper = document.createElement("div");
-    wrapper.className = "print-wrapper";
-    wrapper.appendChild(printArea.cloneNode(true));
-    document.body.appendChild(wrapper);
-
-    // Clean up AFTER the print dialog closes (not synchronously after window.print)
-    const cleanup = () => {
-      if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
-      window.removeEventListener("afterprint", cleanup);
-    };
-    window.addEventListener("afterprint", cleanup);
-
-    window.print();
+  const handleDownloadPDF = () => {
+    // Stages to include: based on current tab
+    let stages: WorkflowStage[];
+    if (tab === "stage") {
+      // Only the selected stage
+      const mapped = STAGE_KEY_MAP[selectedStage];
+      stages = mapped ? [mapped] : (Object.values(STAGE_KEY_MAP) as WorkflowStage[]);
+    } else if (tab === "individual" && selectedClient) {
+      // All stages (full report) filtered to just the one client
+      stages = Object.values(STAGE_KEY_MAP) as WorkflowStage[];
+      downloadWorkflowReport(
+        activeClients.filter(c => c.id === selectedClient.id),
+        { stages, sortByPriority: false }
+      );
+      return;
+    } else {
+      // Queue: all active stages
+      stages = ["curadoria", "previas_enviadas", "edicao", "link_pronto", "link_enviado", "entrega_fisica"];
+    }
+    downloadWorkflowReport(activeClients, { stages, sortByPriority: true });
   };
 
   return (
     <>
-      <style>{PRINT_CSS}</style>
       <Dialog open={open} onOpenChange={v => !v && onClose()}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -381,9 +395,9 @@ export function WorkflowReportDialog({ open, onClose, clients }: Props) {
                 <FileText className="h-5 w-5" />
                 Relatórios de Impressão
               </DialogTitle>
-              <Button onClick={handlePrint} className="gap-2 mr-6">
-                <Printer className="h-4 w-4" />
-                Imprimir / Salvar PDF
+              <Button onClick={handleDownloadPDF} className="gap-2 mr-6">
+                <Download className="h-4 w-4" />
+                Baixar PDF
               </Button>
             </div>
           </DialogHeader>

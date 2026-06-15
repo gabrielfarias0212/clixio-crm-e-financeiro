@@ -114,6 +114,11 @@ function getClientField(client: any, field: string): boolean {
 function calcProgress(client: any) {
   let steps = client.hasAlbum ? [...WORKFLOW_STEPS, ...ALBUM_STEPS] : WORKFLOW_STEPS;
   if (client.semEntregaFisica) steps = steps.filter(s => s.field !== "boxDelivered");
+  // Prévias é opcional: ignora do progresso se o cliente já tem link enviado mas não tem previas marcado
+  // (clientes antigos que foram direto pro link, ou clientes que não usam esse passo)
+  if (!client.previasSent && (client.linkSent || client.boxDelivered)) {
+    steps = steps.filter(s => s.field !== "previasSent");
+  }
   const done = steps.filter(s => getClientField(client, s.field as string)).length;
   const total = steps.length;
   const pct = Math.round((done / total) * 100);

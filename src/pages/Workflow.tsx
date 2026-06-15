@@ -451,6 +451,7 @@ export default function WorkflowPage() {
   const [filterMonth, setFilterMonth] = useState<number | "all">("all");
   const [filterYear, setFilterYear] = useState<number | "all">("all");
   const [filterStage, setFilterStage] = useState<string>("all");
+  const [sortOrder, setSortOrder] = useState<string>(() => localStorage.getItem("workflow_sort") ?? "date_asc");
   const [showQuickForm, setShowQuickForm] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -493,8 +494,16 @@ export default function WorkflowPage() {
         (c.eventLocation ?? "").toLowerCase().includes(q)
       );
     }
+    // Sort
+    list = [...list].sort((a, b) => {
+      if (sortOrder === "date_asc")  return (parseDate(a.weddingDate)?.getTime() ?? 0) - (parseDate(b.weddingDate)?.getTime() ?? 0);
+      if (sortOrder === "date_desc") return (parseDate(b.weddingDate)?.getTime() ?? 0) - (parseDate(a.weddingDate)?.getTime() ?? 0);
+      if (sortOrder === "name_asc")  return (a.name ?? "").localeCompare(b.name ?? "", "pt-BR");
+      if (sortOrder === "stage")     return (getCurrentStageKey(a) ?? "").localeCompare(getCurrentStageKey(b) ?? "");
+      return 0;
+    });
     return list;
-  }, [workflowClients, filterStatus, filterStage, filterMonth, filterYear, searchTerm]);
+  }, [workflowClients, filterStatus, filterStage, filterMonth, filterYear, searchTerm, sortOrder]);
 
   const stats = useMemo(() => ({
     ativos:               workflowClients.filter(c => isInProgress(c)).length,
@@ -713,6 +722,22 @@ export default function WorkflowPage() {
                         {opt.label} ({stageCounts[opt.key] ?? 0})
                       </option>
                     ))}
+                  </select>
+
+                  {/* Sort */}
+                  <select
+                    value={sortOrder}
+                    onChange={e => {
+                      setSortOrder(e.target.value);
+                      localStorage.setItem("workflow_sort", e.target.value);
+                    }}
+                    title="Ordenação padrão (salva automaticamente)"
+                    style={{ padding: "7px 10px", border: `1.5px solid ${C.navy}`, borderRadius: 8, background: C.navyBg, fontSize: 12, color: C.navy, outline: "none", fontWeight: 600, cursor: "pointer" }}
+                  >
+                    <option value="date_asc">↑ Evento mais antigo</option>
+                    <option value="date_desc">↓ Evento mais recente</option>
+                    <option value="name_asc">A→Z Nome</option>
+                    <option value="stage">Por etapa</option>
                   </select>
                 </div>
               </div>

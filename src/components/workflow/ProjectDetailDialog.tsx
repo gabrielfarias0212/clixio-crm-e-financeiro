@@ -55,6 +55,7 @@ const workflowStageLabels: Record<WorkflowStage, string> = {
   'copia': 'Cópia',
   'backup': 'Backup',
   'curadoria': 'Curadoria',
+  'previas_enviadas': 'Prévias Enviadas',
   'edicao': 'Edição',
   'link_pronto': 'Link Pronto',
   'link_enviado': 'Link Enviado',

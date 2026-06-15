@@ -54,6 +54,7 @@ export const parseClient = (data: any): Client => {
     albumApprovedDelivered: data.album_approved_delivered,
     backupCompleted: data.backup_completed,
     curationCompleted: data.curation_completed,
+    previasSent: data.previas_sent ?? false,
     linkReady: data.link_ready,
 
     payments: [],

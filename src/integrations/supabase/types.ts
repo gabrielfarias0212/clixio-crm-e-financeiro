@@ -2278,6 +2278,7 @@ export type Database = {
         | "copia"
         | "backup"
         | "curadoria"
+        | "previas_enviadas"
         | "edicao"
         | "link_pronto"
         | "link_enviado"

@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { Client } from "@/utils/types";
 import { Progress } from "@/components/ui/progress";
 import {
-  Camera, HardDrive, Scissors, Sliders, Link, Package,
+  Camera, HardDrive, Scissors, Sliders, Link, Package, Send,
   BookOpen, AlertTriangle, CheckCircle2, Clock, Search,
   ChevronRight, Plus, FileText,
 } from "lucide-react";
@@ -72,6 +72,7 @@ const WORKFLOW_STEPS: WorkflowStep[] = [
   { key: "wedding_photographed", label: "Fotografado",    icon: Camera,      color: "#7C3AED", bgColor: "#F3EFFE", field: "weddingPhotographed", description: "Evento realizado" },
   { key: "backup_completed",     label: "Cópia/Backup",  icon: HardDrive,   color: C.gray,    bgColor: C.grayBg,  field: "backupCompleted",     description: "RAW + JPG copiados" },
   { key: "curation_completed",   label: "Curadoria",     icon: Scissors,    color: C.amber,   bgColor: C.amberBg, field: "curationCompleted",   description: "Seleção no Aftershoot" },
+  { key: "previas_sent",         label: "Prévias Enviadas", icon: Send,       color: "#DB2777", bgColor: "#FDF2F8", field: "previasSent",         description: "Prévias enviadas ao cliente" },
   { key: "in_editing",           label: "Edição Final",  icon: Sliders,     color: "#2563EB", bgColor: "#EFF6FF",  field: "inEditing",           description: "Lightroom — ajustes finais" },
   { key: "link_sent",            label: "Link Enviado",  icon: Link,        color: C.success, bgColor: C.successBg, field: "linkSent",          description: "Galeria enviada" },
   { key: "box_delivered",        label: "Entrega Física",icon: Package,     color: "#D97706", bgColor: "#FEF3C7",  field: "boxDelivered",        description: "Pen drive entregue" },

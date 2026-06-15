@@ -55,6 +55,7 @@ const FIELD_MAP: Record<string, string> = {
   notes: 'notes',
   workflowStage: 'workflow_stage',
   weddingPhotographed: 'wedding_photographed',
+  previasSent: 'previas_sent',
   inEditing: 'in_editing',
   linkReady: 'link_ready',
   linkSent: 'link_sent',

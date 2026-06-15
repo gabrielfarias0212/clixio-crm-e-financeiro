@@ -3,6 +3,7 @@ export type WorkflowStage =
   | 'copia' 
   | 'backup'
   | 'curadoria'
+  | 'previas_enviadas'
   | 'edicao'
   | 'edicao_base'
   | 'edicao_final'
@@ -111,6 +112,7 @@ export interface Client {
   weddingPhotographed?: boolean;  // Evento fotografado
   backupDone?: boolean;           // Cópia RAW+JPG para SSD (pré-wedding)
   curadoriaDone?: boolean;        // Curadoria no Aftershoot (pré-wedding)
+  previasSent?: boolean;           // Prévias enviadas ao cliente
   edicaoBaseDone?: boolean;       // Edição base do pré-wedding
   inEditing?: boolean;            // Edição final no Lightroom
   linkSent?: boolean;             // Link Wfolio enviado ao cliente

@@ -26,6 +26,7 @@ const workflowStageLabels: Record<WorkflowStage, string> = {
   copia: 'Cópia',
   backup: 'Backup',
   curadoria: 'Curadoria',
+  previas_enviadas: 'Prévias Enviadas',
   edicao: 'Edição',
   link_pronto: 'Link Pronto',
   link_enviado: 'Link Enviado',
@@ -47,6 +48,7 @@ function getClientWorkflowStage(client: Client): WorkflowStage {
   if (client.linkSent) return 'link_enviado';
   if (client.linkReady) return 'link_pronto';
   if (client.inEditing) return 'edicao';
+  if (client.previasSent) return 'previas_enviadas';
   if (client.curationCompleted) return 'curadoria';
   if (client.backupCompleted) return 'backup';
   if (client.weddingPhotographed) return 'copia';
@@ -182,7 +184,7 @@ export function generateWorkflowReport(
   // === TABELA DE PROJETOS ===
   // Agrupar por estágio
   const stageOrder: WorkflowStage[] = [
-    'evento_ensaio', 'copia', 'backup', 'curadoria', 'edicao',
+    'evento_ensaio', 'copia', 'backup', 'curadoria', 'previas_enviadas', 'edicao',
     'link_pronto', 'link_enviado', 'entrega_fisica', 'projeto_finalizado'
   ];
 

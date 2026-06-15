@@ -32,6 +32,7 @@ const STEPS = [
   { field: "weddingPhotographed",  label: "Fotografado"    },
   { field: "backupCompleted",      label: "Cópia/Backup"   },
   { field: "curationCompleted",    label: "Curadoria"      },
+  { field: "previasSent",          label: "Prévias Enviadas" },
   { field: "inEditing",            label: "Edição Final"   },
   { field: "linkSent",             label: "Link Enviado"   },
   { field: "boxDelivered",         label: "Entrega Física" },
@@ -50,6 +51,7 @@ const STAGE_LABELS: Record<string, string> = {
   wedding_photographed: "Fotografado",
   backup_completed:     "Cópia/Backup",
   curation_completed:   "Curadoria",
+  previas_sent:          "Prévias Enviadas",
   in_editing:           "Edição Final",
   link_sent:            "Link Enviado",
   box_delivered:        "Entrega Física",
@@ -64,6 +66,7 @@ function getStageKey(client: Client): string {
   if (client.boxDelivered)       return "box_delivered";
   if (client.linkSent)           return "link_sent";
   if (client.inEditing)          return "in_editing";
+  if (client.previasSent)          return "previas_sent";
   if (client.curationCompleted)  return "curation_completed";
   if (client.backupCompleted)    return "backup_completed";
   if (client.weddingPhotographed) return "wedding_photographed";

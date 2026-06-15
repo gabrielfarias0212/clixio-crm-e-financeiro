@@ -38,6 +38,7 @@ const CLIENT_SELECT = `
 
   backup_completed,
   curation_completed,
+  previas_sent,
   link_ready,
   album_designed,
   album_approved_delivered,

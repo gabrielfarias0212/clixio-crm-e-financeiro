@@ -458,6 +458,7 @@ export default function WorkflowPage() {
   const [filterYear, setFilterYear] = useState<number | "all">("all");
   const [filterStage, setFilterStage] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<string>(() => localStorage.getItem("workflow_sort") ?? "date_asc");
+  const isMobile = useIsMobile();
   const [showQuickForm, setShowQuickForm] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -541,8 +542,6 @@ export default function WorkflowPage() {
       </Layout>
     );
   }
-
-  const isMobile = useIsMobile();
 
   const statCards = [
     { label: "Em Andamento",      value: stats.ativos,                accent: C.navy,    accentBg: C.navyBg },

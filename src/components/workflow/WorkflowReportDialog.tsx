@@ -360,10 +360,14 @@ export function WorkflowReportDialog({ open, onClose, clients }: Props) {
     wrapper.appendChild(printArea.cloneNode(true));
     document.body.appendChild(wrapper);
 
-    window.print();
+    // Clean up AFTER the print dialog closes (not synchronously after window.print)
+    const cleanup = () => {
+      if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
 
-    // Clean up after printing
-    document.body.removeChild(wrapper);
+    window.print();
   };
 
   return (

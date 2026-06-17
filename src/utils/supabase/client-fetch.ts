@@ -20,6 +20,7 @@ const CLIENT_SELECT = `
   sales_funnel_stage, lead_source, storage_location, sem_entrega_fisica,
         package_id, notes,
   created_at, updated_at, workflow_stage,
+  portal_token, portal_enabled, portal_deadline, portal_message,
 
   wedding_photographed,
   backup_done,

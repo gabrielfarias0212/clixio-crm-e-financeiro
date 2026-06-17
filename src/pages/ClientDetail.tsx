@@ -14,6 +14,7 @@ import { ProjectCosts } from "@/components/client-detail/ProjectCosts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientDetails } from "@/components/client-detail/ClientDetails";
 import { ClientFormsSection } from "@/components/forms/ClientFormsSection";
+import { PortalSettings } from "@/components/client-detail/PortalSettings";
 
 export default function ClientDetail() {
   const { id } = useParams();
@@ -107,6 +108,7 @@ export default function ClientDetail() {
             <TabsTrigger value="details">Informações</TabsTrigger>
             <TabsTrigger value="custos">Custos do Projeto</TabsTrigger>
             <TabsTrigger value="forms">Formulários</TabsTrigger>
+            <TabsTrigger value="portal">Portal</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details">
@@ -119,6 +121,10 @@ export default function ClientDetail() {
 
           <TabsContent value="forms">
             <ClientFormsSection clientId={client.id} />
+          </TabsContent>
+
+          <TabsContent value="portal">
+            <PortalSettings client={client} />
           </TabsContent>
         </Tabs>
       </div>

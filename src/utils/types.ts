@@ -140,6 +140,12 @@ export interface Client {
   leadSource?: string;
   storageLocation?: string;
   semEntregaFisica?: boolean;  // Entrega somente digital (sem pen drive)
+
+  // ── Portal do cliente ───────────────────────────────────────
+  portalToken?: string;
+  portalEnabled?: boolean;
+  portalDeadline?: string | null;
+  portalMessage?: string | null;
   packageId?: string | null;      // Pacote de serviço aplicado
 
   payments: Payment[];

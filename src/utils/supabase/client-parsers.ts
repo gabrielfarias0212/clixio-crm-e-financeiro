@@ -31,6 +31,10 @@ export const parseClient = (data: any): Client => {
     packageId: data.package_id ?? null,
     notes: data.notes,
     workflowStage: data.workflow_stage,
+    portalToken: data.portal_token,
+    portalEnabled: data.portal_enabled ?? false,
+    portalDeadline: data.portal_deadline ?? null,
+    portalMessage: data.portal_message ?? null,
 
     // ── Workflow principal ──────────────────────────
     weddingPhotographed: data.wedding_photographed ?? false,

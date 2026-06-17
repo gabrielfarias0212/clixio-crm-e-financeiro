@@ -29,6 +29,7 @@ import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import FormsPage from "./pages/Forms";
 import PublicFormPage from "./pages/PublicForm";
+import ClientPortal from "./pages/ClientPortal";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             {/* Public route — no auth required */}
             <Route path="/f/:token" element={<PublicFormPage />} />
+        <Route path="/portal/:token" element={<ClientPortal />} />
             <Route
               path="/*"
               element={

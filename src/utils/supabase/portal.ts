@@ -1,5 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export interface PortalTransaction {
+  amount: number;
+  date: string | null;
+  description: string | null;
+  type: string;
+}
+
 export interface PortalClient {
   id: string;
   name: string;
@@ -21,8 +28,8 @@ export interface PortalClient {
   linkSent?: boolean;
   boxDelivered?: boolean;
   semEntregaFisica?: boolean;
-  // payments
-  payments?: { amount: number; date: string; payment_status: string; notes?: string }[];
+  // transactions (real payments received)
+  transactions?: PortalTransaction[];
 }
 
 export interface PortalStudio {
@@ -32,15 +39,14 @@ export interface PortalStudio {
 }
 
 export async function fetchPortalData(token: string): Promise<{ client: PortalClient; studio: PortalStudio } | null> {
-  // Fetch client by token (RLS allows public read when portal_enabled=true)
+  // Fetch client by token
   const { data: client, error } = await supabase
     .from("wedding_clients")
     .select(`
       id, name, couple_name, wedding_date, contract_value, status,
       workflow_stage, portal_deadline, portal_message, contract_link,
       has_album, wedding_photographed, backup_completed, curation_completed,
-      previas_sent, in_editing, link_sent, box_delivered, sem_entrega_fisica,
-      wedding_payments(amount, date, payment_status, notes)
+      previas_sent, in_editing, link_sent, box_delivered, sem_entrega_fisica
     `)
     .eq("portal_token", token)
     .eq("portal_enabled", true)
@@ -48,7 +54,14 @@ export async function fetchPortalData(token: string): Promise<{ client: PortalCl
 
   if (error || !client) return null;
 
-  // Fetch studio info from photographer_profiles
+  // Fetch transactions (actual payments received)
+  const { data: transactions } = await supabase
+    .from("wedding_transactions")
+    .select("amount, date, description, type")
+    .eq("client_id", client.id)
+    .order("date", { ascending: true });
+
+  // Fetch studio info
   const { data: profile } = await supabase
     .from("photographer_profiles")
     .select("name, company_name, avatar_url, website")
@@ -76,7 +89,12 @@ export async function fetchPortalData(token: string): Promise<{ client: PortalCl
       linkSent: client.link_sent ?? false,
       boxDelivered: client.box_delivered ?? false,
       semEntregaFisica: client.sem_entrega_fisica ?? false,
-      payments: (client.wedding_payments as any[]) ?? [],
+      transactions: (transactions ?? []).map(t => ({
+        amount: Number(t.amount),
+        date: t.date,
+        description: t.description,
+        type: t.type,
+      })),
     },
     studio: {
       name: profile?.company_name || profile?.name || "Fotografia",

@@ -60,8 +60,8 @@ const STAGE_DESC: Record<string, string> = {
   projeto_finalizado: "Seu trabalho foi concluído com sucesso. Obrigado pela confiança!",
 };
 
-function formatCurrency(v?: number) {
-  if (!v && v !== 0) return "—";
+function formatCurrency(v?: number | null) {
+  if (v == null) return "—";
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
@@ -109,10 +109,15 @@ export default function ClientPortal() {
   const completedCount = steps.filter(s => !!(client as any)[s.field]).length;
   const currentIdx = steps.findIndex(s => !(client as any)[s.field]);
   const pct = Math.round((completedCount / steps.length) * 100);
-  const payments = client.payments ?? [];
-  const paidTotal = payments.filter(p => p.payment_status === "paid").reduce((a,p) => a + p.amount, 0);
-  const pendingTotal = payments.filter(p => p.payment_status !== "paid").reduce((a,p) => a + p.amount, 0);
-  const allPaid = pendingTotal === 0 && paidTotal > 0;
+
+  // Financial: use transactions (type="entrada" = payment received)
+  const transactions = client.transactions ?? [];
+  const receivedTransactions = transactions.filter(t => t.type === "entrada");
+  const totalPaid = receivedTransactions.reduce((acc, t) => acc + t.amount, 0);
+  const contractValue = client.contractValue ?? 0;
+  const totalRemaining = Math.max(0, contractValue - totalPaid);
+  const allPaid = contractValue > 0 && totalRemaining === 0;
+  const hasFinancialData = contractValue > 0;
 
   const C = { white:"#FFFFFF", cream:"#FAFAF8", gold:"#C9A96E", goldLight:"#F0E8D8",
     text:"#1A1A18", textMid:"#5C5A54", textLight:"#9B9890", border:"#E8E4DC", dark:"#1A1A18",
@@ -221,30 +226,48 @@ export default function ClientPortal() {
           </div>
         )}
 
-        {/* Payments */}
-        {payments.length > 0 && (
+        {/* Financial summary */}
+        {hasFinancialData && (
           <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:16, padding:"28px 28px", marginBottom:24, ...f(0.85) }}>
             <h3 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:400, color:C.text, marginBottom:4 }}>Situação financeira</h3>
-            <p style={{ fontSize:13, color: allPaid ? C.green : C.textLight, marginBottom:20, fontWeight: allPaid ? 500 : 400 }}>
-              {allPaid ? "Seu contrato está totalmente quitado. Obrigado pela confiança." : "Resumo dos seus pagamentos."}
+            <p style={{ fontSize:13, color: allPaid ? C.green : C.textLight, marginBottom:24, fontWeight: allPaid ? 500 : 400 }}>
+              {allPaid ? "Seu contrato está totalmente quitado. Obrigado pela confiança!" : "Resumo dos seus pagamentos."}
             </p>
-            {payments.map((p, i) => {
-              const paid = p.payment_status === "paid";
-              return (
-                <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 0", borderBottom: i < payments.length-1 ? `1px solid ${C.border}` : "none" }}>
-                  <div>
-                    <p style={{ fontSize:13, color:C.text, fontWeight:500 }}>{p.notes || `Pagamento ${i+1}`}</p>
-                    <p style={{ fontSize:11, color:C.textLight, marginTop:2 }}>{p.date ? formatDateBR(p.date) : "—"}</p>
+
+            {/* Summary cards */}
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom: receivedTransactions.length > 0 ? 24 : 0 }}>
+              <div style={{ textAlign:"center", padding:"16px 12px", background:C.warm, borderRadius:12 }}>
+                <p style={{ fontSize:10, letterSpacing:"0.08em", textTransform:"uppercase" as const, color:C.textLight, marginBottom:6 }}>Contrato</p>
+                <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color:C.text }}>{formatCurrency(contractValue)}</p>
+              </div>
+              <div style={{ textAlign:"center", padding:"16px 12px", background:C.greenBg, borderRadius:12 }}>
+                <p style={{ fontSize:10, letterSpacing:"0.08em", textTransform:"uppercase" as const, color:C.green, marginBottom:6 }}>Pago</p>
+                <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color:C.green }}>{formatCurrency(totalPaid)}</p>
+              </div>
+              <div style={{ textAlign:"center", padding:"16px 12px", background: totalRemaining > 0 ? C.amberBg : C.greenBg, borderRadius:12 }}>
+                <p style={{ fontSize:10, letterSpacing:"0.08em", textTransform:"uppercase" as const, color: totalRemaining > 0 ? C.amber : C.green, marginBottom:6 }}>Restante</p>
+                <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color: totalRemaining > 0 ? C.amber : C.green }}>{formatCurrency(totalRemaining)}</p>
+              </div>
+            </div>
+
+            {/* Transaction list */}
+            {receivedTransactions.length > 0 && (
+              <div>
+                <p style={{ fontSize:11, letterSpacing:"0.08em", textTransform:"uppercase" as const, color:C.textLight, marginBottom:12 }}>Histórico de pagamentos</p>
+                {receivedTransactions.map((t, i) => (
+                  <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 0", borderBottom: i < receivedTransactions.length-1 ? `1px solid ${C.border}` : "none" }}>
+                    <div>
+                      <p style={{ fontSize:13, color:C.text, fontWeight:500 }}>{t.description || "Pagamento recebido"}</p>
+                      <p style={{ fontSize:11, color:C.textLight, marginTop:2 }}>{formatDateBR(t.date)}</p>
+                    </div>
+                    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                      <span style={{ fontSize:14, fontWeight:600, color:C.green }}>{formatCurrency(t.amount)}</span>
+                      <span style={{ fontSize:10, fontWeight:600, padding:"3px 9px", borderRadius:999, background:C.greenBg, color:C.green }}>Recebido</span>
+                    </div>
                   </div>
-                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                    <span style={{ fontSize:14, fontWeight:600 }}>{formatCurrency(p.amount)}</span>
-                    <span style={{ fontSize:10, fontWeight:600, padding:"3px 9px", borderRadius:999, background: paid ? C.greenBg : C.amberBg, color: paid ? C.green : C.amber }}>
-                      {paid ? "Pago" : "Pendente"}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+                ))}
+              </div>
+            )}
           </div>
         )}
 

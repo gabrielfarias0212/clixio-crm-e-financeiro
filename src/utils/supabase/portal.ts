@@ -7,6 +7,14 @@ export interface PortalTransaction {
   type: string;
 }
 
+export interface PortalPayment {
+  amount: number;
+  dueDate: string | null;
+  date: string | null;
+  paymentStatus: string | null;
+  notes: string | null;
+}
+
 export interface PortalClient {
   id: string;
   name: string;
@@ -19,7 +27,6 @@ export interface PortalClient {
   portalMessage?: string | null;
   contractLink?: string | null;
   hasAlbum?: boolean;
-  // workflow booleans
   weddingPhotographed?: boolean;
   backupCompleted?: boolean;
   curationCompleted?: boolean;
@@ -28,8 +35,10 @@ export interface PortalClient {
   linkSent?: boolean;
   boxDelivered?: boolean;
   semEntregaFisica?: boolean;
-  // transactions (real payments received)
+  // actual received payments (financial module)
   transactions?: PortalTransaction[];
+  // planned installments
+  payments?: PortalPayment[];
 }
 
 export interface PortalStudio {
@@ -39,7 +48,6 @@ export interface PortalStudio {
 }
 
 export async function fetchPortalData(token: string): Promise<{ client: PortalClient; studio: PortalStudio } | null> {
-  // Fetch client by token
   const { data: client, error } = await supabase
     .from("wedding_clients")
     .select(`
@@ -54,19 +62,24 @@ export async function fetchPortalData(token: string): Promise<{ client: PortalCl
 
   if (error || !client) return null;
 
-  // Fetch transactions (actual payments received)
-  const { data: transactions } = await supabase
-    .from("wedding_transactions")
-    .select("amount, date, description, type")
-    .eq("client_id", client.id)
-    .order("date", { ascending: true });
-
-  // Fetch studio info
-  const { data: profile } = await supabase
-    .from("photographer_profiles")
-    .select("name, company_name, avatar_url, website")
-    .limit(1)
-    .maybeSingle();
+  // Fetch both in parallel
+  const [{ data: transactions }, { data: payments }, { data: profile }] = await Promise.all([
+    supabase
+      .from("wedding_transactions")
+      .select("amount, date, description, type")
+      .eq("client_id", client.id)
+      .order("date", { ascending: true }),
+    supabase
+      .from("wedding_payments")
+      .select("amount, due_date, date, payment_status, notes")
+      .eq("client_id", client.id)
+      .order("due_date", { ascending: true }),
+    supabase
+      .from("photographer_profiles")
+      .select("name, company_name, avatar_url, website")
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   return {
     client: {
@@ -94,6 +107,13 @@ export async function fetchPortalData(token: string): Promise<{ client: PortalCl
         date: t.date,
         description: t.description,
         type: t.type,
+      })),
+      payments: (payments ?? []).map(p => ({
+        amount: Number(p.amount),
+        dueDate: p.due_date,
+        date: p.date,
+        paymentStatus: p.payment_status,
+        notes: p.notes,
       })),
     },
     studio: {

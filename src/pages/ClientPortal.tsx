@@ -110,14 +110,14 @@ export default function ClientPortal() {
   const currentIdx = steps.findIndex(s => !(client as any)[s.field]);
   const pct = Math.round((completedCount / steps.length) * 100);
 
-  // Financial: use transactions (type="entrada" = payment received)
-  const transactions = client.transactions ?? [];
-  const receivedTransactions = transactions.filter(t => t.type === "entrada");
-  const totalPaid = receivedTransactions.reduce((acc, t) => acc + t.amount, 0);
+  // Financial calculations
   const contractValue = client.contractValue ?? 0;
+  const receivedTransactions = (client.transactions ?? []).filter(t => t.type === "entrada");
+  const totalPaid = receivedTransactions.reduce((acc, t) => acc + t.amount, 0);
   const totalRemaining = Math.max(0, contractValue - totalPaid);
   const allPaid = contractValue > 0 && totalRemaining === 0;
-  const hasFinancialData = contractValue > 0;
+  const hasFinancialData = contractValue > 0 || receivedTransactions.length > 0 || (client.payments ?? []).length > 0;
+  const plannedPayments = client.payments ?? [];
 
   const C = { white:"#FFFFFF", cream:"#FAFAF8", gold:"#C9A96E", goldLight:"#F0E8D8",
     text:"#1A1A18", textMid:"#5C5A54", textLight:"#9B9890", border:"#E8E4DC", dark:"#1A1A18",
@@ -226,7 +226,7 @@ export default function ClientPortal() {
           </div>
         )}
 
-        {/* Financial summary */}
+        {/* Financial */}
         {hasFinancialData && (
           <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:16, padding:"28px 28px", marginBottom:24, ...f(0.85) }}>
             <h3 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:400, color:C.text, marginBottom:4 }}>Situação financeira</h3>
@@ -235,25 +235,59 @@ export default function ClientPortal() {
             </p>
 
             {/* Summary cards */}
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom: receivedTransactions.length > 0 ? 24 : 0 }}>
-              <div style={{ textAlign:"center", padding:"16px 12px", background:C.warm, borderRadius:12 }}>
-                <p style={{ fontSize:10, letterSpacing:"0.08em", textTransform:"uppercase" as const, color:C.textLight, marginBottom:6 }}>Contrato</p>
-                <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color:C.text }}>{formatCurrency(contractValue)}</p>
+            {contractValue > 0 && (
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:24 }}>
+                <div style={{ textAlign:"center", padding:"16px 12px", background:C.warm, borderRadius:12 }}>
+                  <p style={{ fontSize:10, letterSpacing:"0.08em", textTransform:"uppercase" as const, color:C.textLight, marginBottom:6 }}>Contrato</p>
+                  <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color:C.text }}>{formatCurrency(contractValue)}</p>
+                </div>
+                <div style={{ textAlign:"center", padding:"16px 12px", background:C.greenBg, borderRadius:12 }}>
+                  <p style={{ fontSize:10, letterSpacing:"0.08em", textTransform:"uppercase" as const, color:C.green, marginBottom:6 }}>Pago</p>
+                  <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color:C.green }}>{formatCurrency(totalPaid)}</p>
+                </div>
+                <div style={{ textAlign:"center", padding:"16px 12px", background: totalRemaining > 0 ? C.amberBg : C.greenBg, borderRadius:12 }}>
+                  <p style={{ fontSize:10, letterSpacing:"0.08em", textTransform:"uppercase" as const, color: totalRemaining > 0 ? C.amber : C.green, marginBottom:6 }}>Restante</p>
+                  <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color: totalRemaining > 0 ? C.amber : C.green }}>{formatCurrency(totalRemaining)}</p>
+                </div>
               </div>
-              <div style={{ textAlign:"center", padding:"16px 12px", background:C.greenBg, borderRadius:12 }}>
-                <p style={{ fontSize:10, letterSpacing:"0.08em", textTransform:"uppercase" as const, color:C.green, marginBottom:6 }}>Pago</p>
-                <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color:C.green }}>{formatCurrency(totalPaid)}</p>
-              </div>
-              <div style={{ textAlign:"center", padding:"16px 12px", background: totalRemaining > 0 ? C.amberBg : C.greenBg, borderRadius:12 }}>
-                <p style={{ fontSize:10, letterSpacing:"0.08em", textTransform:"uppercase" as const, color: totalRemaining > 0 ? C.amber : C.green, marginBottom:6 }}>Restante</p>
-                <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color: totalRemaining > 0 ? C.amber : C.green }}>{formatCurrency(totalRemaining)}</p>
-              </div>
-            </div>
+            )}
 
-            {/* Transaction list */}
+            {/* Planned installments */}
+            {plannedPayments.length > 0 && (
+              <div style={{ marginBottom: receivedTransactions.length > 0 ? 20 : 0 }}>
+                <p style={{ fontSize:11, letterSpacing:"0.08em", textTransform:"uppercase" as const, color:C.textLight, marginBottom:12 }}>Parcelas</p>
+                {plannedPayments.map((p, i) => {
+                  const paid = p.paymentStatus === "paid";
+                  const dueDateObj = parseDate(p.dueDate);
+                  const isOverdue = !paid && dueDateObj && dueDateObj < new Date();
+                  return (
+                    <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 0", borderBottom: i < plannedPayments.length-1 ? `1px solid ${C.border}` : "none" }}>
+                      <div>
+                        <p style={{ fontSize:13, color:C.text, fontWeight:500 }}>{p.notes || `Parcela ${i+1}`}</p>
+                        <p style={{ fontSize:11, color: isOverdue ? C.amber : C.textLight, marginTop:2 }}>
+                          {paid ? `Pago em ${formatDateBR(p.date)}` : p.dueDate ? `Vence em ${formatDateBR(p.dueDate)}` : "—"}
+                        </p>
+                      </div>
+                      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                        <span style={{ fontSize:14, fontWeight:600 }}>{formatCurrency(p.amount)}</span>
+                        <span style={{ fontSize:10, fontWeight:600, padding:"3px 9px", borderRadius:999,
+                          background: paid ? C.greenBg : isOverdue ? C.amberBg : "#F3F4F6",
+                          color: paid ? C.green : isOverdue ? C.amber : C.textMid }}>
+                          {paid ? "Pago" : isOverdue ? "Atrasado" : "Pendente"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Received transactions */}
             {receivedTransactions.length > 0 && (
               <div>
-                <p style={{ fontSize:11, letterSpacing:"0.08em", textTransform:"uppercase" as const, color:C.textLight, marginBottom:12 }}>Histórico de pagamentos</p>
+                <p style={{ fontSize:11, letterSpacing:"0.08em", textTransform:"uppercase" as const, color:C.textLight, marginBottom:12 }}>
+                  {plannedPayments.length > 0 ? "Pagamentos recebidos" : "Histórico de pagamentos"}
+                </p>
                 {receivedTransactions.map((t, i) => (
                   <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 0", borderBottom: i < receivedTransactions.length-1 ? `1px solid ${C.border}` : "none" }}>
                     <div>
@@ -271,7 +305,7 @@ export default function ClientPortal() {
           </div>
         )}
 
-        {/* Contract */}
+        {/* Contract link */}
         {client.contractLink && (
           <a href={client.contractLink} target="_blank" rel="noopener noreferrer"
             style={{ display:"flex", alignItems:"center", justifyContent:"space-between", background:C.dark, borderRadius:16, padding:"24px 28px", marginBottom:24, textDecoration:"none", ...f(0.9) }}
@@ -286,7 +320,7 @@ export default function ClientPortal() {
           </a>
         )}
 
-        {/* Message */}
+        {/* Custom message */}
         {client.portalMessage && (
           <div style={{ background:C.goldLight, border:`1px solid rgba(201,169,110,0.2)`, borderRadius:16, padding:"28px 28px", ...f(0.95) }}>
             <p style={{ fontSize:11, letterSpacing:"0.1em", textTransform:"uppercase" as const, color:C.gold, marginBottom:10 }}>Uma mensagem para você</p>

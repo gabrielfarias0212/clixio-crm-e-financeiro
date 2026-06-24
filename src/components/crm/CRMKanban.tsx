@@ -6,6 +6,11 @@ import { Client, SalesFunnelStage, ClientStatus } from "@/utils/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronDown, ChevronUp, Bell, Trash2 } from "lucide-react";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Users, Send, MessageCircle, FileCheck, Archive, XCircle,
   Phone, Mail, Calendar, AlertCircle,
 } from "lucide-react";
@@ -108,20 +113,18 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientDialogOpen, setClientDialogOpen] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
-  const handleDelete = async (e: React.MouseEvent, clientId: string) => {
+  const handleDelete = (e: React.MouseEvent, client: Client) => {
     e.stopPropagation();
-    if (deletingId === clientId) {
-      // segundo clique confirma
-      await removeClient(clientId);
-      setDeletingId(null);
-      toast.success("Lead removido");
-    } else {
-      // primeiro clique — pede confirmação
-      setDeletingId(clientId);
-      setTimeout(() => setDeletingId(null), 3000); // reseta após 3s
-    }
+    setClientToDelete(client);
+  };
+
+  const confirmDelete = async () => {
+    if (!clientToDelete) return;
+    await removeClient(clientToDelete.id);
+    setClientToDelete(null);
+    toast.success("Lead excluído");
   };
 
   const toggleCardExpand = (id: string, e: React.MouseEvent) => {
@@ -361,32 +364,28 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                         </div>
                                         {/* Botão de exclusão rápida */}
                                         <button
-                                          onClick={e => handleDelete(e, client.id)}
-                                          title={deletingId === client.id ? "Clique novamente para confirmar" : "Excluir lead"}
+                                          onClick={e => handleDelete(e, client)}
+                                          title="Excluir lead"
                                           style={{
                                             flexShrink: 0,
                                             width: 26, height: 26,
                                             borderRadius: 6,
-                                            border: `1px solid ${deletingId === client.id ? C.danger : C.divider}`,
-                                            background: deletingId === client.id ? C.dangerBg : "transparent",
+                                            border: `1px solid ${C.divider}`,
+                                            background: "transparent",
                                             display: "flex", alignItems: "center", justifyContent: "center",
                                             cursor: "pointer",
                                             transition: "all 0.15s",
                                           }}
                                           onMouseEnter={e => {
-                                            if (deletingId !== client.id) {
-                                              (e.currentTarget as HTMLButtonElement).style.background = C.dangerBg;
-                                              (e.currentTarget as HTMLButtonElement).style.borderColor = C.danger;
-                                            }
+                                            (e.currentTarget as HTMLButtonElement).style.background = C.dangerBg;
+                                            (e.currentTarget as HTMLButtonElement).style.borderColor = C.danger;
                                           }}
                                           onMouseLeave={e => {
-                                            if (deletingId !== client.id) {
-                                              (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-                                              (e.currentTarget as HTMLButtonElement).style.borderColor = C.divider;
-                                            }
+                                            (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                                            (e.currentTarget as HTMLButtonElement).style.borderColor = C.divider;
                                           }}
                                         >
-                                          <Trash2 style={{ width: 12, height: 12, color: deletingId === client.id ? C.danger : C.textSub }} />
+                                          <Trash2 style={{ width: 12, height: 12, color: C.textSub }} />
                                         </button>
                                       </div>
 
@@ -654,6 +653,28 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
           client={messageDialogClient}
         />
       )}
+
+      {/* Dialog de confirmação de exclusão */}
+      <AlertDialog open={!!clientToDelete} onOpenChange={open => { if (!open) setClientToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir lead?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{clientToDelete?.name}</strong>?
+              Esta ação removerá o lead e todos os dados relacionados permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              style={{ background: C.danger, color: "#fff" }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

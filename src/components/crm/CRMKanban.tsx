@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { Client, SalesFunnelStage, ClientStatus } from "@/utils/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronDown, ChevronUp, Bell } from "lucide-react";
+import { ChevronDown, ChevronUp, Bell, Trash2 } from "lucide-react";
 import {
   Users, Send, MessageCircle, FileCheck, Archive, XCircle,
   Phone, Mail, Calendar, AlertCircle,
@@ -100,7 +100,7 @@ interface CRMKanbanProps {
 }
 
 export function CRMKanban({ clients }: CRMKanbanProps) {
-  const { updateClient } = useClients();
+  const { updateClient, removeClient } = useClients();
   const { openContractDialog, dialogOpen, pendingClient, handleConfirm, handleLater, handleCancel } = useContractClosed();
 
   const [messageDialogClient, setMessageDialogClient] = useState<Client | null>(null);
@@ -108,6 +108,21 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientDialogOpen, setClientDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (e: React.MouseEvent, clientId: string) => {
+    e.stopPropagation();
+    if (deletingId === clientId) {
+      // segundo clique confirma
+      await removeClient(clientId);
+      setDeletingId(null);
+      toast.success("Lead removido");
+    } else {
+      // primeiro clique — pede confirmação
+      setDeletingId(clientId);
+      setTimeout(() => setDeletingId(null), 3000); // reseta após 3s
+    }
+  };
 
   const toggleCardExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -320,7 +335,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                         </div>
                                       )}
 
-                                      {/* Avatar + name */}
+                                      {/* Avatar + name + delete button */}
                                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                                         <Avatar style={{ width: 34, height: 34, flexShrink: 0 }}>
                                           <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${client.name}`} />
@@ -328,7 +343,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                             {client.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
                                           </AvatarFallback>
                                         </Avatar>
-                                        <div style={{ minWidth: 0 }}>
+                                        <div style={{ minWidth: 0, flex: 1 }}>
                                           <div style={{
                                             fontSize: 13, fontWeight: 600, color: C.text,
                                             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
@@ -344,6 +359,35 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                             </div>
                                           )}
                                         </div>
+                                        {/* Botão de exclusão rápida */}
+                                        <button
+                                          onClick={e => handleDelete(e, client.id)}
+                                          title={deletingId === client.id ? "Clique novamente para confirmar" : "Excluir lead"}
+                                          style={{
+                                            flexShrink: 0,
+                                            width: 26, height: 26,
+                                            borderRadius: 6,
+                                            border: `1px solid ${deletingId === client.id ? C.danger : C.divider}`,
+                                            background: deletingId === client.id ? C.dangerBg : "transparent",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            cursor: "pointer",
+                                            transition: "all 0.15s",
+                                          }}
+                                          onMouseEnter={e => {
+                                            if (deletingId !== client.id) {
+                                              (e.currentTarget as HTMLButtonElement).style.background = C.dangerBg;
+                                              (e.currentTarget as HTMLButtonElement).style.borderColor = C.danger;
+                                            }
+                                          }}
+                                          onMouseLeave={e => {
+                                            if (deletingId !== client.id) {
+                                              (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                                              (e.currentTarget as HTMLButtonElement).style.borderColor = C.divider;
+                                            }
+                                          }}
+                                        >
+                                          <Trash2 style={{ width: 12, height: 12, color: deletingId === client.id ? C.danger : C.textSub }} />
+                                        </button>
                                       </div>
 
                                       {/* Days since contact badge */}

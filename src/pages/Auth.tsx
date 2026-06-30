@@ -66,7 +66,7 @@ export default function Auth() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-6 py-0 px-0 mx-[128px] my-[2px]">
-            <img src="/lovable-uploads/6b189f38-b0b9-4a2e-8ff2-6635102e14a9.png" alt="GCLIXIO Logo" className="w-[180px] h-auto mb-2" />
+            <img src="https://lwdfznskytyjqurxqebu.supabase.co/storage/v1/object/public/avatars/clixio-logo.png" alt="Clixio Logo" className="w-[180px] h-auto mb-2" />
           </div>
           <CardTitle className="text-2xl font-bold text-center">
             {mode === "login" ? "Entre na sua conta" : "Crie uma conta"}

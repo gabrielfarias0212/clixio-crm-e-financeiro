@@ -47,8 +47,8 @@ export function Navbar() {
         <div className="flex h-14 items-center justify-between px-4">
           <Link to="/">
             <img
-              src="/lovable-uploads/6b189f38-b0b9-4a2e-8ff2-6635102e14a9.png"
-              alt="GCLIXIO Logo"
+              src="https://lwdfznskytyjqurxqebu.supabase.co/storage/v1/object/public/avatars/clixio-logo.png"
+              alt="Clixio Logo"
               className="h-auto w-36"
             />
           </Link>
@@ -92,11 +92,11 @@ export function Navbar() {
       <aside className="fixed left-0 top-0 bottom-0 w-14 bg-white border-r border-stone-200 flex flex-col items-center py-4 gap-1 z-50">
         {/* Logo */}
         <Link to="/" className="mb-5 flex-shrink-0">
-          <div className="w-8 h-8 bg-stone-900 rounded-lg flex items-center justify-center">
-            <span className="font-mono text-[10px] font-medium text-stone-50 tracking-tight">
-              cx
-            </span>
-          </div>
+          <img
+            src="https://lwdfznskytyjqurxqebu.supabase.co/storage/v1/object/public/avatars/clixio-logo.png"
+            alt="Clixio Logo"
+            className="w-8 h-8 object-contain"
+          />
         </Link>
 
         {/* Nav items */}

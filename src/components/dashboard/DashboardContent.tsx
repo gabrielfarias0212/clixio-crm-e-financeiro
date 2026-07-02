@@ -194,7 +194,7 @@ export function DashboardContent() {
     clients
       .filter(c => {
         // Só exibe eventos com contrato fechado ou finalizado
-        if (!["fechado", "projeto_finalizado"].includes(c.status)) return false;
+        if (c.status !== "fechado") return false;
         if (!c.weddingDate) return false;
         const d = stringToDate(c.weddingDate);
         if (!d) return false;

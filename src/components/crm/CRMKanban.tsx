@@ -224,6 +224,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
 
         {/* ── Kanban columns ── */}
         <DragDropContext onDragEnd={handleDragEnd}>
+          <div style={{ position: "relative" as const }}>
           <div style={{ width: "100%", overflowX: "auto", paddingBottom: 8 }}>
             <div style={{ display: "flex", gap: 12, minWidth: `${funnelStages.length * 270}px` }}>
 
@@ -245,7 +246,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                       borderTop: `3px solid ${stage.accent}`,
                       display: "flex",
                       flexDirection: "column",
-                      height: "calc(100vh - 280px)",
+                      height: "calc(100vh - 140px)",
                       minHeight: 400,
                       overflow: "hidden",
                     }}>
@@ -271,7 +272,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                             {clientsInStage.length}
                           </span>
                         </div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: stage.accent, marginTop: 6 }}>
+                        <div style={{ fontSize: totalValue > 0 ? 15 : 12, fontWeight: totalValue > 0 ? 800 : 500, color: totalValue > 0 ? stage.accent : C.textSub, marginTop: 5 }}>
                           {fmt(totalValue)}
                         </div>
                       </div>
@@ -323,7 +324,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                       }
                                     }}
                                   >
-                                    <div style={{ padding: "10px 12px" }}>
+                                    <div style={{ padding: "8px 10px" }}>
 
                                       {/* Pending registration alert */}
                                       {hasPendingRegistration(client) && (
@@ -339,10 +340,10 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                       )}
 
                                       {/* Avatar + name + delete button */}
-                                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                                        <Avatar style={{ width: 34, height: 34, flexShrink: 0 }}>
+                                      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
+                                        <Avatar style={{ width: 28, height: 28, flexShrink: 0 }}>
                                           <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${client.name}`} />
-                                          <AvatarFallback style={{ fontSize: 11, fontWeight: 700 }}>
+                                          <AvatarFallback style={{ fontSize: 10, fontWeight: 700 }}>
                                             {client.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
                                           </AvatarFallback>
                                         </Avatar>
@@ -397,7 +398,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                           <div style={{
                                             display: "flex", alignItems: "center", justifyContent: "space-between",
                                             background: bc.bg, borderRadius: 6,
-                                            padding: "4px 8px", marginBottom: 8,
+                                            padding: "4px 8px", marginBottom: 6,
                                           }}>
                                             <span style={{ fontSize: 11, fontWeight: 600, color: bc.color }}>
                                               {days === 0 ? "Hoje" : days === 1 ? "1 dia atrás" : `${days} dias atrás`}
@@ -410,7 +411,7 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                       })()}
 
                                       {/* Contact info */}
-                                      <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 8 }}>
+                                      <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 6 }}>
                                         {client.email && (
                                           <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
                                             <Mail style={{ width: 11, height: 11, color: C.textSub, flexShrink: 0 }} />
@@ -466,10 +467,10 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                         onClick={e => toggleCardExpand(client.id, e)}
                                         style={{
                                           width: "100%", display: "flex", alignItems: "center",
-                                          justifyContent: "center", gap: 4,
-                                          marginTop: 8, padding: "5px 0", borderRadius: 6,
+                                          justifyContent: "center", gap: 3,
+                                          marginTop: 4, padding: "3px 0", borderRadius: 5,
                                           border: `1px solid transparent`, background: "none",
-                                          fontSize: 11, color: C.textSub, cursor: "pointer",
+                                          fontSize: 10, color: C.textSub, cursor: "pointer",
                                         }}
                                         onMouseEnter={e => {
                                           (e.currentTarget as HTMLButtonElement).style.background = C.itemBg;
@@ -482,11 +483,11 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                           (e.currentTarget as HTMLButtonElement).style.color = C.textSub;
                                         }}
                                       >
-                                        <Bell style={{ width: 10, height: 10 }} />
-                                        {expandedCards.has(client.id) ? "Fechar" : "Histórico & Follow-up"}
+                                        <Bell style={{ width: 9, height: 9 }} />
+                                        {expandedCards.has(client.id) ? "Fechar" : "Histórico"}
                                         {expandedCards.has(client.id)
-                                          ? <ChevronUp style={{ width: 10, height: 10 }} />
-                                          : <ChevronDown style={{ width: 10, height: 10 }} />}
+                                          ? <ChevronUp style={{ width: 9, height: 9 }} />
+                                          : <ChevronDown style={{ width: 9, height: 9 }} />}
                                       </button>
                                     </div>
 
@@ -513,6 +514,19 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                                 <span style={{ fontSize: 12 }}>Arraste leads aqui</span>
                               </div>
                             )}
+                            {/* Ghost hint quando poucos cards */}
+                            {clientsInStage.length > 0 && clientsInStage.length < 4 && !snapshot.isDraggingOver && (
+                              <div style={{
+                                border: `1.5px dashed ${C.divider}`, borderRadius: 8,
+                                padding: "10px 12px", display: "flex", alignItems: "center",
+                                justifyContent: "center", gap: 5,
+                                color: C.textSub, opacity: 0.4, marginTop: 2,
+                                userSelect: "none" as const,
+                              }}>
+                                <span style={{ fontSize: 15, lineHeight: 1, fontWeight: 300 }}>+</span>
+                                <span style={{ fontSize: 10 }}>Arraste um lead aqui</span>
+                              </div>
+                            )}
                           </div>
                         )}
                       </Droppable>
@@ -521,6 +535,10 @@ export function CRMKanban({ clients }: CRMKanbanProps) {
                 );
               })}
             </div>
+          </div>
+          {/* Indicadores de scroll horizontal */}
+          <div style={{ position: "absolute" as const, top: 0, left: 0, bottom: 8, width: 32, background: "linear-gradient(to right, rgba(249,248,246,0.9), transparent)", pointerEvents: "none" as const, zIndex: 5 }} />
+          <div style={{ position: "absolute" as const, top: 0, right: 0, bottom: 8, width: 56, background: "linear-gradient(to left, rgba(249,248,246,0.9), transparent)", pointerEvents: "none" as const, zIndex: 5 }} />
           </div>
         </DragDropContext>
 

@@ -363,62 +363,68 @@ export function useAlerts(clients: Client[] = []) {
       });
     });
     
-    // Pre-wedding alerts for clients with unscheduled pre-weddings
-    // UPDATED: Only show if preWeddingDate is NOT filled (indicating it's not scheduled)
-    // AND preWeddingCompleted is not true
+    // Alertas de sessões/ensaios não agendados
+    // - Casamentos: hasPreWedding=true sem preWeddingDate
+    // - Ensaios (qualquer categoria não-casamento): status fechado sem weddingDate (sessão principal)
+    const isCasamento = (cat: string) => (cat || '').toLowerCase().includes('casamento')
+
     const preWeddingAlerts: AlertItem[] = clients
       .filter(client => {
-        // Requirement: Client needs a pre-wedding
-        const needsPreWedding = client.hasPreWedding !== false;
-        
-        // Skip if pre-wedding was already completed
-        if (client.preWeddingCompleted === true) return false;
-        
-        // UPDATED: Pre-wedding not scheduled if preWeddingDate is empty/null
-        const notScheduled = !client.preWeddingDate;
-        
-        // Status: Client has confirmed status
-        const hasConfirmedStatus = client.status === "fechado";
-        
-        // Timeframe: Wedding within 120 days OR no date defined
-        const weddingDate = client.weddingDate ? stringToDate(client.weddingDate) : null;
-        const daysUntilWedding = weddingDate ? differenceInDays(weddingDate, now) : null;
-        const isWithinTimeframe = daysUntilWedding === null || daysUntilWedding <= preWeddingReminderDays;
-        
-        return needsPreWedding && notScheduled && hasConfirmedStatus && isWithinTimeframe;
+        if (client.status !== "fechado") return false
+        if (client.preWeddingCompleted === true) return false
+
+        const category = client.eventCategory || ''
+        const weddingDate = client.weddingDate ? stringToDate(client.weddingDate) : null
+        const daysUntilWedding = weddingDate ? differenceInDays(weddingDate, now) : null
+
+        if (isCasamento(category)) {
+          // Casamento: só alerta se hasPreWedding=true e sem data de pré agendada
+          if (!client.hasPreWedding) return false
+          if (client.preWeddingDate) return false
+          // Dentro do prazo de lembrete
+          return daysUntilWedding === null || daysUntilWedding <= preWeddingReminderDays
+        } else {
+          // Ensaio (gestante, infantil, corporativo, externo, aniversário etc.)
+          // Alerta se ainda não tem data do evento principal agendada
+          return !client.weddingDate
+        }
       })
       .map(client => {
-        const weddingDate = client.weddingDate ? stringToDate(client.weddingDate) : null;
-        let urgency: "high" | "medium" | "low" = "medium";
-        let daysUntilWedding = null;
-        
-        // Calculate urgency based on wedding date proximity
-        if (weddingDate) {
-          daysUntilWedding = differenceInDays(weddingDate, now);
-          
-          if (daysUntilWedding <= 30) {
-            urgency = "high";  // 30 days or less: high urgency
-          } else if (daysUntilWedding <= 60) {
-            urgency = "medium"; // 31-60 days: medium urgency
-          } else {
-            urgency = "low";    // 61-120 days: low urgency
+        const category = client.eventCategory || ''
+        const weddingDate = client.weddingDate ? stringToDate(client.weddingDate) : null
+        const daysUntilWedding = weddingDate ? differenceInDays(weddingDate, now) : null
+        let urgency: "high" | "medium" | "low" = "medium"
+
+        if (isCasamento(category)) {
+          // Urgência baseada na proximidade do casamento
+          if (daysUntilWedding !== null) {
+            if (daysUntilWedding <= 30) urgency = "high"
+            else if (daysUntilWedding <= 60) urgency = "medium"
+            else urgency = "low"
           }
         }
-        
-        // Create description with wedding date information
-        const descriptionWithDays = daysUntilWedding 
-          ? `Cliente: ${client.name} - Agendar pré-wedding/ensaio (Casamento em ${daysUntilWedding} dias)`
-          : `Cliente: ${client.name} - Agendar pré-wedding/ensaio`;
-        
+        // Ensaios sem data ficam como medium por padrão
+
+        const isEnsaio = !isCasamento(category)
+        const title = isEnsaio
+          ? `Ensaio não agendado`
+          : `Pré-wedding não agendado`
+
+        const description = isEnsaio
+          ? `Cliente: ${client.name} - ${category || 'Ensaio'} sem data agendada`
+          : daysUntilWedding !== null
+            ? `Cliente: ${client.name} - Agendar pré-wedding (Casamento em ${daysUntilWedding} dias)`
+            : `Cliente: ${client.name} - Agendar pré-wedding/ensaio`
+
         return {
           type: "pre_wedding" as const,
-          title: "Pré-wedding não agendado",
-          description: descriptionWithDays,
+          title,
+          description,
           client,
           date: now,
           urgency
-        };
-      });
+        }
+      })
     
     // Combine and sort all payment alerts by urgency and type
     const allPaymentAlerts = [...paymentAlerts, ...duePaymentAlerts].sort((a, b) => {

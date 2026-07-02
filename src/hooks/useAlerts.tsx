@@ -366,7 +366,12 @@ export function useAlerts(clients: Client[] = []) {
     // Alertas de sessões/ensaios não agendados
     // - Casamentos: hasPreWedding=true sem preWeddingDate
     // - Ensaios (qualquer categoria não-casamento): status fechado sem weddingDate (sessão principal)
-    const isCasamento = (cat: string) => (cat || '').toLowerCase().includes('casamento')
+    // Eventos que têm um ensaio/sessão separado antes do evento principal (como pré-wedding)
+    const isEventWithPreSession = (cat: string) => {
+      const c = (cat || '').toLowerCase()
+      return c.includes('casamento') || c.includes('debutante') || c.includes('15 anos') || c.includes('debut')
+    }
+    const isCasamento = isEventWithPreSession // alias para compatibilidade
 
     const preWeddingAlerts: AlertItem[] = clients
       .filter(client => {

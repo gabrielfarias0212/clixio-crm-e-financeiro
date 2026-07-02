@@ -193,7 +193,9 @@ export function DashboardContent() {
   const upcomingEvents = useMemo(() =>
     clients
       .filter(c => {
-        if (!c.weddingDate || c.status === "contrato_perdido") return false;
+        // Só exibe eventos com contrato fechado ou finalizado
+        if (!["fechado", "projeto_finalizado"].includes(c.status)) return false;
+        if (!c.weddingDate) return false;
         const d = stringToDate(c.weddingDate);
         if (!d) return false;
         const diff = differenceInDays(d, now);

@@ -183,7 +183,7 @@ export function DashboardContent() {
     pipelineClients.reduce((s, c) => s + (c.contractValue || 0), 0),
     [pipelineClients]);
 
-  const totalAlerts = alerts.editTasks.length + alerts.deliverTasks.length + alerts.payments.length;
+  const totalAlerts = alerts.editTasks.length + alerts.deliverTasks.length + alerts.payments.length + alerts.preWedding.length;
 
   // Receita % do total contratado
   const totalContratado = receitaConfirmada + aReceber;
@@ -535,6 +535,47 @@ export function DashboardContent() {
                     <Badge label="entregar" bg="#E8EEF6" color="#1E3A5F" />
                   </div>
                 ))}
+              </>
+            )}
+
+            {alerts.preWedding.length > 0 && (
+              <>
+                <div style={{ ...MINI_TITLE, marginBottom: 6, marginTop: (alerts.payments.length > 0 || alerts.editTasks.length > 0 || alerts.deliverTasks.length > 0) ? 10 : 0 }}>Ensaios para agendar</div>
+                {alerts.preWedding.slice(0, 4).map((a, i) => {
+                  const isCasamento = (a.client?.eventCategory || '').toLowerCase().includes('casamento')
+                  const daysMatch = a.description?.match(/em (\d+) dias/)
+                  const diff = daysMatch ? parseInt(daysMatch[1]) : null
+                  const isUrgent = diff !== null && diff <= 30
+                  return (
+                    <div
+                      key={i}
+                      onClick={() => a.client && navigate(`/clients/${a.client.id}`)}
+                      style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 8px", borderRadius: 8, background: "#FAFAF8", marginBottom: 4, cursor: "pointer" }}
+                    >
+                      <AlertDot color={isUrgent ? "#E05252" : "#E8A838"} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 11, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#3a3530" }}>
+                          {a.client?.name || "—"}
+                        </div>
+                        {diff !== null && (
+                          <div style={{ fontSize: 9, color: isUrgent ? "#E05252" : "#9A9590", marginTop: 1 }}>
+                            {isCasamento ? `Casamento em ${diff} dias` : a.client?.eventCategory || "Ensaio"}
+                          </div>
+                        )}
+                      </div>
+                      <Badge
+                        label={isCasamento ? "pré-wedding" : "ensaio"}
+                        bg={isUrgent ? "#FEE8E8" : "#FEF3DC"}
+                        color={isUrgent ? "#E05252" : "#B07A1A"}
+                      />
+                    </div>
+                  )
+                })}
+                {alerts.preWedding.length > 4 && (
+                  <div style={{ fontSize: 11, color: "#1E3A5F", cursor: "pointer", textAlign: "right", padding: "2px 0", fontWeight: 500 }}>
+                    +{alerts.preWedding.length - 4} mais
+                  </div>
+                )}
               </>
             )}
           </div>

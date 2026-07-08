@@ -1,7 +1,8 @@
-
 import { useCallback, useMemo, useState } from 'react';
 import { useClients } from '@/contexts/ClientsContext';
 import { Client } from '@/utils/types';
+
+const ARCHIVED_STATUSES = ["projeto_finalizado", "contrato_perdido"];
 
 interface UseOptimizedClientsProps {
   pageSize?: number;
@@ -9,6 +10,7 @@ interface UseOptimizedClientsProps {
   statusFilter?: string;
   sortBy?: "name" | "date" | "value" | "status";
   sortOrder?: "asc" | "desc";
+  mode?: "active" | "archived" | "all";
 }
 
 export function useOptimizedClients({ 
@@ -16,21 +18,28 @@ export function useOptimizedClients({
   searchTerm = '', 
   statusFilter = 'all',
   sortBy = 'name',
-  sortOrder = 'asc'
+  sortOrder = 'asc',
+  mode = 'all',
 }: UseOptimizedClientsProps = {}) {
   const { clients, loading, error } = useClients();
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Filtros otimizados com memoização
   const filteredClients = useMemo(() => {
     let filtered = clients;
 
-    // Filtro por status
+    // Mode filter first
+    if (mode === "active") {
+      filtered = filtered.filter(c => !ARCHIVED_STATUSES.includes(c.status));
+    } else if (mode === "archived") {
+      filtered = filtered.filter(c => ARCHIVED_STATUSES.includes(c.status));
+    }
+
+    // Status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(client => client.status === statusFilter);
     }
 
-    // Filtro por busca
+    // Search filter
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(client =>
@@ -41,9 +50,8 @@ export function useOptimizedClients({
     }
 
     return filtered;
-  }, [clients, statusFilter, searchTerm]);
+  }, [clients, statusFilter, searchTerm, mode]);
 
-  // Dados ordenados
   const sortedClients = useMemo(() => {
     const sorted = [...filteredClients].sort((a, b) => {
       let aValue: any;
@@ -78,14 +86,12 @@ export function useOptimizedClients({
     return sorted;
   }, [filteredClients, sortBy, sortOrder]);
 
-  // Paginação otimizada
   const paginatedClients = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
     return sortedClients.slice(startIndex, endIndex);
   }, [sortedClients, currentPage, pageSize]);
 
-  // Metadados de paginação
   const paginationMeta = useMemo(() => ({
     totalItems: sortedClients.length,
     totalPages: Math.ceil(sortedClients.length / pageSize),
@@ -96,7 +102,6 @@ export function useOptimizedClients({
     endIndex: Math.min(currentPage * pageSize, sortedClients.length)
   }), [sortedClients.length, currentPage, pageSize]);
 
-  // Navegação otimizada
   const goToPage = useCallback((page: number) => {
     if (page >= 1 && page <= paginationMeta.totalPages) {
       setCurrentPage(page);
@@ -115,7 +120,6 @@ export function useOptimizedClients({
     }
   }, [paginationMeta.hasPrevPage]);
 
-  // Reset página quando filtros mudam
   const resetPage = useCallback(() => {
     setCurrentPage(1);
   }, []);

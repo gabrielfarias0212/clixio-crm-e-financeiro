@@ -22,6 +22,7 @@ interface ClientFiltersProps {
   setSortOrder: (order: "asc" | "desc") => void;
   clearFilters: () => void;
   hasActiveFilters: boolean;
+  mode?: "active" | "archived";
 }
 
 const C = {
@@ -34,13 +35,18 @@ const C = {
   border:  "#E8E4DE",
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  all:                "Todos os status",
-  primeiro_contato:   "Primeiro Contato",
-  "orçamento enviado":"Orçamento Enviado",
-  negociacao:         "Follow-up",
-  fechado:            "Fechado",
-  projeto_finalizado: "Projeto Finalizado",
+const ACTIVE_STATUS_LABELS: Record<string, string> = {
+  all:                  "Todos os ativos",
+  primeiro_contato:     "Primeiro Contato",
+  "orçamento enviado":  "Orçamento Enviado",
+  negociacao:           "Follow-up",
+  fechado:              "Contrato Fechado",
+};
+
+const ARCHIVED_STATUS_LABELS: Record<string, string> = {
+  all:                  "Todos os arquivados",
+  projeto_finalizado:   "Projeto Finalizado",
+  contrato_perdido:     "Contrato Perdido",
 };
 
 const SORT_LABELS: Record<string, string> = {
@@ -63,7 +69,13 @@ export function ClientFilters({
   setSortOrder,
   clearFilters,
   hasActiveFilters,
+  mode = "active",
 }: ClientFiltersProps) {
+  const statusLabels = mode === "archived" ? ARCHIVED_STATUS_LABELS : ACTIVE_STATUS_LABELS;
+  const statusOptions = mode === "archived"
+    ? ["all", "projeto_finalizado", "contrato_perdido"]
+    : ["all", "primeiro_contato", "orçamento enviado", "negociacao", "fechado"];
+
   return (
     <div style={{
       background: "#FFFFFF",
@@ -86,7 +98,7 @@ export function ClientFilters({
           <input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Buscar clientes..."
+            placeholder={mode === "archived" ? "Buscar arquivados..." : "Buscar clientes..."}
             style={{
               width: "100%", boxSizing: "border-box" as const,
               padding: "8px 32px 8px 32px",
@@ -117,9 +129,9 @@ export function ClientFilters({
               background: hasActiveFilters && statusFilter !== "all" ? C.navyBg : C.itemBg,
               fontSize: 12, fontWeight: 600,
               color: hasActiveFilters && statusFilter !== "all" ? C.navy : C.text,
-              cursor: "pointer", whiteSpace: "nowrap" as const, minWidth: 140,
+              cursor: "pointer", whiteSpace: "nowrap" as const, minWidth: 150,
             }}>
-              {STATUS_LABELS[statusFilter] ?? statusFilter}
+              {statusLabels[statusFilter] ?? statusFilter}
               <ChevronDown style={{ width: 12, height: 12, flexShrink: 0 }} />
             </button>
           </DropdownMenuTrigger>
@@ -128,12 +140,11 @@ export function ClientFilters({
               value={statusFilter}
               onValueChange={v => setStatusFilter(v as ClientStatus | "all")}
             >
-              <DropdownMenuRadioItem value="all">Todos os status</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="primeiro_contato">Primeiro Contato</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="orçamento enviado">Orçamento Enviado</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="negociacao">Follow-up</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="fechado">Fechado</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="projeto_finalizado">Projeto Finalizado</DropdownMenuRadioItem>
+              {statusOptions.map(s => (
+                <DropdownMenuRadioItem key={s} value={s}>
+                  {statusLabels[s] ?? s}
+                </DropdownMenuRadioItem>
+              ))}
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -4,9 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { useNavigate } from "react-router-dom";
 import { ConditionalFormFields } from "./client-form/ConditionalFormFields";
-import { NotesField } from "./client-form/NotesField";
 import { FormActions } from "./client-form/FormActions";
-import { PackageSelector } from "./client-form/PackageSelector";
 import { createFormSchema, ClientFormProps, ClientFormValues } from "./client-form/types";
 import { ServicePackage } from "@/utils/supabase/packages";
 
@@ -96,24 +94,16 @@ export function ClientForm({ client, onSubmit, isSubmitting = false, isLeadForm 
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 animate-fade-in">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 animate-fade-in">
         <ConditionalFormFields
           control={form.control}
           watchStatus={watchStatus}
           watchHasPreWedding={watchHasPreWedding}
           clientId={client?.id}
           isLeadForm={isLeadForm}
+          selectedPackageId={selectedPackage?.id ?? client?.packageId ?? null}
+          onPackageSelect={handlePackageSelect}
         />
-
-        {/* Package selector — shown above payment fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <PackageSelector
-            selectedId={selectedPackage?.id ?? client?.packageId ?? null}
-            onSelect={handlePackageSelect}
-          />
-        </div>
-
-        <NotesField control={form.control} />
         <FormActions
           isSubmitting={isSubmitting}
           onCancel={() => navigate(-1)}

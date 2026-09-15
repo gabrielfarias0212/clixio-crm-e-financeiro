@@ -408,7 +408,7 @@ export default function GalleryDetail() {
 
       {/* Upload section */}
       <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 16, padding: "20px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: uploading ? 10 : 16 }}>
           <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>
             Fotos {photos.length > 0 && `(${photos.length})`}
             {gallery.watermark_enabled && <span style={{ fontSize: 11, fontWeight: 400, color: C.textSub, marginLeft: 8 }}>· Marca d'água: "{gallery.watermark_text}"</span>}
@@ -416,11 +416,37 @@ export default function GalleryDetail() {
           <button onClick={() => inputRef.current?.click()} disabled={uploading}
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: C.goldBg, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, color: "#7C5C20", cursor: uploading ? "not-allowed" : "pointer", opacity: uploading ? 0.7 : 1 }}>
             <Upload style={{ width: 13, height: 13 }} />
-            {uploading ? `Enviando ${uploadProgress?.done}/${uploadProgress?.total}...` : "Fazer upload"}
+            {uploading ? "Enviando..." : "Fazer upload"}
           </button>
           <input ref={inputRef} type="file" multiple accept="image/*" style={{ display: "none" }}
             onChange={e => e.target.files && handleUpload(e.target.files)} />
         </div>
+
+        {/* Upload progress bar */}
+        {uploading && uploadProgress && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <span style={{ fontSize: 12, color: C.textSub }}>
+                Processando e enviando fotos...
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: C.text }}>
+                {uploadProgress.done} / {uploadProgress.total}
+              </span>
+            </div>
+            <div style={{ height: 6, background: C.divider, borderRadius: 99, overflow: "hidden" }}>
+              <div style={{
+                height: "100%",
+                width: `${Math.round((uploadProgress.done / uploadProgress.total) * 100)}%`,
+                background: `linear-gradient(90deg, ${C.gold}, #E8C47A)`,
+                borderRadius: 99,
+                transition: "width 0.4s ease",
+              }} />
+            </div>
+            <div style={{ fontSize: 11, color: C.textSub, marginTop: 5, textAlign: "right" }}>
+              {Math.round((uploadProgress.done / uploadProgress.total) * 100)}%
+            </div>
+          </div>
+        )}
 
         {photos.length === 0 ? (
           <div onClick={() => inputRef.current?.click()}

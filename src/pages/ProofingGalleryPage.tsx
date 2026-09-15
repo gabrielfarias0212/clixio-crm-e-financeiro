@@ -204,10 +204,10 @@ export default function ProofingGalleryPage() {
         {!coverUrl && <div style={{ position: "absolute", inset: 0, background: "#FAFAF8", zIndex: 0 }} />}
         <div style={{ width: "100%", maxWidth: 400, background: coverUrl ? "rgba(255,255,255,0.92)" : "#fff", borderRadius: 20, padding: "40px 36px", boxShadow: "0 8px 40px rgba(0,0,0,0.10)", position: "relative", zIndex: 2, backdropFilter: coverUrl ? "blur(8px)" : "none" }}>
           <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <div style={{ width: 72, height: 72, borderRadius: "50%", margin: "0 auto 16px", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#F5F0E8", boxShadow: "0 2px 12px rgba(0,0,0,0.10)" }}>
+            <div style={{ margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
               {logoUrl
-                ? <img src={logoUrl} alt="Studio" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                : <Heart style={{ width: 24, height: 24, color: "#C9A96E" }} />}
+                ? <img src={logoUrl} alt="Studio" style={{ maxWidth: 160, maxHeight: 72, objectFit: "contain" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                : <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#F5F0E8", display: "flex", alignItems: "center", justifyContent: "center" }}><Heart style={{ width: 24, height: 24, color: "#C9A96E" }} /></div>}
             </div>
             <h1 style={{ fontFamily: "Georgia, serif", fontSize: 24, fontWeight: 400, color: "#1A1A18", margin: "0 0 6px" }}>Galeria de Seleção</h1>
             <p style={{ fontSize: 13, color: "#9B9890", margin: 0 }}>Entre com seus dados de acesso</p>

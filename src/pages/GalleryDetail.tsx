@@ -57,7 +57,6 @@ export default function GalleryDetail() {
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [movingStatus, setMovingStatus] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
-  const [hoveredPhotoId, setHoveredPhotoId] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
   const [exportTab, setExportTab] = useState<"lightroom"|"finder"|"win10"|"win11">("lightroom");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -433,44 +432,14 @@ export default function GalleryDetail() {
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8 }}>
             {photos.map(photo => (
-              <div key={photo.id}
-                style={{ position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "1", background: C.itemBg,
-                  border: gallery.cover_photo_path === photo.storage_path ? `2.5px solid ${C.gold}` : photo.selecionada ? `2.5px solid #7CB9E8` : `2px solid transparent` }}
-                onMouseEnter={() => setHoveredPhotoId(photo.id)}
-                onMouseLeave={() => setHoveredPhotoId(null)}>
-                {photoUrls[photo.id]
-                  ? <img src={photoUrls[photo.id]} alt={photo.nome_arquivo} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  : <div style={{ width: "100%", height: "100%", background: C.divider }} />}
-                {/* Cover star badge */}
-                {gallery.cover_photo_path === photo.storage_path && (
-                  <div style={{ position: "absolute", top: 4, left: 4, width: 20, height: 20, background: C.gold, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Star style={{ width: 10, height: 10, color: "#fff", fill: "#fff" }} />
-                  </div>
-                )}
-                {photo.selecionada && (
-                  <div style={{ position: "absolute", bottom: 4, right: 4, width: 18, height: 18, background: "#7CB9E8", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <CheckCircle style={{ width: 11, height: 11, color: "#fff" }} />
-                  </div>
-                )}
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: hoveredPhotoId === photo.id ? "rgba(0,0,0,0.22)" : "rgba(0,0,0,0)", transition: "background 0.15s" }}>
-                  <button onClick={() => deletePhoto(photo)}
-                    style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, background: "rgba(0,0,0,0.6)", border: "none", borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <XCircle style={{ width: 12, height: 12, color: "#fff" }} />
-                  </button>
-                  {/* Set as cover button */}
-                  {hoveredPhotoId === photo.id && (
-                    <button
-                      onClick={() => setCoverPhoto(gallery.cover_photo_path === photo.storage_path ? null : photo.storage_path)}
-                      style={{ position: "absolute", bottom: 26, left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap", padding: "4px 8px", background: gallery.cover_photo_path === photo.storage_path ? "rgba(201,169,110,0.95)" : "rgba(0,0,0,0.72)", border: "none", borderRadius: 6, color: "#fff", fontSize: 10, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                      <Star style={{ width: 9, height: 9, fill: gallery.cover_photo_path === photo.storage_path ? "#fff" : "none" }} />
-                      {gallery.cover_photo_path === photo.storage_path ? "Remover capa" : "Definir como capa"}
-                    </button>
-                  )}
-                </div>
-                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(0,0,0,0.55)", padding: "3px 5px" }}>
-                  <div style={{ fontSize: 9, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{photo.nome_arquivo}</div>
-                </div>
-              </div>
+              <PhotoCard
+                key={photo.id}
+                photo={photo}
+                url={photoUrls[photo.id]}
+                isCover={gallery.cover_photo_path === photo.storage_path}
+                onDelete={() => deletePhoto(photo)}
+                onSetCover={() => setCoverPhoto(gallery.cover_photo_path === photo.storage_path ? null : photo.storage_path)}
+              />
             ))}
           </div>
         )}
@@ -536,6 +505,69 @@ export default function GalleryDetail() {
       )}
     </div>
     </Layout>
+  );
+}
+
+
+// ── PhotoCard ─────────────────────────────────────────────────────────────────
+function PhotoCard({ photo, url, isCover, onDelete, onSetCover }: {
+  photo: Photo;
+  url?: string;
+  isCover: boolean;
+  onDelete: () => void;
+  onSetCover: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const gold = "#C9A96E";
+  return (
+    <div
+      style={{ position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "1", background: "#FAFAF8",
+        border: isCover ? `2.5px solid ${gold}` : photo.selecionada ? `2.5px solid #7CB9E8` : `2px solid transparent` }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {url
+        ? <img src={url} alt={photo.nome_arquivo} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        : <div style={{ width: "100%", height: "100%", background: "#F0EDE8" }} />}
+
+      {/* Cover badge */}
+      {isCover && (
+        <div style={{ position: "absolute", top: 4, left: 4, width: 20, height: 20, background: gold, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3 }}>
+          <Star style={{ width: 10, height: 10, color: "#fff", fill: "#fff" }} />
+        </div>
+      )}
+
+      {/* Selected badge */}
+      {photo.selecionada && (
+        <div style={{ position: "absolute", bottom: 22, right: 4, width: 18, height: 18, background: "#7CB9E8", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3 }}>
+          <CheckCircle style={{ width: 11, height: 11, color: "#fff" }} />
+        </div>
+      )}
+
+      {/* Hover overlay */}
+      {hovered && (
+        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.28)", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
+          {/* Set cover button */}
+          <button
+            onClick={e => { e.stopPropagation(); onSetCover(); }}
+            style={{ padding: "5px 10px", background: isCover ? "rgba(201,169,110,0.95)" : "rgba(255,255,255,0.92)", border: "none", borderRadius: 6, color: isCover ? "#fff" : "#333", fontSize: 10, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
+            <Star style={{ width: 9, height: 9, fill: isCover ? "#fff" : "none", color: isCover ? "#fff" : gold }} />
+            {isCover ? "Remover capa" : "Definir como capa"}
+          </button>
+          {/* Delete button */}
+          <button
+            onClick={e => { e.stopPropagation(); onDelete(); }}
+            style={{ padding: "4px 10px", background: "rgba(224,82,82,0.9)", border: "none", borderRadius: 6, color: "#fff", fontSize: 10, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+            <XCircle style={{ width: 9, height: 9 }} /> Excluir
+          </button>
+        </div>
+      )}
+
+      {/* Filename strip */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(0,0,0,0.55)", padding: "3px 5px", zIndex: 1 }}>
+        <div style={{ fontSize: 9, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{photo.nome_arquivo}</div>
+      </div>
+    </div>
   );
 }
 

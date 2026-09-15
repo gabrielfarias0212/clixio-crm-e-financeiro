@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientDetails } from "@/components/client-detail/ClientDetails";
 import { ClientFormsSection } from "@/components/forms/ClientFormsSection";
 import { PortalSettings } from "@/components/client-detail/PortalSettings";
+import { ProofingTab } from "@/components/proofing/ProofingTab";
 
 export default function ClientDetail() {
   const { id } = useParams();
@@ -109,6 +110,7 @@ export default function ClientDetail() {
             <TabsTrigger value="custos">Custos do Projeto</TabsTrigger>
             <TabsTrigger value="forms">Formulários</TabsTrigger>
             <TabsTrigger value="portal">Portal</TabsTrigger>
+            <TabsTrigger value="galeria">📸 Galeria de Seleção</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details">
@@ -121,6 +123,10 @@ export default function ClientDetail() {
 
           <TabsContent value="forms">
             <ClientFormsSection clientId={client.id} />
+          </TabsContent>
+
+          <TabsContent value="galeria">
+            <ProofingTab clientId={client.id} clientName={client.name} />
           </TabsContent>
 
           <TabsContent value="portal">

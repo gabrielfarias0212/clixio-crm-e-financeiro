@@ -28,6 +28,7 @@ import Workflow from "./pages/Workflow";
 import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import FormsPage from "./pages/Forms";
+import ProofingGalleryPage from "./pages/ProofingGalleryPage";
 import PublicFormPage from "./pages/PublicForm";
 import ClientPortal from "./pages/ClientPortal";
 
@@ -52,6 +53,7 @@ const App = () => (
             {/* Public route — no auth required */}
             <Route path="/f/:token" element={<PublicFormPage />} />
         <Route path="/portal/:token" element={<ClientPortal />} />
+        <Route path="/galeria/:galleryId" element={<ProofingGalleryPage />} />
             <Route
               path="/*"
               element={

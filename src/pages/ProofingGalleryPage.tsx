@@ -36,7 +36,7 @@ interface Session {
   clientName: string; studioName: string; pixKey: string | null;
   email: string; password: string;
   selectedCount: number; valorExtras: number;
-  photos: (ProofingPhoto & { url?: string })[];
+  photos: (ProofingPhoto & { url?: string; thumbnail_url?: string })[];
 }
 
 export default function ProofingGalleryPage() {
@@ -370,7 +370,7 @@ export default function ProofingGalleryPage() {
 }
 
 function PhotoTile({ photo, onToggle, onView, disabled }: {
-  photo: ProofingPhoto & { url?: string };
+  photo: ProofingPhoto & { url?: string; thumbnail_url?: string };
   onToggle: (p: ProofingPhoto) => void;
   onView: (url: string) => void;
   disabled: boolean;
@@ -381,14 +381,16 @@ function PhotoTile({ photo, onToggle, onView, disabled }: {
       style={{ breakInside: "avoid", marginBottom: 8, position: "relative", borderRadius: 8, overflow: "hidden", cursor: "pointer", border: photo.selecionada ? "3px solid #C9A96E" : "3px solid transparent", transition: "border 0.15s" }}
     >
       {!loaded && <div style={{ width: "100%", aspectRatio: "1", background: "#E8E4DC" }} />}
-      {photo.url && (
+      {(photo.thumbnail_url || photo.url) && (
         <img
-          src={photo.url}
+          src={photo.thumbnail_url || photo.url}
           alt={photo.nome_arquivo}
+          loading="lazy"
+          decoding="async"
           style={{ width: "100%", display: loaded ? "block" : "none", objectFit: "cover" }}
           onLoad={() => setLoaded(true)}
           onClick={() => !disabled && onToggle(photo)}
-          onDoubleClick={() => photo.url && onView(photo.url)}
+          onDoubleClick={() => (photo.url || photo.thumbnail_url) && onView(photo.url || photo.thumbnail_url!)}
         />
       )}
       {/* Selection badge */}

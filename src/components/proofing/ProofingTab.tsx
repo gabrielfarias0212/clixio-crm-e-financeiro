@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { compressWithWatermark, ProofingGallery, ProofingPhoto } from "@/utils/proofing";
+import { compressWithWatermark, compressThumbnail, ProofingGallery, ProofingPhoto } from "@/utils/proofing";
 import {
   Upload, Images, Download, CheckCircle, XCircle, Plus, Trash2,
   ExternalLink, Copy, ChevronDown, ChevronUp, AlertCircle, ToggleLeft, ToggleRight
@@ -315,11 +315,17 @@ function GalleryCard({ gallery, label, expanded, studioName, onToggleExpand, onD
     const { data } = await supabase.from("proofing_photos").select("*").eq("gallery_id", gallery.id).order("created_at", { ascending: true });
     const list = (data ?? []) as ProofingPhoto[];
     setPhotos(list);
+    // Batch sign URLs — 1 HTTP call instead of N
     const urls: Record<string, string> = {};
-    await Promise.all(list.filter(p => p.storage_path).map(async p => {
-      const { data: u } = await supabase.storage.from("proofing-photos").createSignedUrl(p.storage_path!, 3600);
-      if (u?.signedUrl) urls[p.id] = u.signedUrl;
-    }));
+    const pathsToSign = list.map(p => p.thumbnail_path || p.storage_path).filter(Boolean) as string[];
+    if (pathsToSign.length) {
+      const { data: signed } = await supabase.storage.from("proofing-photos").createSignedUrls(pathsToSign, 3600);
+      list.forEach(p => {
+        const path = p.thumbnail_path || p.storage_path;
+        const entry = (signed || []).find(s => s.path === path);
+        if (entry?.signedUrl) urls[p.id] = entry.signedUrl;
+      });
+    }
     setPhotoUrls(urls);
     setPhotosLoading(false);
   }
@@ -332,12 +338,26 @@ function GalleryCard({ gallery, label, expanded, studioName, onToggleExpand, onD
     for (let i = 0; i < fileArr.length; i++) {
       const file = fileArr[i];
       try {
-        const blob = await compressWithWatermark(file, gallery.watermark_enabled ? studioName : "");
-        const path = `${gallery.id}/${crypto.randomUUID()}.webp`;
-        const { error: upErr } = await supabase.storage.from("proofing-photos").upload(path, blob, { contentType: "image/webp", upsert: false });
+        const wmark = gallery.watermark_enabled ? studioName : "";
+        const [blob, thumbBlob] = await Promise.all([
+          compressWithWatermark(file, wmark),
+          compressThumbnail(file, wmark),
+        ]);
+        const uuid = crypto.randomUUID();
+        const path = `${gallery.id}/${uuid}.webp`;
+        const thumbPath = `${gallery.id}/${uuid}_thumb.webp`;
+        const [{ error: upErr }, { error: thumbErr }] = await Promise.all([
+          supabase.storage.from("proofing-photos").upload(path, blob, { contentType: "image/webp", upsert: false }),
+          supabase.storage.from("proofing-photos").upload(thumbPath, thumbBlob, { contentType: "image/webp", upsert: false }),
+        ]);
         if (upErr) { toast.error(`Erro: ${file.name}`); }
         else {
-          await supabase.from("proofing_photos").insert({ gallery_id: gallery.id, nome_arquivo: file.name, storage_path: path, selecionada: false });
+          await supabase.from("proofing_photos").insert({
+            gallery_id: gallery.id, nome_arquivo: file.name,
+            storage_path: path,
+            thumbnail_path: thumbErr ? null : thumbPath,
+            selecionada: false,
+          });
         }
       } catch { toast.error(`Falha ao processar ${file.name}`); }
       setUploadProgress({ done: i + 1, total: fileArr.length });
@@ -349,7 +369,8 @@ function GalleryCard({ gallery, label, expanded, studioName, onToggleExpand, onD
   }
 
   async function deletePhoto(photo: ProofingPhoto) {
-    if (photo.storage_path) await supabase.storage.from("proofing-photos").remove([photo.storage_path]);
+    const pathsToRemove = [photo.storage_path, photo.thumbnail_path].filter(Boolean) as string[];
+    if (pathsToRemove.length) await supabase.storage.from("proofing-photos").remove(pathsToRemove);
     await supabase.from("proofing_photos").delete().eq("id", photo.id);
     setPhotos(prev => prev.filter(p => p.id !== photo.id));
     toast.success("Foto removida.");

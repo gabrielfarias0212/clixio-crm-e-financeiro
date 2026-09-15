@@ -75,6 +75,11 @@ export async function compressWithWatermark(
     img.src = objectUrl;
   });
 }
+// Compressed thumbnail for fast grid display (800px, sharper quality)
+export function compressThumbnail(file: File, watermarkText: string): Promise<Blob> {
+  return compressWithWatermark(file, watermarkText, 800, 0.82);
+}
+
 
 // Edge Function URL
 const FN_URL = 'https://lwdfznskytyjqurxqebu.supabase.co/functions/v1/proofing-gallery-access';
@@ -82,7 +87,9 @@ const FN_URL = 'https://lwdfznskytyjqurxqebu.supabase.co/functions/v1/proofing-g
 export interface ProofingPhoto {
   id: string; gallery_id: string;
   nome_arquivo: string; storage_path: string | null;
-  selecionada: boolean; created_at: string; url?: string;
+  thumbnail_path?: string | null;
+  selecionada: boolean; created_at: string;
+  url?: string; thumbnail_url?: string;
 }
 export interface ProofingGallery {
   id: string; client_id: string; tipo: string; status: string;

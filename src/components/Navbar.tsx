@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BarChart, CalendarDays, Users, DollarSign, Workflow, GitBranch, Menu, X, Settings2, FileText } from "lucide-react";
+import { BarChart, CalendarDays, Users, DollarSign, Workflow, GitBranch, Menu, X, Settings2, FileText, Camera } from "lucide-react";
+import { useProofingNotifications } from "@/hooks/useProofingNotifications";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { UserMenu } from "./UserMenu";
@@ -19,6 +20,7 @@ const navItems = [
   { name: "Calendário",        path: "/calendar", icon: CalendarDays },
   { name: "Financeiro",        path: "/cash-flow", icon: DollarSign },
   { name: "Formulários",       path: "/forms",     icon: FileText },
+  { name: "Galerias",          path: "/galerias",  icon: Camera },
   { name: "Configurações",     path: "/settings",  icon: Settings2 },
 ];
 
@@ -36,6 +38,8 @@ export function Navbar() {
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
   }, []);
+
+  const { totalBadge } = useProofingNotifications();
 
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(`${path}/`);
@@ -76,7 +80,14 @@ export function Navbar() {
                     : "text-stone-500 hover:bg-stone-50 hover:text-stone-700"
                 )}
               >
-                <Icon size={16} strokeWidth={1.5} />
+                <span style={{ position: "relative", display: "inline-flex" }}>
+                  <Icon size={16} strokeWidth={1.5} />
+                  {name === "Galerias" && totalBadge > 0 && (
+                    <span style={{ position: "absolute", top: -5, right: -6, minWidth: 14, height: 14, background: "#E05252", borderRadius: 99, fontSize: 9, fontWeight: 800, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px", lineHeight: 1 }}>
+                      {totalBadge > 9 ? "9+" : totalBadge}
+                    </span>
+                  )}
+                </span>
                 {name}
               </Link>
             ))}
@@ -106,13 +117,18 @@ export function Navbar() {
               <Link
                 to={path}
                 className={cn(
-                  "w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
+                  "w-9 h-9 rounded-lg flex items-center justify-center transition-colors relative",
                   isActive(path)
                     ? "bg-stone-100 text-stone-900"
                     : "text-stone-400 hover:bg-stone-50 hover:text-stone-600"
                 )}
               >
                 <Icon size={15} strokeWidth={1.5} />
+                {name === "Galerias" && totalBadge > 0 && (
+                  <span style={{ position: "absolute", top: 2, right: 2, minWidth: 14, height: 14, background: "#E05252", borderRadius: 99, fontSize: 9, fontWeight: 800, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px", lineHeight: 1, pointerEvents: "none" }}>
+                    {totalBadge > 9 ? "9+" : totalBadge}
+                  </span>
+                )}
               </Link>
             </TooltipTrigger>
             <TooltipContent side="right" className="text-xs">

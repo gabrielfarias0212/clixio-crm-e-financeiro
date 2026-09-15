@@ -29,6 +29,7 @@ import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import FormsPage from "./pages/Forms";
 import ProofingGalleryPage from "./pages/ProofingGalleryPage";
+import ProofingDashboard from "./pages/ProofingDashboard";
 import PublicFormPage from "./pages/PublicForm";
 import ClientPortal from "./pages/ClientPortal";
 
@@ -79,6 +80,7 @@ const App = () => (
                           <Route path="/budgets/:id" element={<BudgetDetail />} />
                           <Route path="/forms" element={<FormsPage />} />
                           <Route path="/settings" element={<Settings />} />
+                          <Route path="/galerias" element={<ProofingDashboard />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </FormsProvider>

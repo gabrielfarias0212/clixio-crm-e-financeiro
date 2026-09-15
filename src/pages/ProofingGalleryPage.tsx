@@ -47,6 +47,7 @@ export default function ProofingGalleryPage() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [viewPhoto, setViewPhoto] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
@@ -63,6 +64,19 @@ export default function ProofingGalleryPage() {
         handleLogin(e, p, true);
       } catch { sessionStorage.removeItem(`proofing_${galleryId}`); }
     }
+  }, [galleryId]);
+
+  // Fetch cover photo before login
+  useEffect(() => {
+    if (!galleryId) return;
+    fetch("https://lwdfznskytyjqurxqebu.supabase.co/functions/v1/proofing-gallery-access", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "get_cover", gallery_id: galleryId }),
+    })
+      .then(r => r.json())
+      .then(d => { if (d.cover_url) setCoverUrl(d.cover_url); })
+      .catch(() => {});
   }, [galleryId]);
 
   const handleLogin = async (e?: string, p?: string, silent = false) => {
@@ -163,8 +177,16 @@ export default function ProofingGalleryPage() {
   // ── LOGIN ──
   if (mode === "login" || (mode === "loading" && !session)) {
     return (
-      <div style={{ minHeight: "100vh", background: "#FAFAF8", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-        <div style={{ width: "100%", maxWidth: 400, background: "#fff", borderRadius: 20, padding: "40px 36px", boxShadow: "0 8px 40px rgba(0,0,0,0.10)" }}>
+      <div style={{ minHeight: "100vh", position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", overflow: "hidden" }}>
+        {/* Cover photo background */}
+        {coverUrl && (
+          <>
+            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${coverUrl})`, backgroundSize: "cover", backgroundPosition: "center", filter: "blur(18px) brightness(0.55)", transform: "scale(1.08)", zIndex: 0 }} />
+            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", zIndex: 1 }} />
+          </>
+        )}
+        {!coverUrl && <div style={{ position: "absolute", inset: 0, background: "#FAFAF8", zIndex: 0 }} />}
+        <div style={{ width: "100%", maxWidth: 400, background: coverUrl ? "rgba(255,255,255,0.92)" : "#fff", borderRadius: 20, padding: "40px 36px", boxShadow: "0 8px 40px rgba(0,0,0,0.10)", position: "relative", zIndex: 2, backdropFilter: coverUrl ? "blur(8px)" : "none" }}>
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <div style={{ width: 56, height: 56, background: "#F5F0E8", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
               <Heart style={{ width: 24, height: 24, color: "#C9A96E" }} />

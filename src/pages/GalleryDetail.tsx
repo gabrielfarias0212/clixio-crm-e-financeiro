@@ -6,7 +6,7 @@ import { compressWithWatermark, compressThumbnail } from "@/utils/proofing";
 import { toast } from "sonner";
 import {
   ArrowLeft, Upload, Download, Copy, ExternalLink, Trash2,
-  CheckCircle, XCircle, AlertCircle, RefreshCw, RotateCcw, Share2, MessageCircle
+  CheckCircle, XCircle, AlertCircle, RefreshCw, RotateCcw, Share2, MessageCircle, Star
 } from "lucide-react";
 
 const C = {
@@ -22,6 +22,7 @@ interface Gallery {
   status: string; email_acesso: string; senha_acesso: string;
   limite_incluso: number; permite_extras: boolean; preco_foto_extra: number | null;
   watermark_enabled: boolean; watermark_text: string; permite_download: boolean; deadline: string | null;
+  cover_photo_path?: string | null;
   valor_extras: number | null; extras_pago: boolean | null;
   created_at: string; finalized_at: string | null;
   user_id: string;
@@ -56,6 +57,7 @@ export default function GalleryDetail() {
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [movingStatus, setMovingStatus] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
+  const [hoveredPhotoId, setHoveredPhotoId] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
   const [exportTab, setExportTab] = useState<"lightroom"|"finder"|"win10"|"win11">("lightroom");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -184,6 +186,17 @@ export default function GalleryDetail() {
     await supabase.from("proofing_galleries").delete().eq("id", gallery.id);
     toast.success("Galeria excluída.");
     navigate("/galerias");
+  }
+
+  async function setCoverPhoto(path: string | null) {
+    if (!gallery) return;
+    const { error } = await supabase.rpc("update_gallery_settings", {
+      p_gallery_id: gallery.id,
+      p_cover_photo_path: path,
+    });
+    if (error) { toast.error("Erro ao definir capa"); return; }
+    setGallery(g => g ? { ...g, cover_photo_path: path } : g);
+    toast.success(path ? "Foto definida como capa!" : "Capa removida.");
   }
 
   function copyLink() {
@@ -420,22 +433,39 @@ export default function GalleryDetail() {
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8 }}>
             {photos.map(photo => (
-              <div key={photo.id} style={{ position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "1", background: C.itemBg, border: photo.selecionada ? `2.5px solid ${C.gold}` : `2px solid transparent` }}>
+              <div key={photo.id}
+                style={{ position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "1", background: C.itemBg,
+                  border: gallery.cover_photo_path === photo.storage_path ? `2.5px solid ${C.gold}` : photo.selecionada ? `2.5px solid #7CB9E8` : `2px solid transparent` }}
+                onMouseEnter={() => setHoveredPhotoId(photo.id)}
+                onMouseLeave={() => setHoveredPhotoId(null)}>
                 {photoUrls[photo.id]
                   ? <img src={photoUrls[photo.id]} alt={photo.nome_arquivo} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : <div style={{ width: "100%", height: "100%", background: C.divider }} />}
+                {/* Cover star badge */}
+                {gallery.cover_photo_path === photo.storage_path && (
+                  <div style={{ position: "absolute", top: 4, left: 4, width: 20, height: 20, background: C.gold, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Star style={{ width: 10, height: 10, color: "#fff", fill: "#fff" }} />
+                  </div>
+                )}
                 {photo.selecionada && (
-                  <div style={{ position: "absolute", bottom: 4, right: 4, width: 18, height: 18, background: C.gold, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ position: "absolute", bottom: 4, right: 4, width: 18, height: 18, background: "#7CB9E8", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <CheckCircle style={{ width: 11, height: 11, color: "#fff" }} />
                   </div>
                 )}
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0)", transition: "background 0.15s" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.15)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0)")}>
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: hoveredPhotoId === photo.id ? "rgba(0,0,0,0.22)" : "rgba(0,0,0,0)", transition: "background 0.15s" }}>
                   <button onClick={() => deletePhoto(photo)}
                     style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, background: "rgba(0,0,0,0.6)", border: "none", borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <XCircle style={{ width: 12, height: 12, color: "#fff" }} />
                   </button>
+                  {/* Set as cover button */}
+                  {hoveredPhotoId === photo.id && (
+                    <button
+                      onClick={() => setCoverPhoto(gallery.cover_photo_path === photo.storage_path ? null : photo.storage_path)}
+                      style={{ position: "absolute", bottom: 26, left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap", padding: "4px 8px", background: gallery.cover_photo_path === photo.storage_path ? "rgba(201,169,110,0.95)" : "rgba(0,0,0,0.72)", border: "none", borderRadius: 6, color: "#fff", fontSize: 10, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                      <Star style={{ width: 9, height: 9, fill: gallery.cover_photo_path === photo.storage_path ? "#fff" : "none" }} />
+                      {gallery.cover_photo_path === photo.storage_path ? "Remover capa" : "Definir como capa"}
+                    </button>
+                  )}
                 </div>
                 <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(0,0,0,0.55)", padding: "3px 5px" }}>
                   <div style={{ fontSize: 9, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{photo.nome_arquivo}</div>
@@ -522,10 +552,11 @@ function ShareModal({ gallery, clientName, clientPhone, clientEmail, onClose }: 
   const [copied, setCopied] = useState(false);
 
   const galleryUrl = `${window.location.origin}/galeria/${gallery.id}`;
+  const ogUrl = `https://lwdfznskytyjqurxqebu.supabase.co/functions/v1/galeria-og?id=${gallery.id}`;
   const firstName = clientName ? clientName.split(" ")[0] : "cliente";
   const label = gallery.titulo || (gallery.tipo === "album" ? "álbum" : "ensaio");
 
-  const whatsappText = `Olá ${firstName}! 📸 Sua galeria de seleção de fotos está pronta.\n\nAcesse pelo link abaixo e escolha suas fotos favoritas do seu ${label}:\n\n🔗 ${galleryUrl}\n📧 E-mail: ${gallery.email_acesso}\n🔑 Senha: ${gallery.senha_acesso}\n\nQualquer dúvida é só me chamar!`;
+  const whatsappText = `Olá ${firstName}! 📸 Sua galeria de seleção de fotos está pronta.\n\nAcesse pelo link abaixo e escolha suas fotos favoritas do seu ${label}:\n\n🔗 ${ogUrl}\n📧 E-mail: ${gallery.email_acesso}\n🔑 Senha: ${gallery.senha_acesso}\n\nQualquer dúvida é só me chamar!`;
 
   const cleanPhone = (p: string) => {
     const digits = p.replace(/\D/g, "");

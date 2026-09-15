@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ExternalLink, Trash2, AlertTriangle, CheckCircle, Clock, ChevronRight, Plus, X } from "lucide-react";
+import { ExternalLink, Trash2, AlertTriangle, CheckCircle, Clock, ChevronRight, Plus, X, Search } from "lucide-react";
 
 interface Client { id: string; name: string; }
 
@@ -40,6 +40,7 @@ export default function ProofingDashboard() {
   const [loading, setLoading] = useState(true);
   const [clients, setClients] = useState<Client[]>([]);
   const [showCreate, setShowCreate] = useState(false);
+  const [search, setSearch] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => { load(); loadClients(); }, []);
@@ -122,7 +123,17 @@ export default function ProofingDashboard() {
     toast.success("Galeria excluída.");
   }
 
-  const byCol = (key: Column) => galleries.filter(g => g.status === key);
+  const byCol = (key: Column) => {
+    const q = search.trim().toLowerCase();
+    return galleries.filter(g => {
+      if (g.status !== key) return false;
+      if (!q) return true;
+      return (
+        (g.client_name ?? "").toLowerCase().includes(q) ||
+        (g.titulo ?? "").toLowerCase().includes(q)
+      );
+    });
+  };
 
   const needsCleanup = (g: Gallery) =>
     g.status === "finalizado" && g.finalized_at &&
@@ -165,6 +176,22 @@ export default function ProofingDashboard() {
           }}
         />
       )}
+
+      {/* Search */}
+      <div style={{ marginBottom: 16, position: "relative" }}>
+        <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 14, height: 14, color: C.textSub, pointerEvents: "none" }} />
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar por cliente ou nome da galeria..."
+          style={{ width: "100%", padding: "10px 14px 10px 36px", border: `1.5px solid ${C.border}`, borderRadius: 10, fontSize: 13, outline: "none", background: "#fff", color: C.text, boxSizing: "border-box" }}
+        />
+        {search && (
+          <button onClick={() => setSearch("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: C.textSub, display: "flex", padding: 2 }}>
+            <X style={{ width: 14, height: 14 }} />
+          </button>
+        )}
+      </div>
 
       {/* Kanban */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, alignItems: "start" }}>

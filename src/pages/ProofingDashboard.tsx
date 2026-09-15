@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ExternalLink, Trash2, AlertTriangle, CheckCircle, Clock, ChevronRight, Plus, X, Search } from "lucide-react";
+import { ExternalLink, Trash2, AlertTriangle, CheckCircle, Clock, ChevronRight, Plus, X, Search, Images } from "lucide-react";
 
 interface Client { id: string; name: string; }
 
@@ -154,7 +154,12 @@ export default function ProofingDashboard() {
       {/* Header */}
       <div style={{ marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: 0 }}>📸 Galerias de Seleção</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: 0, display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ width: 36, height: 36, borderRadius: 10, background: C.goldBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Images style={{ width: 18, height: 18, color: C.gold }} />
+            </span>
+            Galerias de Seleção
+          </h1>
           <p style={{ fontSize: 13, color: C.textSub, margin: "4px 0 0" }}>
             {galleries.length} galeria{galleries.length !== 1 ? "s" : ""} ativas · Clique em uma galeria para gerenciar
           </p>

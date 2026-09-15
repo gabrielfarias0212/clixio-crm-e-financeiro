@@ -22,6 +22,7 @@ interface Gallery {
   status: string; created_at: string; finalized_at: string | null;
   limite_incluso: number; valor_extras: number | null; extras_pago: boolean | null;
   client_name?: string;
+  cover_thumb_url?: string | null;
 }
 
 type Column = "aguardando_selecao" | "selecao_concluida" | "finalizado";
@@ -61,7 +62,7 @@ export default function ProofingDashboard() {
 
     const { data, error } = await supabase
       .from("proofing_galleries")
-      .select("id, client_id, titulo, tipo, status, created_at, finalized_at, limite_incluso, valor_extras, extras_pago")
+      .select("id, client_id, titulo, tipo, status, created_at, finalized_at, limite_incluso, valor_extras, extras_pago, cover_photo_path")
       .eq("user_id", user.id)
       .neq("status", "aguardando_upload")
       .order("created_at", { ascending: false });
@@ -78,7 +79,20 @@ export default function ProofingDashboard() {
     const clientMap: Record<string, string> = {};
     (clients ?? []).forEach(c => { clientMap[c.id] = c.name; });
 
-    setGalleries((data ?? []).map(g => ({ ...g, client_name: clientMap[g.client_id] ?? "—" })));
+    // Sign cover thumbnails in one batch
+    const coverPaths = (data ?? [])
+      .map(g => (g as any).cover_photo_path ? (g as any).cover_photo_path.replace(/\.webp$/, '_thumb.webp') : null)
+      .filter(Boolean) as string[];
+    let coverUrlMap: Record<string, string> = {};
+    if (coverPaths.length > 0) {
+      const { data: signed } = await supabase.storage.from("proofing-photos").createSignedUrls(coverPaths, 7200);
+      (signed || []).forEach((e: any) => { if (e.signedUrl) coverUrlMap[e.path] = e.signedUrl; });
+    }
+
+    setGalleries((data ?? []).map(g => {
+      const thumbPath = (g as any).cover_photo_path ? (g as any).cover_photo_path.replace(/\.webp$/, '_thumb.webp') : null;
+      return { ...g, client_name: clientMap[g.client_id] ?? "—", cover_thumb_url: thumbPath ? (coverUrlMap[thumbPath] ?? null) : null };
+    }));
     setLoading(false);
   }
 
@@ -224,7 +238,14 @@ function GalleryCard({ gallery, column, needsCleanup, daysAgo, onNavigate, onMov
         </div>
       )}
 
-      <div style={{ padding: "12px 14px" }} onClick={onNavigate}>
+      <div style={{ padding: "12px 14px", display: "flex", gap: 12, alignItems: "flex-start" }} onClick={onNavigate}>
+        {/* Cover thumbnail */}
+        <div style={{ width: 56, height: 56, borderRadius: 8, flexShrink: 0, overflow: "hidden", background: C.itemBg, border: `1px solid ${C.border}` }}>
+          {gallery.cover_thumb_url
+            ? <img src={gallery.cover_thumb_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>📷</div>}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 2 }}>{gallery.client_name}</div>
         <div style={{ fontSize: 11, color: C.textSub, marginBottom: 8 }}>
           {label} · {gallery.tipo === "album" ? "Álbum" : "Ensaio"}
@@ -246,6 +267,7 @@ function GalleryCard({ gallery, column, needsCleanup, daysAgo, onNavigate, onMov
           {new Date(gallery.created_at).toLocaleDateString("pt-BR")}
           <ChevronRight style={{ width: 10, height: 10, marginLeft: "auto", color: "#C5C0BB" }} />
         </div>
+        </div>{/* end flex:1 */}
       </div>
 
       {/* Action bar */}

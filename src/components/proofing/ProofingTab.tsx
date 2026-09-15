@@ -75,24 +75,18 @@ export function ProofingTab({ clientId, clientName }: ProofingTabProps) {
     if (!form.email_acesso.trim()) { setFormError("Informe o email de acesso do cliente."); return; }
     if (!form.senha_acesso.trim()) { setFormError("Informe a senha de acesso."); return; }
     setCreating(true);
-    const payload: any = {
-      client_id: clientId,
-      titulo: form.titulo.trim() || null,
-      tipo: form.tipo,
-      limite_incluso: Number(form.limite_incluso) || 0,
-      permite_extras: form.permite_extras,
-      preco_foto_extra: form.permite_extras && form.preco_foto_extra ? Number(form.preco_foto_extra) : null,
-      email_acesso: form.email_acesso.toLowerCase().trim(),
-      senha_acesso: form.senha_acesso.trim(),
-      deadline: form.deadline || null,
-      watermark_enabled: form.watermark_enabled,
-      status: "aguardando_selecao",
-    };
-    const { data, error } = await supabase
-      .from("proofing_galleries")
-      .insert(payload)
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc("create_proofing_gallery", {
+      p_client_id:      clientId,
+      p_titulo:         form.titulo.trim() || null,
+      p_tipo:           form.tipo,
+      p_limite:         Number(form.limite_incluso) || 0,
+      p_permite_extras: form.permite_extras,
+      p_preco_extra:    form.permite_extras && form.preco_foto_extra ? Number(form.preco_foto_extra) : null,
+      p_email:          form.email_acesso.toLowerCase().trim(),
+      p_senha:          form.senha_acesso.trim(),
+      p_deadline:       form.deadline || null,
+      p_watermark:      form.watermark_enabled,
+    });
     setCreating(false);
     if (error) {
       console.error("createGallery error:", error);

@@ -296,6 +296,7 @@ function CreateGalleryModal({ clients, onClose, onCreated }: {
     client_id: "", titulo: "", tipo: "ensaio",
     limite_incluso: 0, permite_extras: true, preco_foto_extra: "",
     email_acesso: "", senha_acesso: "", deadline: "", watermark_enabled: true,
+    watermark_text: "PROIBIDA A REPRODUÇÃO EM QUALQUER REDE SOCIAL", permite_download: false,
   });
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
@@ -317,7 +318,9 @@ function CreateGalleryModal({ clients, onClose, onCreated }: {
       p_email:          form.email_acesso.toLowerCase().trim(),
       p_senha:          form.senha_acesso.trim(),
       p_deadline:       form.deadline || null,
-      p_watermark:      form.watermark_enabled,
+      p_watermark:         form.watermark_enabled,
+      p_watermark_text:    form.watermark_text,
+      p_permite_download:  form.permite_download,
     });
     setCreating(false);
     if (err) { setError(`Erro: ${err.message}`); return; }
@@ -402,9 +405,23 @@ function CreateGalleryModal({ clients, onClose, onCreated }: {
           </div>
 
           {/* Watermark */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <input type="checkbox" checked={form.watermark_enabled} onChange={e => set("watermark_enabled", e.target.checked)} id="wm_dash" />
-            <label htmlFor="wm_dash" style={{ fontSize: 13, cursor: "pointer" }}>Aplicar marca d'água nas fotos</label>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <input type="checkbox" checked={form.watermark_enabled} onChange={e => set("watermark_enabled", e.target.checked)} id="wm_dash" />
+              <label htmlFor="wm_dash" style={{ fontSize: 13, cursor: "pointer" }}>Aplicar marca d'água nas fotos</label>
+            </div>
+            {form.watermark_enabled && (
+              <input
+                value={form.watermark_text}
+                onChange={e => set("watermark_text", e.target.value)}
+                placeholder="Texto da marca d'água"
+                style={{ ...inp, fontSize: 12 }}
+              />
+            )}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <input type="checkbox" checked={form.permite_download} onChange={e => set("permite_download", e.target.checked)} id="dl_dash" />
+              <label htmlFor="dl_dash" style={{ fontSize: 13, cursor: "pointer" }}>Permitir download das fotos</label>
+            </div>
           </div>
 
           {error && <div style={{ color: "#E05252", fontSize: 12, padding: "8px 12px", background: "#FEE8E8", borderRadius: 8 }}>{error}</div>}

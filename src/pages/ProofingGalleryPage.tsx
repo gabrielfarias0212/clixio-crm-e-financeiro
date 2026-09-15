@@ -329,6 +329,7 @@ export default function ProofingGalleryPage() {
                 onToggle={handleToggle}
                 onView={setViewPhoto}
                 disabled={gallery.status === "selecao_concluida"}
+                allowDownload={gallery.permite_download ?? true}
               />
             ))}
           </div>
@@ -362,18 +363,19 @@ export default function ProofingGalleryPage() {
           <button onClick={() => setViewPhoto(null)} style={{ position: "absolute", top: 16, right: 16, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <X style={{ width: 18, height: 18, color: "#fff" }} />
           </button>
-          <img src={viewPhoto} alt="" style={{ maxWidth: "90vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 8 }} onClick={e => e.stopPropagation()} />
+          <img src={viewPhoto} alt="" draggable="false" onContextMenu={e => { if (!(session?.gallery?.permite_download ?? true)) e.preventDefault(); }} style={{ maxWidth: "90vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 8, userSelect: "none" } as React.CSSProperties} onClick={e => e.stopPropagation()} />
         </div>
       )}
     </div>
   );
 }
 
-function PhotoTile({ photo, onToggle, onView, disabled }: {
+function PhotoTile({ photo, onToggle, onView, disabled, allowDownload }: {
   photo: ProofingPhoto & { url?: string; thumbnail_url?: string };
   onToggle: (p: ProofingPhoto) => void;
   onView: (url: string) => void;
   disabled: boolean;
+  allowDownload: boolean;
 }) {
   const [loaded, setLoaded] = useState(false);
   return (
@@ -387,8 +389,19 @@ function PhotoTile({ photo, onToggle, onView, disabled }: {
           alt={photo.nome_arquivo}
           loading="lazy"
           decoding="async"
-          style={{ width: "100%", display: loaded ? "block" : "none", objectFit: "cover" }}
+          draggable="false"
+          style={{ width: "100%", display: loaded ? "block" : "none", objectFit: "cover", userSelect: "none", WebkitUserSelect: "none" }}
           onLoad={() => setLoaded(true)}
+          onClick={() => !disabled && onToggle(photo)}
+          onDoubleClick={() => (photo.url || photo.thumbnail_url) && onView(photo.url || photo.thumbnail_url!)}
+          onContextMenu={e => { if (!allowDownload) e.preventDefault(); }}
+        />
+      )}
+      {/* Transparent overlay to block long-press save on mobile when download not allowed */}
+      {!allowDownload && (
+        <div
+          style={{ position: "absolute", inset: 0, zIndex: 2, WebkitTouchCallout: "none" } as React.CSSProperties}
+          onContextMenu={e => e.preventDefault()}
           onClick={() => !disabled && onToggle(photo)}
           onDoubleClick={() => (photo.url || photo.thumbnail_url) && onView(photo.url || photo.thumbnail_url!)}
         />

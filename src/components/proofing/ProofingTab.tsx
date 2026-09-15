@@ -38,6 +38,7 @@ export function ProofingTab({ clientId, clientName }: ProofingTabProps) {
     permite_extras: true, preco_foto_extra: "",
     email_acesso: "", senha_acesso: "",
     deadline: "", watermark_enabled: true,
+    watermark_text: "PROIBIDA A REPRODUÇÃO EM QUALQUER REDE SOCIAL", permite_download: false,
   });
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState("");
@@ -85,7 +86,9 @@ export function ProofingTab({ clientId, clientName }: ProofingTabProps) {
       p_email:          form.email_acesso.toLowerCase().trim(),
       p_senha:          form.senha_acesso.trim(),
       p_deadline:       form.deadline || null,
-      p_watermark:      form.watermark_enabled,
+      p_watermark:         form.watermark_enabled,
+      p_watermark_text:    form.watermark_text,
+      p_permite_download:  form.permite_download,
     });
     setCreating(false);
     if (error) {
@@ -98,7 +101,7 @@ export function ProofingTab({ clientId, clientName }: ProofingTabProps) {
     setGalleries(prev => [newGallery, ...prev]);
     setShowCreate(false);
     setExpandedGallery(newGallery.id); // auto-expand so upload appears immediately
-    setForm({ titulo: "", tipo: "ensaio", limite_incluso: 0, permite_extras: true, preco_foto_extra: "", email_acesso: "", senha_acesso: "", deadline: "", watermark_enabled: true });
+    setForm({ titulo: "", tipo: "ensaio", limite_incluso: 0, permite_extras: true, preco_foto_extra: "", email_acesso: "", senha_acesso: "", deadline: "", watermark_enabled: true, watermark_text: "PROIBIDA A REPRODUÇÃO EM QUALQUER REDE SOCIAL", permite_download: false });
   }
 
   async function deleteGallery(galleryId: string) {
@@ -230,13 +233,31 @@ export function ProofingTab({ clientId, clientName }: ProofingTabProps) {
               </div>
             </div>
 
-            <div style={{ gridColumn: "1/-1", display: "flex", alignItems: "center", gap: 8 }}>
-              <button onClick={() => setForm(f => ({ ...f, watermark_enabled: !f.watermark_enabled }))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                {form.watermark_enabled
-                  ? <ToggleRight style={{ width: 28, height: 28, color: C.navy }} />
-                  : <ToggleLeft style={{ width: 28, height: 28, color: C.textSub }} />}
-              </button>
-              <span style={{ fontSize: 13, color: C.text }}>Aplicar marca d'água nas fotos</span>
+            <div style={{ gridColumn: "1/-1", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button onClick={() => setForm(f => ({ ...f, watermark_enabled: !f.watermark_enabled }))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                  {form.watermark_enabled
+                    ? <ToggleRight style={{ width: 28, height: 28, color: C.navy }} />
+                    : <ToggleLeft style={{ width: 28, height: 28, color: C.textSub }} />}
+                </button>
+                <span style={{ fontSize: 13, color: C.text }}>Aplicar marca d'água nas fotos</span>
+              </div>
+              {form.watermark_enabled && (
+                <input
+                  value={form.watermark_text}
+                  onChange={e => setForm(f => ({ ...f, watermark_text: e.target.value }))}
+                  placeholder="Texto da marca d'água"
+                  style={{ padding: "7px 10px", border: `1.5px solid ${C.border}`, borderRadius: 8, fontSize: 12, color: C.text, width: "100%", boxSizing: "border-box" as const }}
+                />
+              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button onClick={() => setForm(f => ({ ...f, permite_download: !f.permite_download }))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                  {form.permite_download
+                    ? <ToggleRight style={{ width: 28, height: 28, color: C.navy }} />
+                    : <ToggleLeft style={{ width: 28, height: 28, color: C.textSub }} />}
+                </button>
+                <span style={{ fontSize: 13, color: C.text }}>Permitir download das fotos</span>
+              </div>
             </div>
           </div>
 
@@ -338,7 +359,7 @@ function GalleryCard({ gallery, label, expanded, studioName, onToggleExpand, onD
     for (let i = 0; i < fileArr.length; i++) {
       const file = fileArr[i];
       try {
-        const wmark = gallery.watermark_enabled ? studioName : "";
+        const wmark = gallery.watermark_enabled ? (gallery.watermark_text || studioName) : "";
         const [blob, thumbBlob] = await Promise.all([
           compressWithWatermark(file, wmark),
           compressThumbnail(file, wmark),
@@ -507,7 +528,7 @@ function GalleryCard({ gallery, label, expanded, studioName, onToggleExpand, onD
                 style={{ border: `2px dashed ${C.border}`, borderRadius: 10, padding: "36px 20px", textAlign: "center" as const, cursor: "pointer" }}>
                 <Upload style={{ width: 28, height: 28, color: C.border, margin: "0 auto 8px" }} />
                 <p style={{ fontSize: 13, color: C.textSub, margin: 0 }}>Clique para fazer upload das fotos</p>
-                <p style={{ fontSize: 11, color: "#C5C0BB", marginTop: 4 }}>Comprimidas automaticamente · {gallery.watermark_enabled ? "Marca d'água aplicada" : "Sem marca d'água"}</p>
+                <p style={{ fontSize: 11, color: "#C5C0BB", marginTop: 4 }}>Comprimidas automaticamente · {gallery.watermark_enabled ? `Marca d'água: "${gallery.watermark_text}"` : "Sem marca d'água"}</p>
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: 8 }}>

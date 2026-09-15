@@ -95,6 +95,7 @@ export interface ProofingGallery {
   id: string; client_id: string; tipo: string; status: string;
   limite_incluso: number; permite_extras: boolean;
   preco_foto_extra: number | null; watermark_enabled: boolean;
+  watermark_text: string; permite_download: boolean;
   email_acesso: string | null; senha_acesso: string | null;
   deadline: string | null; valor_extras: number | null;
   extras_pago: boolean; created_at: string;

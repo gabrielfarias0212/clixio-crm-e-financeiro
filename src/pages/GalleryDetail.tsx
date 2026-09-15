@@ -21,7 +21,7 @@ interface Gallery {
   id: string; client_id: string | null; titulo: string | null; tipo: string;
   status: string; email_acesso: string; senha_acesso: string;
   limite_incluso: number; permite_extras: boolean; preco_foto_extra: number | null;
-  watermark_enabled: boolean; deadline: string | null;
+  watermark_enabled: boolean; watermark_text: string; permite_download: boolean; deadline: string | null;
   valor_extras: number | null; extras_pago: boolean | null;
   created_at: string; finalized_at: string | null;
   user_id: string;
@@ -55,6 +55,7 @@ export default function GalleryDetail() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [movingStatus, setMovingStatus] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [exportTab, setExportTab] = useState<"lightroom"|"finder"|"win10"|"win11">("lightroom");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -102,6 +103,20 @@ export default function GalleryDetail() {
     setLoading(false);
   }
 
+  async function saveSettings(patch: { watermark_enabled?: boolean; watermark_text?: string; permite_download?: boolean }) {
+    if (!gallery) return;
+    setSavingSettings(true);
+    await supabase.rpc("update_gallery_settings", {
+      p_gallery_id:       gallery.id,
+      p_watermark_enabled: patch.watermark_enabled ?? null,
+      p_watermark_text:   patch.watermark_text   ?? null,
+      p_permite_download: patch.permite_download  ?? null,
+    });
+    setGallery(g => g ? { ...g, ...patch } : g);
+    setSavingSettings(false);
+    toast.success("Configurações salvas!");
+  }
+
   async function moveStatus(newStatus: string) {
     if (!gallery) return;
     setMovingStatus(true);
@@ -125,7 +140,7 @@ export default function GalleryDetail() {
     for (let i = 0; i < fileArr.length; i++) {
       const file = fileArr[i];
       try {
-        const wmark = gallery.watermark_enabled ? studioName : "";
+        const wmark = gallery.watermark_enabled ? (gallery.watermark_text || studioName) : "";
         const [blob, thumbBlob] = await Promise.all([
           compressWithWatermark(file, wmark),
           compressThumbnail(file, wmark),
@@ -311,7 +326,7 @@ export default function GalleryDetail() {
             </span>
             <button onClick={async () => {
               const newVal = !gallery.extras_pago;
-              await supabase.from("proofing_galleries").update({ extras_pago: newVal }).eq("id", gallery.id);
+              await supabase.rpc("update_gallery_settings", { p_gallery_id: gallery.id, p_extras_pago: newVal });
               setGallery(g => g ? { ...g, extras_pago: newVal } : g);
             }} style={{ padding: "5px 12px", background: "#fff", border: "none", borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: "pointer", color: C.text }}>
               {gallery.extras_pago ? "Desmarcar" : "Confirmar pagamento"}
@@ -334,12 +349,57 @@ export default function GalleryDetail() {
         </div>
       )}
 
+      {/* Settings panel */}
+      <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 16, padding: "18px 20px", marginBottom: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 14 }}>Configurações da galeria</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+          {/* Watermark toggle + text */}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", minWidth: 160 }}>
+              <div onClick={() => saveSettings({ watermark_enabled: !gallery.watermark_enabled })}
+                style={{ width: 36, height: 20, borderRadius: 99, background: gallery.watermark_enabled ? C.gold : C.border, position: "relative", cursor: "pointer", transition: "background 0.2s", flexShrink: 0 }}>
+                <div style={{ width: 16, height: 16, background: "#fff", borderRadius: "50%", position: "absolute", top: 2, left: gallery.watermark_enabled ? 18 : 2, transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Marca d'água</span>
+            </label>
+            {gallery.watermark_enabled && (
+              <div style={{ flex: 1, minWidth: 220, display: "flex", gap: 8 }}>
+                <input
+                  defaultValue={gallery.watermark_text}
+                  key={gallery.watermark_text}
+                  onBlur={e => { if (e.target.value.trim() !== gallery.watermark_text) saveSettings({ watermark_text: e.target.value.trim() || gallery.watermark_text }); }}
+                  style={{ flex: 1, padding: "6px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, color: C.text }}
+                  placeholder="Texto da marca d'água"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Download toggle */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <div onClick={() => saveSettings({ permite_download: !gallery.permite_download })}
+                style={{ width: 36, height: 20, borderRadius: 99, background: gallery.permite_download ? C.success : C.border, position: "relative", cursor: "pointer", transition: "background 0.2s", flexShrink: 0 }}>
+                <div style={{ width: 16, height: 16, background: "#fff", borderRadius: "50%", position: "absolute", top: 2, left: gallery.permite_download ? 18 : 2, transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Permitir download</span>
+            </label>
+            <span style={{ fontSize: 12, color: C.textSub }}>
+              {gallery.permite_download ? "Cliente pode salvar as fotos" : "Protegido contra clique direito e toque longo"}
+            </span>
+          </div>
+
+          {savingSettings && <span style={{ fontSize: 11, color: C.textSub }}>Salvando...</span>}
+        </div>
+      </div>
+
       {/* Upload section */}
       <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 16, padding: "20px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>
             Fotos {photos.length > 0 && `(${photos.length})`}
-            {gallery.watermark_enabled && <span style={{ fontSize: 11, fontWeight: 400, color: C.textSub, marginLeft: 8 }}>· Marca d'água ativa</span>}
+            {gallery.watermark_enabled && <span style={{ fontSize: 11, fontWeight: 400, color: C.textSub, marginLeft: 8 }}>· Marca d'água: "{gallery.watermark_text}"</span>}
           </span>
           <button onClick={() => inputRef.current?.click()} disabled={uploading}
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: C.goldBg, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, color: "#7C5C20", cursor: uploading ? "not-allowed" : "pointer", opacity: uploading ? 0.7 : 1 }}>

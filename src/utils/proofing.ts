@@ -50,20 +50,28 @@ export async function compressWithWatermark(
       const ctx = canvas.getContext('2d')!;
       ctx.drawImage(img, 0, 0, width, height);
       if (watermarkText) {
-        const fontSize = Math.max(14, Math.floor(width * 0.035));
+        const fontSize = Math.max(11, Math.floor(width * 0.022));
         ctx.save();
-        ctx.globalAlpha = 0.3;
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = `bold ${fontSize}px sans-serif`;
+        ctx.translate(width / 2, height / 2);
+        ctx.rotate(-Math.PI / 6);
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.translate(width / 2, height / 2);
-        ctx.rotate(-Math.PI / 5);
+        ctx.font = `600 ${fontSize}px sans-serif`;
         const text = `© ${watermarkText}`;
-        const sw = width * 0.55, sh = height * 0.28;
-        for (let x = -width; x < width; x += sw)
-          for (let y = -height; y < height; y += sh)
+        const sw = width * 0.72, sh = height * 0.42;
+        for (let x = -width; x < width; x += sw) {
+          for (let y = -height; y < height; y += sh) {
+            // Subtle dark shadow for readability on light photos
+            ctx.globalAlpha = 0.12;
+            ctx.fillStyle = '#000000';
+            ctx.shadowColor = 'transparent';
+            ctx.fillText(text, x + 1, y + 1);
+            // White text
+            ctx.globalAlpha = 0.18;
+            ctx.fillStyle = '#FFFFFF';
             ctx.fillText(text, x, y);
+          }
+        }
         ctx.restore();
       }
       canvas.toBlob(

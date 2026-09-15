@@ -48,7 +48,7 @@ export default function ProofingGalleryPage() {
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
-  const [viewPhoto, setViewPhoto] = useState<string | null>(null);
+  const [viewPhoto, setViewPhoto] = useState<(ProofingPhoto & { url?: string; thumbnail_url?: string }) | null>(null);
   const [copied, setCopied] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
   const pendingToggles = useRef(new Set<string>());
@@ -343,13 +343,13 @@ export default function ProofingGalleryPage() {
         </div>
       ) : (
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 12px" }}>
-          <div style={{ columns: "auto 200px", columnGap: 8 }}>
+          <div style={{ columns: "auto 280px", columnGap: 10 }}>
             {photos.map(photo => (
               <PhotoTile
                 key={photo.id}
                 photo={photo}
                 onToggle={handleToggle}
-                onView={setViewPhoto}
+                onView={() => setViewPhoto(photo)}
                 disabled={gallery.status === "selecao_concluida"}
                 allowDownload={gallery.permite_download ?? true}
               />
@@ -377,17 +377,68 @@ export default function ProofingGalleryPage() {
       )}
 
       {/* Lightbox */}
-      {viewPhoto && (
-        <div
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}
-          onClick={() => setViewPhoto(null)}
-        >
-          <button onClick={() => setViewPhoto(null)} style={{ position: "absolute", top: 16, right: 16, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <X style={{ width: 18, height: 18, color: "#fff" }} />
-          </button>
-          <img src={viewPhoto} alt="" draggable="false" onContextMenu={e => { if (!(session?.gallery?.permite_download ?? true)) e.preventDefault(); }} style={{ maxWidth: "90vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 8, userSelect: "none" } as React.CSSProperties} onClick={e => e.stopPropagation()} />
-        </div>
-      )}
+      {viewPhoto && session && (() => {
+        const idx = session.photos.findIndex(p => p.id === viewPhoto.id);
+        const prev = idx > 0 ? session.photos[idx - 1] : null;
+        const next = idx < session.photos.length - 1 ? session.photos[idx + 1] : null;
+        const isSel = viewPhoto.selecionada;
+        const allowDl = gallery.permite_download ?? true;
+        return (
+          <div
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.94)", zIndex: 1000, display: "flex", flexDirection: "column" }}
+            onClick={() => setViewPhoto(null)}
+          >
+            {/* Top bar */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+              <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>{idx + 1} / {session.photos.length}</span>
+              <button onClick={() => setViewPhoto(null)} style={{ background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <X style={{ width: 18, height: 18, color: "#fff" }} />
+              </button>
+            </div>
+
+            {/* Image area */}
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+              {/* Prev */}
+              {prev && (
+                <button onClick={e => { e.stopPropagation(); setViewPhoto(prev); }}
+                  style={{ position: "absolute", left: 12, zIndex: 10, background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "50%", width: 44, height: 44, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+              )}
+
+              <img
+                src={viewPhoto.url || viewPhoto.thumbnail_url}
+                alt={viewPhoto.nome_arquivo}
+                draggable="false"
+                onContextMenu={e => { if (!allowDl) e.preventDefault(); }}
+                style={{ maxWidth: "calc(100vw - 120px)", maxHeight: "calc(100vh - 160px)", objectFit: "contain", borderRadius: 8, userSelect: "none" } as React.CSSProperties}
+                onClick={e => e.stopPropagation()}
+              />
+
+              {/* Next */}
+              {next && (
+                <button onClick={e => { e.stopPropagation(); setViewPhoto(next); }}
+                  style={{ position: "absolute", right: 12, zIndex: 10, background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "50%", width: 44, height: 44, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              )}
+            </div>
+
+            {/* Bottom bar — select button */}
+            {gallery.status !== "selecao_concluida" && (
+              <div style={{ display: "flex", justifyContent: "center", padding: "16px", flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                <button
+                  onClick={() => { handleToggle(viewPhoto); setViewPhoto(p => p ? { ...p, selecionada: !p.selecionada } : p); }}
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 32px", background: isSel ? "#C9A96E" : "rgba(255,255,255,0.12)", border: isSel ? "none" : "2px solid rgba(255,255,255,0.3)", borderRadius: 12, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+                  {isSel
+                    ? <><Check style={{ width: 18, height: 18 }} /> Selecionada — clique para remover</>
+                    : <><Heart style={{ width: 18, height: 18 }} /> Selecionar esta foto</>}
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -395,16 +446,16 @@ export default function ProofingGalleryPage() {
 function PhotoTile({ photo, onToggle, onView, disabled, allowDownload }: {
   photo: ProofingPhoto & { url?: string; thumbnail_url?: string };
   onToggle: (p: ProofingPhoto) => void;
-  onView: (url: string) => void;
+  onView: () => void;
   disabled: boolean;
   allowDownload: boolean;
 }) {
   const [loaded, setLoaded] = useState(false);
   return (
     <div
-      style={{ breakInside: "avoid", marginBottom: 8, position: "relative", borderRadius: 8, overflow: "hidden", cursor: "pointer", border: photo.selecionada ? "3px solid #C9A96E" : "3px solid transparent", transition: "border 0.15s" }}
+      style={{ breakInside: "avoid", marginBottom: 10, position: "relative", borderRadius: 10, overflow: "hidden", cursor: "pointer", border: photo.selecionada ? "3px solid #C9A96E" : "3px solid transparent", transition: "border 0.15s" }}
     >
-      {!loaded && <div style={{ width: "100%", aspectRatio: "1", background: "#E8E4DC" }} />}
+      {!loaded && <div style={{ width: "100%", aspectRatio: "3/2", background: "#E8E4DC" }} />}
       {(photo.thumbnail_url || photo.url) && (
         <img
           src={photo.thumbnail_url || photo.url}
@@ -414,35 +465,33 @@ function PhotoTile({ photo, onToggle, onView, disabled, allowDownload }: {
           draggable="false"
           style={{ width: "100%", display: loaded ? "block" : "none", objectFit: "cover", userSelect: "none", WebkitUserSelect: "none" }}
           onLoad={() => setLoaded(true)}
-          onClick={() => !disabled && onToggle(photo)}
-          onDoubleClick={() => (photo.url || photo.thumbnail_url) && onView(photo.url || photo.thumbnail_url!)}
+          onClick={onView}
           onContextMenu={e => { if (!allowDownload) e.preventDefault(); }}
         />
       )}
-      {/* Transparent overlay to block long-press save on mobile when download not allowed */}
+      {/* Transparent overlay to block long-press on mobile when download not allowed */}
       {!allowDownload && (
         <div
           style={{ position: "absolute", inset: 0, zIndex: 2, WebkitTouchCallout: "none" } as React.CSSProperties}
           onContextMenu={e => e.preventDefault()}
-          onClick={() => !disabled && onToggle(photo)}
-          onDoubleClick={() => (photo.url || photo.thumbnail_url) && onView(photo.url || photo.thumbnail_url!)}
+          onClick={onView}
         />
       )}
-      {/* Selection badge */}
+      {/* Selection badge — click to toggle without opening lightbox */}
       <div
         onClick={e => { e.stopPropagation(); if (!disabled) onToggle(photo); }}
         style={{
-          position: "absolute", top: 8, right: 8,
-          width: 28, height: 28, borderRadius: "50%",
-          background: photo.selecionada ? "#C9A96E" : "rgba(255,255,255,0.85)",
+          position: "absolute", top: 8, right: 8, zIndex: 3,
+          width: 32, height: 32, borderRadius: "50%",
+          background: photo.selecionada ? "#C9A96E" : "rgba(255,255,255,0.88)",
           border: `2px solid ${photo.selecionada ? "#C9A96E" : "rgba(200,196,190,0.7)"}`,
           display: "flex", alignItems: "center", justifyContent: "center",
           cursor: disabled ? "default" : "pointer",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
           transition: "all 0.15s",
         }}
       >
-        {photo.selecionada && <Check style={{ width: 14, height: 14, color: "#fff" }} />}
+        {photo.selecionada && <Check style={{ width: 16, height: 16, color: "#fff" }} />}
       </div>
     </div>
   );

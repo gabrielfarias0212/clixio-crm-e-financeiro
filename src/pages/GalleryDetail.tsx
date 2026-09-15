@@ -1,3 +1,4 @@
+import Layout from "@/components/Layout";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -204,6 +205,7 @@ export default function GalleryDetail() {
   const hasExtras = (gallery.valor_extras ?? 0) > 0 && gallery.permite_extras;
 
   return (
+    <Layout>
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "20px 16px 60px" }}>
       {/* Back + title */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
@@ -425,5 +427,6 @@ export default function GalleryDetail() {
         </div>
       )}
     </div>
+    </Layout>
   );
 }

@@ -1,3 +1,4 @@
+import Layout from "@/components/Layout";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -123,6 +124,7 @@ export default function ProofingDashboard() {
   );
 
   return (
+    <Layout>
     <div style={{ padding: "24px 20px", maxWidth: 1100, margin: "0 auto" }}>
       {/* Header */}
       <div style={{ marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -189,6 +191,7 @@ export default function ProofingDashboard() {
         })}
       </div>
     </div>
+    </Layout>
   );
 }
 

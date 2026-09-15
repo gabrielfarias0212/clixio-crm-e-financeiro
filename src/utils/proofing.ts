@@ -50,7 +50,7 @@ export async function compressWithWatermark(
       const ctx = canvas.getContext('2d')!;
       ctx.drawImage(img, 0, 0, width, height);
       if (watermarkText) {
-        const fontSize = Math.max(11, Math.floor(width * 0.022));
+        const fontSize = Math.max(13, Math.floor(width * 0.028));
         ctx.save();
         ctx.translate(width / 2, height / 2);
         ctx.rotate(-Math.PI / 6);
@@ -61,13 +61,13 @@ export async function compressWithWatermark(
         const sw = width * 0.72, sh = height * 0.42;
         for (let x = -width; x < width; x += sw) {
           for (let y = -height; y < height; y += sh) {
-            // Subtle dark shadow for readability on light photos
-            ctx.globalAlpha = 0.12;
+            // Dark shadow for readability on light photos
+            ctx.globalAlpha = 0.18;
             ctx.fillStyle = '#000000';
             ctx.shadowColor = 'transparent';
             ctx.fillText(text, x + 1, y + 1);
             // White text
-            ctx.globalAlpha = 0.18;
+            ctx.globalAlpha = 0.30;
             ctx.fillStyle = '#FFFFFF';
             ctx.fillText(text, x, y);
           }

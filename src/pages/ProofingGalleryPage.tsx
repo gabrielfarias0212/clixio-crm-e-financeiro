@@ -48,6 +48,7 @@ export default function ProofingGalleryPage() {
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [viewPhoto, setViewPhoto] = useState<(ProofingPhoto & { url?: string; thumbnail_url?: string }) | null>(null);
   const [copied, setCopied] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
@@ -89,6 +90,7 @@ export default function ProofingGalleryPage() {
           setCoverUrl(url);
           sessionStorage.setItem(cacheKey, JSON.stringify({ url, expires: Date.now() + 3600_000 }));
         }
+        if (d.logo_url) setLogoUrl(d.logo_url);
       })
       .catch(() => {});
   }, [galleryId]);
@@ -202,8 +204,10 @@ export default function ProofingGalleryPage() {
         {!coverUrl && <div style={{ position: "absolute", inset: 0, background: "#FAFAF8", zIndex: 0 }} />}
         <div style={{ width: "100%", maxWidth: 400, background: coverUrl ? "rgba(255,255,255,0.92)" : "#fff", borderRadius: 20, padding: "40px 36px", boxShadow: "0 8px 40px rgba(0,0,0,0.10)", position: "relative", zIndex: 2, backdropFilter: coverUrl ? "blur(8px)" : "none" }}>
           <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <div style={{ width: 56, height: 56, background: "#F5F0E8", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-              <Heart style={{ width: 24, height: 24, color: "#C9A96E" }} />
+            <div style={{ width: 72, height: 72, borderRadius: "50%", margin: "0 auto 16px", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#F5F0E8", boxShadow: "0 2px 12px rgba(0,0,0,0.10)" }}>
+              {logoUrl
+                ? <img src={logoUrl} alt="Studio" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                : <Heart style={{ width: 24, height: 24, color: "#C9A96E" }} />}
             </div>
             <h1 style={{ fontFamily: "Georgia, serif", fontSize: 24, fontWeight: 400, color: "#1A1A18", margin: "0 0 6px" }}>Galeria de Seleção</h1>
             <p style={{ fontSize: 13, color: "#9B9890", margin: 0 }}>Entre com seus dados de acesso</p>

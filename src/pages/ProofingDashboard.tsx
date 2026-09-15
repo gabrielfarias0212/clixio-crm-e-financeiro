@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ExternalLink, Trash2, AlertTriangle, CheckCircle, Clock, ChevronRight } from "lucide-react";
+import { ExternalLink, Trash2, AlertTriangle, CheckCircle, Clock, ChevronRight, Plus, X } from "lucide-react";
+
+interface Client { id: string; name: string; }
 
 const C = {
   navy: "#1E3A5F", navyBg: "#E8EEF6",
@@ -34,9 +36,22 @@ const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
 export default function ProofingDashboard() {
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [loading, setLoading] = useState(true);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [showCreate, setShowCreate] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); loadClients(); }, []);
+
+  async function loadClients() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase
+      .from("wedding_clients")
+      .select("id, name")
+      .eq("user_id", user.id)
+      .order("name");
+    setClients((data ?? []) as Client[]);
+  }
 
   async function load() {
     setLoading(true);
@@ -105,12 +120,30 @@ export default function ProofingDashboard() {
   return (
     <div style={{ padding: "24px 20px", maxWidth: 1100, margin: "0 auto" }}>
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: 0 }}>📸 Galerias de Seleção</h1>
-        <p style={{ fontSize: 13, color: C.textSub, margin: "4px 0 0" }}>
-          {galleries.length} galeria{galleries.length !== 1 ? "s" : ""} ativas · Clique em um cliente para gerenciar
-        </p>
+      <div style={{ marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: 0 }}>📸 Galerias de Seleção</h1>
+          <p style={{ fontSize: 13, color: C.textSub, margin: "4px 0 0" }}>
+            {galleries.length} galeria{galleries.length !== 1 ? "s" : ""} ativas · Clique em um cliente para gerenciar
+          </p>
+        </div>
+        <button onClick={() => setShowCreate(true)}
+          style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 18px", background: C.navy, border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+          <Plus style={{ width: 15, height: 15 }} /> Nova Galeria
+        </button>
       </div>
+
+      {showCreate && (
+        <CreateGalleryModal
+          clients={clients}
+          onClose={() => setShowCreate(false)}
+          onCreated={(g, clientName) => {
+            setGalleries(prev => [{ ...g, client_name: clientName ?? "—" }, ...prev]);
+            setShowCreate(false);
+            toast.success("Galeria criada!");
+          }}
+        />
+      )}
 
       {/* Kanban */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, alignItems: "start" }}>
@@ -231,6 +264,139 @@ function GalleryCard({ gallery, column, needsCleanup, daysAgo, onNavigate, onMov
               <Trash2 style={{ width: 11, height: 11 }} /> Excluir
             </button>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── CreateGalleryModal ────────────────────────────────────────────────────────
+function CreateGalleryModal({ clients, onClose, onCreated }: {
+  clients: Client[];
+  onClose: () => void;
+  onCreated: (gallery: Gallery, clientName: string | null) => void;
+}) {
+  const [form, setForm] = useState({
+    client_id: "", titulo: "", tipo: "ensaio",
+    limite_incluso: 0, permite_extras: true, preco_foto_extra: "",
+    email_acesso: "", senha_acesso: "", deadline: "", watermark_enabled: true,
+  });
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState("");
+
+  const set = (k: string, v: unknown) => setForm(f => ({ ...f, [k]: v }));
+
+  async function submit() {
+    setError("");
+    if (!form.email_acesso.trim()) { setError("Informe o email de acesso."); return; }
+    if (!form.senha_acesso.trim()) { setError("Informe a senha de acesso."); return; }
+    setCreating(true);
+    const { data, error: err } = await supabase.rpc("create_proofing_gallery_v2", {
+      p_client_id:      form.client_id || null,
+      p_titulo:         form.titulo.trim() || null,
+      p_tipo:           form.tipo,
+      p_limite:         Number(form.limite_incluso) || 0,
+      p_permite_extras: form.permite_extras,
+      p_preco_extra:    form.permite_extras && form.preco_foto_extra ? Number(form.preco_foto_extra) : null,
+      p_email:          form.email_acesso.toLowerCase().trim(),
+      p_senha:          form.senha_acesso.trim(),
+      p_deadline:       form.deadline || null,
+      p_watermark:      form.watermark_enabled,
+    });
+    setCreating(false);
+    if (err) { setError(`Erro: ${err.message}`); return; }
+    const clientName = clients.find(c => c.id === form.client_id)?.name ?? null;
+    onCreated(data as unknown as Gallery, clientName);
+  }
+
+  const inp: React.CSSProperties = { width: "100%", padding: "9px 12px", border: "1px solid #E8E4DE", borderRadius: 8, fontSize: 13, color: "#1a1a1a", background: "#fff", boxSizing: "border-box" };
+  const label: React.CSSProperties = { fontSize: 11, fontWeight: 700, color: "#9A9590", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5, display: "block" };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+         onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 520, maxHeight: "90vh", overflow: "auto", boxShadow: "0 24px 60px rgba(0,0,0,0.18)" }}
+           onClick={e => e.stopPropagation()}>
+        <div style={{ padding: "20px 24px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 16, fontWeight: 800, color: "#1a1a1a" }}>Nova Galeria de Seleção</span>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "#9A9590" }}><X style={{ width: 18, height: 18 }} /></button>
+        </div>
+
+        <div style={{ padding: "20px 24px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Client selector */}
+          <div>
+            <label style={label}>Cliente (opcional)</label>
+            <select value={form.client_id} onChange={e => set("client_id", e.target.value)} style={inp}>
+              <option value="">— Sem cliente vinculado —</option>
+              {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+
+          {/* Titulo + tipo */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <label style={label}>Título da galeria</label>
+              <input value={form.titulo} onChange={e => set("titulo", e.target.value)} placeholder="Ex: Ensaio Maria" style={inp} />
+            </div>
+            <div>
+              <label style={label}>Tipo</label>
+              <select value={form.tipo} onChange={e => set("tipo", e.target.value)} style={inp}>
+                <option value="ensaio">Ensaio</option>
+                <option value="album">Álbum</option>
+                <option value="corporativo">Corporativo</option>
+                <option value="familia">Família</option>
+                <option value="individual">Individual</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Email + senha */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <label style={label}>Email do cliente *</label>
+              <input type="email" value={form.email_acesso} onChange={e => set("email_acesso", e.target.value)} placeholder="cliente@email.com" style={inp} />
+            </div>
+            <div>
+              <label style={label}>Senha de acesso *</label>
+              <input value={form.senha_acesso} onChange={e => set("senha_acesso", e.target.value)} placeholder="Ex: Familia2024" style={inp} />
+            </div>
+          </div>
+
+          {/* Limite + deadline */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <label style={label}>Fotos inclusas</label>
+              <input type="number" min={0} value={form.limite_incluso} onChange={e => set("limite_incluso", e.target.value)} style={inp} />
+            </div>
+            <div>
+              <label style={label}>Prazo</label>
+              <input type="date" value={form.deadline} onChange={e => set("deadline", e.target.value)} style={inp} />
+            </div>
+          </div>
+
+          {/* Extras */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <input type="checkbox" checked={form.permite_extras} onChange={e => set("permite_extras", e.target.checked)} id="extras_dash" />
+            <label htmlFor="extras_dash" style={{ fontSize: 13, cursor: "pointer" }}>Permitir extras</label>
+            {form.permite_extras && (
+              <input type="number" min={0} step={0.01} value={form.preco_foto_extra}
+                onChange={e => set("preco_foto_extra", e.target.value)}
+                placeholder="R$/foto extra" style={{ ...inp, width: 130 }} />
+            )}
+          </div>
+
+          {/* Watermark */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <input type="checkbox" checked={form.watermark_enabled} onChange={e => set("watermark_enabled", e.target.checked)} id="wm_dash" />
+            <label htmlFor="wm_dash" style={{ fontSize: 13, cursor: "pointer" }}>Aplicar marca d'água nas fotos</label>
+          </div>
+
+          {error && <div style={{ color: "#E05252", fontSize: 12, padding: "8px 12px", background: "#FEE8E8", borderRadius: 8 }}>{error}</div>}
+
+          <button onClick={submit} disabled={creating}
+            style={{ padding: "11px", background: "#1E3A5F", border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 700, cursor: creating ? "not-allowed" : "pointer", opacity: creating ? 0.7 : 1, marginTop: 4 }}>
+            {creating ? "Criando..." : "Criar Galeria"}
+          </button>
         </div>
       </div>
     </div>

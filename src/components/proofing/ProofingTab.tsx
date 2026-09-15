@@ -75,7 +75,7 @@ export function ProofingTab({ clientId, clientName }: ProofingTabProps) {
     if (!form.email_acesso.trim()) { setFormError("Informe o email de acesso do cliente."); return; }
     if (!form.senha_acesso.trim()) { setFormError("Informe a senha de acesso."); return; }
     setCreating(true);
-    const { data, error } = await supabase.rpc("create_proofing_gallery", {
+    const { data, error } = await supabase.rpc("create_proofing_gallery_v2", {
       p_client_id:      clientId,
       p_titulo:         form.titulo.trim() || null,
       p_tipo:           form.tipo,

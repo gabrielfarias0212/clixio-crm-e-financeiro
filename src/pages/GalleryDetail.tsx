@@ -55,6 +55,7 @@ export default function GalleryDetail() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
+  const [pendingUpload, setPendingUpload] = useState<{ all: File[]; dupes: File[]; fresh: File[] } | null>(null);
   const [movingStatus, setMovingStatus] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [showExport, setShowExport] = useState(false);
@@ -137,16 +138,32 @@ export default function GalleryDetail() {
     if (!gallery || !files.length) return;
     const existingNames = new Set(photos.map(p => p.nome_arquivo));
     const fileArr = Array.from(files);
-    const duplicates = fileArr.filter(f => existingNames.has(f.name));
-    const toUpload = fileArr.filter(f => !existingNames.has(f.name));
-    if (duplicates.length) {
-      toast.warning(`${duplicates.length} foto${duplicates.length > 1 ? "s ignoradas (já existem)" : " ignorada (já existe)"}: ${duplicates.map(f => f.name).join(", ")}`);
+    const dupes = fileArr.filter(f => existingNames.has(f.name));
+    const fresh = fileArr.filter(f => !existingNames.has(f.name));
+    if (dupes.length) {
+      setPendingUpload({ all: fileArr, dupes, fresh });
+      return;
     }
-    if (!toUpload.length) return;
+    await doUpload(fresh, false);
+  }
+
+  async function doUpload(filesToUpload: File[], replacedupes: boolean) {
+    if (!gallery || !filesToUpload.length) return;
+    if (replacedupes) {
+      // Delete existing photos that will be replaced
+      const namesToReplace = new Set(filesToUpload.map(f => f.name));
+      const toDelete = photos.filter(p => namesToReplace.has(p.nome_arquivo));
+      for (const old of toDelete) {
+        const paths = [old.storage_path, old.thumbnail_path].filter(Boolean) as string[];
+        if (paths.length) await supabase.storage.from("proofing-photos").remove(paths);
+        await supabase.from("proofing_photos").delete().eq("id", old.id);
+      }
+      setPhotos(prev => prev.filter(p => !namesToReplace.has(p.nome_arquivo)));
+    }
     setUploading(true);
-    setUploadProgress({ done: 0, total: toUpload.length });
-    for (let i = 0; i < toUpload.length; i++) {
-      const file = toUpload[i];
+    setUploadProgress({ done: 0, total: filesToUpload.length });
+    for (let i = 0; i < filesToUpload.length; i++) {
+      const file = filesToUpload[i];
       try {
         const wmark = gallery.watermark_enabled ? (gallery.watermark_text || studioName) : "";
         const [blob, thumbBlob] = await Promise.all([
@@ -168,7 +185,7 @@ export default function GalleryDetail() {
           selecionada: false,
         });
       } catch { toast.error(`Falha ao processar ${file.name}`); }
-      setUploadProgress({ done: i + 1, total: toUpload.length });
+      setUploadProgress({ done: i + 1, total: filesToUpload.length });
     }
     setUploading(false); setUploadProgress(null);
     toast.success("Upload concluído!");
@@ -477,6 +494,43 @@ export default function GalleryDetail() {
           </div>
         )}
       </div>
+
+      {/* Duplicate Modal */}
+      {pendingUpload && gallery && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+             onClick={() => setPendingUpload(null)}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 440, padding: "28px 28px 24px", boxShadow: "0 24px 60px rgba(0,0,0,0.2)" }}
+               onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: C.text, marginBottom: 8 }}>
+              {pendingUpload.dupes.length} foto{pendingUpload.dupes.length > 1 ? "s" : ""} já existe{pendingUpload.dupes.length > 1 ? "m" : ""}
+            </div>
+            <div style={{ fontSize: 13, color: C.textSub, marginBottom: 16, lineHeight: 1.5 }}>
+              {pendingUpload.dupes.map(f => f.name).join(", ")}
+            </div>
+            <div style={{ background: C.itemBg, borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 12, color: C.textSub }}>
+              {pendingUpload.fresh.length > 0
+                ? `${pendingUpload.fresh.length} foto${pendingUpload.fresh.length > 1 ? "s novas" : " nova"} serão enviadas normalmente.`
+                : "Nenhuma foto nova no lote."}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button onClick={async () => { const p = pendingUpload; setPendingUpload(null); await doUpload(p.all, true); }}
+                style={{ padding: "11px", background: C.goldBg, border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, color: "#7C5C20", cursor: "pointer" }}>
+                Substituir duplicatas + enviar novas
+              </button>
+              {pendingUpload.fresh.length > 0 && (
+                <button onClick={async () => { const p = pendingUpload; setPendingUpload(null); await doUpload(p.fresh, false); }}
+                  style={{ padding: "11px", background: C.navyBg, border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, color: C.navy, cursor: "pointer" }}>
+                  Pular duplicatas, enviar só as novas ({pendingUpload.fresh.length})
+                </button>
+              )}
+              <button onClick={() => setPendingUpload(null)}
+                style={{ padding: "11px", background: "none", border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 13, fontWeight: 600, color: C.textSub, cursor: "pointer" }}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Share Modal */}
       {showShare && gallery && (

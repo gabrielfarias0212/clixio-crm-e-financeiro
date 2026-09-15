@@ -204,9 +204,9 @@ export default function ProofingGalleryPage() {
         {!coverUrl && <div style={{ position: "absolute", inset: 0, background: "#FAFAF8", zIndex: 0 }} />}
         <div style={{ width: "100%", maxWidth: 400, background: coverUrl ? "rgba(255,255,255,0.92)" : "#fff", borderRadius: 20, padding: "40px 36px", boxShadow: "0 8px 40px rgba(0,0,0,0.10)", position: "relative", zIndex: 2, backdropFilter: coverUrl ? "blur(8px)" : "none" }}>
           <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <div style={{ margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ margin: "0 auto 16px", width: 180, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
               {logoUrl
-                ? <img src={logoUrl} alt="Studio" style={{ maxWidth: 160, maxHeight: 72, objectFit: "contain" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                ? <img src={logoUrl} alt="Studio" style={{ maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", objectFit: "contain", display: "block" }} onError={e => { (e.target as HTMLImageElement).parentElement!.innerHTML = ""; }} />
                 : <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#F5F0E8", display: "flex", alignItems: "center", justifyContent: "center" }}><Heart style={{ width: 24, height: 24, color: "#C9A96E" }} /></div>}
             </div>
             <h1 style={{ fontFamily: "Georgia, serif", fontSize: 24, fontWeight: 400, color: "#1A1A18", margin: "0 0 6px" }}>Galeria de Seleção</h1>

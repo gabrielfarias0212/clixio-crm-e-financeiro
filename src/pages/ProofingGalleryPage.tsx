@@ -29,7 +29,7 @@ function Spinner({ size = 28, color = "#C9A96E" }: { size?: number; color?: stri
   );
 }
 
-type Mode = "login" | "loading" | "gallery" | "finalized" | "payment";
+type Mode = "login" | "loading" | "welcome" | "gallery" | "finalized" | "payment";
 
 interface Session {
   gallery: ProofingGallery & { proofing_photos: ProofingPhoto[] };
@@ -66,16 +66,30 @@ export default function ProofingGalleryPage() {
     }
   }, [galleryId]);
 
-  // Fetch cover photo before login
+  // Fetch cover photo — use sessionStorage cache for instant repeat loads
   useEffect(() => {
     if (!galleryId) return;
+    const cacheKey = `cover_${galleryId}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const { url, expires } = JSON.parse(cached);
+        if (url && Date.now() < expires) { setCoverUrl(url); return; }
+      } catch {}
+    }
     fetch("https://lwdfznskytyjqurxqebu.supabase.co/functions/v1/proofing-gallery-access", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "get_cover", gallery_id: galleryId }),
     })
       .then(r => r.json())
-      .then(d => { if (d.cover_url) setCoverUrl(d.cover_url); })
+      .then(d => {
+        const url = d.cover_thumb_url || d.cover_url;
+        if (url) {
+          setCoverUrl(url);
+          sessionStorage.setItem(cacheKey, JSON.stringify({ url, expires: Date.now() + 3600_000 }));
+        }
+      })
       .catch(() => {});
   }, [galleryId]);
 
@@ -96,7 +110,7 @@ export default function ProofingGalleryPage() {
       };
       setSession(sess);
       sessionStorage.setItem(`proofing_${galleryId}`, JSON.stringify({ email: em.trim(), password: pw }));
-      setMode(g.status === "selecao_concluida" ? "finalized" : "gallery");
+      setMode(g.status === "selecao_concluida" ? "finalized" : "welcome");
     } catch (err: any) {
       setLoginError(err.message || "Email ou senha incorretos.");
       sessionStorage.removeItem(`proofing_${galleryId}`);
@@ -226,6 +240,90 @@ export default function ProofingGalleryPage() {
   }
 
   if (!session) return null;
+
+  // ── WELCOME ──
+  if (mode === "welcome") {
+    const g = session.gallery;
+    const firstName = session.clientName ? session.clientName.split(" ")[0] : "cliente";
+    const total = session.photos.length;
+    const limite = g.limite_incluso;
+    const temExtras = g.permite_extras && g.preco_foto_extra;
+    return (
+      <div style={{ minHeight: "100vh", position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px", overflow: "hidden" }}>
+        {coverUrl && (
+          <>
+            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${coverUrl})`, backgroundSize: "cover", backgroundPosition: "center", filter: "blur(18px) brightness(0.55)", transform: "scale(1.08)", zIndex: 0 }} />
+            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", zIndex: 1 }} />
+          </>
+        )}
+        {!coverUrl && <div style={{ position: "absolute", inset: 0, background: "#1a1a18", zIndex: 0 }} />}
+
+        <div style={{ position: "relative", zIndex: 2, width: "100%", maxWidth: 500, background: "rgba(255,255,255,0.97)", borderRadius: 20, padding: "40px 36px", boxShadow: "0 16px 60px rgba(0,0,0,0.3)" }}>
+          {/* Studio name */}
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", color: "#9A9590", textTransform: "uppercase", marginBottom: 6 }}>{session.studioName}</div>
+            <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 400, color: "#1a1a18", margin: "0 0 8px" }}>Olá, {firstName}! 👋</h2>
+            <p style={{ fontSize: 14, color: "#6B6762", margin: 0, lineHeight: 1.6 }}>
+              Sua galeria de seleção está pronta.<br />Escolha as fotos que mais gostou!
+            </p>
+          </div>
+
+          {/* Info cards */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "#F0EDE8", borderRadius: 14, overflow: "hidden", marginBottom: 28 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", background: "#fff" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 32, height: 32, background: "#F5F0E8", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </div>
+                <span style={{ fontSize: 14, color: "#4A4641" }}>Total de fotos</span>
+              </div>
+              <span style={{ fontSize: 16, fontWeight: 800, color: "#1a1a18" }}>{total} fotos</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", background: "#fff" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 32, height: 32, background: "#F5F0E8", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </div>
+                <span style={{ fontSize: 14, color: "#4A4641" }}>Fotos do seu pacote</span>
+              </div>
+              <span style={{ fontSize: 16, fontWeight: 800, color: "#1a1a18" }}>
+                {limite > 0 ? `${limite} fotos` : "Livre"}
+              </span>
+            </div>
+            {temExtras && (
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", background: "#fff" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 32, height: 32, background: "#F5F0E8", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </div>
+                  <span style={{ fontSize: 14, color: "#4A4641" }}>Foto extra</span>
+                </div>
+                <span style={{ fontSize: 16, fontWeight: 800, color: "#1a1a18" }}>{fmt(g.preco_foto_extra!)}/foto</span>
+              </div>
+            )}
+          </div>
+
+          {/* Extras note */}
+          {g.permite_extras && (
+            <div style={{ background: "#F5F0E8", borderRadius: 10, padding: "12px 14px", marginBottom: 24, fontSize: 13, color: "#7C5C20", lineHeight: 1.55 }}>
+              💡 Não se preocupe com o limite — você pode selecionar fotos extras e o valor será calculado automaticamente.
+            </div>
+          )}
+
+          <button
+            onClick={() => setMode("gallery")}
+            style={{ width: "100%", padding: "15px", background: "#C9A96E", border: "none", borderRadius: 12, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            Acessar galeria
+          </button>
+        </div>
+
+        {/* Studio footer */}
+        <div style={{ position: "relative", zIndex: 2, marginTop: 20, fontSize: 11, letterSpacing: "0.16em", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>
+          {session.studioName}
+        </div>
+      </div>
+    );
+  }
 
   const { gallery, photos, selectedCount, valorExtras, studioName } = session;
   const totalPhotos = photos.length;

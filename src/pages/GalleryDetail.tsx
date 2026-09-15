@@ -135,11 +135,18 @@ export default function GalleryDetail() {
 
   async function handleUpload(files: FileList) {
     if (!gallery || !files.length) return;
+    const existingNames = new Set(photos.map(p => p.nome_arquivo));
     const fileArr = Array.from(files);
+    const duplicates = fileArr.filter(f => existingNames.has(f.name));
+    const toUpload = fileArr.filter(f => !existingNames.has(f.name));
+    if (duplicates.length) {
+      toast.warning(`${duplicates.length} foto${duplicates.length > 1 ? "s ignoradas (já existem)" : " ignorada (já existe)"}: ${duplicates.map(f => f.name).join(", ")}`);
+    }
+    if (!toUpload.length) return;
     setUploading(true);
-    setUploadProgress({ done: 0, total: fileArr.length });
-    for (let i = 0; i < fileArr.length; i++) {
-      const file = fileArr[i];
+    setUploadProgress({ done: 0, total: toUpload.length });
+    for (let i = 0; i < toUpload.length; i++) {
+      const file = toUpload[i];
       try {
         const wmark = gallery.watermark_enabled ? (gallery.watermark_text || studioName) : "";
         const [blob, thumbBlob] = await Promise.all([
@@ -161,7 +168,7 @@ export default function GalleryDetail() {
           selecionada: false,
         });
       } catch { toast.error(`Falha ao processar ${file.name}`); }
-      setUploadProgress({ done: i + 1, total: fileArr.length });
+      setUploadProgress({ done: i + 1, total: toUpload.length });
     }
     setUploading(false); setUploadProgress(null);
     toast.success("Upload concluído!");

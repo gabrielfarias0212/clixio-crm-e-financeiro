@@ -301,6 +301,8 @@ function GalleryCard({ gallery, label, expanded, studioName, onToggleExpand, onD
   const [photosLoading, setPhotosLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
+  const [showExport, setShowExport] = useState(false);
+  const [exportTab, setExportTab] = useState<"lightroom" | "finder" | "win10" | "win11">("lightroom");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const status = STATUS_MAP[gallery.status] || STATUS_MAP["aguardando_selecao"];
@@ -353,15 +355,40 @@ function GalleryCard({ gallery, label, expanded, studioName, onToggleExpand, onD
     toast.success("Foto removida.");
   }
 
-  function exportSelection() {
+  const baseName = (f: string) => f.replace(/\.[^.]+$/, "");
+
+  function buildList(tab: typeof exportTab, names: string[]): string {
+    switch (tab) {
+      case "lightroom": return names.join(", ");
+      case "finder":    return names.map(n => n + ".").join(" OR ");
+      case "win10":     return names.map(n => `"${n}."`).join(" OR ");
+      case "win11":     return names.map(n => `"${n}."`).join(" OR ");
+    }
+  }
+
+  function openExport() {
     const sel = photos.filter(p => p.selecionada);
     if (!sel.length) { toast.error("Nenhuma foto selecionada."); return; }
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([sel.map(p => p.nome_arquivo).join("\n")], { type: "text/plain;charset=utf-8" }));
-    a.download = `selecao_${label.replace(/\s+/g, "_")}_${gallery.id.slice(0, 6)}.txt`;
-    a.click();
-    toast.success(`${sel.length} arquivos exportados.`);
+    setShowExport(true);
   }
+
+  function copyList(tab: typeof exportTab) {
+    const sel = photos.filter(p => p.selecionada);
+    const names = sel.map(p => baseName(p.nome_arquivo));
+    navigator.clipboard.writeText(buildList(tab, names));
+    toast.success("Lista copiada!");
+  }
+
+  const TABS: { key: typeof exportTab; label: string; hint: string; steps: string[] }[] = [
+    { key: "lightroom", label: "Lightroom", hint: "Lista para Lightroom",
+      steps: ["No Lightroom, vá para o modo de Biblioteca", "Em 'Filtro da biblioteca', filtre por 'Texto'", "Selecione 'Nome do arquivo' e 'Contém'", "Copie e cole a lista abaixo no campo de busca"] },
+    { key: "finder", label: "Finder (Mac)", hint: "Lista para Finder (Mac)",
+      steps: ["Abra o Finder do Mac", "Pressione ⌘+F para busca avançada", "Copie e cole a lista abaixo no campo de busca"] },
+    { key: "win10", label: "Windows 10", hint: "Lista para Windows 10",
+      steps: ["Abra o Windows Explorer", "Copie e cole a lista abaixo no campo de busca"] },
+    { key: "win11", label: "Windows 11", hint: "Lista para Windows 11",
+      steps: ["Abra o Windows Explorer", "Copie e cole a lista abaixo no campo de busca"] },
+  ];
 
   return (
     <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
@@ -427,9 +454,9 @@ function GalleryCard({ gallery, label, expanded, studioName, onToggleExpand, onD
           {gallery.status === "selecao_concluida" && (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, padding: "10px 14px", background: C.itemBg, borderRadius: 10, border: `1px solid ${C.border}` }}>
               <span style={{ fontSize: 13, color: C.text }}><b>{selectedCount}</b> foto{selectedCount !== 1 ? "s" : ""} selecionada{selectedCount !== 1 ? "s" : ""} pelo cliente</span>
-              <button onClick={exportSelection}
+              <button onClick={openExport}
                 style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", background: C.navyBg, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, color: C.navy, cursor: "pointer" }}>
-                <Download style={{ width: 13, height: 13 }} /> Exportar .txt
+                <Download style={{ width: 13, height: 13 }} /> Exportar lista
               </button>
             </div>
           )}
@@ -484,6 +511,68 @@ function GalleryCard({ gallery, label, expanded, studioName, onToggleExpand, onD
           </div>
         </div>
       )}
+
+      {/* ── Export Modal ──────────────────────────────────────────── */}
+      {showExport && (() => {
+        const sel = photos.filter(p => p.selecionada);
+        const names = sel.map(p => baseName(p.nome_arquivo));
+        const activeTab = TABS.find(t => t.key === exportTab)!;
+        const CHUNK = 17;
+        const chunks: string[] = [];
+        for (let i = 0; i < names.length; i += CHUNK) {
+          chunks.push(buildList(exportTab, names.slice(i, i + CHUNK)));
+        }
+        return (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+               onClick={() => setShowExport(false)}>
+            <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 560, maxHeight: "90vh", overflow: "auto", boxShadow: "0 24px 60px rgba(0,0,0,0.2)" }}
+                 onClick={e => e.stopPropagation()}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 0" }}>
+                <span style={{ fontSize: 17, fontWeight: 700, color: C.text }}>Exportar fotos</span>
+                <button onClick={() => setShowExport(false)}
+                  style={{ background: "none", border: "none", cursor: "pointer", fontSize: 22, color: C.textSub, lineHeight: 1, padding: 4 }}>×</button>
+              </div>
+              <div style={{ display: "flex", borderBottom: `1px solid ${C.divider}`, padding: "0 24px", marginTop: 16 }}>
+                {TABS.map(t => (
+                  <button key={t.key} onClick={() => setExportTab(t.key)}
+                    style={{ padding: "8px 12px", border: "none", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 600,
+                      color: exportTab === t.key ? C.navy : C.textSub,
+                      borderBottom: exportTab === t.key ? `2px solid ${C.navy}` : "2px solid transparent", marginBottom: -1 }}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ padding: "20px 24px 24px" }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 10 }}>{activeTab.hint}</div>
+                <ul style={{ margin: "0 0 16px", paddingLeft: 18 }}>
+                  {activeTab.steps.map((s, i) => (
+                    <li key={i} style={{ fontSize: 13, color: C.textSub, marginBottom: 4 }}>{s}</li>
+                  ))}
+                </ul>
+                {chunks.map((chunk, idx) => (
+                  <div key={idx} style={{ marginBottom: 12 }}>
+                    {chunks.length > 1 && (
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: C.textSub }}>Parte {idx + 1}</span>
+                        <span style={{ fontSize: 12, color: C.textSub }}>{names.slice(idx * CHUNK, (idx + 1) * CHUNK).length} fotos</span>
+                      </div>
+                    )}
+                    <div style={{ background: C.itemBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 14px" }}>
+                      <div style={{ fontSize: 12, color: C.text, wordBreak: "break-all" as const, lineHeight: 1.7 }}>{chunk}</div>
+                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+                        <button onClick={() => { navigator.clipboard.writeText(chunk); toast.success("Lista copiada!"); }}
+                          style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", background: "#fff", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", color: C.text }}>
+                          <Copy style={{ width: 12, height: 12 }} /> Copiar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

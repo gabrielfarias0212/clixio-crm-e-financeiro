@@ -197,7 +197,7 @@ export default function ProofingGalleryPage() {
         {/* Cover photo background */}
         {coverUrl && (
           <>
-            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${coverUrl})`, backgroundSize: "cover", backgroundPosition: "center", filter: "blur(18px) brightness(0.55)", transform: "scale(1.08)", zIndex: 0 }} />
+            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${coverUrl})`, backgroundSize: "cover", backgroundPosition: "center", filter: "blur(10px) brightness(0.55)", transform: "scale(1.08)", zIndex: 0 }} />
             <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", zIndex: 1 }} />
           </>
         )}
@@ -256,7 +256,7 @@ export default function ProofingGalleryPage() {
       <div style={{ minHeight: "100vh", position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px", overflow: "hidden" }}>
         {coverUrl && (
           <>
-            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${coverUrl})`, backgroundSize: "cover", backgroundPosition: "center", filter: "blur(18px) brightness(0.55)", transform: "scale(1.08)", zIndex: 0 }} />
+            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${coverUrl})`, backgroundSize: "cover", backgroundPosition: "center", filter: "blur(10px) brightness(0.55)", transform: "scale(1.08)", zIndex: 0 }} />
             <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", zIndex: 1 }} />
           </>
         )}

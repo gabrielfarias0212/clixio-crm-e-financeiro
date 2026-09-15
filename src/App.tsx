@@ -30,6 +30,7 @@ import Settings from "./pages/Settings";
 import FormsPage from "./pages/Forms";
 import ProofingGalleryPage from "./pages/ProofingGalleryPage";
 import ProofingDashboard from "./pages/ProofingDashboard";
+import GalleryDetail from "./pages/GalleryDetail";
 import PublicFormPage from "./pages/PublicForm";
 import ClientPortal from "./pages/ClientPortal";
 
@@ -81,6 +82,7 @@ const App = () => (
                           <Route path="/forms" element={<FormsPage />} />
                           <Route path="/settings" element={<Settings />} />
                           <Route path="/galerias" element={<ProofingDashboard />} />
+                          <Route path="/galerias/:galleryId" element={<GalleryDetail />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </FormsProvider>

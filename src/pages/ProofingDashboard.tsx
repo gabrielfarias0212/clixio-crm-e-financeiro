@@ -82,11 +82,16 @@ export default function ProofingDashboard() {
   }
 
   async function moveGallery(galleryId: string, toStatus: Column) {
-    const patch: Record<string, unknown> = { status: toStatus };
-    if (toStatus === "finalizado") patch.finalized_at = new Date().toISOString();
-    const { error } = await supabase.from("proofing_galleries").update(patch).eq("id", galleryId);
-    if (error) { toast.error("Erro ao mover galeria"); return; }
-    setGalleries(prev => prev.map(g => g.id === galleryId ? { ...g, ...patch } as Gallery : g));
+    const finalizedAt = toStatus === "finalizado" ? new Date().toISOString() : null;
+    const { error } = await supabase.rpc("update_gallery_status", {
+      p_gallery_id:   galleryId,
+      p_status:       toStatus,
+      p_finalized_at: finalizedAt,
+    });
+    if (error) { toast.error("Erro ao mover galeria: " + error.message); return; }
+    setGalleries(prev => prev.map(g => g.id === galleryId
+      ? { ...g, status: toStatus, ...(toStatus === "finalizado" ? { finalized_at: finalizedAt } : {}) }
+      : g));
     toast.success("Galeria movida!");
   }
 
@@ -124,7 +129,7 @@ export default function ProofingDashboard() {
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: 0 }}>📸 Galerias de Seleção</h1>
           <p style={{ fontSize: 13, color: C.textSub, margin: "4px 0 0" }}>
-            {galleries.length} galeria{galleries.length !== 1 ? "s" : ""} ativas · Clique em um cliente para gerenciar
+            {galleries.length} galeria{galleries.length !== 1 ? "s" : ""} ativas · Clique em uma galeria para gerenciar
           </p>
         </div>
         <button onClick={() => setShowCreate(true)}
@@ -172,8 +177,9 @@ export default function ProofingDashboard() {
                     column={col.key}
                     needsCleanup={!!needsCleanup(g)}
                     daysAgo={g.finalized_at ? daysAgo(g.finalized_at) : null}
-                    onNavigate={() => navigate(`/clients/${g.client_id}`, { state: { openTab: "galeria" } })}
+                    onNavigate={() => navigate(`/galerias/${g.id}`)}
                     onMove={moveGallery}
+                    onReactivate={(id) => moveGallery(id, "aguardando_selecao")}
                     onDelete={deleteGallery}
                   />
                 ))}
@@ -186,10 +192,11 @@ export default function ProofingDashboard() {
   );
 }
 
-function GalleryCard({ gallery, column, needsCleanup, daysAgo, onNavigate, onMove, onDelete }: {
+function GalleryCard({ gallery, column, needsCleanup, daysAgo, onNavigate, onMove, onReactivate, onDelete }: {
   gallery: Gallery; column: Column; needsCleanup: boolean; daysAgo: number | null;
   onNavigate: () => void;
   onMove: (id: string, to: Column) => void;
+  onReactivate: (id: string) => void;
   onDelete: (g: Gallery) => void;
 }) {
   const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -247,15 +254,21 @@ function GalleryCard({ gallery, column, needsCleanup, daysAgo, onNavigate, onMov
 
         <div style={{ marginLeft: "auto", display: "flex", gap: 5 }}>
           {column === "selecao_concluida" && (
-            <button onClick={() => onMove(gallery.id, "finalizado")}
-              style={{ padding: "4px 10px", background: C.successBg, border: "none", borderRadius: 6, fontSize: 11, fontWeight: 700, color: "#1A5C32", cursor: "pointer" }}>
-              ✓ Finalizar
-            </button>
+            <>
+              <button onClick={() => onMove(gallery.id, "finalizado")}
+                style={{ padding: "4px 10px", background: C.successBg, border: "none", borderRadius: 6, fontSize: 11, fontWeight: 700, color: "#1A5C32", cursor: "pointer" }}>
+                ✓ Finalizar
+              </button>
+              <button onClick={() => onReactivate(gallery.id)}
+                style={{ padding: "4px 10px", background: C.goldBg, border: "none", borderRadius: 6, fontSize: 11, fontWeight: 700, color: "#7C5C20", cursor: "pointer" }}>
+                ↺ Reativar
+              </button>
+            </>
           )}
           {column === "finalizado" && (
-            <button onClick={() => onMove(gallery.id, "selecao_concluida")}
-              style={{ padding: "4px 10px", background: C.navyBg, border: "none", borderRadius: 6, fontSize: 11, fontWeight: 700, color: C.navy, cursor: "pointer" }}>
-              ← Devolver
+            <button onClick={() => onReactivate(gallery.id)}
+              style={{ padding: "4px 10px", background: C.goldBg, border: "none", borderRadius: 6, fontSize: 11, fontWeight: 700, color: "#7C5C20", cursor: "pointer" }}>
+              ↺ Reativar
             </button>
           )}
           {column === "finalizado" && (

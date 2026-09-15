@@ -440,7 +440,7 @@ export default function ProofingGalleryPage() {
           <p style={{ color: "#9B9890", fontSize: 14 }}>Nenhuma foto disponível ainda.</p>
         </div>
       ) : (
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 12px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 12px 90px" }}>
           <div style={{ columns: "auto 280px", columnGap: 10 }}>
             {photos.map(photo => (
               <PhotoTile
@@ -458,7 +458,7 @@ export default function ProofingGalleryPage() {
 
       {/* Bottom action bar */}
       {gallery.status !== "selecao_concluida" && (
-        <div style={{ position: "sticky", bottom: 0, background: "#fff", borderTop: "1px solid #E8E4DC", padding: "14px 16px" }}>
+        <div style={{ position: "sticky", bottom: 0, background: "#fff", borderTop: "1px solid #E8E4DC", padding: "14px 16px", zIndex: 20 }}>
           <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
             <div style={{ fontSize: 13, color: "#9B9890" }}>
               {totalPhotos} foto{totalPhotos !== 1 ? "s" : ""} no total

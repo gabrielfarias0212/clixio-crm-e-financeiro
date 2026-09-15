@@ -377,68 +377,135 @@ export default function ProofingGalleryPage() {
       )}
 
       {/* Lightbox */}
-      {viewPhoto && session && (() => {
-        const idx = session.photos.findIndex(p => p.id === viewPhoto.id);
-        const prev = idx > 0 ? session.photos[idx - 1] : null;
-        const next = idx < session.photos.length - 1 ? session.photos[idx + 1] : null;
-        const isSel = viewPhoto.selecionada;
-        const allowDl = gallery.permite_download ?? true;
-        return (
-          <div
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.94)", zIndex: 1000, display: "flex", flexDirection: "column" }}
-            onClick={() => setViewPhoto(null)}
-          >
-            {/* Top bar */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-              <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>{idx + 1} / {session.photos.length}</span>
-              <button onClick={() => setViewPhoto(null)} style={{ background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <X style={{ width: 18, height: 18, color: "#fff" }} />
-              </button>
-            </div>
+      {viewPhoto && session && (
+        <Lightbox
+          photo={viewPhoto}
+          photos={session.photos}
+          allowDownload={gallery.permite_download ?? true}
+          finalized={gallery.status === "selecao_concluida"}
+          onClose={() => setViewPhoto(null)}
+          onNavigate={setViewPhoto}
+          onToggle={p => { handleToggle(p); setViewPhoto(prev => prev ? { ...prev, selecionada: !prev.selecionada } : prev); }}
+        />
+      )}
+    </div>
+  );
+}
 
-            {/* Image area */}
-            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-              {/* Prev */}
-              {prev && (
-                <button onClick={e => { e.stopPropagation(); setViewPhoto(prev); }}
-                  style={{ position: "absolute", left: 12, zIndex: 10, background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "50%", width: 44, height: 44, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-              )}
 
-              <img
-                src={viewPhoto.url || viewPhoto.thumbnail_url}
-                alt={viewPhoto.nome_arquivo}
-                draggable="false"
-                onContextMenu={e => { if (!allowDl) e.preventDefault(); }}
-                style={{ maxWidth: "calc(100vw - 120px)", maxHeight: "calc(100vh - 160px)", objectFit: "contain", borderRadius: 8, userSelect: "none" } as React.CSSProperties}
-                onClick={e => e.stopPropagation()}
-              />
+// ── Lightbox ──────────────────────────────────────────────────────────────────
+function Lightbox({ photo, photos, allowDownload, finalized, onClose, onNavigate, onToggle }: {
+  photo: ProofingPhoto & { url?: string; thumbnail_url?: string };
+  photos: (ProofingPhoto & { url?: string; thumbnail_url?: string })[];
+  allowDownload: boolean;
+  finalized: boolean;
+  onClose: () => void;
+  onNavigate: (p: ProofingPhoto & { url?: string; thumbnail_url?: string }) => void;
+  onToggle: (p: ProofingPhoto & { url?: string; thumbnail_url?: string }) => void;
+}) {
+  const idx = photos.findIndex(p => p.id === photo.id);
+  const prev = idx > 0 ? photos[idx - 1] : null;
+  const next = idx < photos.length - 1 ? photos[idx + 1] : null;
 
-              {/* Next */}
-              {next && (
-                <button onClick={e => { e.stopPropagation(); setViewPhoto(next); }}
-                  style={{ position: "absolute", right: 12, zIndex: 10, background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "50%", width: 44, height: 44, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-              )}
-            </div>
+  // Progressive image: show thumb immediately, swap to full when ready
+  const [displaySrc, setDisplaySrc] = useState(photo.thumbnail_url || photo.url || "");
+  const [fullLoaded, setFullLoaded] = useState(false);
 
-            {/* Bottom bar — select button */}
-            {gallery.status !== "selecao_concluida" && (
-              <div style={{ display: "flex", justifyContent: "center", padding: "16px", flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                <button
-                  onClick={() => { handleToggle(viewPhoto); setViewPhoto(p => p ? { ...p, selecionada: !p.selecionada } : p); }}
-                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 32px", background: isSel ? "#C9A96E" : "rgba(255,255,255,0.12)", border: isSel ? "none" : "2px solid rgba(255,255,255,0.3)", borderRadius: 12, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
-                  {isSel
-                    ? <><Check style={{ width: 18, height: 18 }} /> Selecionada — clique para remover</>
-                    : <><Heart style={{ width: 18, height: 18 }} /> Selecionar esta foto</>}
-                </button>
-              </div>
-            )}
-          </div>
-        );
-      })()}
+  useEffect(() => {
+    setDisplaySrc(photo.thumbnail_url || photo.url || "");
+    setFullLoaded(false);
+    if (photo.url && photo.url !== photo.thumbnail_url) {
+      const img = new Image();
+      img.onload = () => { setDisplaySrc(photo.url!); setFullLoaded(true); };
+      img.src = photo.url;
+    } else {
+      setFullLoaded(true);
+    }
+    // Preload adjacent photos
+    [prev, next].forEach(adj => {
+      if (adj?.url) { const i = new Image(); i.src = adj.url; }
+    });
+  }, [photo.id]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight" && next) onNavigate(next);
+      if (e.key === "ArrowLeft" && prev) onNavigate(prev);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [prev, next]);
+
+  const isSel = photo.selecionada;
+  const gold = "#C9A96E";
+
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 1000, display: "flex", flexDirection: "column" }}
+      onClick={onClose}
+    >
+      {/* Top bar */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 13 }}>{idx + 1} / {photos.length}</span>
+          {!fullLoaded && (
+            <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 11 }}>carregando...</span>
+          )}
+        </div>
+        <button onClick={onClose} style={{ background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <X style={{ width: 18, height: 18, color: "#fff" }} />
+        </button>
+      </div>
+
+      {/* Image area */}
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+        {prev && (
+          <button onClick={e => { e.stopPropagation(); onNavigate(prev); }}
+            style={{ position: "absolute", left: 12, zIndex: 10, background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "50%", width: 44, height: 44, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+        )}
+
+        <img
+          key={photo.id}
+          src={displaySrc}
+          alt={photo.nome_arquivo}
+          draggable="false"
+          onContextMenu={e => { if (!allowDownload) e.preventDefault(); }}
+          style={{
+            maxWidth: "calc(100vw - 120px)",
+            maxHeight: "calc(100vh - 160px)",
+            objectFit: "contain",
+            borderRadius: 8,
+            userSelect: "none",
+            filter: fullLoaded ? "none" : "blur(1px)",
+            transition: "filter 0.25s ease",
+          } as React.CSSProperties}
+          onClick={e => e.stopPropagation()}
+        />
+
+        {next && (
+          <button onClick={e => { e.stopPropagation(); onNavigate(next); }}
+            style={{ position: "absolute", right: 12, zIndex: 10, background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "50%", width: 44, height: 44, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        )}
+      </div>
+
+      {/* Select button */}
+      {!finalized && (
+        <div style={{ display: "flex", justifyContent: "center", padding: "16px", flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+          <button
+            onClick={() => onToggle(photo)}
+            style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 32px", background: isSel ? gold : "rgba(255,255,255,0.12)", border: isSel ? "none" : "2px solid rgba(255,255,255,0.3)", borderRadius: 12, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+            {isSel
+              ? <><Check style={{ width: 18, height: 18 }} /> Selecionada — clique para remover</>
+              : <><Heart style={{ width: 18, height: 18 }} /> Selecionar esta foto</>}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

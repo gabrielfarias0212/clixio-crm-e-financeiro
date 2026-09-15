@@ -69,7 +69,7 @@ export default function ProofingDashboard() {
     if (error) { toast.error("Erro ao carregar galerias"); setLoading(false); return; }
 
     // Fetch client names
-    const clientIds = [...new Set((data ?? []).map(g => g.client_id))];
+    const clientIds = [...new Set((data ?? []).map(g => g.client_id).filter(Boolean))];
     const { data: clients } = await supabase
       .from("wedding_clients")
       .select("id, name")

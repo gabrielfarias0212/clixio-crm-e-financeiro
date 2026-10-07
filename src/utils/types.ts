@@ -146,6 +146,8 @@ export interface Client {
   portalEnabled?: boolean;
   portalDeadline?: string | null;
   portalMessage?: string | null;
+  deliveryLink?: string | null;
+  preWeddingDeliveryLink?: string | null;
   packageId?: string | null;      // Pacote de serviço aplicado
 
   payments: Payment[];

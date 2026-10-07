@@ -305,6 +305,37 @@ export default function ClientPortal() {
           </div>
         )}
 
+        {/* Delivery links */}
+        {(client.deliveryLink || (client.hasPreWedding && client.preWeddingDeliveryLink)) && (
+          <div style={{ marginBottom:24, ...f(0.92) }}>
+            <p style={{ fontSize:11, letterSpacing:"0.1em", textTransform:"uppercase" as const, color:C.gold, marginBottom:12 }}>Suas fotos</p>
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {client.hasPreWedding && client.preWeddingDeliveryLink && (
+                <a href={client.preWeddingDeliveryLink} target="_blank" rel="noopener noreferrer"
+                  style={{ display:"flex", alignItems:"center", justifyContent:"space-between", background:C.bg, border:`1px solid ${C.border}`, borderRadius:12, padding:"16px 20px", textDecoration:"none" }}
+                  onMouseEnter={e=>(e.currentTarget.style.background=C.goldLight)} onMouseLeave={e=>(e.currentTarget.style.background=C.bg)}>
+                  <div>
+                    <p style={{ fontSize:14, fontWeight:600, color:C.text, marginBottom:2 }}>📷 Pré-Wedding</p>
+                    <p style={{ fontSize:11, color:C.textLight }}>Acesse sua galeria de fotos</p>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+              )}
+              {client.deliveryLink && (
+                <a href={client.deliveryLink} target="_blank" rel="noopener noreferrer"
+                  style={{ display:"flex", alignItems:"center", justifyContent:"space-between", background:C.bg, border:`1px solid ${C.border}`, borderRadius:12, padding:"16px 20px", textDecoration:"none" }}
+                  onMouseEnter={e=>(e.currentTarget.style.background=C.goldLight)} onMouseLeave={e=>(e.currentTarget.style.background=C.bg)}>
+                  <div>
+                    <p style={{ fontSize:14, fontWeight:600, color:C.text, marginBottom:2 }}>💍 Casamento</p>
+                    <p style={{ fontSize:11, color:C.textLight }}>Acesse sua galeria de fotos</p>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Contract link */}
         {client.contractLink && (
           <a href={client.contractLink} target="_blank" rel="noopener noreferrer"

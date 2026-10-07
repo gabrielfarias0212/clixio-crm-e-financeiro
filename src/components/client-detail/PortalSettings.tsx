@@ -12,6 +12,8 @@ export function PortalSettings({ client }: Props) {
   const [saving, setSaving] = useState(false);
   const [deadline, setDeadline] = useState(client.portalDeadline ?? "");
   const [message, setMessage] = useState(client.portalMessage ?? "");
+  const [deliveryLink, setDeliveryLink] = useState(client.deliveryLink ?? "");
+  const [preWeddingDeliveryLink, setPreWeddingDeliveryLink] = useState(client.preWeddingDeliveryLink ?? "");
 
   const portalUrl = client.portalToken
     ? `${window.location.origin}/portal/${client.portalToken}`
@@ -30,7 +32,7 @@ export function PortalSettings({ client }: Props) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateClient(client.id, { portalDeadline: deadline || null, portalMessage: message || null } as any);
+      await updateClient(client.id, { portalDeadline: deadline || null, portalMessage: message || null, deliveryLink: deliveryLink || null, preWeddingDeliveryLink: preWeddingDeliveryLink || null } as any);
       toast({ title: "Configurações salvas" });
     } catch (e: any) {
       toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
@@ -98,6 +100,23 @@ export function PortalSettings({ client }: Props) {
           placeholder="Escreva uma mensagem especial para o cliente ver no portal..."
           style={{ width:"100%", padding:"8px 12px", border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, color:C.text, background:"#FFFFFF", outline:"none", resize:"vertical" as const, fontFamily:"inherit" }} />
       </div>
+
+      {/* Delivery links */}
+      <div style={{ marginBottom:12 }}>
+        <label style={{ display:"block", fontSize:11, fontWeight:600, color:C.sub, marginBottom:4, textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Link de entrega — Casamento</label>
+        <input type="url" value={deliveryLink} onChange={e => setDeliveryLink(e.target.value)}
+          placeholder="https://..."
+          style={{ width:"100%", padding:"8px 12px", border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, color:C.text, background:"#FFFFFF", outline:"none" }} />
+      </div>
+
+      {client.hasPreWedding && (
+        <div style={{ marginBottom:16 }}>
+          <label style={{ display:"block", fontSize:11, fontWeight:600, color:C.sub, marginBottom:4, textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Link de entrega — Pré-Wedding</label>
+          <input type="url" value={preWeddingDeliveryLink} onChange={e => setPreWeddingDeliveryLink(e.target.value)}
+            placeholder="https://..."
+            style={{ width:"100%", padding:"8px 12px", border:`1px solid ${C.border}`, borderRadius:8, fontSize:13, color:C.text, background:"#FFFFFF", outline:"none" }} />
+        </div>
+      )}
 
       <button onClick={handleSave} disabled={saving}
         style={{ width:"100%", padding:"9px", borderRadius:8, border:"none", background:C.text, color:"#FFFFFF", fontSize:13, fontWeight:600, cursor:"pointer", opacity: saving ? 0.6 : 1 }}>

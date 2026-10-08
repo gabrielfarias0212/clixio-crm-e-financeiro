@@ -79,6 +79,8 @@ const FIELD_MAP: Record<string, string> = {
   preWeddingCompleted: 'pre_wedding_completed',
   preWeddingDelivered: 'pre_wedding_delivered',
   salesFunnelStage: 'sales_funnel_stage',
+  deliveryLink: 'delivery_link',
+  preWeddingDeliveryLink: 'pre_wedding_delivery_link',
 };
 
 export const updateClient = async (

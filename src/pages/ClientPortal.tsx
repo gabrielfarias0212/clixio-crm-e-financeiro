@@ -257,15 +257,15 @@ export default function ClientPortal() {
               <div style={{ marginBottom: receivedTransactions.length > 0 ? 20 : 0 }}>
                 <p style={{ fontSize:11, letterSpacing:"0.08em", textTransform:"uppercase" as const, color:C.textLight, marginBottom:12 }}>Parcelas</p>
                 {plannedPayments.map((p, i) => {
-                  const paid = p.payment_status === "pago";
-                  const dueDateObj = parseDate(p.due_date);
+                  const paid = p.paymentStatus === "pago";
+                  const dueDateObj = parseDate(p.dueDate);
                   const isOverdue = !paid && dueDateObj && dueDateObj < new Date();
                   return (
                     <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 0", borderBottom: i < plannedPayments.length-1 ? `1px solid ${C.border}` : "none" }}>
                       <div>
                         <p style={{ fontSize:13, color:C.text, fontWeight:500 }}>{p.notes || `Parcela ${i+1}`}</p>
                         <p style={{ fontSize:11, color: isOverdue ? C.amber : C.textLight, marginTop:2 }}>
-                          {paid ? `Pago em ${formatDateBR(p.date)}` : p.due_date ? `Vence em ${formatDateBR(p.due_date)}` : "—"}
+                          {paid ? `Pago em ${formatDateBR(p.date)}` : p.dueDate ? `Vence em ${formatDateBR(p.dueDate)}` : "—"}
                         </p>
                       </div>
                       <div style={{ display:"flex", alignItems:"center", gap:10 }}>

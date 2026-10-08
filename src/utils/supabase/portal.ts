@@ -37,6 +37,9 @@ export interface PortalClient {
   semEntregaFisica?: boolean;
   // actual received payments (financial module)
   transactions?: PortalTransaction[];
+  hasPreWedding?: boolean;
+  deliveryLink?: string | null;
+  preWeddingDeliveryLink?: string | null;
   // planned installments
   payments?: PortalPayment[];
 }
@@ -54,7 +57,8 @@ export async function fetchPortalData(token: string): Promise<{ client: PortalCl
       id, name, couple_name, wedding_date, contract_value, status,
       workflow_stage, portal_deadline, portal_message, contract_link,
       has_album, wedding_photographed, backup_completed, curation_completed,
-      previas_sent, in_editing, link_sent, box_delivered, sem_entrega_fisica
+      previas_sent, in_editing, link_sent, box_delivered, sem_entrega_fisica,
+      has_pre_wedding, delivery_link, pre_wedding_delivery_link
     `)
     .eq("portal_token", token)
     .eq("portal_enabled", true)
@@ -102,6 +106,9 @@ export async function fetchPortalData(token: string): Promise<{ client: PortalCl
       linkSent: client.link_sent ?? false,
       boxDelivered: client.box_delivered ?? false,
       semEntregaFisica: client.sem_entrega_fisica ?? false,
+      hasPreWedding: client.has_pre_wedding ?? false,
+      deliveryLink: client.delivery_link ?? null,
+      preWeddingDeliveryLink: client.pre_wedding_delivery_link ?? null,
       transactions: (transactions ?? []).map(t => ({
         amount: Number(t.amount),
         date: t.date,

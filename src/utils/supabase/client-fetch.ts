@@ -21,7 +21,7 @@ const CLIENT_SELECT = `
         package_id, notes,
   created_at, updated_at, workflow_stage,
   portal_token, portal_enabled, portal_deadline, portal_message,
-  delivery_link, pre_wedding_delivery_link,
+  delivery_link, pre_wedding_delivery_link, portal_cover_url,
 
   wedding_photographed,
   backup_done,

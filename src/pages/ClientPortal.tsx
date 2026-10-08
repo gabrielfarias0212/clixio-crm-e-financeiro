@@ -145,29 +145,47 @@ export default function ClientPortal() {
       </div>
 
       {/* Hero */}
-      <div style={{ background:C.white, borderBottom:`1px solid ${C.border}`, padding:"60px 20px 52px", textAlign:"center", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", top:-80, left:"50%", transform:"translateX(-50%)", width:500, height:500, background:"radial-gradient(circle,rgba(201,169,110,0.07) 0%,transparent 70%)", pointerEvents:"none" }} />
-        <p style={{ fontSize:11, letterSpacing:"0.14em", textTransform:"uppercase" as const, color:C.textLight, marginBottom:16, ...f(0.1) }}>Bem-vindo ao seu espaço</p>
-        <h1 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(32px,6vw,44px)", fontWeight:300, color:C.text, lineHeight:1.15, marginBottom:8, ...f(0.2) }}>
+      <div style={{ borderBottom:`1px solid ${C.border}`, padding:"60px 20px 52px", textAlign:"center", position:"relative", overflow:"hidden",
+        background: client.portalCoverUrl ? "transparent" : C.white }}>
+        {/* Cover photo background */}
+        {client.portalCoverUrl && (
+          <>
+            <div style={{ position:"absolute", inset:0, backgroundImage:`url(${client.portalCoverUrl})`, backgroundSize:"cover", backgroundPosition:"center", filter:"blur(3px) brightness(0.38)", transform:"scale(1.05)" }} />
+            <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.55) 100%)" }} />
+          </>
+        )}
+        {!client.portalCoverUrl && (
+          <div style={{ position:"absolute", top:-80, left:"50%", transform:"translateX(-50%)", width:500, height:500, background:"radial-gradient(circle,rgba(201,169,110,0.07) 0%,transparent 70%)", pointerEvents:"none" }} />
+        )}
+        {/* Content — switch to white text when cover is set */}
+        <p style={{ fontSize:11, letterSpacing:"0.14em", textTransform:"uppercase" as const, marginBottom:16, position:"relative",
+          color: client.portalCoverUrl ? "rgba(255,255,255,0.7)" : C.textLight, ...f(0.1) }}>Bem-vindo ao seu espaço</p>
+        <h1 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(32px,6vw,44px)", fontWeight:300, lineHeight:1.15, marginBottom:8, position:"relative",
+          color: client.portalCoverUrl ? "#FFFFFF" : C.text, ...f(0.2) }}>
           {displayName}
         </h1>
-        <p style={{ fontSize:13, color:C.textLight, marginBottom:days !== null ? 48 : 16, ...f(0.3) }}>
+        <p style={{ fontSize:13, marginBottom:days !== null ? 48 : 16, position:"relative",
+          color: client.portalCoverUrl ? "rgba(255,255,255,0.65)" : C.textLight, ...f(0.3) }}>
           Casamento · {formatDateBR(client.weddingDate)}
         </p>
         {days !== null && (
-          <div style={{ ...f(0.4) }}>
-            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(72px,14vw,96px)", fontWeight:300, lineHeight:1, color:C.text, letterSpacing:-2 }}>
+          <div style={{ ...f(0.4), position:"relative" }}>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"clamp(72px,14vw,96px)", fontWeight:300, lineHeight:1, letterSpacing:-2,
+              color: client.portalCoverUrl ? "#FFFFFF" : C.text }}>
               {days === 0 ? "Hoje" : Math.abs(days)}
             </div>
-            <div style={{ fontSize:12, letterSpacing:"0.1em", textTransform:"uppercase" as const, color:C.textLight, marginTop:4 }}>
+            <div style={{ fontSize:12, letterSpacing:"0.1em", textTransform:"uppercase" as const, marginTop:4,
+              color: client.portalCoverUrl ? "rgba(255,255,255,0.65)" : C.textLight }}>
               {days > 0 ? "dias para o grande dia" : days === 0 ? "é o grande dia" : "dias desde o casamento"}
             </div>
           </div>
         )}
-        <p style={{ maxWidth:440, margin:"28px auto 0", fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:300, fontStyle:"italic", color:C.textMid, lineHeight:1.6, ...f(0.55) }}>
+        <p style={{ maxWidth:440, margin:"28px auto 0", fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:300, fontStyle:"italic", lineHeight:1.6, position:"relative",
+          color: client.portalCoverUrl ? "rgba(255,255,255,0.8)" : C.textMid, ...f(0.55) }}>
           {phrase}
         </p>
-        <div style={{ width:40, height:1, background:C.gold, margin:"28px auto 0", ...f(0.65) }} />
+        <div style={{ width:40, height:1, margin:"28px auto 0", position:"relative",
+          background: client.portalCoverUrl ? "rgba(201,169,110,0.8)" : C.gold, ...f(0.65) }} />
       </div>
 
       {/* Main */}

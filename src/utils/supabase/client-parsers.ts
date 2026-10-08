@@ -36,6 +36,7 @@ export const parseClient = (data: any): Client => {
     portalDeadline: data.portal_deadline ?? null,
     portalMessage: data.portal_message ?? null,
     deliveryLink: data.delivery_link ?? null,
+    portalCoverUrl: data.portal_cover_url ?? null,
     preWeddingDeliveryLink: data.pre_wedding_delivery_link ?? null,
 
     // ── Workflow principal ──────────────────────────

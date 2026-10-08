@@ -147,6 +147,7 @@ export interface Client {
   portalDeadline?: string | null;
   portalMessage?: string | null;
   deliveryLink?: string | null;
+  portalCoverUrl?: string | null;
   preWeddingDeliveryLink?: string | null;
   packageId?: string | null;      // Pacote de serviço aplicado
 

@@ -80,6 +80,7 @@ const FIELD_MAP: Record<string, string> = {
   preWeddingDelivered: 'pre_wedding_delivered',
   salesFunnelStage: 'sales_funnel_stage',
   deliveryLink: 'delivery_link',
+  portalCoverUrl: 'portal_cover_url',
   preWeddingDeliveryLink: 'pre_wedding_delivery_link',
 };
 

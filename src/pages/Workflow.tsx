@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { QuickProjectForm } from "@/components/workflow/QuickProjectForm";
 import { WorkflowReportDialog } from "@/components/workflow/WorkflowReportDialog";
+import { WorkflowKanban } from "@/components/workflow/WorkflowKanban";
 import { ProjectDetailDialog } from "@/components/workflow/ProjectDetailDialog";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
@@ -464,6 +465,7 @@ export default function WorkflowPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"projetos" | "entregas">("projetos");
+  const [viewMode, setViewMode] = useState<"painel" | "kanban">(() => (localStorage.getItem("workflow_view") ?? "painel") as "painel" | "kanban");
 
   const workflowClients = useMemo(() =>
     clients.filter(c => c.status === "projeto_finalizado" || c.status === "fechado"),
@@ -648,8 +650,26 @@ export default function WorkflowPage() {
             ))}
           </div>
 
-          {/* Tab: Projetos */}
+          {/* View toggle (only on projetos tab) */}
           {activeTab === "projetos" && (
+            <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:4, marginTop:-8 }}>
+              {(["painel","kanban"] as const).map(v => (
+                <button key={v} onClick={() => { setViewMode(v); localStorage.setItem("workflow_view", v); }}
+                  style={{ padding:"5px 12px", fontSize:11, fontWeight:600, cursor:"pointer", border:`1px solid ${C.divider}`,
+                    borderRadius: v === "painel" ? "6px 0 0 6px" : "0 6px 6px 0",
+                    background: viewMode === v ? C.navy : C.itemBg,
+                    color: viewMode === v ? "#FFFFFF" : C.textSub }}>
+                  {v === "painel" ? "⊞ Painel" : "⬛ Kanban"}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Tab: Projetos */}
+          {activeTab === "projetos" && viewMode === "kanban" && (
+            <WorkflowKanban clients={filtered} />
+          )}
+          {activeTab === "projetos" && viewMode === "painel" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {/* Filter bar */}
               <div style={{ ...CARD, padding: "14px 18px", display: "flex", flexDirection: "column", gap: 10 }}>

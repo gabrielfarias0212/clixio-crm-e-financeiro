@@ -39,7 +39,7 @@ export function parseInterCartao(text: string): ResultadoInterCartao {
     return {
       data: toIso(data), cartaoFinal: "", categoriaBanco: cat, descricao: norm(lanc),
       parcelaAtual: m ? +m[1] : null, parcelaTotal: m ? +m[2] : null, valor: v, iof: 0, usd: null,
-      tipo: v < 0 ? "credito_a_confirmar" : "compra",
+      tipo: v < 0 ? "credito_a_confirmar" : /ENCARGOS|JUROS|MULTA|ROTATIVO|IOF (ADICIONAL|DIARIO)/.test(norm(lanc)) ? "tarifa" : "compra",
     } as LinhaCartao;
   });
 
@@ -47,8 +47,8 @@ export function parseInterCartao(text: string): ResultadoInterCartao {
   todas = todas.filter((l) => !pagamentos.includes(l));
 
   // IOF: casa com a compra cujo valor × 3,5% ≈ IOF, até 4 dias antes
-  const iofs = todas.filter((l) => /IOF/.test(l.descricao));
-  const compras = todas.filter((l) => !/IOF/.test(l.descricao));
+  const iofs = todas.filter((l) => /IOF INTERNACIONAL/.test(l.descricao));
+  const compras = todas.filter((l) => !/IOF INTERNACIONAL/.test(l.descricao));
   for (const iof of iofs) {
     const alvo = compras.find((c) => c.iof === 0 && c.valor > 0 && Math.abs(r2(c.valor * 0.035) - iof.valor) <= 0.02 && dia(iof.data) - dia(c.data) >= 0 && dia(iof.data) - dia(c.data) <= 4);
     if (alvo) { alvo.iof = iof.valor; alvo.valor = r2(alvo.valor + iof.valor); }

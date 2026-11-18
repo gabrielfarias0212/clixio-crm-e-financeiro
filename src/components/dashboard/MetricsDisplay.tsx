@@ -83,16 +83,16 @@ export function MetricsDisplay({ onCardClick }: MetricsDisplayProps) {
             onClick={() => onCardClick("conversion")}
           />
 
-          {/* Lucro Líquido */}
+          {/* Receita Total (antes "Lucro Líquido": despesas saíram do Clixio) */}
           <MetricsCard 
             icon={<DollarSign />}
             iconColor="text-purple-600 dark:text-purple-400"
             iconBgColor="bg-purple-50 dark:bg-purple-950"
-            title="Lucro Líquido"
-            value={formatCurrency(metrics.netProfit)}
-            valueColor={`${metrics.netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
-            subtext="Receitas vs Despesas"
-            onClick={() => onCardClick("profit")}
+            title="Receita Total"
+            value={formatCurrency(metrics.totalRevenue)}
+            valueColor="text-green-600 dark:text-green-400"
+            subtext="Despesas ficam no módulo Finanças"
+            onClick={() => onCardClick("revenue")}
           />
         </div>
       </CardContent>

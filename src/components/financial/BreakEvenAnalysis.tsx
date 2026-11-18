@@ -41,10 +41,17 @@ export function BreakEvenAnalysis() {
     // 1. Custos fixos mensais
     const fixedCosts = fixedCostsMonthly;
 
-    // 2. Ticket médio por evento
+    // 2. Ticket médio por evento = valor médio dos contratos fechados no ano
+    // (fechado + projeto finalizado, com valor de contrato informado).
+    // Antes: receita total das entradas do ano ÷ contratos criados no ano, o que
+    // misturava pagamentos de contratos antigos e entradas sem cliente.
+    const ticketContracts = metrics.closedContractsData.filter(
+      (c) => Number(c.contractValue) > 0
+    );
     const avgTicket =
-      metrics.activeContracts > 0
-        ? metrics.totalRevenue / metrics.activeContracts
+      ticketContracts.length > 0
+        ? ticketContracts.reduce((sum, c) => sum + Number(c.contractValue), 0) /
+          ticketContracts.length
         : 0;
 
     // 3. Custo variável médio por projeto (de project_costs)
@@ -85,6 +92,7 @@ export function BreakEvenAnalysis() {
     return {
       fixedCosts,
       avgTicket,
+      ticketContractsCount: ticketContracts.length,
       avgVarCost,
       contributionMargin,
       breakEven,
@@ -230,7 +238,7 @@ export function BreakEvenAnalysis() {
             </div>
             <p className="text-lg font-bold">{fmt(analysis.avgTicket)}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              por evento ({metrics.activeContracts} contratos)
+              por evento (média de {analysis.ticketContractsCount} contratos fechados no ano)
             </p>
           </CardContent>
         </Card>

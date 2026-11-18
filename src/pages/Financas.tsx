@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ImportarTab } from "@/components/financas/ImportarTab";
 import { TriagemTab } from "@/components/financas/TriagemTab";
 import { ResumoTab } from "@/components/financas/ResumoTab";
+import { ManualTab } from "@/components/financas/ManualTab";
 import { listarCategorias, listarFaturas, listarLancamentos, type Categoria, type Lanc } from "@/lib/financas/api";
 
 export const FINANCAS_FLAG = "clixio_financas";
@@ -36,10 +37,12 @@ export default function Financas() {
             <TabsTrigger value="importar">Importar</TabsTrigger>
             <TabsTrigger value="triagem">Triagem</TabsTrigger>
             <TabsTrigger value="resumo">Resumo</TabsTrigger>
+            <TabsTrigger value="manual">Manual</TabsTrigger>
           </TabsList>
           <TabsContent value="importar"><ImportarTab onImportado={() => { carregar(); setAba("triagem"); }} /></TabsContent>
           <TabsContent value="triagem"><TriagemTab lancs={lancs} categorias={cats} onMudou={carregar} /></TabsContent>
           <TabsContent value="resumo"><ResumoTab lancs={lancs} faturas={faturas} onMudou={carregar} /></TabsContent>
+          <TabsContent value="manual"><ManualTab categorias={cats} onMudou={carregar} /></TabsContent>
         </Tabs>
       </div>
     </Layout>

@@ -128,3 +128,22 @@ export async function marcarFatura(id: string, status: "paga" | "fechada", pagoE
   const { error } = await db.from("fin_faturas").update({ status, pago_em: pagoEm, valor_pago: valorPago }).eq("id", id);
   if (error) throw error;
 }
+
+export async function criarFonte(f: { nome: string; banco: string; tipo: "conta" | "cartao"; pagador: "PF" | "PJ"; dia_fechamento?: number | null; dia_vencimento?: number | null }) {
+  const { error } = await db.from("fin_fontes").insert({ ...f, dia_fechamento: f.dia_fechamento ?? null, dia_vencimento: f.dia_vencimento ?? null });
+  if (error) throw error;
+}
+export async function arquivarFonte(id: string) {
+  const { error } = await db.from("fin_fontes").update({ ativa: false }).eq("id", id);
+  if (error) throw error;
+}
+export async function criarLancamentoManual(l: {
+  fonte: Fonte; data: string; descricao: string; valor: number; tipo: "entrada" | "saida" | "transferencia" | "reembolso";
+  pertence_a: "PF" | "PJ"; categoria_id: string | null; obs?: string | null;
+}) {
+  const { error } = await db.from("fin_lancamentos").insert({
+    fonte_id: l.fonte.id, data: l.data, descricao: l.descricao, descricao_original: l.descricao, valor: Math.abs(l.valor), tipo: l.tipo,
+    pagador: l.fonte.pagador, pertence_a: l.pertence_a, categoria_id: l.categoria_id, status: "realizado", obs: l.obs ?? "lançamento manual",
+  });
+  if (error) throw error;
+}

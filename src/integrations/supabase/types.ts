@@ -855,6 +855,357 @@ export type Database = {
         }
         Relationships: []
       }
+      fin_categorias: {
+        Row: {
+          created_at: string
+          grupo: string
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grupo: string
+          id?: string
+          nome: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          grupo?: string
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fin_faturas: {
+        Row: {
+          competencia: string
+          created_at: string
+          fonte_id: string
+          id: string
+          pago_em: string | null
+          status: string
+          user_id: string
+          valor_pago: number | null
+          valor_total: number
+          vencimento: string | null
+        }
+        Insert: {
+          competencia: string
+          created_at?: string
+          fonte_id: string
+          id?: string
+          pago_em?: string | null
+          status?: string
+          user_id?: string
+          valor_pago?: number | null
+          valor_total?: number
+          vencimento?: string | null
+        }
+        Update: {
+          competencia?: string
+          created_at?: string
+          fonte_id?: string
+          id?: string
+          pago_em?: string | null
+          status?: string
+          user_id?: string
+          valor_pago?: number | null
+          valor_total?: number
+          vencimento?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_faturas_fonte_id_fkey"
+            columns: ["fonte_id"]
+            isOneToOne: false
+            referencedRelation: "fin_fontes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_fontes: {
+        Row: {
+          ativa: boolean
+          banco: string
+          conta_pagamento_id: string | null
+          created_at: string
+          dia_fechamento: number | null
+          dia_vencimento: number | null
+          id: string
+          nome: string
+          pagador: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          ativa?: boolean
+          banco: string
+          conta_pagamento_id?: string | null
+          created_at?: string
+          dia_fechamento?: number | null
+          dia_vencimento?: number | null
+          id?: string
+          nome: string
+          pagador: string
+          tipo: string
+          user_id?: string
+        }
+        Update: {
+          ativa?: boolean
+          banco?: string
+          conta_pagamento_id?: string | null
+          created_at?: string
+          dia_fechamento?: number | null
+          dia_vencimento?: number | null
+          id?: string
+          nome?: string
+          pagador?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_fontes_conta_pagamento_id_fkey"
+            columns: ["conta_pagamento_id"]
+            isOneToOne: false
+            referencedRelation: "fin_fontes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_importacoes: {
+        Row: {
+          created_at: string
+          enviado_ia: boolean
+          fonte_id: string
+          formato: string | null
+          id: string
+          layout_fingerprint: string | null
+          nome_arquivo: string | null
+          qtd_linhas: number | null
+          total_declarado: number | null
+          total_lido: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enviado_ia?: boolean
+          fonte_id: string
+          formato?: string | null
+          id?: string
+          layout_fingerprint?: string | null
+          nome_arquivo?: string | null
+          qtd_linhas?: number | null
+          total_declarado?: number | null
+          total_lido?: number | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          enviado_ia?: boolean
+          fonte_id?: string
+          formato?: string | null
+          id?: string
+          layout_fingerprint?: string | null
+          nome_arquivo?: string | null
+          qtd_linhas?: number | null
+          total_declarado?: number | null
+          total_lido?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_importacoes_fonte_id_fkey"
+            columns: ["fonte_id"]
+            isOneToOne: false
+            referencedRelation: "fin_fontes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_lancamentos: {
+        Row: {
+          categoria_id: string | null
+          clixio_match_score: number | null
+          clixio_match_status: string | null
+          clixio_transaction_id: string | null
+          conciliado: boolean
+          created_at: string
+          data: string
+          descricao: string
+          descricao_original: string | null
+          fatura_id: string | null
+          fonte_id: string
+          grupo_parcela: string | null
+          hash_dedupe: string | null
+          id: string
+          importacao_id: string | null
+          obs: string | null
+          pagador: string
+          parcela_atual: number | null
+          parcela_total: number | null
+          pertence_a: string
+          status: string
+          tipo: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          categoria_id?: string | null
+          clixio_match_score?: number | null
+          clixio_match_status?: string | null
+          clixio_transaction_id?: string | null
+          conciliado?: boolean
+          created_at?: string
+          data: string
+          descricao: string
+          descricao_original?: string | null
+          fatura_id?: string | null
+          fonte_id: string
+          grupo_parcela?: string | null
+          hash_dedupe?: string | null
+          id?: string
+          importacao_id?: string | null
+          obs?: string | null
+          pagador: string
+          parcela_atual?: number | null
+          parcela_total?: number | null
+          pertence_a: string
+          status?: string
+          tipo: string
+          user_id?: string
+          valor: number
+        }
+        Update: {
+          categoria_id?: string | null
+          clixio_match_score?: number | null
+          clixio_match_status?: string | null
+          clixio_transaction_id?: string | null
+          conciliado?: boolean
+          created_at?: string
+          data?: string
+          descricao?: string
+          descricao_original?: string | null
+          fatura_id?: string | null
+          fonte_id?: string
+          grupo_parcela?: string | null
+          hash_dedupe?: string | null
+          id?: string
+          importacao_id?: string | null
+          obs?: string | null
+          pagador?: string
+          parcela_atual?: number | null
+          parcela_total?: number | null
+          pertence_a?: string
+          status?: string
+          tipo?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_lancamentos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "fin_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_lancamentos_fatura_id_fkey"
+            columns: ["fatura_id"]
+            isOneToOne: false
+            referencedRelation: "fin_faturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_lancamentos_fonte_id_fkey"
+            columns: ["fonte_id"]
+            isOneToOne: false
+            referencedRelation: "fin_fontes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_lancamentos_importacao_id_fkey"
+            columns: ["importacao_id"]
+            isOneToOne: false
+            referencedRelation: "fin_importacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_reembolsos: {
+        Row: {
+          created_at: string
+          id: string
+          lancamento_id: string
+          quitado_em: string | null
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lancamento_id: string
+          quitado_em?: string | null
+          user_id?: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lancamento_id?: string
+          quitado_em?: string | null
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_reembolsos_lancamento_id_fkey"
+            columns: ["lancamento_id"]
+            isOneToOne: false
+            referencedRelation: "fin_lancamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_regras: {
+        Row: {
+          categoria_id: string | null
+          created_at: string
+          id: string
+          padrao: string
+          pertence_a: string | null
+          user_id: string
+        }
+        Insert: {
+          categoria_id?: string | null
+          created_at?: string
+          id?: string
+          padrao: string
+          pertence_a?: string | null
+          user_id?: string
+        }
+        Update: {
+          categoria_id?: string | null
+          created_at?: string
+          id?: string
+          padrao?: string
+          pertence_a?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_regras_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "fin_categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_alerts: {
         Row: {
           alert_type: string
@@ -1356,6 +1707,7 @@ export type Database = {
           id: string
           name: string | null
           phone: string | null
+          pix_key: string | null
           updated_at: string | null
           user_id: string
           website: string | null
@@ -1371,6 +1723,7 @@ export type Database = {
           id: string
           name?: string | null
           phone?: string | null
+          pix_key?: string | null
           updated_at?: string | null
           user_id: string
           website?: string | null
@@ -1386,6 +1739,7 @@ export type Database = {
           id?: string
           name?: string | null
           phone?: string | null
+          pix_key?: string | null
           updated_at?: string | null
           user_id?: string
           website?: string | null
@@ -1767,6 +2121,124 @@ export type Database = {
         }
         Relationships: []
       }
+      proofing_galleries: {
+        Row: {
+          client_id: string | null
+          cover_photo_path: string | null
+          created_at: string | null
+          deadline: string | null
+          email_acesso: string | null
+          extras_pago: boolean | null
+          finalized_at: string | null
+          id: string
+          limite_incluso: number
+          permite_download: boolean
+          permite_extras: boolean
+          preco_foto_extra: number | null
+          senha_acesso: string | null
+          status: string
+          tipo: string
+          titulo: string | null
+          updated_at: string | null
+          user_id: string | null
+          valor_extras: number | null
+          watermark_enabled: boolean
+          watermark_text: string
+        }
+        Insert: {
+          client_id?: string | null
+          cover_photo_path?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          email_acesso?: string | null
+          extras_pago?: boolean | null
+          finalized_at?: string | null
+          id?: string
+          limite_incluso?: number
+          permite_download?: boolean
+          permite_extras?: boolean
+          preco_foto_extra?: number | null
+          senha_acesso?: string | null
+          status?: string
+          tipo?: string
+          titulo?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          valor_extras?: number | null
+          watermark_enabled?: boolean
+          watermark_text?: string
+        }
+        Update: {
+          client_id?: string | null
+          cover_photo_path?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          email_acesso?: string | null
+          extras_pago?: boolean | null
+          finalized_at?: string | null
+          id?: string
+          limite_incluso?: number
+          permite_download?: boolean
+          permite_extras?: boolean
+          preco_foto_extra?: number | null
+          senha_acesso?: string | null
+          status?: string
+          tipo?: string
+          titulo?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          valor_extras?: number | null
+          watermark_enabled?: boolean
+          watermark_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proofing_galleries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "wedding_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proofing_photos: {
+        Row: {
+          created_at: string | null
+          gallery_id: string
+          id: string
+          nome_arquivo: string
+          selecionada: boolean
+          storage_path: string | null
+          thumbnail_path: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          gallery_id: string
+          id?: string
+          nome_arquivo: string
+          selecionada?: boolean
+          storage_path?: string | null
+          thumbnail_path?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          gallery_id?: string
+          id?: string
+          nome_arquivo?: string
+          selecionada?: boolean
+          storage_path?: string | null
+          thumbnail_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proofing_photos_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "proofing_galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_follow_ups: {
         Row: {
           contact_name: string | null
@@ -1989,6 +2461,7 @@ export type Database = {
           created_at: string | null
           curadoria_done: boolean | null
           curation_completed: boolean | null
+          delivery_link: string | null
           down_payment: number | null
           edicao_base_done: boolean | null
           email: string | null
@@ -2007,12 +2480,19 @@ export type Database = {
           notes: string | null
           package_id: string | null
           phone: string | null
+          portal_cover_url: string | null
+          portal_deadline: string | null
+          portal_enabled: boolean | null
+          portal_message: string | null
+          portal_token: string | null
           pre_wedding_completed: boolean | null
           pre_wedding_date: string | null
           pre_wedding_delivered: boolean | null
+          pre_wedding_delivery_link: string | null
           pre_wedding_end_time: string | null
           pre_wedding_scheduled: boolean | null
           pre_wedding_start_time: string | null
+          previas_sent: boolean | null
           sales_funnel_stage: string | null
           sem_entrega_fisica: boolean
           status: string | null
@@ -2023,6 +2503,7 @@ export type Database = {
           wedding_end_time: string | null
           wedding_photographed: boolean | null
           wedding_start_time: string | null
+          whatsapp_messages_processed: number | null
           workflow_stage:
             | Database["public"]["Enums"]["workflow_stage_enum"]
             | null
@@ -2045,6 +2526,7 @@ export type Database = {
           created_at?: string | null
           curadoria_done?: boolean | null
           curation_completed?: boolean | null
+          delivery_link?: string | null
           down_payment?: number | null
           edicao_base_done?: boolean | null
           email?: string | null
@@ -2063,12 +2545,19 @@ export type Database = {
           notes?: string | null
           package_id?: string | null
           phone?: string | null
+          portal_cover_url?: string | null
+          portal_deadline?: string | null
+          portal_enabled?: boolean | null
+          portal_message?: string | null
+          portal_token?: string | null
           pre_wedding_completed?: boolean | null
           pre_wedding_date?: string | null
           pre_wedding_delivered?: boolean | null
+          pre_wedding_delivery_link?: string | null
           pre_wedding_end_time?: string | null
           pre_wedding_scheduled?: boolean | null
           pre_wedding_start_time?: string | null
+          previas_sent?: boolean | null
           sales_funnel_stage?: string | null
           sem_entrega_fisica?: boolean
           status?: string | null
@@ -2079,6 +2568,7 @@ export type Database = {
           wedding_end_time?: string | null
           wedding_photographed?: boolean | null
           wedding_start_time?: string | null
+          whatsapp_messages_processed?: number | null
           workflow_stage?:
             | Database["public"]["Enums"]["workflow_stage_enum"]
             | null
@@ -2101,6 +2591,7 @@ export type Database = {
           created_at?: string | null
           curadoria_done?: boolean | null
           curation_completed?: boolean | null
+          delivery_link?: string | null
           down_payment?: number | null
           edicao_base_done?: boolean | null
           email?: string | null
@@ -2119,12 +2610,19 @@ export type Database = {
           notes?: string | null
           package_id?: string | null
           phone?: string | null
+          portal_cover_url?: string | null
+          portal_deadline?: string | null
+          portal_enabled?: boolean | null
+          portal_message?: string | null
+          portal_token?: string | null
           pre_wedding_completed?: boolean | null
           pre_wedding_date?: string | null
           pre_wedding_delivered?: boolean | null
+          pre_wedding_delivery_link?: string | null
           pre_wedding_end_time?: string | null
           pre_wedding_scheduled?: boolean | null
           pre_wedding_start_time?: string | null
+          previas_sent?: boolean | null
           sales_funnel_stage?: string | null
           sem_entrega_fisica?: boolean
           status?: string | null
@@ -2135,6 +2633,7 @@ export type Database = {
           wedding_end_time?: string | null
           wedding_photographed?: boolean | null
           wedding_start_time?: string | null
+          whatsapp_messages_processed?: number | null
           workflow_stage?:
             | Database["public"]["Enums"]["workflow_stage_enum"]
             | null
@@ -2256,6 +2755,138 @@ export type Database = {
         Args: { client_id_param: string }
         Returns: string
       }
+      create_proofing_gallery: {
+        Args: {
+          p_client_id: string
+          p_deadline: string
+          p_email: string
+          p_limite: number
+          p_permite_extras: boolean
+          p_preco_extra: number
+          p_senha: string
+          p_tipo: string
+          p_titulo: string
+          p_watermark: boolean
+        }
+        Returns: {
+          client_id: string | null
+          cover_photo_path: string | null
+          created_at: string | null
+          deadline: string | null
+          email_acesso: string | null
+          extras_pago: boolean | null
+          finalized_at: string | null
+          id: string
+          limite_incluso: number
+          permite_download: boolean
+          permite_extras: boolean
+          preco_foto_extra: number | null
+          senha_acesso: string | null
+          status: string
+          tipo: string
+          titulo: string | null
+          updated_at: string | null
+          user_id: string | null
+          valor_extras: number | null
+          watermark_enabled: boolean
+          watermark_text: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "proofing_galleries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_proofing_gallery_v2:
+        | {
+            Args: {
+              p_client_id: string
+              p_deadline: string
+              p_email: string
+              p_limite: number
+              p_permite_extras: boolean
+              p_preco_extra: number
+              p_senha: string
+              p_tipo: string
+              p_titulo: string
+              p_watermark: boolean
+            }
+            Returns: {
+              client_id: string | null
+              cover_photo_path: string | null
+              created_at: string | null
+              deadline: string | null
+              email_acesso: string | null
+              extras_pago: boolean | null
+              finalized_at: string | null
+              id: string
+              limite_incluso: number
+              permite_download: boolean
+              permite_extras: boolean
+              preco_foto_extra: number | null
+              senha_acesso: string | null
+              status: string
+              tipo: string
+              titulo: string | null
+              updated_at: string | null
+              user_id: string | null
+              valor_extras: number | null
+              watermark_enabled: boolean
+              watermark_text: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "proofing_galleries"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              p_client_id: string
+              p_deadline: string
+              p_email: string
+              p_limite: number
+              p_permite_download?: boolean
+              p_permite_extras: boolean
+              p_preco_extra: number
+              p_senha: string
+              p_tipo: string
+              p_titulo: string
+              p_watermark: boolean
+              p_watermark_text?: string
+            }
+            Returns: {
+              client_id: string | null
+              cover_photo_path: string | null
+              created_at: string | null
+              deadline: string | null
+              email_acesso: string | null
+              extras_pago: boolean | null
+              finalized_at: string | null
+              id: string
+              limite_incluso: number
+              permite_download: boolean
+              permite_extras: boolean
+              preco_foto_extra: number | null
+              senha_acesso: string | null
+              status: string
+              tipo: string
+              titulo: string | null
+              updated_at: string | null
+              user_id: string | null
+              valor_extras: number | null
+              watermark_enabled: boolean
+              watermark_text: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "proofing_galleries"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       exec_sql: { Args: { query_text: string }; Returns: Json }
       find_client_by_phone: {
         Args: { p_phone: string; p_user_id: string }
@@ -2270,6 +2901,25 @@ export type Database = {
         }[]
       }
       generate_unique_token: { Args: never; Returns: string }
+      update_gallery_settings: {
+        Args: {
+          p_cover_photo_path?: string
+          p_extras_pago?: boolean
+          p_gallery_id: string
+          p_permite_download?: boolean
+          p_watermark_enabled?: boolean
+          p_watermark_text?: string
+        }
+        Returns: undefined
+      }
+      update_gallery_status: {
+        Args: {
+          p_finalized_at?: string
+          p_gallery_id: string
+          p_status: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       calculation_type: "mensal" | "semanal"
@@ -2302,12 +2952,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2331,11 +2981,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2356,11 +3006,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2381,11 +3031,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2398,11 +3048,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2420,6 +3070,7 @@ export const Constants = {
         "copia",
         "backup",
         "curadoria",
+        "previas_enviadas",
         "edicao",
         "link_pronto",
         "link_enviado",

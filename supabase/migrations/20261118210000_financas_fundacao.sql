@@ -72,6 +72,9 @@ create table public.fin_lancamentos (
   status text not null default 'realizado' check (status in ('realizado','projetado')),
   conciliado boolean not null default false,
   hash_dedupe text,
+  clixio_transaction_id uuid,                -- vínculo (somente leitura) com wedding_transactions; sem FK de propósito
+  clixio_match_status text check (clixio_match_status in ('sugerido','confirmado','rejeitado')),
+  clixio_match_score numeric(4,2),
   created_at timestamptz not null default now(),
   check ((parcela_atual is null) = (parcela_total is null))
 );

@@ -17,6 +17,7 @@ import EditClient from "./pages/EditClient";
 import ClientDetail from "./pages/ClientDetail";
 import ImportClients from "./pages/ImportClients";
 import CashFlow from "./pages/CashFlow";
+import Financas from "./pages/Financas";
 import PersonalControl from "./pages/PersonalControl";
 import Calendar from "./pages/Calendar";
 import Budgets from "./pages/Budgets";
@@ -73,6 +74,7 @@ const App = () => (
                           <Route path="/crm" element={<CRM />} />
                           <Route path="/workflow" element={<Workflow />} />
                           <Route path="/cash-flow" element={<CashFlow />} />
+                          <Route path="/financas" element={<Financas />} />
                           <Route path="/personal" element={<PersonalControl />} />
                           <Route path="/calendar" element={<Calendar />} />
                           <Route path="/budgets" element={<Budgets />} />

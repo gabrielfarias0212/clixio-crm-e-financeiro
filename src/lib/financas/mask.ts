@@ -7,3 +7,13 @@ export function maskSensitive(text: string): string {
     .replace(/\b\d{6,}\b/g, "[NUM]")
     .replace(/(Pix (?:recebido de|enviado para))\s+.+$/i, "$1 [PESSOA]");
 }
+
+/** Remove CPF/CNPJ e números longos de descrições antes de gravar (o nome da pessoa/loja é mantido). */
+export function limparDocumentos(text: string): string {
+  return text
+    .replace(/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, "")
+    .replace(/\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/g, "")
+    .replace(/\b\d{5,}\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}

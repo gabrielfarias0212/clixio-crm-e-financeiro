@@ -105,7 +105,7 @@ export default function ClientPortal() {
   const displayName = client.coupleName || client.name;
   const stageLabel = STAGE_LABELS[client.workflowStage ?? ""] ?? "Em andamento";
   const stageDesc  = STAGE_DESC[client.workflowStage ?? ""] ?? "Estamos trabalhando nas suas fotos com carinho.";
-  const steps = STEPS.filter(s => !s.optional || !client.semEntregaFisica);
+  const steps = STEPS.filter(s => !("optional" in s && s.optional) || !client.semEntregaFisica);
   const completedCount = steps.filter(s => !!(client as any)[s.field]).length;
   const currentIdx = steps.findIndex(s => !(client as any)[s.field]);
   const pct = Math.round((completedCount / steps.length) * 100);
@@ -330,8 +330,8 @@ export default function ClientPortal() {
             <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
               {client.hasPreWedding && client.preWeddingDeliveryLink && (
                 <a href={client.preWeddingDeliveryLink} target="_blank" rel="noopener noreferrer"
-                  style={{ display:"flex", alignItems:"center", justifyContent:"space-between", background:C.bg, border:`1px solid ${C.border}`, borderRadius:12, padding:"16px 20px", textDecoration:"none" }}
-                  onMouseEnter={e=>(e.currentTarget.style.background=C.goldLight)} onMouseLeave={e=>(e.currentTarget.style.background=C.bg)}>
+                  style={{ display:"flex", alignItems:"center", justifyContent:"space-between", background:C.cream, border:`1px solid ${C.border}`, borderRadius:12, padding:"16px 20px", textDecoration:"none" }}
+                  onMouseEnter={e=>(e.currentTarget.style.background=C.goldLight)} onMouseLeave={e=>(e.currentTarget.style.background=C.cream)}>
                   <div>
                     <p style={{ fontSize:14, fontWeight:600, color:C.text, marginBottom:2 }}>📷 Pré-Wedding</p>
                     <p style={{ fontSize:11, color:C.textLight }}>Acesse sua galeria de fotos</p>
@@ -341,8 +341,8 @@ export default function ClientPortal() {
               )}
               {client.deliveryLink && (
                 <a href={client.deliveryLink} target="_blank" rel="noopener noreferrer"
-                  style={{ display:"flex", alignItems:"center", justifyContent:"space-between", background:C.bg, border:`1px solid ${C.border}`, borderRadius:12, padding:"16px 20px", textDecoration:"none" }}
-                  onMouseEnter={e=>(e.currentTarget.style.background=C.goldLight)} onMouseLeave={e=>(e.currentTarget.style.background=C.bg)}>
+                  style={{ display:"flex", alignItems:"center", justifyContent:"space-between", background:C.cream, border:`1px solid ${C.border}`, borderRadius:12, padding:"16px 20px", textDecoration:"none" }}
+                  onMouseEnter={e=>(e.currentTarget.style.background=C.goldLight)} onMouseLeave={e=>(e.currentTarget.style.background=C.cream)}>
                   <div>
                     <p style={{ fontSize:14, fontWeight:600, color:C.text, marginBottom:2 }}>💍 Casamento</p>
                     <p style={{ fontSize:11, color:C.textLight }}>Acesse sua galeria de fotos</p>

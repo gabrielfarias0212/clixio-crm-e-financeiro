@@ -19,6 +19,7 @@ const navItems = [
   { name: "Fluxo de Trabalho", path: "/workflow", icon: GitBranch },
   { name: "Calendário",        path: "/calendar", icon: CalendarDays },
   { name: "Financeiro",        path: "/cash-flow", icon: DollarSign },
+  { name: "Finanças",          path: "/financas",  icon: DollarSign, flag: "clixio_financas" },
   { name: "Formulários",       path: "/forms",     icon: FileText },
   { name: "Galerias",          path: "/galerias",  icon: Camera },
   { name: "Configurações",     path: "/settings",  icon: Settings2 },
@@ -28,6 +29,11 @@ export function Navbar() {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const visibleItems = navItems.filter((i) => {
+    const flag = (i as { flag?: string }).flag;
+    if (!flag) return true;
+    try { return localStorage.getItem(flag) === "1"; } catch { return false; }
+  });
 
   useEffect(() => { setOpen(false); }, [location.pathname]);
 
@@ -69,7 +75,7 @@ export function Navbar() {
 
         {open && (
           <nav className="bg-white border-t border-stone-100 px-3 py-2 flex flex-col gap-1">
-            {navItems.map(({ name, path, icon: Icon }) => (
+            {visibleItems.map(({ name, path, icon: Icon }) => (
               <Link
                 key={path}
                 to={path}
@@ -111,7 +117,7 @@ export function Navbar() {
         </Link>
 
         {/* Nav items */}
-        {navItems.map(({ name, path, icon: Icon }) => (
+        {visibleItems.map(({ name, path, icon: Icon }) => (
           <Tooltip key={path}>
             <TooltipTrigger asChild>
               <Link

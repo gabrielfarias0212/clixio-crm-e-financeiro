@@ -1,7 +1,7 @@
 -- Módulo Finanças — fundação (somente adições; não altera tabelas existentes)
 -- Todas as tabelas: user_id NOT NULL + RLS (cada usuário vê só o seu).
 
-create table public.fin_fontes (            -- contas e cartões (C6 PF, Inter PJ, cartões)
+create table if not exists public.fin_fontes (            -- contas e cartões (C6 PF, Inter PJ, cartões)
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid(),
   nome text not null,
@@ -15,7 +15,7 @@ create table public.fin_fontes (            -- contas e cartões (C6 PF, Inter P
   created_at timestamptz not null default now()
 );
 
-create table public.fin_categorias (
+create table if not exists public.fin_categorias (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid(),
   nome text not null,
@@ -23,7 +23,7 @@ create table public.fin_categorias (
   created_at timestamptz not null default now()
 );
 
-create table public.fin_importacoes (       -- log de cada arquivo importado
+create table if not exists public.fin_importacoes (       -- log de cada arquivo importado
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid(),
   fonte_id uuid not null references public.fin_fontes(id),
@@ -37,7 +37,7 @@ create table public.fin_importacoes (       -- log de cada arquivo importado
   created_at timestamptz not null default now()
 );
 
-create table public.fin_faturas (           -- ciclo da fatura do cartão
+create table if not exists public.fin_faturas (           -- ciclo da fatura do cartão
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid(),
   fonte_id uuid not null references public.fin_fontes(id),
@@ -52,7 +52,7 @@ create table public.fin_faturas (           -- ciclo da fatura do cartão
   unique (fonte_id, competencia)
 );
 
-create table public.fin_lancamentos (
+create table if not exists public.fin_lancamentos (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid(),
   fonte_id uuid not null references public.fin_fontes(id),
@@ -78,10 +78,10 @@ create table public.fin_lancamentos (
   created_at timestamptz not null default now(),
   check ((parcela_atual is null) = (parcela_total is null))
 );
-create unique index fin_lancamentos_dedupe on public.fin_lancamentos (user_id, hash_dedupe) where hash_dedupe is not null;
-create index fin_lancamentos_data on public.fin_lancamentos (user_id, data);
+create unique index if not exists fin_lancamentos_dedupe on public.fin_lancamentos (user_id, hash_dedupe) where hash_dedupe is not null;
+create index if not exists fin_lancamentos_data on public.fin_lancamentos (user_id, data);
 
-create table public.fin_regras (            -- "contém X → categoria Y" (aprendizado local)
+create table if not exists public.fin_regras (            -- "contém X → categoria Y" (aprendizado local)
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid(),
   padrao text not null,
@@ -90,7 +90,7 @@ create table public.fin_regras (            -- "contém X → categoria Y" (apre
   created_at timestamptz not null default now()
 );
 
-create table public.fin_reembolsos (        -- PJ pagou no cartão PF (ou vice-versa): saldo a acertar
+create table if not exists public.fin_reembolsos (        -- PJ pagou no cartão PF (ou vice-versa): saldo a acertar
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid(),
   lancamento_id uuid not null references public.fin_lancamentos(id) on delete cascade,
@@ -105,6 +105,7 @@ begin
   foreach t in array array['fin_fontes','fin_categorias','fin_importacoes','fin_faturas','fin_lancamentos','fin_regras','fin_reembolsos']
   loop
     execute format('alter table public.%I enable row level security', t);
+    execute format('drop policy if exists "%1$s_own" on public.%1$I', t);
     execute format('create policy "%1$s_own" on public.%1$I for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid())', t);
   end loop;
 end $$;

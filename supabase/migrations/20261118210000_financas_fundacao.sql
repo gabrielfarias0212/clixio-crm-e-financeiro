@@ -3,7 +3,7 @@
 
 create table public.fin_fontes (            -- contas e cartões (C6 PF, Inter PJ, cartões)
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null,
+  user_id uuid not null default auth.uid(),
   nome text not null,
   banco text not null,                       -- 'c6' | 'inter' | outro
   tipo text not null check (tipo in ('conta','cartao')),
@@ -17,7 +17,7 @@ create table public.fin_fontes (            -- contas e cartões (C6 PF, Inter P
 
 create table public.fin_categorias (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null,
+  user_id uuid not null default auth.uid(),
   nome text not null,
   grupo text not null check (grupo in ('fixa','variavel','lazer','imposto','investimento','receita','outro')),
   created_at timestamptz not null default now()
@@ -25,7 +25,7 @@ create table public.fin_categorias (
 
 create table public.fin_importacoes (       -- log de cada arquivo importado
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null,
+  user_id uuid not null default auth.uid(),
   fonte_id uuid not null references public.fin_fontes(id),
   nome_arquivo text,
   formato text,                              -- csv | ofx | pdf
@@ -39,7 +39,7 @@ create table public.fin_importacoes (       -- log de cada arquivo importado
 
 create table public.fin_faturas (           -- ciclo da fatura do cartão
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null,
+  user_id uuid not null default auth.uid(),
   fonte_id uuid not null references public.fin_fontes(id),
   competencia date not null,                 -- 1º dia do mês da fatura
   vencimento date,
@@ -54,7 +54,7 @@ create table public.fin_faturas (           -- ciclo da fatura do cartão
 
 create table public.fin_lancamentos (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null,
+  user_id uuid not null default auth.uid(),
   fonte_id uuid not null references public.fin_fontes(id),
   importacao_id uuid references public.fin_importacoes(id),
   fatura_id uuid references public.fin_faturas(id),
@@ -62,7 +62,7 @@ create table public.fin_lancamentos (
   descricao text not null,
   descricao_original text,
   valor numeric(14,2) not null,              -- sempre positivo; sentido em 'tipo'
-  tipo text not null check (tipo in ('entrada','saida','transferencia','pagamento_fatura','reembolso')),
+  tipo text not null check (tipo in ('entrada','saida','transferencia','pagamento_fatura','reembolso','estorno')),
   pagador text not null check (pagador in ('PF','PJ')),       -- quem paga
   pertence_a text not null check (pertence_a in ('PF','PJ')), -- a quem pertence
   categoria_id uuid references public.fin_categorias(id),
@@ -83,7 +83,7 @@ create index fin_lancamentos_data on public.fin_lancamentos (user_id, data);
 
 create table public.fin_regras (            -- "contém X → categoria Y" (aprendizado local)
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null,
+  user_id uuid not null default auth.uid(),
   padrao text not null,
   categoria_id uuid references public.fin_categorias(id),
   pertence_a text check (pertence_a in ('PF','PJ')),
@@ -92,7 +92,7 @@ create table public.fin_regras (            -- "contém X → categoria Y" (apre
 
 create table public.fin_reembolsos (        -- PJ pagou no cartão PF (ou vice-versa): saldo a acertar
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null,
+  user_id uuid not null default auth.uid(),
   lancamento_id uuid not null references public.fin_lancamentos(id) on delete cascade,
   valor numeric(14,2) not null,
   quitado_em date,

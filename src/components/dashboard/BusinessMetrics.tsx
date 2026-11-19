@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MetricsDetailDialog, ContractsDetailContent, RevenueDetailContent, ConversionDetailContent, ProfitDetailContent, formatCurrency } from "./MetricsDetailDialog";
+import { MetricsDetailDialog, ContractsDetailContent, RevenueDetailContent, ConversionDetailContent, formatCurrency } from "./MetricsDetailDialog";
 import { useBusinessMetrics } from "@/hooks/useBusinessMetrics";
 import { FileCheck, BarChart3, TrendingUp, DollarSign, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,8 +26,10 @@ export function BusinessMetrics() {
         content: <ConversionDetailContent totalLeads={metrics.totalLeadsData.length} closedContracts={metrics.closedContractsData.length} conversionRate={metrics.conversionRate} />,
       },
       profit: {
-        title: `Lucro Líquido (${metrics.currentYear})`,
-        content: <ProfitDetailContent totalRevenue={metrics.totalRevenue} totalExpenses={metrics.totalExpenses} netProfit={metrics.netProfit} />,
+        // Despesas deixaram de ser lançadas no Clixio (ficam no módulo Finanças),
+        // então o "lucro" daqui seria só receita menos saídas parciais.
+        title: `Receita Total (${metrics.currentYear})`,
+        content: <RevenueDetailContent chartData={metrics.chartData} revenueMonths={metrics.revenueMonths} totalRevenue={metrics.totalRevenue} />,
       },
     };
     setDialogTitle(map[type].title);
@@ -84,10 +86,10 @@ export function BusinessMetrics() {
     },
     {
       type: "profit" as const,
-      label: "Lucro Líquido",
-      value: formatCurrency(metrics.netProfit),
+      label: "Receita Total no Ano",
+      value: formatCurrency(metrics.totalRevenue),
       icon: DollarSign,
-      valueColor: metrics.netProfit >= 0 ? "text-green-600" : "text-red-500",
+      valueColor: "text-green-600",
       extra: null,
     },
   ];

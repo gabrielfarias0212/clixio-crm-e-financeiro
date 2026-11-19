@@ -276,7 +276,7 @@ export function DashboardContent() {
         {/* Despesas do Mês */}
         <div style={{ ...CARD, borderTop: "3px solid #E05252" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <span style={MINI_TITLE}>Despesas do Mês</span>
+            <span style={MINI_TITLE}>Despesas lançadas (mês)</span>
             <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#FEE8E8", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <ArrowDownCircle size={13} color="#E05252" />
             </div>
@@ -286,15 +286,15 @@ export function DashboardContent() {
           </div>
           <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>
             {monthlyTotals.income > 0
-              ? `${((monthlyTotals.expenses / monthlyTotals.income) * 100).toFixed(0)}% da receita do mês`
-              : "Nenhuma saída este mês"}
+              ? "Só o que foi lançado no Clixio"
+              : "Nenhuma saída lançada no Clixio"}
           </div>
         </div>
 
         {/* Lucro Líquido do Mês */}
         <div style={{ ...CARD, borderTop: `3px solid ${monthlyTotals.balance >= 0 ? "#1E3A5F" : "#E05252"}` }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <span style={MINI_TITLE}>Lucro do Mês</span>
+            <span style={MINI_TITLE}>Saldo parcial do mês</span>
             <div style={{ width: 26, height: 26, borderRadius: "50%", background: monthlyTotals.balance >= 0 ? "#E8EEF6" : "#FEE8E8", display: "flex", alignItems: "center", justifyContent: "center" }}>
               {monthlyTotals.balance >= 0
                 ? <TrendingUp size={13} color="#1E3A5F" />
@@ -306,7 +306,7 @@ export function DashboardContent() {
           </div>
           <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>
             {monthlyTotals.income > 0
-              ? `${((monthlyTotals.balance / monthlyTotals.income) * 100).toFixed(0)}% de margem líquida`
+              ? "Receita − despesas lançadas aqui (completo no módulo Finanças)"
               : monthlyTotals.balance >= 0 ? "Mês positivo" : "Mês negativo"}
           </div>
         </div>

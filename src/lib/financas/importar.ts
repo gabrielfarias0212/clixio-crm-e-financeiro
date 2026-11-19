@@ -84,7 +84,9 @@ export function montarPreview(text: string, layout: Layout): Preview {
       });
     }
     const ignorados = "pagamentos" in r ? (r as any).pagamentos.map((p: LinhaCartao) => ({ descricao: p.descricao, valor: p.valor })) : [];
-    const ultimaData = r.linhas.reduce((m, l) => (l.data > m ? l.data : m), "0000-00-00");
+    // multa/juros/encargos são lançados depois do fechamento e não definem o mês da fatura: vale a última compra
+    const base = r.linhas.filter((l) => l.tipo !== "tarifa");
+    const ultimaData = (base.length ? base : r.linhas).reduce((m, l) => (l.data > m ? l.data : m), "0000-00-00");
     return { layout, lancamentos, totalLido: r.total, saldoFinal: null, avisos: r.avisos, ignorados, ultimaData, cartaoLinhas: r.linhas };
   }
 

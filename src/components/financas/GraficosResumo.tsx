@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis, LabelList } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Categoria, Lanc } from "@/lib/financas/api";
+import { noPeriodo, type Periodo } from "@/lib/financas/periodo";
 
 // Cores validadas (azul/laranja, categórico slots 1 e 2: passam nos testes de daltonismo e contraste).
 const COR = { PF: "#2a78d6", PJ: "#eb6834" } as const;
@@ -19,7 +20,7 @@ function Tip({ active, payload, label }: any) {
   );
 }
 
-export function GraficosResumo({ lancs, categorias, mes }: { lancs: Lanc[]; categorias: Categoria[]; mes: string }) {
+export function GraficosResumo({ lancs, categorias, periodo }: { lancs: Lanc[]; categorias: Categoria[]; periodo: Periodo | null }) {
   const gastos = useMemo(() => lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno")), [lancs]);
   const valor = (l: Lanc) => (l.tipo === "estorno" ? -l.valor : l.valor);
 
@@ -30,24 +31,24 @@ export function GraficosResumo({ lancs, categorias, mes }: { lancs: Lanc[]; cate
       const r = m.get(k) ?? { mes: k, PF: 0, PJ: 0 };
       r[l.pertence_a] += valor(l); m.set(k, r);
     }
-    return [...m.values()].sort((a, b) => (a.mes < b.mes ? -1 : 1)).slice(-6).map((r) => ({ ...r, nome: nomeMes(r.mes), PF: Math.round(r.PF), PJ: Math.round(r.PJ) }));
-  }, [gastos]);
+    return [...m.values()].filter((r) => !periodo || r.mes <= periodo.ate).sort((a, b) => (a.mes < b.mes ? -1 : 1)).slice(-6).map((r) => ({ ...r, nome: nomeMes(r.mes), PF: Math.round(r.PF), PJ: Math.round(r.PJ) }));
+  }, [gastos, periodo]);
 
   const catNome = useMemo(() => new Map(categorias.map((c) => [c.id, c.nome])), [categorias]);
   const porCategoria = (dono: "PF" | "PJ") => {
     const m = new Map<string, number>();
     for (const l of gastos) {
-      if (l.pertence_a !== dono || (mes !== "todos" && l.data.slice(0, 7) !== mes)) continue;
+      if (l.pertence_a !== dono || !noPeriodo(l.data, periodo)) continue;
       const k = l.categoria_id ? catNome.get(l.categoria_id) ?? "Outros" : "Sem categoria";
       m.set(k, (m.get(k) ?? 0) + valor(l));
     }
     const todas = [...m.entries()].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
     const top = todas.slice(0, 7), resto = todas.slice(7).reduce((s, [, v]) => s + v, 0);
     if (resto > 0) top.push(["Outras", resto]);
-    return { itens: top.map(([nome, v]) => ({ nome, valor: Math.round(v) })), total: todas.reduce((s, [, v]) => s + v, 0) };
+    return { itens: top.map(([nome, v]) => ({ nome, valor: Math.round(v) })), total: [...m.values()].reduce((s, v) => s + v, 0) };
   };
-  const pf = useMemo(() => porCategoria("PF"), [gastos, catNome, mes]);
-  const pj = useMemo(() => porCategoria("PJ"), [gastos, catNome, mes]);
+  const pf = useMemo(() => porCategoria("PF"), [gastos, catNome, periodo]);
+  const pj = useMemo(() => porCategoria("PJ"), [gastos, catNome, periodo]);
   const total = pf.total + pj.total;
 
   if (!gastos.length) return null;

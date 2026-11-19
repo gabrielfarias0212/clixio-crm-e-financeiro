@@ -7,29 +7,41 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { marcarFatura, type Categoria, type Fonte, type Lanc } from "@/lib/financas/api";
 import { LinhasLancamentos } from "./LinhasLancamentos";
 import { GraficosResumo } from "./GraficosResumo";
-import { CategoriasComparativo } from "./CategoriasComparativo";
+import { CategoriasComparativo, type Origem } from "./CategoriasComparativo";
+import { SeletorPeriodo } from "./SeletorPeriodo";
+import { mesAtual, nomeMes, noPeriodo, type Periodo } from "@/lib/financas/periodo";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImportar, onTriagem, pendConc, onConciliar }: { fontes: Fonte[]; lancs: Lanc[]; faturas: any[]; categorias: Categoria[]; onMudou: () => void; onImportar: () => void; onTriagem: () => void; pendConc: number; onConciliar: () => void }) {
-  const [mes, setMes] = useState("todos");
+  const [periodo, setPeriodo] = useState<Periodo | null>(() => { const a = mesAtual(); return { de: a, ate: a }; });
+  const [origem, setOrigem] = useState<Origem>("cartoes");
+  const tipoFonte = useMemo(() => new Map(fontes.map((f) => [f.id, f.tipo])), [fontes]);
+  const lancsO = useMemo(() => lancs.filter((l) => origem === "tudo" || tipoFonte.get(l.fonte_id) === (origem === "cartoes" ? "cartao" : "conta")), [lancs, origem, tipoFonte]);
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
   const alternar = (id: string) => setAbertas((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const porFatura = useMemo(() => { const m = new Map<string, Lanc[]>(); for (const l of lancs) if (l.fatura_id) (m.get(l.fatura_id) ?? m.set(l.fatura_id, []).get(l.fatura_id)!).push(l); return m; }, [lancs]);
-  const meses = useMemo(() => [...new Set(lancs.map((l) => l.data.slice(0, 7)))].sort().reverse(), [lancs]);
 
   const semCategoria = useMemo(() => lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno") && !l.categoria_id).length, [lancs]);
 
+  // Quem pagou x de quem é o gasto, no período e na origem escolhidos.
   const q = useMemo(() => {
     const r = { PF_PF: 0, PJ_PJ: 0, PJ_PF: 0, PF_PJ: 0 };
-    for (const l of lancs) {
-      if (l.status !== "realizado" || (l.tipo !== "saida" && l.tipo !== "estorno")) continue;
-      if (mes !== "todos" && l.data.slice(0, 7) !== mes) continue;
-      const v = l.tipo === "estorno" ? -l.valor : l.valor;
-      (r as any)[`${l.pagador}_${l.pertence_a}`] += v;
+    for (const l of lancsO) {
+      if (l.status !== "realizado" || (l.tipo !== "saida" && l.tipo !== "estorno") || !noPeriodo(l.data, periodo)) continue;
+      (r as any)[`${l.pagador}_${l.pertence_a}`] += l.tipo === "estorno" ? -l.valor : l.valor;
     }
     return r;
-  }, [lancs, mes]);
+  }, [lancsO, periodo]);
+  const totalPF = q.PF_PF + q.PJ_PF, totalPJ = q.PJ_PJ + q.PF_PJ;
+  const acerto = q.PJ_PF - q.PF_PJ; // >0: a empresa bancou mais gasto pessoal do que você bancou da empresa
+
+  // Parcelas já assumidas para os próximos meses (não entram nos números de gasto).
+  const proximos = useMemo(() => {
+    const m = new Map<string, number>(); const agora = mesAtual();
+    for (const l of lancsO) if (l.status === "projetado" && l.tipo === "saida" && l.data.slice(0, 7) > agora) m.set(l.data.slice(0, 7), (m.get(l.data.slice(0, 7)) ?? 0) + l.valor);
+    return [...m.entries()].sort().slice(0, 6);
+  }, [lancsO]);
 
   async function pagar(f: any) {
     const hoje = new Date().toISOString().slice(0, 10);
@@ -38,20 +50,17 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
   }
   const hoje = new Date().toISOString().slice(0, 10);
 
-  const Q = ({ t, v, d, alerta }: { t: string; v: number; d: string; alerta?: boolean }) => (
-    <Card className={alerta ? "border-amber-400" : ""}><CardContent className="p-4"><div className="text-xs text-muted-foreground">{t}</div><div className="text-xl font-semibold">{brl(v)}</div><div className="text-xs text-muted-foreground">{d}</div></CardContent></Card>
-  );
-
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-        <div className="flex items-center gap-2">
-          <span>Período:</span>
-          <select className="rounded-md border px-2 py-1" value={mes} onChange={(e) => setMes(e.target.value)}>
-            <option value="todos">Tudo</option>{meses.map((m) => <option key={m} value={m}>{m}</option>)}
-          </select>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <SeletorPeriodo valor={periodo} onChange={setPeriodo} />
         <Button onClick={onImportar}>Importar extrato ou fatura</Button>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <span className="text-muted-foreground">Mostrando:</span>
+        {([["cartoes", "Só cartões"], ["contas", "Só contas"], ["tudo", "Cartões + contas"]] as const).map(([o, t]) => (
+          <button key={o} type="button" onClick={() => setOrigem(o)} className={"rounded-full border px-3 py-1 " + (origem === o ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted")}>{t}</button>
+        ))}
       </div>
       {pendConc > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-blue-300 bg-blue-50 px-3 py-2 text-sm text-blue-900">
@@ -66,13 +75,31 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
         </div>
       )}
       <div className="grid gap-3 sm:grid-cols-2">
-        <Q t="PF pagou · é PF" v={q.PF_PF} d="gasto pessoal, saiu do pessoal" />
-        <Q t="PJ pagou · é PJ" v={q.PJ_PJ} d="gasto da empresa, saiu da empresa" />
-        <Q alerta t="PJ pagou · é PF" v={q.PJ_PF} d="retirada implícita: gasto pessoal pago pela empresa" />
-        <Q alerta t="PF pagou · é PJ" v={q.PF_PJ} d="a receber da empresa (reembolso)" />
+        <Card style={{ borderTop: "3px solid #2a78d6" }}><CardContent className="p-4">
+          <div className="text-xs text-muted-foreground">Gasto pessoal (PF)</div>
+          <div className="text-2xl font-semibold tabular-nums">{brl(totalPF)}</div>
+          <div className="mt-1 text-xs text-muted-foreground">pago pela PF {brl(q.PF_PF)} · pago pela empresa {brl(q.PJ_PF)}</div>
+        </CardContent></Card>
+        <Card style={{ borderTop: "3px solid #eb6834" }}><CardContent className="p-4">
+          <div className="text-xs text-muted-foreground">Gasto da empresa (PJ)</div>
+          <div className="text-2xl font-semibold tabular-nums">{brl(totalPJ)}</div>
+          <div className="mt-1 text-xs text-muted-foreground">pago pela empresa {brl(q.PJ_PJ)} · pago por você (PF) {brl(q.PF_PJ)}</div>
+        </CardContent></Card>
       </div>
+      <div className="rounded-md border px-3 py-2 text-sm">
+        <span className="font-medium">Acerto PF × PJ: </span>
+        {Math.abs(acerto) < 0.005 ? "equilibrado."
+          : acerto > 0 ? <>a empresa bancou {brl(q.PJ_PF)} de gastos pessoais e você bancou {brl(q.PF_PJ)} de gastos da empresa. Saldo: você retirou <b>{brl(acerto)}</b> a mais do que a empresa te deve.</>
+          : <>você bancou {brl(q.PF_PJ)} de gastos da empresa e ela bancou {brl(q.PJ_PF)} de gastos pessoais. Saldo: a empresa te deve <b>{brl(-acerto)}</b>.</>}
+      </div>
+      {proximos.length > 0 && (
+        <div className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">Já assumido para os próximos meses (parcelas): </span>
+          {proximos.map(([m, v]) => `${nomeMes(m)} ${brl(v)}`).join(" · ")}. Não entra nos números acima.
+        </div>
+      )}
 
-      <GraficosResumo lancs={lancs} categorias={categorias} mes={mes} />
+      <GraficosResumo lancs={lancsO} categorias={categorias} periodo={periodo} />
 
       <CategoriasComparativo lancs={lancs} fontes={fontes} categorias={categorias} onMudou={onMudou} origemInicial="cartoes" />
 

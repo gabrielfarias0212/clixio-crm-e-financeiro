@@ -36,7 +36,7 @@ export function parseC6Cartao(text: string): ResultadoParse<LinhaCartao> & { pag
       data: toIso(data), cartaoFinal: final, categoriaBanco: cat === "-" ? null : cat,
       descricao: norm(desc), parcelaAtual: m ? +m[1] : null, parcelaTotal: m ? +m[2] : null,
       valor, iof: 0, usd: usd || null,
-      tipo: valor < 0 ? "credito_a_confirmar" : /ANUIDADE|TARIFA/i.test(desc) ? "tarifa" : "compra",
+      tipo: valor < 0 ? "credito_a_confirmar" : /ANUIDADE|TARIFA|MULTA|JUROS|ENCARGOS|IOF ROTATIVO/i.test(desc) ? "tarifa" : "compra",
     });
   }
 

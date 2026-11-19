@@ -254,9 +254,15 @@ export function ConciliacaoTab({ lancs, faturas, onMudou }: { lancs: Lanc[]; fat
         </div>)}
         {modo === "cliente" && (<div className="space-y-2">
           <Input placeholder="Buscar cliente (nome ou casal)" value={busca} onChange={(e) => setBusca(e.target.value)} />
-          <select className="w-full rounded-md border bg-background px-2 py-1" value={clienteId} onChange={(e) => setClienteId(e.target.value)} size={Math.min(6, Math.max(2, lista.length))}>
-            {lista.map((c) => <option key={c.id} value={c.id}>{c.name}{c.couple_name ? ` (${c.couple_name})` : ""}</option>)}
-          </select>
+          <div className="max-h-48 overflow-y-auto rounded-md border">
+            {lista.length === 0 && <div className="p-2 text-xs text-muted-foreground">Nenhum cliente encontrado.</div>}
+            {lista.map((c) => (
+              <button key={c.id} type="button" onClick={() => setClienteId(c.id)}
+                className={`block w-full px-2 py-1.5 text-left text-sm hover:bg-muted ${clienteId === c.id ? "bg-primary text-primary-foreground hover:bg-primary" : ""}`}>
+                {c.name}{c.couple_name ? ` (${c.couple_name})` : ""}
+              </button>
+            ))}
+          </div>
           <Input placeholder="Observação (ex.: parcela 2 de 5)" value={nota} onChange={(e) => setNota(e.target.value)} />
           {cliente && (
             <div className="rounded-md bg-amber-50 p-2 text-xs text-amber-900">

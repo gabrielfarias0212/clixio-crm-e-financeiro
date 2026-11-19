@@ -9,6 +9,7 @@ import { ContasTab } from "@/components/financas/ContasTab";
 import { ResumoTab } from "@/components/financas/ResumoTab";
 import { ConciliacaoTab } from "@/components/financas/ConciliacaoTab";
 import { ManualTab } from "@/components/financas/ManualTab";
+import { ResumoDoMes } from "@/components/financas/ResumoDoMes";
 import { listarCategorias, listarFaturas, listarFontes, listarLancamentos, type Categoria, type Fonte, type Lanc } from "@/lib/financas/api";
 
 export const FINANCAS_FLAG = "clixio_financas";
@@ -40,6 +41,7 @@ export default function Financas() {
           <h1 className="text-2xl font-semibold">Finanças</h1>
           <p className="text-sm text-muted-foreground">Contas e cartões, pessoal e empresa. Separado do Financeiro (que cuida das entradas de clientes).</p>
         </div>
+        <ResumoDoMes lancs={lancs} fontes={fontes} faturas={faturas} />
         <Tabs value={aba} onValueChange={setAba}>
           <TabsList>
             <TabsTrigger value="resumo">Cartões</TabsTrigger>

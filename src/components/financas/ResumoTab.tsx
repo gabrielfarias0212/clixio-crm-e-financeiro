@@ -7,6 +7,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { marcarFatura, type Categoria, type Fonte, type Lanc } from "@/lib/financas/api";
 import { LinhasLancamentos } from "./LinhasLancamentos";
 import { GraficosResumo } from "./GraficosResumo";
+import { CategoriasComparativo } from "./CategoriasComparativo";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -72,6 +73,8 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
       </div>
 
       <GraficosResumo lancs={lancs} categorias={categorias} mes={mes} />
+
+      <CategoriasComparativo lancs={lancs} fontes={fontes} categorias={categorias} onMudou={onMudou} origemInicial="cartoes" />
 
       <Card>
         <CardHeader><CardTitle className="text-base">Faturas</CardTitle></CardHeader>

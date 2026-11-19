@@ -4,6 +4,7 @@ import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, T
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CategoriasComparativo } from "./CategoriasComparativo";
 import { atualizarLancamento, type Categoria, type Fonte, type Lanc } from "@/lib/financas/api";
 
 // Aqui a cor diz entrada x saída (PF/PJ vai em rótulos). Par validado: verde #1a8f6a e roxo #8a5cc2.
@@ -170,6 +171,8 @@ export function ContasTab({ lancs, fontes, categorias, onMudou, onImportar }: { 
           </CardContent>
         </Card>
       )}
+
+      <CategoriasComparativo lancs={lancs} fontes={fontes} categorias={categorias} onMudou={onMudou} origemInicial="contas" />
 
       <Card>
         <CardHeader className="pb-2">

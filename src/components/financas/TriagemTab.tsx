@@ -7,15 +7,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { criarCategoria, salvarRegra, type Categoria, type Lanc } from "@/lib/financas/api";
 import { chaveDestino } from "@/lib/financas/importar";
+import { LinhasLancamentos } from "./LinhasLancamentos";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-interface Grupo { chave: string; nome: string; ids: string[]; total: number; qtd: number; pendentes: number; pagadores: Set<string>; parcelas: Map<string, { atual: number; total: number; valor: number }> }
+interface Grupo { itens: Lanc[]; chave: string; nome: string; ids: string[]; total: number; qtd: number; pendentes: number; pagadores: Set<string>; parcelas: Map<string, { atual: number; total: number; valor: number }> }
 
 export function TriagemTab({ lancs, categorias, onMudou }: { lancs: Lanc[]; categorias: Categoria[]; onMudou: () => void }) {
   const [todos, setTodos] = useState(false);
   const [cat, setCat] = useState<Record<string, string>>({});
   const [salvando, setSalvando] = useState<string | null>(null);
+  const [abertos, setAbertos] = useState<Set<string>>(new Set());
+  const alternar = (k: string) => setAbertos((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
 
   const grupos = useMemo(() => {
     const m = new Map<string, Grupo>();
@@ -23,8 +26,8 @@ export function TriagemTab({ lancs, categorias, onMudou }: { lancs: Lanc[]; cate
       if (l.status !== "realizado" || (l.tipo !== "saida" && l.tipo !== "estorno")) continue;
       const k = chaveDestino(l.descricao);
       if (!k) continue;
-      const g = m.get(k) ?? { chave: k, nome: l.descricao, ids: [], total: 0, qtd: 0, pendentes: 0, pagadores: new Set(), parcelas: new Map() };
-      g.ids.push(l.id); g.qtd++; g.total += l.tipo === "estorno" ? -l.valor : l.valor; g.pagadores.add(l.pagador);
+      const g = m.get(k) ?? { itens: [], chave: k, nome: l.descricao, ids: [], total: 0, qtd: 0, pendentes: 0, pagadores: new Set(), parcelas: new Map() };
+      g.ids.push(l.id); g.itens.push(l); g.qtd++; g.total += l.tipo === "estorno" ? -l.valor : l.valor; g.pagadores.add(l.pagador);
       if (l.parcela_total && l.parcela_total > 1 && l.parcela_atual) g.parcelas.set(`${l.parcela_atual}/${l.parcela_total}`, { atual: l.parcela_atual, total: l.parcela_total, valor: l.valor });
       if (!l.categoria_id) g.pendentes++;
       m.set(k, g);
@@ -83,6 +86,8 @@ export function TriagemTab({ lancs, categorias, onMudou }: { lancs: Lanc[]; cate
             </Select>
             <Button size="sm" disabled={salvando === g.chave} onClick={() => aplicar(g, "PF")}>É pessoal (PF)</Button>
             <Button size="sm" variant="secondary" disabled={salvando === g.chave} onClick={() => aplicar(g, "PJ")}>É da empresa (PJ)</Button>
+            <Button size="sm" variant="ghost" onClick={() => alternar(g.chave)}>{abertos.has(g.chave) ? "Ocultar" : "Ver lançamentos"}</Button>
+            {abertos.has(g.chave) && <div className="w-full rounded-md border px-3"><LinhasLancamentos lancs={g.itens} categorias={categorias} onMudou={onMudou} /></div>}
           </CardContent>
         </Card>
       ))}

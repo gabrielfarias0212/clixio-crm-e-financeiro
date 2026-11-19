@@ -1,6 +1,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useTransactions } from "@/contexts/TransactionsContext";
+import { useDespesasEmpresa } from "@/hooks/useDespesasEmpresa";
 
 interface FinancialCache {
   data: {
@@ -18,6 +19,7 @@ let financialCache: FinancialCache | null = null;
 
 export function useFinancialData() {
   const { transactions, loading: transactionsLoading } = useTransactions();
+  const despesasFin = useDespesasEmpresa();
   const [loading, setLoading] = useState(true);
   const [monthlyTotals, setMonthlyTotals] = useState({
     income: 0,
@@ -158,8 +160,15 @@ export function useFinancialData() {
     }
   }, [calculateFinancialData, transactionsLoading]);
 
+  // Soma as despesas da empresa lançadas no módulo Finanças (cartão e conta PJ).
+  const totaisComFinancas = useMemo(() => ({
+    income: monthlyTotals.income,
+    expenses: monthlyTotals.expenses + despesasFin.doMes,
+    balance: monthlyTotals.balance - despesasFin.doMes,
+  }), [monthlyTotals, despesasFin.doMes]);
+
   return { 
-    monthlyTotals,
+    monthlyTotals: totaisComFinancas,
     loading: loading || transactionsLoading,
     hasCalculated
   };

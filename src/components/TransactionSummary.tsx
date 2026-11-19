@@ -8,6 +8,7 @@ import {
 import { isTransactionInWeek, WeekInfo } from "@/utils/dates/weekUtils";
 import { fetchCompanySettings, CompanySettings } from "@/utils/supabase/settings";
 import { PeriodType } from "@/hooks/useWeeklyFilter";
+import { useDespesasEmpresa } from "@/hooks/useDespesasEmpresa";
 
 const C = {
   text:      "#1a1a1a",
@@ -50,9 +51,10 @@ export function TransactionSummary({
   onWeeklyBalanceChange,
 }: TransactionSummaryProps) {
   const isMobile = useIsMobile();
+  const despesasFin = useDespesasEmpresa();
   const [goals, setGoals] = useState<CompanySettings | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [summary, setSummary] = useState({
+  const [rawSummary, setSummary] = useState({
     totalIncome: 0, totalExpenses: 0,
     periodIncome: 0, periodExpenses: 0,
     periodIncomeCount: 0,
@@ -96,6 +98,9 @@ export function TransactionSummary({
   useEffect(() => { fetchCompanySettings().then(d => setGoals(d)).catch(() => {}); }, []);
 
   const periodLabel = periodType === "monthly" ? "do Mês" : "da Semana";
+  // Despesas da empresa vindas do módulo Finanças: entram no mês e no histórico (a semana não tem esse detalhe)
+  const extraPeriodo = periodType === "monthly" ? despesasFin.doMes : 0;
+  const summary = { ...rawSummary, periodExpenses: rawSummary.periodExpenses + extraPeriodo, totalExpenses: rawSummary.totalExpenses + despesasFin.total };
   const periodBalance = summary.periodIncome - summary.periodExpenses;
   const totalBalance  = summary.totalIncome - summary.totalExpenses;
 

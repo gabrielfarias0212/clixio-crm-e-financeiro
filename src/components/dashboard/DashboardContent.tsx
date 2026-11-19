@@ -285,9 +285,9 @@ export function DashboardContent() {
             {fmt(monthlyTotals.expenses)}
           </div>
           <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>
-            {monthlyTotals.income > 0
-              ? "Só o que foi lançado no Clixio"
-              : "Nenhuma saída lançada no Clixio"}
+            {monthlyTotals.expenses > 0
+              ? "Gastos da empresa (cartão e conta PJ do módulo Finanças + lançamentos)"
+              : "Nenhum gasto da empresa neste mês"}
           </div>
         </div>
 
@@ -306,7 +306,7 @@ export function DashboardContent() {
           </div>
           <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>
             {monthlyTotals.income > 0
-              ? "Receita − despesas lançadas aqui (completo no módulo Finanças)"
+              ? "Receita − gastos da empresa do mês (pró-labore ainda não incluído)"
               : monthlyTotals.balance >= 0 ? "Mês positivo" : "Mês negativo"}
           </div>
         </div>

@@ -66,6 +66,13 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
     return [...m.entries()].sort().slice(0, 6);
   }, [lancsO, mesDe]);
 
+  // Faturas dos meses do período, como no app do banco: um bloco por cartão com valor, vencimento e situação.
+  const cartoes = useMemo(() => fontes.filter((f) => f.tipo === "cartao"), [fontes]);
+  const faturasPeriodo = useMemo(() => faturas
+    .filter((f) => mesNoPeriodo(String(f.competencia).slice(0, 7), periodo))
+    .sort((a, b) => String(b.competencia).localeCompare(String(a.competencia)) || String(a.fin_fontes?.nome).localeCompare(String(b.fin_fontes?.nome))), [faturas, periodo]);
+  const mesUnico = periodo && periodo.de === periodo.ate ? periodo.de : null;
+
   async function pagar(f: any) {
     const hoje = new Date().toISOString().slice(0, 10);
     try { await marcarFatura(f.id, "paga", hoje, f.valor_total); toast.success("Fatura marcada como paga."); onMudou(); }
@@ -139,6 +146,37 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
         <div className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
           <span className="font-medium text-foreground">Já assumido para os próximos meses (parcelas): </span>
           {proximos.map(([m, v]) => `${nomeMes(m)} ${brl(v)}`).join(" · ")}. Não entra nos números acima.
+        </div>
+      )}
+
+      {origem !== "contas" && (
+        <div className="space-y-2">
+          <div className="text-sm font-medium">Faturas {mesUnico ? `de ${nomeMes(mesUnico)}` : "do período"}</div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {faturasPeriodo.map((f) => {
+              const vencida = f.status !== "paga" && f.vencimento && f.vencimento < hoje && f.status !== "aberta";
+              const fonte = fontes.find((x) => x.id === f.fonte_id);
+              return (
+                <Card key={f.id} style={{ borderTop: `3px solid ${fonte?.pagador === "PJ" ? "#eb6834" : "#2a78d6"}` }}><CardContent className="p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs text-muted-foreground">{f.fin_fontes?.nome}{mesUnico ? "" : ` · ${nomeMes(String(f.competencia).slice(0, 7))}`}</div>
+                    <Badge variant={vencida ? "destructive" : f.status === "paga" ? "secondary" : "outline"}>{vencida ? "vencida" : f.status}</Badge>
+                  </div>
+                  <div className="text-2xl font-semibold tabular-nums">{brl(Number(f.valor_total))}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    vence {f.vencimento?.split("-").reverse().join("/")}
+                    {f.status === "paga" && f.pago_em ? ` · paga em ${String(f.pago_em).slice(0, 10).split("-").reverse().join("/")}` : ""}
+                  </div>
+                </CardContent></Card>
+              );
+            })}
+            {mesUnico && cartoes.filter((c) => !faturasPeriodo.some((f) => f.fonte_id === c.id)).map((c) => (
+              <Card key={c.id} style={{ borderTop: "3px solid #cbd5e1" }}><CardContent className="p-4">
+                <div className="text-xs text-muted-foreground">{c.nome}</div>
+                <div className="text-sm text-muted-foreground">Sem fatura importada neste mês.</div>
+              </CardContent></Card>
+            ))}
+          </div>
         </div>
       )}
 

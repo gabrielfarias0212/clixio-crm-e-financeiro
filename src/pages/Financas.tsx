@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImportarTab } from "@/components/financas/ImportarTab";
 import { TriagemTab } from "@/components/financas/TriagemTab";
 import { ResumoTab } from "@/components/financas/ResumoTab";
@@ -14,7 +15,8 @@ export default function Financas() {
   const [lancs, setLancs] = useState<Lanc[]>([]);
   const [cats, setCats] = useState<Categoria[]>([]);
   const [faturas, setFaturas] = useState<any[]>([]);
-  const [aba, setAba] = useState("importar");
+  const [aba, setAba] = useState("resumo");
+  const [importando, setImportando] = useState(false);
 
   const carregar = useCallback(async () => {
     try {
@@ -34,16 +36,20 @@ export default function Financas() {
         </div>
         <Tabs value={aba} onValueChange={setAba}>
           <TabsList>
-            <TabsTrigger value="importar">Importar</TabsTrigger>
-            <TabsTrigger value="triagem">Triagem</TabsTrigger>
             <TabsTrigger value="resumo">Resumo</TabsTrigger>
+            <TabsTrigger value="triagem">Triagem</TabsTrigger>
             <TabsTrigger value="manual">Manual</TabsTrigger>
           </TabsList>
-          <TabsContent value="importar"><ImportarTab onImportado={() => { carregar(); setAba("triagem"); }} /></TabsContent>
           <TabsContent value="triagem"><TriagemTab lancs={lancs} categorias={cats} onMudou={carregar} /></TabsContent>
-          <TabsContent value="resumo"><ResumoTab lancs={lancs} faturas={faturas} categorias={cats} onMudou={carregar} /></TabsContent>
+          <TabsContent value="resumo"><ResumoTab lancs={lancs} faturas={faturas} categorias={cats} onMudou={carregar} onImportar={() => setImportando(true)} onTriagem={() => setAba("triagem")} /></TabsContent>
           <TabsContent value="manual"><ManualTab categorias={cats} onMudou={carregar} /></TabsContent>
         </Tabs>
+        <Dialog open={importando} onOpenChange={setImportando}>
+          <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto">
+            <DialogHeader><DialogTitle>Importar extrato ou fatura</DialogTitle></DialogHeader>
+            <ImportarTab onImportado={() => { carregar(); setImportando(false); setAba("triagem"); }} />
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

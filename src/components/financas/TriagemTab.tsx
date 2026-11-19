@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { criarCategoria, salvarRegra, type Categoria, type Lanc } from "@/lib/financas/api";
+import { criarCategoria, marcarSaidaComoTransferencia, salvarRegra, type Categoria, type Lanc } from "@/lib/financas/api";
 import { chaveDestino } from "@/lib/financas/importar";
 import { LinhasLancamentos } from "./LinhasLancamentos";
 
@@ -42,6 +42,13 @@ export function TriagemTab({ lancs, categorias, onMudou }: { lancs: Lanc[]; cate
       toast.success(`${g.qtd} lançamentos de "${g.nome}" marcados como ${pertence}. Regra salva.`);
       onMudou();
     } catch (e: any) { toast.error("Erro: " + (e.message ?? e)); } finally { setSalvando(null); }
+  }
+
+  async function comoTransferencia(g: Grupo) {
+    if (!window.confirm(`Marcar os ${g.qtd} lançamentos (${brl(g.total)}) como transferência para conta própria? Eles deixam de contar como gasto. Dá para desfazer na aba Conciliação.`)) return;
+    setSalvando(g.chave);
+    try { await marcarSaidaComoTransferencia(g.ids); toast.success(`${g.qtd} lançamentos marcados como transferência`); onMudou(); }
+    catch (e: any) { toast.error("Erro: " + (e.message ?? e)); } finally { setSalvando(null); }
   }
 
   const [novaCat, setNovaCat] = useState("");
@@ -86,6 +93,7 @@ export function TriagemTab({ lancs, categorias, onMudou }: { lancs: Lanc[]; cate
             </Select>
             <Button size="sm" disabled={salvando === g.chave} onClick={() => aplicar(g, "PF")}>É pessoal (PF)</Button>
             <Button size="sm" variant="secondary" disabled={salvando === g.chave} onClick={() => aplicar(g, "PJ")}>É da empresa (PJ)</Button>
+            <Button size="sm" variant="outline" disabled={salvando === g.chave} onClick={() => comoTransferencia(g)}>É transferência (minha conta)</Button>
             <Button size="sm" variant="ghost" onClick={() => alternar(g.chave)}>{abertos.has(g.chave) ? "Ocultar" : "Ver lançamentos"}</Button>
             {abertos.has(g.chave) && <div className="w-full rounded-md border px-3"><LinhasLancamentos lancs={g.itens} categorias={categorias} onMudou={onMudou} /></div>}
           </CardContent>

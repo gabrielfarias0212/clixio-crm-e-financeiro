@@ -225,6 +225,13 @@ export async function marcarTransferenciaPropria(ids: string[]) {
   const { error } = await db.from("fin_lancamentos").update({ tipo: "transferencia", obs: "transferência de conta própria (sem par importado)|entrada" }).in("id", ids);
   if (error) throw error;
 }
+/** Saída para conta própria (ex.: PJ → seu nome): fica neutra. Desfazer na aba Conciliação. */
+export async function marcarSaidaComoTransferencia(ids: string[]) {
+  for (let i = 0; i < ids.length; i += 200) {
+    const { error } = await db.from("fin_lancamentos").update({ tipo: "transferencia", obs: "transferência de conta própria (sem par importado)|saida" }).in("id", ids.slice(i, i + 200));
+    if (error) throw error;
+  }
+}
 export async function desfazerTransferencia(lados: Lanc[]) {
   for (const l of lados) {
     const tipo = l.obs?.endsWith("|entrada") ? "entrada" : "saida";

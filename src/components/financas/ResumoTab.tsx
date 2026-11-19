@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { marcarFatura, type Categoria, type Lanc } from "@/lib/financas/api";
 import { LinhasLancamentos } from "./LinhasLancamentos";
+import { GraficosResumo } from "./GraficosResumo";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -53,6 +54,8 @@ export function ResumoTab({ lancs, faturas, categorias, onMudou }: { lancs: Lanc
         <Q alerta t="PF pagou · é PJ" v={q.PF_PJ} d="a receber da empresa (reembolso)" />
       </div>
       <p className="text-xs text-muted-foreground">Tudo que ainda não foi triado conta como "pago por quem pagou". Classifique na aba Triagem para os quadrantes ficarem corretos.</p>
+
+      <GraficosResumo lancs={lancs} categorias={categorias} mes={mes} />
 
       <Card>
         <CardHeader><CardTitle className="text-base">Faturas</CardTitle></CardHeader>

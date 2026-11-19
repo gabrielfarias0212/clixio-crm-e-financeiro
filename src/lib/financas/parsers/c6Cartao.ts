@@ -1,10 +1,10 @@
 import type { LinhaCartao, ResultadoParse } from "./types";
 
 const toIso = (d: string) => d.split("/").reverse().join("-");
-const norm = (s: string) => s.replace(/\s+/g, " ").trim().toUpperCase();
+const norm = (s: string) => s.replace(/^"+|"+$/g, "").replace(/\s+/g, " ").trim().toUpperCase();
 
 /** CSV de fatura do C6: ';' como separador, decimal com ponto, sem total no arquivo. */
-export function parseC6Cartao(text: string): ResultadoParse<LinhaCartao> {
+export function parseC6Cartao(text: string): ResultadoParse<LinhaCartao> & { pagamentos: LinhaCartao[] } {
   const avisos: string[] = [];
   const rows = text.replace(/^﻿/, "").split(/\r?\n/).filter((l) => l.trim());
   const h = rows.findIndex((l) => l.startsWith("Data de Compra;"));
@@ -40,6 +40,10 @@ export function parseC6Cartao(text: string): ResultadoParse<LinhaCartao> {
     });
   }
 
+  // "Inclusao de Pagamento" = quitação da fatura anterior: não é gasto nem estorno, fica fora do total
+  const pagamentos = out.filter((l) => /^(INCLUSAO DE )?PAGAMENTO/.test(l.descricao) && l.valor < 0);
+  for (const p of pagamentos) out.splice(out.indexOf(p), 1);
+
   // Negativo + mesmo comerciante de uma compra positiva (ou rótulo "Estorno") => estorno.
   // Caso contrário fica "crédito a confirmar": nunca cancela parcelas por conta própria.
   const comprados = new Set(out.filter((l) => l.valor > 0).map((l) => l.descricao));
@@ -51,5 +55,5 @@ export function parseC6Cartao(text: string): ResultadoParse<LinhaCartao> {
   }
 
   const total = Math.round(out.reduce((s, l) => s + l.valor, 0) * 100) / 100;
-  return { linhas: out, total, avisos };
+  return { linhas: out, total, avisos, pagamentos };
 }

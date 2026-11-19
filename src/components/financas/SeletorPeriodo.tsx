@@ -21,9 +21,15 @@ export function SeletorPeriodo({ valor, onChange }: { valor: Periodo | null; onC
         <span className="min-w-[96px] px-2 text-center font-medium">{rotuloPeriodo(valor)}</span>
         <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!valor || valor.ate >= agora} onClick={() => mover(1)} aria-label="Próximo"><ChevronRight className="h-4 w-4" /></Button>
       </div>
-      {atalhos.map(([t, p]) => (
-        <button key={t} type="button" onClick={() => onChange(p)} className={"rounded-full border px-3 py-1 text-xs " + (igual(p) ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted")}>{t}</button>
-      ))}
+      <select
+        className="h-8 rounded-md border bg-background px-2 text-xs"
+        value={atalhos.findIndex(([, p]) => igual(p))}
+        onChange={(e) => { const i = Number(e.target.value); if (i >= 0) onChange(atalhos[i][1]); }}
+        aria-label="Atalhos de período"
+      >
+        {atalhos.findIndex(([, p]) => igual(p)) < 0 && <option value={-1}>Personalizado</option>}
+        {atalhos.map(([t], i) => <option key={t} value={i}>{t}</option>)}
+      </select>
     </div>
   );
 }

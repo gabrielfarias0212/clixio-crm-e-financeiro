@@ -144,7 +144,7 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
 
       <GraficosResumo lancs={lancsO} categorias={categorias} periodo={periodo} mesDe={mesDe} />
 
-      <CategoriasComparativo lancs={lancs} fontes={fontes} categorias={categorias} onMudou={onMudou} origemInicial="cartoes" mesDe={mesDe} />
+      <CategoriasComparativo lancs={lancs} fontes={fontes} categorias={categorias} onMudou={onMudou} origemInicial={origem} mesDe={mesDe} />
 
       <Card>
         <CardHeader><CardTitle className="text-base">Faturas</CardTitle></CardHeader>

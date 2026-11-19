@@ -1,9 +1,9 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Categoria, Fonte, Lanc } from "@/lib/financas/api";
-import { mesPelaData, type MesDe } from "@/lib/financas/periodo";
+import { mesAtual, mesPelaData, type MesDe } from "@/lib/financas/periodo";
 import { LinhasLancamentos } from "./LinhasLancamentos";
 
 // Meses em ordem do tempo: azul claro → escuro (sequencial; o mais recente é o mais escuro).
@@ -29,6 +29,8 @@ export type Origem = "tudo" | "cartoes" | "contas";
 
 export function CategoriasComparativo({ lancs, fontes, categorias, onMudou, origemInicial, mesDe = mesPelaData }: { lancs: Lanc[]; fontes: Fonte[]; categorias: Categoria[]; onMudou: () => void; origemInicial: Origem; mesDe?: MesDe }) {
   const [origem, setOrigem] = useState<Origem>(origemInicial);
+  // Acompanha o filtro de origem do Resumo (o usuário ainda pode trocar aqui).
+  useEffect(() => { setOrigem(origemInicial); setSel(null); }, [origemInicial]);
   const tipoFonte = useMemo(() => new Map(fontes.map((f) => [f.id, f.tipo])), [fontes]);
   const [dono, setDono] = useState<"todos" | "PF" | "PJ">("todos");
   const [sel, setSel] = useState<string[] | null>(null);
@@ -38,7 +40,9 @@ export function CategoriasComparativo({ lancs, fontes, categorias, onMudou, orig
   const doOrigem = (l: Lanc) => origem === "tudo" || tipoFonte.get(l.fonte_id) === (origem === "cartoes" ? "cartao" : "conta");
   const gastos = useMemo(() => lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno") && doOrigem(l) && (dono === "todos" || l.pertence_a === dono)), [lancs, dono, origem, tipoFonte]);
   const mesesDisp = useMemo(() => [...new Set(lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno") && doOrigem(l)).map((l) => mesDe(l)))].sort().reverse(), [lancs, origem, tipoFonte, mesDe]);
-  const meses = useMemo(() => (sel ?? mesesDisp.slice(0, 3)).slice().sort(), [sel, mesesDisp]);
+  // Padrão: só o mês atual (ou o mais recente até hoje, se o atual não tiver gastos).
+  const mesPadrao = useMemo(() => { const hoje = mesAtual(); return mesesDisp.find((m) => m <= hoje) ?? mesesDisp[0]; }, [mesesDisp]);
+  const meses = useMemo(() => (sel ?? (mesPadrao ? [mesPadrao] : [])).slice().sort(), [sel, mesPadrao]);
   const catNome = useMemo(() => new Map(categorias.map((c) => [c.id, c.nome])), [categorias]);
   const nomeCat = (l: Lanc) => (l.categoria_id ? catNome.get(l.categoria_id) ?? "Outros" : SEM);
 

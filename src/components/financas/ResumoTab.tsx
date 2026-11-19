@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,17 @@ import { LinhasLancamentos } from "./LinhasLancamentos";
 import { GraficosResumo } from "./GraficosResumo";
 import { CategoriasComparativo, type Origem } from "./CategoriasComparativo";
 import { SeletorPeriodo } from "./SeletorPeriodo";
-import { mesAtual, nomeMes, noPeriodo, type Periodo } from "@/lib/financas/periodo";
+import { mesAtual, mesNoPeriodo, nomeMes, type Periodo } from "@/lib/financas/periodo";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImportar, onTriagem, pendConc, onConciliar }: { fontes: Fonte[]; lancs: Lanc[]; faturas: any[]; categorias: Categoria[]; onMudou: () => void; onImportar: () => void; onTriagem: () => void; pendConc: number; onConciliar: () => void }) {
   const [periodo, setPeriodo] = useState<Periodo | null>(() => { const a = mesAtual(); return { de: a, ate: a }; });
   const [origem, setOrigem] = useState<Origem>("cartoes");
+  // Cartão: o mês pode ser o da fatura (vencimento) ou o da compra. Conta sempre usa a data do lançamento.
+  const [criterio, setCriterio] = useState<"fatura" | "compra">("fatura");
+  const compFatura = useMemo(() => new Map<string, string>(faturas.map((f) => [f.id, String(f.competencia).slice(0, 7)])), [faturas]);
+  const mesDe = useCallback((l: { data: string; fatura_id: string | null }) => (criterio === "fatura" && l.fatura_id && compFatura.get(l.fatura_id)) || l.data.slice(0, 7), [criterio, compFatura]);
   const tipoFonte = useMemo(() => new Map(fontes.map((f) => [f.id, f.tipo])), [fontes]);
   const lancsO = useMemo(() => lancs.filter((l) => origem === "tudo" || tipoFonte.get(l.fonte_id) === (origem === "cartoes" ? "cartao" : "conta")), [lancs, origem, tipoFonte]);
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
@@ -28,20 +32,20 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
   const q = useMemo(() => {
     const r = { PF_PF: 0, PJ_PJ: 0, PJ_PF: 0, PF_PJ: 0 };
     for (const l of lancsO) {
-      if (l.status !== "realizado" || (l.tipo !== "saida" && l.tipo !== "estorno") || !noPeriodo(l.data, periodo)) continue;
+      if (l.status !== "realizado" || (l.tipo !== "saida" && l.tipo !== "estorno") || !mesNoPeriodo(mesDe(l), periodo)) continue;
       (r as any)[`${l.pagador}_${l.pertence_a}`] += l.tipo === "estorno" ? -l.valor : l.valor;
     }
     return r;
-  }, [lancsO, periodo]);
+  }, [lancsO, periodo, mesDe]);
   const totalPF = q.PF_PF + q.PJ_PF, totalPJ = q.PJ_PJ + q.PF_PJ;
   const acerto = q.PJ_PF - q.PF_PJ; // >0: a empresa bancou mais gasto pessoal do que você bancou da empresa
 
   // Parcelas já assumidas para os próximos meses (não entram nos números de gasto).
   const proximos = useMemo(() => {
     const m = new Map<string, number>(); const agora = mesAtual();
-    for (const l of lancsO) if (l.status === "projetado" && l.tipo === "saida" && l.data.slice(0, 7) > agora) m.set(l.data.slice(0, 7), (m.get(l.data.slice(0, 7)) ?? 0) + l.valor);
+    for (const l of lancsO) { const k = mesDe(l); if (l.status === "projetado" && l.tipo === "saida" && k > agora) m.set(k, (m.get(k) ?? 0) + l.valor); }
     return [...m.entries()].sort().slice(0, 6);
-  }, [lancsO]);
+  }, [lancsO, mesDe]);
 
   async function pagar(f: any) {
     const hoje = new Date().toISOString().slice(0, 10);
@@ -62,6 +66,15 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
           <button key={o} type="button" onClick={() => setOrigem(o)} className={"rounded-full border px-3 py-1 " + (origem === o ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted")}>{t}</button>
         ))}
       </div>
+      {origem !== "contas" && (
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-muted-foreground">Mês do cartão pela:</span>
+          {([["fatura", "Fatura (vencimento)"], ["compra", "Data da compra"]] as const).map(([o, t]) => (
+            <button key={o} type="button" onClick={() => setCriterio(o)} className={"rounded-full border px-3 py-1 " + (criterio === o ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted")}>{t}</button>
+          ))}
+          <span className="text-muted-foreground">{criterio === "fatura" ? "o que você paga em cada mês, como no app do banco" : "quando a compra foi feita"}</span>
+        </div>
+      )}
       {pendConc > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-blue-300 bg-blue-50 px-3 py-2 text-sm text-blue-900">
           <span>{pendConc} lançamentos do extrato aguardando conciliação com o Financeiro (para não duplicar entradas de clientes).</span>
@@ -99,9 +112,9 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
         </div>
       )}
 
-      <GraficosResumo lancs={lancsO} categorias={categorias} periodo={periodo} />
+      <GraficosResumo lancs={lancsO} categorias={categorias} periodo={periodo} mesDe={mesDe} />
 
-      <CategoriasComparativo lancs={lancs} fontes={fontes} categorias={categorias} onMudou={onMudou} origemInicial="cartoes" />
+      <CategoriasComparativo lancs={lancs} fontes={fontes} categorias={categorias} onMudou={onMudou} origemInicial="cartoes" mesDe={mesDe} />
 
       <Card>
         <CardHeader><CardTitle className="text-base">Faturas</CardTitle></CardHeader>

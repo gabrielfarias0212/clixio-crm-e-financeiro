@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis, LabelList } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Categoria, Lanc } from "@/lib/financas/api";
-import { noPeriodo, type Periodo } from "@/lib/financas/periodo";
+import { mesNoPeriodo, mesPelaData, type MesDe, type Periodo } from "@/lib/financas/periodo";
 
 // Cores validadas (azul/laranja, categórico slots 1 e 2: passam nos testes de daltonismo e contraste).
 const COR = { PF: "#2a78d6", PJ: "#eb6834" } as const;
@@ -20,25 +20,25 @@ function Tip({ active, payload, label }: any) {
   );
 }
 
-export function GraficosResumo({ lancs, categorias, periodo }: { lancs: Lanc[]; categorias: Categoria[]; periodo: Periodo | null }) {
+export function GraficosResumo({ lancs, categorias, periodo, mesDe = mesPelaData }: { lancs: Lanc[]; categorias: Categoria[]; periodo: Periodo | null; mesDe?: MesDe }) {
   const gastos = useMemo(() => lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno")), [lancs]);
   const valor = (l: Lanc) => (l.tipo === "estorno" ? -l.valor : l.valor);
 
   const porMes = useMemo(() => {
     const m = new Map<string, { mes: string; PF: number; PJ: number }>();
     for (const l of gastos) {
-      const k = l.data.slice(0, 7);
+      const k = mesDe(l);
       const r = m.get(k) ?? { mes: k, PF: 0, PJ: 0 };
       r[l.pertence_a] += valor(l); m.set(k, r);
     }
     return [...m.values()].filter((r) => !periodo || r.mes <= periodo.ate).sort((a, b) => (a.mes < b.mes ? -1 : 1)).slice(-6).map((r) => ({ ...r, nome: nomeMes(r.mes), PF: Math.round(r.PF), PJ: Math.round(r.PJ) }));
-  }, [gastos, periodo]);
+  }, [gastos, periodo, mesDe]);
 
   const catNome = useMemo(() => new Map(categorias.map((c) => [c.id, c.nome])), [categorias]);
   const porCategoria = (dono: "PF" | "PJ") => {
     const m = new Map<string, number>();
     for (const l of gastos) {
-      if (l.pertence_a !== dono || !noPeriodo(l.data, periodo)) continue;
+      if (l.pertence_a !== dono || !mesNoPeriodo(mesDe(l), periodo)) continue;
       const k = l.categoria_id ? catNome.get(l.categoria_id) ?? "Outros" : "Sem categoria";
       m.set(k, (m.get(k) ?? 0) + valor(l));
     }
@@ -47,8 +47,8 @@ export function GraficosResumo({ lancs, categorias, periodo }: { lancs: Lanc[]; 
     if (resto > 0) top.push(["Outras", resto]);
     return { itens: top.map(([nome, v]) => ({ nome, valor: Math.round(v) })), total: [...m.values()].reduce((s, v) => s + v, 0) };
   };
-  const pf = useMemo(() => porCategoria("PF"), [gastos, catNome, periodo]);
-  const pj = useMemo(() => porCategoria("PJ"), [gastos, catNome, periodo]);
+  const pf = useMemo(() => porCategoria("PF"), [gastos, catNome, periodo, mesDe]);
+  const pj = useMemo(() => porCategoria("PJ"), [gastos, catNome, periodo, mesDe]);
   const total = pf.total + pj.total;
 
   if (!gastos.length) return null;

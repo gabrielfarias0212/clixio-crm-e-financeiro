@@ -11,6 +11,16 @@ import { CategoriasComparativo, type Origem } from "./CategoriasComparativo";
 import { SeletorPeriodo } from "./SeletorPeriodo";
 import { mesAtual, mesNoPeriodo, nomeMes, type Periodo } from "@/lib/financas/periodo";
 
+function Segmentado<T extends string>({ valor, onChange, opcoes, ajuda, titulo }: { valor: T; onChange: (v: T) => void; opcoes: readonly (readonly [T, string])[]; ajuda?: string; titulo?: string }) {
+  return (
+    <div className="flex items-center rounded-md border p-0.5 text-xs" title={ajuda} aria-label={titulo}>
+      {opcoes.map(([o, t]) => (
+        <button key={o} type="button" onClick={() => onChange(o)} className={"rounded px-3 py-1 " + (valor === o ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>{t}</button>
+      ))}
+    </div>
+  );
+}
+
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImportar, onTriagem, pendConc, onConciliar }: { fontes: Fonte[]; lancs: Lanc[]; faturas: any[]; categorias: Categoria[]; onMudou: () => void; onImportar: () => void; onTriagem: () => void; pendConc: number; onConciliar: () => void }) {
@@ -82,25 +92,16 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <SeletorPeriodo valor={periodo} onChange={setPeriodo} />
-        <Button onClick={onImportar}>Importar extrato ou fatura</Button>
+        <Segmentado<Origem> valor={origem} onChange={setOrigem} opcoes={[["cartoes", "Cartões"], ["contas", "Contas"], ["tudo", "Tudo"]]} />
+        {origem !== "contas" && (
+          <Segmentado<"fatura" | "compra"> valor={criterio} onChange={setCriterio} titulo="Mês do cartão pela"
+            opcoes={[["fatura", "Mês da fatura"], ["compra", "Data da compra"]]}
+            ajuda={criterio === "fatura" ? "Mês da fatura: o que você paga em cada mês, como no app do banco" : "Data da compra: quando a compra foi feita"} />
+        )}
+        <Button className="ml-auto" onClick={onImportar}>Importar extrato ou fatura</Button>
       </div>
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-muted-foreground">Mostrando:</span>
-        {([["cartoes", "Só cartões"], ["contas", "Só contas"], ["tudo", "Cartões + contas"]] as const).map(([o, t]) => (
-          <button key={o} type="button" onClick={() => setOrigem(o)} className={"rounded-full border px-3 py-1 " + (origem === o ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted")}>{t}</button>
-        ))}
-      </div>
-      {origem !== "contas" && (
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-muted-foreground">Mês do cartão pela:</span>
-          {([["fatura", "Fatura (vencimento)"], ["compra", "Data da compra"]] as const).map(([o, t]) => (
-            <button key={o} type="button" onClick={() => setCriterio(o)} className={"rounded-full border px-3 py-1 " + (criterio === o ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted")}>{t}</button>
-          ))}
-          <span className="text-muted-foreground">{criterio === "fatura" ? "o que você paga em cada mês, como no app do banco" : "quando a compra foi feita"}</span>
-        </div>
-      )}
       {pendConc > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-blue-300 bg-blue-50 px-3 py-2 text-sm text-blue-900">
           <span>{pendConc} lançamentos do extrato aguardando conciliação com o Financeiro (para não duplicar entradas de clientes).</span>

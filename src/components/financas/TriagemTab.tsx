@@ -10,7 +10,7 @@ import { chaveDestino } from "@/lib/financas/importar";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-interface Grupo { chave: string; nome: string; ids: string[]; total: number; qtd: number; pendentes: number; pagadores: Set<string> }
+interface Grupo { chave: string; nome: string; ids: string[]; total: number; qtd: number; pendentes: number; pagadores: Set<string>; parcelas: Map<string, { atual: number; total: number; valor: number }> }
 
 export function TriagemTab({ lancs, categorias, onMudou }: { lancs: Lanc[]; categorias: Categoria[]; onMudou: () => void }) {
   const [todos, setTodos] = useState(false);
@@ -23,8 +23,9 @@ export function TriagemTab({ lancs, categorias, onMudou }: { lancs: Lanc[]; cate
       if (l.status !== "realizado" || (l.tipo !== "saida" && l.tipo !== "estorno")) continue;
       const k = chaveDestino(l.descricao);
       if (!k) continue;
-      const g = m.get(k) ?? { chave: k, nome: l.descricao, ids: [], total: 0, qtd: 0, pendentes: 0, pagadores: new Set() };
+      const g = m.get(k) ?? { chave: k, nome: l.descricao, ids: [], total: 0, qtd: 0, pendentes: 0, pagadores: new Set(), parcelas: new Map() };
       g.ids.push(l.id); g.qtd++; g.total += l.tipo === "estorno" ? -l.valor : l.valor; g.pagadores.add(l.pagador);
+      if (l.parcela_total && l.parcela_total > 1 && l.parcela_atual) g.parcelas.set(`${l.parcela_atual}/${l.parcela_total}`, { atual: l.parcela_atual, total: l.parcela_total, valor: l.valor });
       if (!l.categoria_id) g.pendentes++;
       m.set(k, g);
     }
@@ -65,7 +66,16 @@ export function TriagemTab({ lancs, categorias, onMudou }: { lancs: Lanc[]; cate
           <CardContent className="flex flex-wrap items-center gap-3 p-3">
             <div className="min-w-[200px] flex-1">
               <div className="text-sm font-medium">{g.nome}</div>
-              <div className="text-xs text-muted-foreground">{g.qtd} lançamentos · {brl(g.total)} · pago por {[...g.pagadores].join("/")}{g.pendentes === 0 && <Badge className="ml-2" variant="secondary">classificado</Badge>}</div>
+              {g.parcelas.size > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {[...g.parcelas.values()].sort((a, b) => a.atual - b.atual).map((p) => (
+                    <Badge key={`${p.atual}/${p.total}`} variant="outline">
+                      parcela {p.atual}/{p.total} · {brl(p.valor)}{p.total > p.atual ? ` · faltam ${p.total - p.atual} (${brl((p.total - p.atual) * p.valor)})` : " · última"}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <div className="text-xs text-muted-foreground">{g.qtd} {g.qtd === 1 ? "lançamento" : "lançamentos"} · {brl(g.total)} · pago por {[...g.pagadores].join("/")}{g.pendentes === 0 && <Badge className="ml-2" variant="secondary">classificado</Badge>}</div>
             </div>
             <Select value={cat[g.chave] ?? ""} onValueChange={(v) => setCat({ ...cat, [g.chave]: v })}>
               <SelectTrigger className="w-44"><SelectValue placeholder="Categoria" /></SelectTrigger>

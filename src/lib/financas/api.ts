@@ -9,7 +9,7 @@ export interface Fonte { id: string; nome: string; banco: string; tipo: "conta" 
 export interface Categoria { id: string; nome: string; grupo: string }
 export interface Lanc {
   id: string; fonte_id: string; fatura_id: string | null; data: string; descricao: string; valor: number;
-  tipo: string; pagador: "PF" | "PJ"; pertence_a: "PF" | "PJ"; categoria_id: string | null; status: string; obs: string | null;
+  tipo: string; parcela_atual: number | null; parcela_total: number | null; pagador: "PF" | "PJ"; pertence_a: "PF" | "PJ"; categoria_id: string | null; status: string; obs: string | null;
 }
 
 export async function listarFontes(): Promise<Fonte[]> {

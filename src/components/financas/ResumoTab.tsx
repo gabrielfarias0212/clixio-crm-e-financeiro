@@ -44,7 +44,20 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
     for (const l of lancsO) if (l.status === "realizado" && l.tipo === "estorno" && mesNoPeriodo(mesDe(l), periodo) && !/ESTORNO TARIFA/.test(l.descricao)) (r as any)[l.pertence_a] += l.valor;
     return r;
   }, [lancsO, periodo, mesDe]);
-  const acerto = q.PJ_PF - q.PF_PJ; // >0: a empresa bancou mais gasto pessoal do que você bancou da empresa
+  // Acerto: reposição entre você e a empresa. Considera cartão e conta juntos (independe do filtro de origem).
+  const qa = useMemo(() => {
+    const r = { PJ_PF: 0, PF_PJ: 0 };
+    for (const l of lancs) {
+      if (l.status !== "realizado" || (l.tipo !== "saida" && l.tipo !== "estorno") || !mesNoPeriodo(mesDe(l), periodo)) continue;
+      const k = `${l.pagador}_${l.pertence_a}`;
+      if (k === "PJ_PF" || k === "PF_PJ") (r as any)[k] += l.tipo === "estorno" ? -l.valor : l.valor;
+    }
+    return r;
+  }, [lancs, periodo, mesDe]);
+  // Pix da conta da empresa para você: só abatem o acerto se você disser que são reposição (pode ser retirada/pró-labore).
+  const [contarRepasses, setContarRepasses] = useState(false);
+  const repasses = useMemo(() => lancs.filter((l) => l.status === "realizado" && l.tipo === "transferencia" && tipoFonte.get(l.fonte_id) === "conta" && l.pagador === "PJ" && /GABRIEL LUIS DE FARIAS/i.test(l.descricao) && mesNoPeriodo(l.data.slice(0, 7), periodo)).reduce((a, l) => a + l.valor, 0), [lancs, tipoFonte, periodo]);
+  const acerto = qa.PJ_PF - qa.PF_PJ + (contarRepasses ? repasses : 0); // >0: você deve à empresa; <0: a empresa deve a você
 
   // Parcelas já assumidas para os próximos meses (não entram nos números de gasto).
   const proximos = useMemo(() => {
@@ -110,11 +123,17 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
       <div className="rounded-md border px-3 py-2 text-sm">
         <span className="font-medium">Acerto PF × PJ: </span>
         {Math.abs(acerto) < 0.005 ? "equilibrado."
-          : acerto > 0 ? <>você deve <b>{brl(acerto)}</b> à empresa.</>
-          : <>a empresa deve <b>{brl(-acerto)}</b> a você.</>}
-        <span className="text-xs text-muted-foreground">
-          {" "}A empresa pagou {brl(q.PJ_PF)} de gastos pessoais{q.PF_PJ < 0 ? <>; você recebeu {brl(-q.PF_PJ)} de devoluções de gastos da empresa</> : <> e você pagou {brl(q.PF_PJ)} de gastos da empresa</>}.
-        </span>
+          : acerto > 0 ? <>você deve <b>{brl(acerto)}</b> à empresa para repor os gastos pessoais pagos por ela.</>
+          : <>a empresa deve <b>{brl(-acerto)}</b> a você para repor os gastos dela pagos por você.</>}
+        <div className="mt-1 text-xs text-muted-foreground">
+          Gastos da empresa pagos por você (cartão ou conta PF): {brl(qa.PF_PJ)} · gastos pessoais pagos pela empresa (cartão ou conta PJ): {brl(qa.PJ_PF)}.
+        </div>
+        {repasses > 0 && (
+          <label className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+            <input type="checkbox" checked={contarRepasses} onChange={(e) => setContarRepasses(e.target.checked)} />
+            Contar {brl(repasses)} em Pix da empresa para você como reposição (desmarque se forem retirada ou pró-labore)
+          </label>
+        )}
       </div>
       {proximos.length > 0 && (
         <div className="rounded-md border px-3 py-2 text-xs text-muted-foreground">

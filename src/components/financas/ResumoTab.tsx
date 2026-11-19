@@ -113,6 +113,53 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
           <Button size="sm" variant="outline" onClick={onTriagem}>Ir para a Triagem</Button>
         </div>
       )}
+      {origem !== "contas" && (
+        <div className="space-y-2">
+          <div className="text-sm font-medium">Faturas {mesUnico ? `de ${nomeMes(mesUnico)}` : "do período"}</div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {faturasPeriodo.map((f) => {
+              const vencida = f.status !== "paga" && f.vencimento && f.vencimento < hoje && f.status !== "aberta";
+              const fonte = fontes.find((x) => x.id === f.fonte_id);
+              return (
+                <Card key={f.id} style={{ borderTop: `3px solid ${fonte?.pagador === "PJ" ? "#eb6834" : "#2a78d6"}` }}><CardContent className="p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs text-muted-foreground">{f.fin_fontes?.nome}{mesUnico ? "" : ` · ${nomeMes(String(f.competencia).slice(0, 7))}`}</div>
+                    <Badge variant={vencida ? "destructive" : f.status === "paga" ? "secondary" : "outline"}>{vencida ? "vencida" : f.status}</Badge>
+                  </div>
+                  <div className="text-2xl font-semibold tabular-nums">{brl(Number(f.valor_total))}</div>
+                  {(() => {
+                    let pf = 0, pj = 0;
+                    for (const l of porFatura.get(f.id) ?? []) {
+                      if (l.tipo !== "saida" && l.tipo !== "estorno") continue;
+                      const v = l.tipo === "estorno" ? -l.valor : l.valor;
+                      if (l.pertence_a === "PJ") pj += v; else pf += v;
+                    }
+                    const resto = Math.round((Number(f.valor_total) - pf - pj) * 100) / 100;
+                    return (
+                      <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
+                        <div>{brl(pf)} pessoal · {brl(pj)} da empresa</div>
+                        {Math.abs(resto) >= 0.01 && <div className="text-xs">{brl(resto)} de {resto > 0 ? "fatura anterior ou ajustes" : "ajustes"}</div>}
+                      </div>
+                    );
+                  })()}
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    vence {f.vencimento?.split("-").reverse().join("/")}
+                    {f.status === "paga" && f.pago_em ? ` · paga em ${String(f.pago_em).slice(0, 10).split("-").reverse().join("/")}` : ""}
+                  </div>
+                </CardContent></Card>
+              );
+            })}
+            {mesUnico && cartoes.filter((c) => !faturasPeriodo.some((f) => f.fonte_id === c.id)).map((c) => (
+              <Card key={c.id} style={{ borderTop: "3px solid #cbd5e1" }}><CardContent className="p-4">
+                <div className="text-xs text-muted-foreground">{c.nome}</div>
+                <div className="text-sm text-muted-foreground">Sem fatura importada neste mês.</div>
+              </CardContent></Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {origem !== "cartoes" && (
       <div className="grid gap-3 sm:grid-cols-2">
         <Card style={{ borderTop: "3px solid #2a78d6" }}><CardContent className="p-4">
           <div className="text-xs text-muted-foreground">Gasto pessoal (PF)</div>
@@ -127,6 +174,7 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
           {dev.PJ > 0 && <div className="text-xs text-muted-foreground">já descontando {brl(dev.PJ)} de devoluções{totalPJ < 0 ? " (por isso o total ficou negativo)" : ""}</div>}
         </CardContent></Card>
       </div>
+      )}
       <div className="rounded-md border px-3 py-2 text-sm">
         <span className="font-medium">Acerto PF × PJ: </span>
         {Math.abs(acerto) < 0.005 ? "equilibrado."
@@ -146,37 +194,6 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
         <div className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
           <span className="font-medium text-foreground">Já assumido para os próximos meses (parcelas): </span>
           {proximos.map(([m, v]) => `${nomeMes(m)} ${brl(v)}`).join(" · ")}. Não entra nos números acima.
-        </div>
-      )}
-
-      {origem !== "contas" && (
-        <div className="space-y-2">
-          <div className="text-sm font-medium">Faturas {mesUnico ? `de ${nomeMes(mesUnico)}` : "do período"}</div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {faturasPeriodo.map((f) => {
-              const vencida = f.status !== "paga" && f.vencimento && f.vencimento < hoje && f.status !== "aberta";
-              const fonte = fontes.find((x) => x.id === f.fonte_id);
-              return (
-                <Card key={f.id} style={{ borderTop: `3px solid ${fonte?.pagador === "PJ" ? "#eb6834" : "#2a78d6"}` }}><CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs text-muted-foreground">{f.fin_fontes?.nome}{mesUnico ? "" : ` · ${nomeMes(String(f.competencia).slice(0, 7))}`}</div>
-                    <Badge variant={vencida ? "destructive" : f.status === "paga" ? "secondary" : "outline"}>{vencida ? "vencida" : f.status}</Badge>
-                  </div>
-                  <div className="text-2xl font-semibold tabular-nums">{brl(Number(f.valor_total))}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    vence {f.vencimento?.split("-").reverse().join("/")}
-                    {f.status === "paga" && f.pago_em ? ` · paga em ${String(f.pago_em).slice(0, 10).split("-").reverse().join("/")}` : ""}
-                  </div>
-                </CardContent></Card>
-              );
-            })}
-            {mesUnico && cartoes.filter((c) => !faturasPeriodo.some((f) => f.fonte_id === c.id)).map((c) => (
-              <Card key={c.id} style={{ borderTop: "3px solid #cbd5e1" }}><CardContent className="p-4">
-                <div className="text-xs text-muted-foreground">{c.nome}</div>
-                <div className="text-sm text-muted-foreground">Sem fatura importada neste mês.</div>
-              </CardContent></Card>
-            ))}
-          </div>
         </div>
       )}
 

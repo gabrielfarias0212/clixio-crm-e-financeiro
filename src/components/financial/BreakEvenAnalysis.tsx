@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, TrendingUp, AlertTriangle, CheckCircle2, Target, DollarSign, Camera, Wrench } from "lucide-react";
-import { useBusinessFixedExpenses } from "@/hooks/useBusinessFixedExpenses";
+import { useFixedCosts } from "@/hooks/useFixedCosts";
 import { useBusinessMetrics } from "@/hooks/useBusinessMetrics";
 import { useClients } from "@/contexts/ClientsContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +17,7 @@ interface ProjectCostRow {
 }
 
 export function BreakEvenAnalysis() {
-  const { expenses, loading: loadingExpenses, getTotalMonthlyExpenses } = useBusinessFixedExpenses();
+  const { loading: loadingExpenses, monthlyTotal: fixedCostsMonthly } = useFixedCosts();
   const metrics = useBusinessMetrics();
   const { clients } = useClients();
 
@@ -39,12 +39,19 @@ export function BreakEvenAnalysis() {
 
   const analysis = useMemo(() => {
     // 1. Custos fixos mensais
-    const fixedCosts = getTotalMonthlyExpenses();
+    const fixedCosts = fixedCostsMonthly;
 
-    // 2. Ticket médio por evento
+    // 2. Ticket médio por evento = valor médio dos contratos fechados no ano
+    // (fechado + projeto finalizado, com valor de contrato informado).
+    // Antes: receita total das entradas do ano ÷ contratos criados no ano, o que
+    // misturava pagamentos de contratos antigos e entradas sem cliente.
+    const ticketContracts = metrics.closedContractsData.filter(
+      (c) => Number(c.contractValue) > 0
+    );
     const avgTicket =
-      metrics.activeContracts > 0
-        ? metrics.totalRevenue / metrics.activeContracts
+      ticketContracts.length > 0
+        ? ticketContracts.reduce((sum, c) => sum + Number(c.contractValue), 0) /
+          ticketContracts.length
         : 0;
 
     // 3. Custo variável médio por projeto (de project_costs)
@@ -72,21 +79,28 @@ export function BreakEvenAnalysis() {
     }).length;
 
     // 7. Status
-    let status: "danger" | "warning" | "ok" = "danger";
-    if (breakEven !== null && eventsThisMonth >= breakEven) status = "ok";
-    else if (breakEven !== null && eventsThisMonth >= breakEven * 0.7) status = "warning";
+    // Sem custo fixo informado (ou sem ticket/margem) não há veredito: "neutral".
+    // Antes, custo 0 gerava ponto de equilíbrio 0 e o painel mostrava "No azul".
+    const hasEnoughData = fixedCosts > 0 && avgTicket > 0 && contributionMargin > 0;
+    let status: "danger" | "warning" | "ok" | "neutral" = "neutral";
+    if (hasEnoughData && breakEven !== null) {
+      status = "danger";
+      if (eventsThisMonth >= breakEven) status = "ok";
+      else if (eventsThisMonth >= breakEven * 0.7) status = "warning";
+    }
 
     return {
       fixedCosts,
       avgTicket,
+      ticketContractsCount: ticketContracts.length,
       avgVarCost,
       contributionMargin,
       breakEven,
       eventsThisMonth,
       status,
-      hasEnoughData: avgTicket > 0 && contributionMargin > 0,
+      hasEnoughData,
     };
-  }, [getTotalMonthlyExpenses, metrics, allCosts, clients]);
+  }, [fixedCostsMonthly, metrics, allCosts, clients]);
 
   if (loadingExpenses || loadingCosts) {
     return (
@@ -112,7 +126,9 @@ export function BreakEvenAnalysis() {
           ? "border-green-500/40 bg-green-50/30 dark:bg-green-950/20"
           : analysis.status === "warning"
           ? "border-yellow-500/40 bg-yellow-50/30 dark:bg-yellow-950/20"
-          : "border-red-500/40 bg-red-50/30 dark:bg-red-950/20"
+          : analysis.status === "danger"
+          ? "border-red-500/40 bg-red-50/30 dark:bg-red-950/20"
+          : "bg-muted/30"
       }>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -152,7 +168,7 @@ export function BreakEvenAnalysis() {
                 <p>Para calcular o ponto de equilíbrio, você precisa ter pelo menos:</p>
                 <ul className="list-disc list-inside mt-1 space-y-0.5">
                   <li>Contratos fechados com valor registrado</li>
-                  <li>Despesas fixas cadastradas</li>
+                  <li>Custos fixos mensais informados (virão do módulo Finanças)</li>
                 </ul>
               </div>
             </div>
@@ -206,7 +222,9 @@ export function BreakEvenAnalysis() {
               <span className="text-xs text-muted-foreground">Custos Fixos/mês</span>
             </div>
             <p className="text-lg font-bold">{fmt(analysis.fixedCosts)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">despesas fixas cadastradas</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {analysis.fixedCosts > 0 ? "despesas fixas cadastradas" : "ainda não informados (virão do módulo Finanças)"}
+            </p>
           </CardContent>
         </Card>
 
@@ -220,7 +238,7 @@ export function BreakEvenAnalysis() {
             </div>
             <p className="text-lg font-bold">{fmt(analysis.avgTicket)}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              por evento ({metrics.activeContracts} contratos)
+              por evento (média de {analysis.ticketContractsCount} contratos fechados no ano)
             </p>
           </CardContent>
         </Card>

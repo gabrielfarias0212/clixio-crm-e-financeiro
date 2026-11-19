@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, CalendarDays, DollarSign, AlertCircle, Info } from "lucide-react";
 import { useClients } from "@/contexts/ClientsContext";
-import { useBusinessFixedExpenses } from "@/hooks/useBusinessFixedExpenses";
+import { useFixedCosts } from "@/hooks/useFixedCosts";
 import { addMonths, format, startOfMonth, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -47,11 +47,11 @@ function formatBR(date: Date): string {
 
 export function CashFlowForecast() {
   const { clients } = useClients();
-  const { getTotalMonthlyExpenses } = useBusinessFixedExpenses();
+  const { monthlyTotal: fixedMonthly, configured: hasFixed } = useFixedCosts();
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
 
   const { months, totalPending, overdueAmount, fallbackCount } = useMemo(() => {
-    const fixedPerMonth = getTotalMonthlyExpenses();
+    const fixedPerMonth = fixedMonthly;
     const now = new Date();
     const today = startOfMonth(now);
 
@@ -123,7 +123,7 @@ export function CashFlowForecast() {
     }));
 
     return { months, totalPending, overdueAmount, fallbackCount };
-  }, [clients, getTotalMonthlyExpenses]);
+  }, [clients, fixedMonthly]);
 
   const toggle = (key: string) =>
     setExpandedMonth((prev) => (prev === key ? null : key));
@@ -175,8 +175,10 @@ export function CashFlowForecast() {
               </div>
               <span className="text-xs text-muted-foreground">Despesas fixas/mês</span>
             </div>
-            <p className="text-xl font-bold">{fmt(months[0]?.fixedExpenses ?? 0)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">despesas ativas cadastradas</p>
+            <p className="text-xl font-bold">{hasFixed ? fmt(months[0]?.fixedExpenses ?? 0) : "—"}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {hasFixed ? "despesas ativas cadastradas" : "não informadas (virão do módulo Finanças)"}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -211,11 +213,13 @@ export function CashFlowForecast() {
                         style={{ width: `${(month.totalReceipts / maxBar) * 100}%` }}
                       />
                     )}
-                    {/* Linha de corte das despesas fixas */}
-                    <div
-                      className="absolute inset-y-0 border-r-2 border-red-500/70"
-                      style={{ left: `${Math.min((month.fixedExpenses / maxBar) * 100, 99)}%` }}
-                    />
+                    {/* Linha de corte das despesas fixas (só quando há custo fixo informado) */}
+                    {hasFixed && (
+                      <div
+                        className="absolute inset-y-0 border-r-2 border-red-500/70"
+                        style={{ left: `${Math.min((month.fixedExpenses / maxBar) * 100, 99)}%` }}
+                      />
+                    )}
                   </div>
 
                   {/* Numbers */}
@@ -279,12 +283,14 @@ export function CashFlowForecast() {
                     ))
                   )}
 
-                  <div className="flex items-center justify-between text-sm pt-1 text-muted-foreground">
-                    <span>(-) Despesas fixas estimadas</span>
-                    <span className="text-red-600 font-medium">- {fmt(month.fixedExpenses)}</span>
-                  </div>
+                  {hasFixed && (
+                    <div className="flex items-center justify-between text-sm pt-1 text-muted-foreground">
+                      <span>(-) Despesas fixas estimadas</span>
+                      <span className="text-red-600 font-medium">- {fmt(month.fixedExpenses)}</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between text-sm font-semibold border-t pt-2">
-                    <span>Saldo líquido previsto</span>
+                    <span>{hasFixed ? "Saldo líquido previsto" : "Total previsto a receber"}</span>
                     <span className={month.netFlow >= 0 ? "text-green-600" : "text-red-600"}>
                       {fmt(month.netFlow)}
                     </span>
@@ -297,7 +303,8 @@ export function CashFlowForecast() {
       </div>
 
       <p className="text-xs text-muted-foreground text-center">
-        Parcelas sem vencimento usam data do evento − {DAYS_BEFORE_EVENT} dias como estimativa · Despesas fixas baseadas no cadastro de despesas fixas
+        Parcelas sem vencimento usam data do evento − {DAYS_BEFORE_EVENT} dias como estimativa ·{" "}
+        {hasFixed ? "Despesas fixas baseadas no cadastro de despesas fixas" : "Despesas fixas ainda não informadas: o saldo mostra só os recebimentos previstos"}
       </p>
     </div>
   );

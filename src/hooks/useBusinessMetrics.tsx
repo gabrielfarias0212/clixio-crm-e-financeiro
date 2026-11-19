@@ -93,6 +93,12 @@ export function useBusinessMetrics() {
     const closedContracts = closedContractsData.length;
     const conversionRate = totalLeads > 0 ? (closedContracts / totalLeads) * 100 : 0;
 
+    // Ticket médio = valor médio dos contratos fechados no ano (com valor informado).
+    const comValor = closedContractsData.filter(c => Number(c.contractValue) > 0);
+    const averageTicket = comValor.length > 0
+      ? comValor.reduce((sum, c) => sum + Number(c.contractValue), 0) / comValor.length
+      : 0;
+
     // 4. Lucro líquido (Entradas - Saídas)
     const totalExpensesData = transactions
       .filter(t => {
@@ -123,6 +129,7 @@ export function useBusinessMetrics() {
       monthlyTransactions,
       chartData,
       conversionRate,
+      averageTicket,
       totalLeadsData,
       closedContractsData,
       netProfit,

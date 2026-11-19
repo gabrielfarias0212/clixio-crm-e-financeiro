@@ -38,7 +38,9 @@ export function TriagemTab({ lancs, categorias, onMudou }: { lancs: Lanc[]; cate
   async function aplicar(g: Grupo, pertence: "PF" | "PJ") {
     setSalvando(g.chave);
     try {
-      await salvarRegra(g.chave, cat[g.chave] || null, pertence, g.ids);
+      // inclui as parcelas futuras (projetadas) do mesmo destino, que a triagem não lista
+      const futuras = lancs.filter((l) => l.status === "projetado" && l.tipo === "saida" && chaveDestino(l.descricao) === g.chave).map((l) => l.id);
+      await salvarRegra(g.chave, cat[g.chave] || null, pertence, [...g.ids, ...futuras]);
       toast.success(`${g.qtd} lançamentos de "${g.nome}" marcados como ${pertence}. Regra salva.`);
       onMudou();
     } catch (e: any) { toast.error("Erro: " + (e.message ?? e)); } finally { setSalvando(null); }

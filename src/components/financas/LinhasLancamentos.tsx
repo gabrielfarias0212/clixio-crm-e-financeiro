@@ -13,7 +13,7 @@ function Linha({ l, categorias, onMudou }: { l: Lanc; categorias: Categoria[]; o
   const [nome, setNome] = useState(l.apelido ?? "");
 
   async function salvar(patch: Parameters<typeof atualizarLancamento>[1]) {
-    try { await atualizarLancamento(l.id, patch); onMudou(); }
+    try { const n = await atualizarLancamento(l.id, patch); if (n > 0) toast.success(`Aplicado também a ${n} ${n === 1 ? "outra parcela" : "outras parcelas"} desta compra`); onMudou(); }
     catch (e: any) { toast.error("Erro: " + (e.message ?? e)); }
   }
   async function salvarNome() {

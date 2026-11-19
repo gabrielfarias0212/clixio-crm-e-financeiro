@@ -41,7 +41,7 @@ export function parseC6Cartao(text: string): ResultadoParse<LinhaCartao> & { pag
   }
 
   // "Inclusao de Pagamento" = quitação da fatura anterior: não é gasto nem estorno, fica fora do total
-  const pagamentos = out.filter((l) => /^(INCLUSAO DE )?PAGAMENTO/.test(l.descricao) && l.valor < 0);
+  const pagamentos = out.filter((l) => /^((INCLUSAO DE )?PAGAMENTO|PAG(AMENTO)? FATURA)/.test(l.descricao) && l.valor < 0);
   for (const p of pagamentos) out.splice(out.indexOf(p), 1);
 
   // Negativo + mesmo comerciante de uma compra positiva (ou rótulo "Estorno") => estorno.

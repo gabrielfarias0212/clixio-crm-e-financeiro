@@ -10,12 +10,14 @@ import { GraficosResumo } from "./GraficosResumo";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function ResumoTab({ lancs, faturas, categorias, onMudou }: { lancs: Lanc[]; faturas: any[]; categorias: Categoria[]; onMudou: () => void }) {
+export function ResumoTab({ lancs, faturas, categorias, onMudou, onImportar, onTriagem }: { lancs: Lanc[]; faturas: any[]; categorias: Categoria[]; onMudou: () => void; onImportar: () => void; onTriagem: () => void }) {
   const [mes, setMes] = useState("todos");
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
   const alternar = (id: string) => setAbertas((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const porFatura = useMemo(() => { const m = new Map<string, Lanc[]>(); for (const l of lancs) if (l.fatura_id) (m.get(l.fatura_id) ?? m.set(l.fatura_id, []).get(l.fatura_id)!).push(l); return m; }, [lancs]);
   const meses = useMemo(() => [...new Set(lancs.map((l) => l.data.slice(0, 7)))].sort().reverse(), [lancs]);
+
+  const semCategoria = useMemo(() => lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno") && !l.categoria_id).length, [lancs]);
 
   const q = useMemo(() => {
     const r = { PF_PF: 0, PJ_PJ: 0, PJ_PF: 0, PF_PJ: 0 };
@@ -41,19 +43,27 @@ export function ResumoTab({ lancs, faturas, categorias, onMudou }: { lancs: Lanc
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm">
-        <span>Período:</span>
-        <select className="rounded-md border px-2 py-1" value={mes} onChange={(e) => setMes(e.target.value)}>
-          <option value="todos">Tudo</option>{meses.map((m) => <option key={m} value={m}>{m}</option>)}
-        </select>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+        <div className="flex items-center gap-2">
+          <span>Período:</span>
+          <select className="rounded-md border px-2 py-1" value={mes} onChange={(e) => setMes(e.target.value)}>
+            <option value="todos">Tudo</option>{meses.map((m) => <option key={m} value={m}>{m}</option>)}
+          </select>
+        </div>
+        <Button onClick={onImportar}>Importar extrato ou fatura</Button>
       </div>
+      {semCategoria > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <span>{semCategoria} lançamentos ainda sem categoria. Classifique para os números e gráficos ficarem corretos.</span>
+          <Button size="sm" variant="outline" onClick={onTriagem}>Ir para a Triagem</Button>
+        </div>
+      )}
       <div className="grid gap-3 sm:grid-cols-2">
         <Q t="PF pagou · é PF" v={q.PF_PF} d="gasto pessoal, saiu do pessoal" />
         <Q t="PJ pagou · é PJ" v={q.PJ_PJ} d="gasto da empresa, saiu da empresa" />
         <Q alerta t="PJ pagou · é PF" v={q.PJ_PF} d="retirada implícita: gasto pessoal pago pela empresa" />
         <Q alerta t="PF pagou · é PJ" v={q.PF_PJ} d="a receber da empresa (reembolso)" />
       </div>
-      <p className="text-xs text-muted-foreground">Tudo que ainda não foi triado conta como "pago por quem pagou". Classifique na aba Triagem para os quadrantes ficarem corretos.</p>
 
       <GraficosResumo lancs={lancs} categorias={categorias} mes={mes} />
 

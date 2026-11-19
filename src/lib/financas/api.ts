@@ -86,12 +86,20 @@ export async function importar(opts: {
     await db.from("fin_lancamentos").delete().eq("fonte_id", fonte.id).eq("fatura_id", faturaId).eq("status", "projetado");
   }
 
+  // Parcelas da mesma compra (mesma fonte, descrição, nº de parcelas e valor) herdam a categoria já escolhida.
+  const chaveParc = (d: string, t: number | null, v: number) => `${d}|${t}|${Number(v).toFixed(2)}`;
+  const herdadas = new Map<string, { categoria_id: string; pertence_a: "PF" | "PJ" }>();
+  const { data: jaCat } = await db.from("fin_lancamentos").select("descricao,parcela_total,valor,categoria_id,pertence_a,data")
+    .eq("fonte_id", fonte.id).gt("parcela_total", 1).not("categoria_id", "is", null).order("data", { ascending: false }).range(0, 999);
+  for (const x of jaCat ?? []) { const k = chaveParc(x.descricao, x.parcela_total, x.valor); if (!herdadas.has(k)) herdadas.set(k, { categoria_id: x.categoria_id, pertence_a: x.pertence_a }); }
+
   const montar = (l: LancamentoNovo, fatura_id: string | null) => {
     const r = aplicarRegra(l.descricao, regras);
+    const h = l.parcela_total && l.parcela_total > 1 ? herdadas.get(chaveParc(l.descricao, l.parcela_total, l.valor)) : undefined;
     return {
       user_id: user, fonte_id: fonte.id, importacao_id: imp.id, fatura_id,
       data: l.data, descricao: l.descricao, descricao_original: l.descricao_original, valor: l.valor, tipo: l.tipo,
-      pagador: fonte.pagador, pertence_a: r?.pertence_a ?? fonte.pagador, categoria_id: r?.categoria_id ?? null,
+      pagador: fonte.pagador, pertence_a: r?.pertence_a ?? h?.pertence_a ?? fonte.pagador, categoria_id: r?.categoria_id ?? h?.categoria_id ?? null,
       parcela_atual: l.parcela_atual, parcela_total: l.parcela_total, status: l.status, hash_dedupe: l.hash_dedupe, obs: l.obs ?? null,
     };
   };
@@ -155,9 +163,23 @@ export async function criarCategoria(nome: string, grupo: string) {
   if (error) throw error; return data as Categoria;
 }
 
-export async function atualizarLancamento(id: string, patch: Partial<Pick<Lanc, "apelido" | "categoria_id" | "pertence_a">>) {
+/** Atualiza o lançamento. Se for compra parcelada, categoria/PF-PJ valem também para as outras parcelas
+ *  (mesma fonte, descrição, nº de parcelas e valor) que ainda estão sem categoria ou projetadas. Retorna quantas outras foram ajustadas. */
+export async function atualizarLancamento(id: string, patch: Partial<Pick<Lanc, "apelido" | "categoria_id" | "pertence_a">>): Promise<number> {
   const { error } = await db.from("fin_lancamentos").update(patch).eq("id", id);
   if (error) throw error;
+  if (patch.categoria_id === undefined && patch.pertence_a === undefined) return 0;
+  const { data: l } = await db.from("fin_lancamentos").select("fonte_id,descricao,parcela_total,valor,tipo").eq("id", id).single();
+  if (!l || !l.parcela_total || l.parcela_total < 2 || l.tipo !== "saida") return 0;
+  const prop: any = {};
+  if (patch.categoria_id) prop.categoria_id = patch.categoria_id;
+  if (patch.pertence_a) prop.pertence_a = patch.pertence_a;
+  if (!Object.keys(prop).length) return 0;
+  const { data, error: e2 } = await db.from("fin_lancamentos").update(prop)
+    .eq("fonte_id", l.fonte_id).eq("descricao", l.descricao).eq("parcela_total", l.parcela_total).eq("valor", l.valor).eq("tipo", "saida").neq("id", id)
+    .or("status.eq.projetado,categoria_id.is.null").select("id");
+  if (e2) throw e2;
+  return data?.length ?? 0;
 }
 
 // ---------- Conciliação ----------

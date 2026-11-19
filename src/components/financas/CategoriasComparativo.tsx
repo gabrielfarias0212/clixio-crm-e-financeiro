@@ -3,6 +3,7 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Categoria, Fonte, Lanc } from "@/lib/financas/api";
+import { mesPelaData, type MesDe } from "@/lib/financas/periodo";
 import { LinhasLancamentos } from "./LinhasLancamentos";
 
 // Meses em ordem do tempo: azul claro → escuro (sequencial; o mais recente é o mais escuro).
@@ -26,7 +27,7 @@ function Tip({ active, payload, label }: any) {
 
 export type Origem = "tudo" | "cartoes" | "contas";
 
-export function CategoriasComparativo({ lancs, fontes, categorias, onMudou, origemInicial }: { lancs: Lanc[]; fontes: Fonte[]; categorias: Categoria[]; onMudou: () => void; origemInicial: Origem }) {
+export function CategoriasComparativo({ lancs, fontes, categorias, onMudou, origemInicial, mesDe = mesPelaData }: { lancs: Lanc[]; fontes: Fonte[]; categorias: Categoria[]; onMudou: () => void; origemInicial: Origem; mesDe?: MesDe }) {
   const [origem, setOrigem] = useState<Origem>(origemInicial);
   const tipoFonte = useMemo(() => new Map(fontes.map((f) => [f.id, f.tipo])), [fontes]);
   const [dono, setDono] = useState<"todos" | "PF" | "PJ">("todos");
@@ -36,7 +37,7 @@ export function CategoriasComparativo({ lancs, fontes, categorias, onMudou, orig
   // Gasto = saída e estorno de qualquer fonte. Pagamento de fatura e transferência ficam fora (não são gasto novo).
   const doOrigem = (l: Lanc) => origem === "tudo" || tipoFonte.get(l.fonte_id) === (origem === "cartoes" ? "cartao" : "conta");
   const gastos = useMemo(() => lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno") && doOrigem(l) && (dono === "todos" || l.pertence_a === dono)), [lancs, dono, origem, tipoFonte]);
-  const mesesDisp = useMemo(() => [...new Set(lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno") && doOrigem(l)).map((l) => l.data.slice(0, 7)))].sort().reverse(), [lancs, origem, tipoFonte]);
+  const mesesDisp = useMemo(() => [...new Set(lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno") && doOrigem(l)).map((l) => mesDe(l)))].sort().reverse(), [lancs, origem, tipoFonte, mesDe]);
   const meses = useMemo(() => (sel ?? mesesDisp.slice(0, 3)).slice().sort(), [sel, mesesDisp]);
   const catNome = useMemo(() => new Map(categorias.map((c) => [c.id, c.nome])), [categorias]);
   const nomeCat = (l: Lanc) => (l.categoria_id ? catNome.get(l.categoria_id) ?? "Outros" : SEM);
@@ -50,7 +51,7 @@ export function CategoriasComparativo({ lancs, fontes, categorias, onMudou, orig
   const linhas = useMemo(() => {
     const por = new Map<string, { nome: string; porMes: Record<string, number>; total: number; itens: Lanc[] }>();
     for (const l of gastos) {
-      const k = l.data.slice(0, 7);
+      const k = mesDe(l);
       if (!meses.includes(k)) continue;
       const n = nomeCat(l);
       const r = por.get(n) ?? { nome: n, porMes: {}, total: 0, itens: [] };
@@ -58,7 +59,7 @@ export function CategoriasComparativo({ lancs, fontes, categorias, onMudou, orig
       r.porMes[k] = (r.porMes[k] ?? 0) + v; r.total += v; r.itens.push(l); por.set(n, r);
     }
     return [...por.values()].filter((r) => r.total > 0).sort((a, b) => b.total - a.total);
-  }, [gastos, meses, catNome]);
+  }, [gastos, meses, catNome, mesDe]);
 
   const totalMes = (m: string) => linhas.reduce((s, r) => s + (r.porMes[m] ?? 0), 0);
   const grafico = useMemo(() => {

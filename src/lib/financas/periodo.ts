@@ -9,3 +9,7 @@ export function addMes(m: string, k: number) {
 export const qtdMeses = (p: Periodo) => (+p.ate.slice(0, 4) * 12 + +p.ate.slice(5, 7)) - (+p.de.slice(0, 4) * 12 + +p.de.slice(5, 7)) + 1;
 export const noPeriodo = (data: string, p: Periodo | null) => !p || (data.slice(0, 7) >= p.de && data.slice(0, 7) <= p.ate);
 export const rotuloPeriodo = (p: Periodo | null) => (!p ? "Tudo" : p.de === p.ate ? nomeMes(p.de) : `${nomeMes(p.de)} a ${nomeMes(p.ate)}`);
+
+export const mesNoPeriodo = (m: string, p: Periodo | null) => !p || (m >= p.de && m <= p.ate);
+export type MesDe = (l: { data: string; fatura_id: string | null }) => string;
+export const mesPelaData: MesDe = (l) => l.data.slice(0, 7);

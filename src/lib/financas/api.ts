@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { LancamentoNovo, Preview, Regra } from "./importar";
+import type { ClienteClixio, TxClixio } from "./conciliacao";
 import { aplicarRegra, ehCartao, montarProjetados, vencimentoDe } from "./importar";
 
 // As tabelas fin_* ainda não estão em integrations/supabase/types.ts (arquivo gerado); acesso sem tipos.
@@ -10,6 +11,7 @@ export interface Categoria { id: string; nome: string; grupo: string }
 export interface Lanc {
   id: string; fonte_id: string; fatura_id: string | null; data: string; descricao: string; valor: number;
   tipo: string; parcela_atual: number | null; parcela_total: number | null; pagador: "PF" | "PJ"; pertence_a: "PF" | "PJ"; categoria_id: string | null; status: string; obs: string | null; apelido: string | null;
+  conciliado: boolean; clixio_transaction_id: string | null; clixio_match_status: "sugerido" | "confirmado" | "rejeitado" | null; par_id: string | null;
 }
 
 export async function listarFontes(): Promise<Fonte[]> {
@@ -35,7 +37,7 @@ export async function listarLancamentos(): Promise<Lanc[]> {
   return todos;
 }
 export async function listarFaturas() {
-  const { data, error } = await db.from("fin_faturas").select("*, fin_fontes(nome)").order("competencia", { ascending: false });
+  const { data, error } = await db.from("fin_faturas").select("*, fin_fontes(nome,banco)").order("competencia", { ascending: false });
   if (error) throw error; return data as any[];
 }
 
@@ -156,4 +158,84 @@ export async function criarCategoria(nome: string, grupo: string) {
 export async function atualizarLancamento(id: string, patch: Partial<Pick<Lanc, "apelido" | "categoria_id" | "pertence_a">>) {
   const { error } = await db.from("fin_lancamentos").update(patch).eq("id", id);
   if (error) throw error;
+}
+
+// ---------- Conciliação ----------
+async function paginar<T>(consulta: (de: number, ate: number) => any): Promise<T[]> {
+  const todos: T[] = [];
+  for (let de = 0; ; de += 1000) {
+    const { data, error } = await consulta(de, de + 999);
+    if (error) throw error;
+    todos.push(...data);
+    if (data.length < 1000) break;
+  }
+  return todos;
+}
+/** Somente leitura: entradas e clientes do módulo Financeiro. */
+export async function carregarClixio(): Promise<{ txs: TxClixio[]; clientes: ClienteClixio[] }> {
+  const [txs, clientes] = await Promise.all([
+    paginar<any>((a, b) => db.from("wedding_transactions").select("id,date,amount,description,client_id,payment_id,category").eq("type", "entrada").order("date", { ascending: false }).range(a, b)),
+    paginar<any>((a, b) => db.from("wedding_clients").select("id,name,couple_name").order("name").range(a, b)),
+  ]);
+  return { txs: txs.map((t) => ({ ...t, amount: Number(t.amount) })), clientes };
+}
+export async function vincularTransacao(lancId: string, txId: string, score: number) {
+  const { error } = await db.from("fin_lancamentos").update({ clixio_transaction_id: txId, clixio_match_status: "confirmado", clixio_match_score: score, conciliado: true }).eq("id", lancId);
+  if (error) throw error;
+}
+export async function marcarNaoEhCliente(lancId: string) {
+  const { error } = await db.from("fin_lancamentos").update({ clixio_match_status: "rejeitado", clixio_transaction_id: null, conciliado: false }).eq("id", lancId);
+  if (error) throw error;
+}
+/** Cria no Financeiro o pagamento do cliente + a transação de entrada (padrão do Clixio) e vincula. Desfaz o que criou se algo falhar. */
+export async function registrarPagamentoCliente(l: Lanc, cliente: ClienteClixio, nota: string) {
+  const user = (await supabase.auth.getUser()).data.user?.id;
+  if (!user) throw new Error("Sem usuário autenticado");
+  const { data: pag, error: e1 } = await db.from("wedding_payments").insert({
+    client_id: cliente.id, amount: l.valor, date: l.data, payment_status: "pago", user_id: user,
+    notes: `${nota ? nota + " · " : ""}Pix recebido: ${l.descricao} (registrado pela conciliação do módulo Finanças)`,
+  }).select("id").single();
+  if (e1) throw e1;
+  const { data: tx, error: e2 } = await db.from("wedding_transactions").insert({
+    amount: l.valor, date: l.data, type: "entrada", category: "casamento", client_id: cliente.id, payment_id: pag.id, user_id: user,
+    description: `Pagamento — ${cliente.name}${cliente.couple_name ? ` (${cliente.couple_name})` : ""}`,
+  }).select("id").single();
+  if (e2) { await db.from("wedding_payments").delete().eq("id", pag.id); throw e2; }
+  const { error: e3 } = await db.from("fin_lancamentos").update({ clixio_transaction_id: tx.id, clixio_match_status: "confirmado", clixio_match_score: 1, conciliado: true, obs: "pagamento criado no Clixio pela conciliação" }).eq("id", l.id);
+  if (e3) { await db.from("wedding_transactions").delete().eq("id", tx.id); await db.from("wedding_payments").delete().eq("id", pag.id); throw e3; }
+}
+/** Desfaz um vínculo. Se o pagamento foi criado pela conciliação, remove também o que foi criado no Financeiro. */
+export async function desfazerVinculo(l: Lanc) {
+  if (l.obs === "pagamento criado no Clixio pela conciliação" && l.clixio_transaction_id) {
+    const { data: tx } = await db.from("wedding_transactions").select("id,payment_id").eq("id", l.clixio_transaction_id).maybeSingle();
+    if (tx) { await db.from("wedding_transactions").delete().eq("id", tx.id); if (tx.payment_id) await db.from("wedding_payments").delete().eq("id", tx.payment_id); }
+  }
+  const { error } = await db.from("fin_lancamentos").update({ clixio_transaction_id: null, clixio_match_status: null, clixio_match_score: null, conciliado: false, obs: l.obs === "pagamento criado no Clixio pela conciliação" ? null : l.obs }).eq("id", l.id);
+  if (error) throw error;
+}
+export async function confirmarTransferencia(saidaId: string, entradaId: string) {
+  const par = crypto.randomUUID();
+  for (const [id, lado] of [[saidaId, "saida"], [entradaId, "entrada"]] as const) {
+    const { error } = await db.from("fin_lancamentos").update({ tipo: "transferencia", par_id: par, obs: `transferência entre contas (neutra)|${lado}` }).eq("id", id);
+    if (error) throw error;
+  }
+}
+/** Entrada vinda de conta própria cuja outra ponta não foi importada: fica neutra (não conta como receita nova). */
+export async function marcarTransferenciaPropria(ids: string[]) {
+  const { error } = await db.from("fin_lancamentos").update({ tipo: "transferencia", obs: "transferência de conta própria (sem par importado)|entrada" }).in("id", ids);
+  if (error) throw error;
+}
+export async function desfazerTransferencia(lados: Lanc[]) {
+  for (const l of lados) {
+    const tipo = l.obs?.endsWith("|entrada") ? "entrada" : "saida";
+    const { error } = await db.from("fin_lancamentos").update({ tipo, par_id: null, obs: null }).eq("id", l.id);
+    if (error) throw error;
+  }
+}
+export async function vincularPagamentoFatura(l: Lanc, f: { id: string; valor_total: number }) {
+  const total = Number(f.valor_total), parcial = l.valor + 0.01 < total;
+  const { error: e1 } = await db.from("fin_faturas").update({ status: parcial ? "parcial" : "paga", pago_em: l.data, valor_pago: l.valor, pagamento_lancamento_id: l.id }).eq("id", f.id);
+  if (e1) throw e1;
+  const { error: e2 } = await db.from("fin_lancamentos").update({ conciliado: true }).eq("id", l.id);
+  if (e2) throw e2;
 }

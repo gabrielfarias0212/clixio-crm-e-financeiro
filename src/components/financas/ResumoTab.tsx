@@ -10,7 +10,7 @@ import { GraficosResumo } from "./GraficosResumo";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function ResumoTab({ lancs, faturas, categorias, onMudou, onImportar, onTriagem }: { lancs: Lanc[]; faturas: any[]; categorias: Categoria[]; onMudou: () => void; onImportar: () => void; onTriagem: () => void }) {
+export function ResumoTab({ lancs, faturas, categorias, onMudou, onImportar, onTriagem, pendConc, onConciliar }: { lancs: Lanc[]; faturas: any[]; categorias: Categoria[]; onMudou: () => void; onImportar: () => void; onTriagem: () => void; pendConc: number; onConciliar: () => void }) {
   const [mes, setMes] = useState("todos");
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
   const alternar = (id: string) => setAbertas((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -52,6 +52,12 @@ export function ResumoTab({ lancs, faturas, categorias, onMudou, onImportar, onT
         </div>
         <Button onClick={onImportar}>Importar extrato ou fatura</Button>
       </div>
+      {pendConc > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-blue-300 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+          <span>{pendConc} lançamentos do extrato aguardando conciliação com o Financeiro (para não duplicar entradas de clientes).</span>
+          <Button size="sm" variant="outline" onClick={onConciliar}>Ir para a Conciliação</Button>
+        </div>
+      )}
       {semCategoria > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           <span>{semCategoria} lançamentos ainda sem categoria. Classifique para os números e gráficos ficarem corretos.</span>

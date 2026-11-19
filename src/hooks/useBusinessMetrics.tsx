@@ -1,6 +1,7 @@
 
 import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
+import { useDespesasEmpresa } from "@/hooks/useDespesasEmpresa";
 import { startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { stringToDate } from "@/utils/dateUtils";
 import { Client } from "@/utils/types";
@@ -9,6 +10,7 @@ import { useMemo } from "react";
 export function useBusinessMetrics() {
   const { clients } = useClients();
   const { transactions } = useTransactions();
+  const despesasFin = useDespesasEmpresa();
   const currentYear = new Date().getFullYear();
   const yearStart = startOfYear(new Date());
   const yearEnd = endOfYear(new Date());
@@ -109,10 +111,11 @@ export function useBusinessMetrics() {
         return transactionDate && isWithinInterval(transactionDate, { start: yearStart, end: yearEnd });
       });
       
+    // + despesas da empresa lançadas no módulo Finanças (ano atual)
     const totalExpenses = totalExpensesData.reduce((sum, t) => {
       const amount = Number(t.amount);
       return sum + (isNaN(amount) ? 0 : amount);
-    }, 0);
+    }, 0) + despesasFin.doAno;
     
     const netProfit = totalRevenue - totalExpenses;
 
@@ -139,7 +142,7 @@ export function useBusinessMetrics() {
       revenueMonths,
       currentYear
     };
-  }, [clients, transactions, yearStart, yearEnd]);
+  }, [clients, transactions, yearStart, yearEnd, despesasFin.doAno]);
 
   return metrics;
 }

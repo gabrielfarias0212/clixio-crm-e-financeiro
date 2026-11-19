@@ -38,6 +38,12 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
     return r;
   }, [lancsO, periodo, mesDe]);
   const totalPF = q.PF_PF + q.PJ_PF, totalPJ = q.PJ_PJ + q.PF_PJ;
+  // devoluções (estornos) do período, por de quem é o gasto: aparecem como aviso para o líquido negativo não parecer erro
+  const dev = useMemo(() => {
+    const r = { PF: 0, PJ: 0 };
+    for (const l of lancsO) if (l.status === "realizado" && l.tipo === "estorno" && mesNoPeriodo(mesDe(l), periodo) && !/ESTORNO TARIFA/.test(l.descricao)) (r as any)[l.pertence_a] += l.valor;
+    return r;
+  }, [lancsO, periodo, mesDe]);
   const acerto = q.PJ_PF - q.PF_PJ; // >0: a empresa bancou mais gasto pessoal do que você bancou da empresa
 
   // Parcelas já assumidas para os próximos meses (não entram nos números de gasto).
@@ -92,18 +98,23 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
           <div className="text-xs text-muted-foreground">Gasto pessoal (PF)</div>
           <div className="text-2xl font-semibold tabular-nums">{brl(totalPF)}</div>
           <div className="mt-1 text-xs text-muted-foreground">pago pela PF {brl(q.PF_PF)} · pago pela empresa {brl(q.PJ_PF)}</div>
+          {dev.PF > 0 && <div className="text-xs text-muted-foreground">já descontando {brl(dev.PF)} de devoluções</div>}
         </CardContent></Card>
         <Card style={{ borderTop: "3px solid #eb6834" }}><CardContent className="p-4">
           <div className="text-xs text-muted-foreground">Gasto da empresa (PJ)</div>
           <div className="text-2xl font-semibold tabular-nums">{brl(totalPJ)}</div>
           <div className="mt-1 text-xs text-muted-foreground">pago pela empresa {brl(q.PJ_PJ)} · pago por você (PF) {brl(q.PF_PJ)}</div>
+          {dev.PJ > 0 && <div className="text-xs text-muted-foreground">já descontando {brl(dev.PJ)} de devoluções{totalPJ < 0 ? " (por isso o total ficou negativo)" : ""}</div>}
         </CardContent></Card>
       </div>
       <div className="rounded-md border px-3 py-2 text-sm">
         <span className="font-medium">Acerto PF × PJ: </span>
         {Math.abs(acerto) < 0.005 ? "equilibrado."
-          : acerto > 0 ? <>a empresa bancou {brl(q.PJ_PF)} de gastos pessoais e você bancou {brl(q.PF_PJ)} de gastos da empresa. Saldo: você retirou <b>{brl(acerto)}</b> a mais do que a empresa te deve.</>
-          : <>você bancou {brl(q.PF_PJ)} de gastos da empresa e ela bancou {brl(q.PJ_PF)} de gastos pessoais. Saldo: a empresa te deve <b>{brl(-acerto)}</b>.</>}
+          : acerto > 0 ? <>você deve <b>{brl(acerto)}</b> à empresa.</>
+          : <>a empresa deve <b>{brl(-acerto)}</b> a você.</>}
+        <span className="text-xs text-muted-foreground">
+          {" "}A empresa pagou {brl(q.PJ_PF)} de gastos pessoais{q.PF_PJ < 0 ? <>; você recebeu {brl(-q.PF_PJ)} de devoluções de gastos da empresa</> : <> e você pagou {brl(q.PF_PJ)} de gastos da empresa</>}.
+        </span>
       </div>
       {proximos.length > 0 && (
         <div className="rounded-md border px-3 py-2 text-xs text-muted-foreground">

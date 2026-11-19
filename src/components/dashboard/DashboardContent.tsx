@@ -366,7 +366,7 @@ export function DashboardContent() {
             <div style={{ display: "flex", justifyContent: "space-around" }}>
               {[
                 { label: "Conversão", value: `${metrics.conversionRate.toFixed(1)}%`, color: "#3B6D11" },
-                { label: "Ticket médio", value: fmt(metrics.activeContracts > 0 ? metrics.totalRevenue / metrics.activeContracts : 0), color: "#1a1a1a" },
+                { label: "Ticket médio", value: fmt(metrics.averageTicket), color: "#1a1a1a" },
                 { label: "Perdidos", value: `${funnelData.find(f => f.label === "Perdido")?.count || 0}`, color: "#E05252" },
               ].map(m => (
                 <div key={m.label} style={{ textAlign: "center" }}>

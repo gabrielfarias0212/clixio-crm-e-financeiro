@@ -130,7 +130,7 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
                   {(() => {
                     let pf = 0, pj = 0;
                     for (const l of porFatura.get(f.id) ?? []) {
-                      if (l.tipo !== "saida" && l.tipo !== "estorno") continue;
+                      if (l.status !== "realizado" || (l.tipo !== "saida" && l.tipo !== "estorno")) continue;
                       const v = l.tipo === "estorno" ? -l.valor : l.valor;
                       if (l.pertence_a === "PJ") pj += v; else pf += v;
                     }

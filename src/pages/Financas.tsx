@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ImportarTab } from "@/components/financas/ImportarTab";
 import { TriagemTab } from "@/components/financas/TriagemTab";
 import { ResumoTab } from "@/components/financas/ResumoTab";
+import { ConciliacaoTab } from "@/components/financas/ConciliacaoTab";
 import { ManualTab } from "@/components/financas/ManualTab";
 import { listarCategorias, listarFaturas, listarLancamentos, type Categoria, type Lanc } from "@/lib/financas/api";
 
@@ -22,8 +23,11 @@ export default function Financas() {
     try {
       const [l, c, f] = await Promise.all([listarLancamentos(), listarCategorias(), listarFaturas()]);
       setLancs(l); setCats(c); setFaturas(f);
-    } catch (e: any) { toast.error("Erro ao carregar Finanças: " + (e.message ?? e)); }
+      return l;
+    } catch (e: any) { toast.error("Erro ao carregar Finanças: " + (e.message ?? e)); return null; }
   }, []);
+
+  const pendConc = lancs.filter((l) => l.status === "realizado" && ((l.tipo === "entrada" && !l.conciliado && l.clixio_match_status !== "rejeitado") || (l.tipo === "pagamento_fatura" && !l.conciliado))).length;
 
   useEffect(() => { try { localStorage.setItem(FINANCAS_FLAG, "1"); } catch { /* sem storage */ } carregar(); }, [carregar]);
 
@@ -38,16 +42,18 @@ export default function Financas() {
           <TabsList>
             <TabsTrigger value="resumo">Resumo</TabsTrigger>
             <TabsTrigger value="triagem">Triagem</TabsTrigger>
+            <TabsTrigger value="conciliacao">Conciliação{pendConc > 0 ? ` (${pendConc})` : ""}</TabsTrigger>
             <TabsTrigger value="manual">Manual</TabsTrigger>
           </TabsList>
           <TabsContent value="triagem"><TriagemTab lancs={lancs} categorias={cats} onMudou={carregar} /></TabsContent>
-          <TabsContent value="resumo"><ResumoTab lancs={lancs} faturas={faturas} categorias={cats} onMudou={carregar} onImportar={() => setImportando(true)} onTriagem={() => setAba("triagem")} /></TabsContent>
+          <TabsContent value="resumo"><ResumoTab lancs={lancs} faturas={faturas} categorias={cats} onMudou={carregar} onImportar={() => setImportando(true)} onTriagem={() => setAba("triagem")} pendConc={pendConc} onConciliar={() => setAba("conciliacao")} /></TabsContent>
+          <TabsContent value="conciliacao"><ConciliacaoTab lancs={lancs} faturas={faturas} onMudou={carregar} /></TabsContent>
           <TabsContent value="manual"><ManualTab categorias={cats} onMudou={carregar} /></TabsContent>
         </Tabs>
         <Dialog open={importando} onOpenChange={setImportando}>
           <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto">
             <DialogHeader><DialogTitle>Importar extrato ou fatura</DialogTitle></DialogHeader>
-            <ImportarTab onImportado={() => { carregar(); setImportando(false); setAba("triagem"); }} />
+            <ImportarTab onImportado={async () => { const l = await carregar(); setImportando(false); const conc = (l ?? []).some((x) => x.status === "realizado" && ((x.tipo === "entrada" && !x.conciliado && x.clixio_match_status !== "rejeitado") || (x.tipo === "pagamento_fatura" && !x.conciliado))); setAba(conc ? "conciliacao" : "triagem"); }} />
           </DialogContent>
         </Dialog>
       </div>

@@ -78,7 +78,8 @@ export function montarPreview(text: string, layout: Layout): Preview {
         valor: Math.abs(l.valor),
         tipo: l.valor < 0 ? "estorno" : "saida",
         parcela_atual: l.parcelaAtual, parcela_total: l.parcelaTotal, status: "realizado",
-        hash_dedupe: comOcorrencia(`${BANCO[layout]}|cartao|${l.data}|${l.valor}|${l.descricao}`, vistos),
+        // a parcela entra no hash: o Inter repete a data da compra original em todas as parcelas, então 11/12 e 12/12 seriam "iguais"
+        hash_dedupe: comOcorrencia(`${BANCO[layout]}|cartao|${l.data}|${l.valor}|${l.descricao}${l.parcelaTotal && l.parcelaTotal > 1 ? `|p${l.parcelaAtual}/${l.parcelaTotal}` : ""}`, vistos),
         obs: l.iof ? `inclui IOF ${l.iof.toFixed(2)}` : l.tipo === "credito_a_confirmar" ? "crédito a confirmar" : null,
       });
     }

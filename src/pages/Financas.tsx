@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImportarTab } from "@/components/financas/ImportarTab";
 import { TriagemTab } from "@/components/financas/TriagemTab";
+import { ContasTab } from "@/components/financas/ContasTab";
 import { ResumoTab } from "@/components/financas/ResumoTab";
 import { ConciliacaoTab } from "@/components/financas/ConciliacaoTab";
 import { ManualTab } from "@/components/financas/ManualTab";
@@ -41,13 +42,15 @@ export default function Financas() {
         </div>
         <Tabs value={aba} onValueChange={setAba}>
           <TabsList>
-            <TabsTrigger value="resumo">Resumo</TabsTrigger>
+            <TabsTrigger value="resumo">Cartões</TabsTrigger>
+            <TabsTrigger value="contas">Contas</TabsTrigger>
             <TabsTrigger value="triagem">Triagem</TabsTrigger>
             <TabsTrigger value="conciliacao">Conciliação{pendConc > 0 ? ` (${pendConc})` : ""}</TabsTrigger>
             <TabsTrigger value="manual">Manual</TabsTrigger>
           </TabsList>
           <TabsContent value="triagem"><TriagemTab lancs={lancs} categorias={cats} onMudou={carregar} /></TabsContent>
           <TabsContent value="resumo"><ResumoTab fontes={fontes} lancs={lancs} faturas={faturas} categorias={cats} onMudou={carregar} onImportar={() => setImportando(true)} onTriagem={() => setAba("triagem")} pendConc={pendConc} onConciliar={() => setAba("conciliacao")} /></TabsContent>
+          <TabsContent value="contas"><ContasTab lancs={lancs} fontes={fontes} categorias={cats} onMudou={carregar} onImportar={() => setImportando(true)} /></TabsContent>
           <TabsContent value="conciliacao"><ConciliacaoTab lancs={lancs} faturas={faturas} onMudou={carregar} /></TabsContent>
           <TabsContent value="manual"><ManualTab categorias={cats} onMudou={carregar} /></TabsContent>
         </Tabs>

@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Categoria, Lanc } from "@/lib/financas/api";
+import type { Categoria, Fonte, Lanc } from "@/lib/financas/api";
 import { LinhasLancamentos } from "./LinhasLancamentos";
 
 // Meses em ordem do tempo: azul claro → escuro (sequencial; o mais recente é o mais escuro).
@@ -24,14 +24,19 @@ function Tip({ active, payload, label }: any) {
   );
 }
 
-export function CategoriasTab({ lancs, categorias, onMudou }: { lancs: Lanc[]; categorias: Categoria[]; onMudou: () => void }) {
+export type Origem = "tudo" | "cartoes" | "contas";
+
+export function CategoriasComparativo({ lancs, fontes, categorias, onMudou, origemInicial }: { lancs: Lanc[]; fontes: Fonte[]; categorias: Categoria[]; onMudou: () => void; origemInicial: Origem }) {
+  const [origem, setOrigem] = useState<Origem>(origemInicial);
+  const tipoFonte = useMemo(() => new Map(fontes.map((f) => [f.id, f.tipo])), [fontes]);
   const [dono, setDono] = useState<"todos" | "PF" | "PJ">("todos");
   const [sel, setSel] = useState<string[] | null>(null);
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
 
   // Gasto = saída e estorno de qualquer fonte. Pagamento de fatura e transferência ficam fora (não são gasto novo).
-  const gastos = useMemo(() => lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno") && (dono === "todos" || l.pertence_a === dono)), [lancs, dono]);
-  const mesesDisp = useMemo(() => [...new Set(lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno")).map((l) => l.data.slice(0, 7)))].sort().reverse(), [lancs]);
+  const doOrigem = (l: Lanc) => origem === "tudo" || tipoFonte.get(l.fonte_id) === (origem === "cartoes" ? "cartao" : "conta");
+  const gastos = useMemo(() => lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno") && doOrigem(l) && (dono === "todos" || l.pertence_a === dono)), [lancs, dono, origem, tipoFonte]);
+  const mesesDisp = useMemo(() => [...new Set(lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno") && doOrigem(l)).map((l) => l.data.slice(0, 7)))].sort().reverse(), [lancs, origem, tipoFonte]);
   const meses = useMemo(() => (sel ?? mesesDisp.slice(0, 3)).slice().sort(), [sel, mesesDisp]);
   const catNome = useMemo(() => new Map(categorias.map((c) => [c.id, c.nome])), [categorias]);
   const nomeCat = (l: Lanc) => (l.categoria_id ? catNome.get(l.categoria_id) ?? "Outros" : SEM);
@@ -74,7 +79,7 @@ export function CategoriasTab({ lancs, categorias, onMudou }: { lancs: Lanc[]; c
     <button type="button" onClick={onClick} className={"rounded-full border px-3 py-1 text-xs " + (ativo ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted")}>{children}</button>
   );
 
-  if (mesesDisp.length === 0) return <Card><CardContent className="p-6 text-sm text-muted-foreground">Nenhum gasto importado ainda.</CardContent></Card>;
+  if (mesesDisp.length === 0 && origem === origemInicial) return null;
 
   return (
     <div className="space-y-4">
@@ -84,14 +89,16 @@ export function CategoriasTab({ lancs, categorias, onMudou }: { lancs: Lanc[]; c
           {mesesDisp.map((m) => <Chip key={m} ativo={meses.includes(m)} onClick={() => alternarMes(m)}>{nomeMes(m)}</Chip>)}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted-foreground">É de:</span>
+          <span className="text-xs text-muted-foreground">Origem:</span>
+          {([["tudo", "Tudo"], ["cartoes", "Cartões"], ["contas", "Contas"]] as const).map(([o, t]) => <Chip key={o} ativo={origem === o} onClick={() => { setOrigem(o); setSel(null); }}>{t}</Chip>)}
+          <span className="ml-3 text-xs text-muted-foreground">É de:</span>
           {(["todos", "PF", "PJ"] as const).map((d) => <Chip key={d} ativo={dono === d} onClick={() => setDono(d)}>{d === "todos" ? "PF + PJ" : d}</Chip>)}
         </div>
       </div>
 
       {linhas.length === 0 ? <Card><CardContent className="p-6 text-sm text-muted-foreground">Sem gastos nos meses escolhidos.</CardContent></Card> : (<>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base">Gasto por categoria, mês a mês</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Comparar categorias mês a mês</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={Math.max(180, grafico.length * (meses.length * 13 + 16) + 40)}>
               <BarChart data={grafico} layout="vertical" margin={{ left: 0, right: 16, top: 0, bottom: 0 }} barCategoryGap={10} barGap={2}>

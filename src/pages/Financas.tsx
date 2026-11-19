@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImportarTab } from "@/components/financas/ImportarTab";
 import { TriagemTab } from "@/components/financas/TriagemTab";
-import { CategoriasTab } from "@/components/financas/CategoriasTab";
 import { ContasTab } from "@/components/financas/ContasTab";
 import { ResumoTab } from "@/components/financas/ResumoTab";
 import { ConciliacaoTab } from "@/components/financas/ConciliacaoTab";
@@ -45,7 +44,6 @@ export default function Financas() {
           <TabsList>
             <TabsTrigger value="resumo">Cartões</TabsTrigger>
             <TabsTrigger value="contas">Contas</TabsTrigger>
-            <TabsTrigger value="categorias">Categorias</TabsTrigger>
             <TabsTrigger value="triagem">Triagem</TabsTrigger>
             <TabsTrigger value="conciliacao">Conciliação{pendConc > 0 ? ` (${pendConc})` : ""}</TabsTrigger>
             <TabsTrigger value="manual">Manual</TabsTrigger>
@@ -53,7 +51,6 @@ export default function Financas() {
           <TabsContent value="triagem"><TriagemTab lancs={lancs} categorias={cats} onMudou={carregar} /></TabsContent>
           <TabsContent value="resumo"><ResumoTab fontes={fontes} lancs={lancs} faturas={faturas} categorias={cats} onMudou={carregar} onImportar={() => setImportando(true)} onTriagem={() => setAba("triagem")} pendConc={pendConc} onConciliar={() => setAba("conciliacao")} /></TabsContent>
           <TabsContent value="contas"><ContasTab lancs={lancs} fontes={fontes} categorias={cats} onMudou={carregar} onImportar={() => setImportando(true)} /></TabsContent>
-          <TabsContent value="categorias"><CategoriasTab lancs={lancs} categorias={cats} onMudou={carregar} /></TabsContent>
           <TabsContent value="conciliacao"><ConciliacaoTab lancs={lancs} faturas={faturas} onMudou={carregar} /></TabsContent>
           <TabsContent value="manual"><ManualTab categorias={cats} onMudou={carregar} /></TabsContent>
         </Tabs>

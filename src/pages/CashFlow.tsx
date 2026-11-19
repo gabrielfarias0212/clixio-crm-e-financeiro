@@ -3,7 +3,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import Layout from "@/components/Layout";
 import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
-import { PlusCircle, TrendingUp, Settings, Calendar } from "lucide-react";
+import { PlusCircle, TrendingUp, Settings } from "lucide-react";
 import { Transaction, TransactionType } from "@/utils/types";
 import { toast } from "sonner";
 import { WeeklyControls } from "@/components/WeeklyControls";
@@ -15,8 +15,6 @@ import { ProjectionsSection } from "@/components/financial/ProjectionsSection";
 import { OptimizedFinancialSummary } from "@/components/financial/OptimizedFinancialSummary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TransactionImporter } from "@/components/transaction-importer/TransactionImporter";
-import { BusinessFixedExpensesManager } from "@/components/financial/BusinessFixedExpensesManager";
-import { FixedExpensesAlerts } from "@/components/financial/FixedExpensesAlerts";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -36,7 +34,7 @@ const CARD = {
   boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
 } as const;
 
-type TabKey = "transactions" | "projections" | "fixed-expenses";
+type TabKey = "transactions" | "projections";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -123,7 +121,6 @@ export default function CashFlow() {
   const tabs: { key: TabKey; label: string; labelMobile: string; icon?: typeof TrendingUp }[] = [
     { key: "transactions",    label: "Transações",             labelMobile: "Transações" },
     { key: "projections",     label: "Projeções & Pró-Labore", labelMobile: "Projeções", icon: TrendingUp },
-    { key: "fixed-expenses",  label: "Despesas Fixas",         labelMobile: "Desp. Fixas", icon: Calendar },
   ];
 
   return (
@@ -243,15 +240,6 @@ export default function CashFlow() {
           {activeTab === "projections" && (
             <Suspense fallback={<Skeleton className="h-96" />}>
               <ProjectionsSection />
-            </Suspense>
-          )}
-
-          {activeTab === "fixed-expenses" && (
-            <Suspense fallback={<Skeleton className="h-96" />}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                <FixedExpensesAlerts />
-                <BusinessFixedExpensesManager />
-              </div>
             </Suspense>
           )}
         </div>

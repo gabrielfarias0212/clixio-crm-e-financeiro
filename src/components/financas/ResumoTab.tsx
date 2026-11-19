@@ -11,7 +11,7 @@ import { CategoriasComparativo, type Origem } from "./CategoriasComparativo";
 import { SeletorPeriodo } from "./SeletorPeriodo";
 import { mesAtual, mesNoPeriodo, nomeMes, type Periodo } from "@/lib/financas/periodo";
 
-function Segmentado<T extends string>({ valor, onChange, opcoes, ajuda, titulo }: { valor: T; onChange: (v: T) => void; opcoes: readonly (readonly [T, string])[]; ajuda?: string; titulo?: string }) {
+function Segmentado({ valor, onChange, opcoes, ajuda, titulo }: { valor: string; onChange: (v: string) => void; opcoes: string[][]; ajuda?: string; titulo?: string }) {
   return (
     <div className="flex items-center rounded-md border p-0.5 text-xs" title={ajuda} aria-label={titulo}>
       {opcoes.map(([o, t]) => (
@@ -94,9 +94,9 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <SeletorPeriodo valor={periodo} onChange={setPeriodo} />
-        <Segmentado<Origem> valor={origem} onChange={setOrigem} opcoes={[["cartoes", "Cartões"], ["contas", "Contas"], ["tudo", "Tudo"]]} />
+        <Segmentado valor={origem} onChange={(v) => setOrigem(v as Origem)} opcoes={[["cartoes", "Cartões"], ["contas", "Contas"], ["tudo", "Tudo"]]} />
         {origem !== "contas" && (
-          <Segmentado<"fatura" | "compra"> valor={criterio} onChange={setCriterio} titulo="Mês do cartão pela"
+          <Segmentado valor={criterio} onChange={(v) => setCriterio(v as "fatura" | "compra")} titulo="Mês do cartão pela"
             opcoes={[["fatura", "Mês da fatura"], ["compra", "Data da compra"]]}
             ajuda={criterio === "fatura" ? "Mês da fatura: o que você paga em cada mês, como no app do banco" : "Data da compra: quando a compra foi feita"} />
         )}

@@ -41,7 +41,7 @@ export default function Financas() {
           </TabsList>
           <TabsContent value="importar"><ImportarTab onImportado={() => { carregar(); setAba("triagem"); }} /></TabsContent>
           <TabsContent value="triagem"><TriagemTab lancs={lancs} categorias={cats} onMudou={carregar} /></TabsContent>
-          <TabsContent value="resumo"><ResumoTab lancs={lancs} faturas={faturas} onMudou={carregar} /></TabsContent>
+          <TabsContent value="resumo"><ResumoTab lancs={lancs} faturas={faturas} categorias={cats} onMudou={carregar} /></TabsContent>
           <TabsContent value="manual"><ManualTab categorias={cats} onMudou={carregar} /></TabsContent>
         </Tabs>
       </div>

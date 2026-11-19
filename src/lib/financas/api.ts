@@ -9,7 +9,7 @@ export interface Fonte { id: string; nome: string; banco: string; tipo: "conta" 
 export interface Categoria { id: string; nome: string; grupo: string }
 export interface Lanc {
   id: string; fonte_id: string; fatura_id: string | null; data: string; descricao: string; valor: number;
-  tipo: string; parcela_atual: number | null; parcela_total: number | null; pagador: "PF" | "PJ"; pertence_a: "PF" | "PJ"; categoria_id: string | null; status: string; obs: string | null;
+  tipo: string; parcela_atual: number | null; parcela_total: number | null; pagador: "PF" | "PJ"; pertence_a: "PF" | "PJ"; categoria_id: string | null; status: string; obs: string | null; apelido: string | null;
 }
 
 export async function listarFontes(): Promise<Fonte[]> {
@@ -151,4 +151,9 @@ export async function criarLancamentoManual(l: {
 export async function criarCategoria(nome: string, grupo: string) {
   const { data, error } = await db.from("fin_categorias").insert({ nome, grupo }).select("*").single();
   if (error) throw error; return data as Categoria;
+}
+
+export async function atualizarLancamento(id: string, patch: Partial<Pick<Lanc, "apelido" | "categoria_id" | "pertence_a">>) {
+  const { error } = await db.from("fin_lancamentos").update(patch).eq("id", id);
+  if (error) throw error;
 }

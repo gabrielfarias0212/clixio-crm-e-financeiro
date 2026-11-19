@@ -3,12 +3,17 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { marcarFatura, type Lanc } from "@/lib/financas/api";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { marcarFatura, type Categoria, type Lanc } from "@/lib/financas/api";
+import { LinhasLancamentos } from "./LinhasLancamentos";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function ResumoTab({ lancs, faturas, onMudou }: { lancs: Lanc[]; faturas: any[]; onMudou: () => void }) {
+export function ResumoTab({ lancs, faturas, categorias, onMudou }: { lancs: Lanc[]; faturas: any[]; categorias: Categoria[]; onMudou: () => void }) {
   const [mes, setMes] = useState("todos");
+  const [abertas, setAbertas] = useState<Set<string>>(new Set());
+  const alternar = (id: string) => setAbertas((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const porFatura = useMemo(() => { const m = new Map<string, Lanc[]>(); for (const l of lancs) if (l.fatura_id) (m.get(l.fatura_id) ?? m.set(l.fatura_id, []).get(l.fatura_id)!).push(l); return m; }, [lancs]);
   const meses = useMemo(() => [...new Set(lancs.map((l) => l.data.slice(0, 7)))].sort().reverse(), [lancs]);
 
   const q = useMemo(() => {
@@ -56,12 +61,18 @@ export function ResumoTab({ lancs, faturas, onMudou }: { lancs: Lanc[]; faturas:
           {faturas.map((f) => {
             const vencida = f.status !== "paga" && f.vencimento && f.vencimento < hoje && f.status !== "aberta";
             return (
-              <div key={f.id} className="flex flex-wrap items-center gap-3 border-b pb-2 text-sm last:border-0">
-                <div className="min-w-[140px]">{f.fin_fontes?.nome} · {f.competencia.slice(0, 7)}</div>
-                <div>{brl(Number(f.valor_total))}</div>
-                <div className="text-xs text-muted-foreground">vence {f.vencimento?.split("-").reverse().join("/")}</div>
-                <Badge variant={vencida ? "destructive" : f.status === "paga" ? "secondary" : "outline"}>{vencida ? "vencida" : f.status}</Badge>
-                {f.status !== "paga" && f.status !== "aberta" && <Button size="sm" variant="outline" onClick={() => pagar(f)}>Marcar como paga hoje</Button>}
+              <div key={f.id} className="border-b pb-2 text-sm last:border-0">
+                <div className="flex flex-wrap items-center gap-3">
+                  <button type="button" className="flex min-w-[170px] items-center gap-1 text-left font-medium" onClick={() => alternar(f.id)}>
+                    {abertas.has(f.id) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    {f.fin_fontes?.nome} · {f.competencia.slice(0, 7)}
+                  </button>
+                  <div>{brl(Number(f.valor_total))}</div>
+                  <div className="text-xs text-muted-foreground">vence {f.vencimento?.split("-").reverse().join("/")} · {(porFatura.get(f.id) ?? []).length} lançamentos</div>
+                  <Badge variant={vencida ? "destructive" : f.status === "paga" ? "secondary" : "outline"}>{vencida ? "vencida" : f.status}</Badge>
+                  {f.status !== "paga" && f.status !== "aberta" && <Button size="sm" variant="outline" onClick={() => pagar(f)}>Marcar como paga hoje</Button>}
+                </div>
+                {abertas.has(f.id) && <div className="mt-2 rounded-md border px-3"><LinhasLancamentos lancs={porFatura.get(f.id) ?? []} categorias={categorias} onMudou={onMudou} /></div>}
               </div>
             );
           })}

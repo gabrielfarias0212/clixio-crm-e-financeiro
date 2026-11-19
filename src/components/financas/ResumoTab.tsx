@@ -7,7 +7,6 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { marcarFatura, type Categoria, type Fonte, type Lanc } from "@/lib/financas/api";
 import { LinhasLancamentos } from "./LinhasLancamentos";
 import { GraficosResumo } from "./GraficosResumo";
-import { ContasResumo } from "./ContasResumo";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -71,8 +70,6 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
         <Q alerta t="PJ pagou · é PF" v={q.PJ_PF} d="retirada implícita: gasto pessoal pago pela empresa" />
         <Q alerta t="PF pagou · é PJ" v={q.PF_PJ} d="a receber da empresa (reembolso)" />
       </div>
-
-      <ContasResumo lancs={lancs} fontes={fontes} mes={mes} />
 
       <GraficosResumo lancs={lancs} categorias={categorias} mes={mes} />
 

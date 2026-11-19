@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { salvarRegra, type Categoria, type Lanc } from "@/lib/financas/api";
+import { Input } from "@/components/ui/input";
+import { criarCategoria, salvarRegra, type Categoria, type Lanc } from "@/lib/financas/api";
 import { chaveDestino } from "@/lib/financas/importar";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -39,12 +40,24 @@ export function TriagemTab({ lancs, categorias, onMudou }: { lancs: Lanc[]; cate
     } catch (e: any) { toast.error("Erro: " + (e.message ?? e)); } finally { setSalvando(null); }
   }
 
+  const [novaCat, setNovaCat] = useState("");
+  async function addCat() {
+    const n = novaCat.trim();
+    if (!n) return;
+    try { await criarCategoria(n, "variavel"); setNovaCat(""); toast.success(`Categoria "${n}" criada`); onMudou(); }
+    catch (e: any) { toast.error("Erro: " + (e.message ?? e)); }
+  }
+
   const pend = grupos.reduce((s, g) => s + (g.pendentes > 0 ? 1 : 0), 0);
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">{pend} destinos aguardando decisão, do maior valor para o menor. Cada escolha vira regra e vale para o passado e para as próximas importações.</div>
         <Button variant="outline" size="sm" onClick={() => setTodos(!todos)}>{todos ? "Só pendentes" : "Mostrar todos"}</Button>
+      </div>
+      <div className="flex items-center gap-2">
+        <Input className="max-w-xs" value={novaCat} onChange={(e) => setNovaCat(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCat()} placeholder="Nova categoria (ex.: Insumos fotográficos)" />
+        <Button variant="outline" size="sm" onClick={addCat}>Criar categoria</Button>
       </div>
       {grupos.length === 0 && <Card><CardContent className="p-6 text-sm text-muted-foreground">Nada pendente. Importe um arquivo na aba Importar.</CardContent></Card>}
       {grupos.map((g) => (

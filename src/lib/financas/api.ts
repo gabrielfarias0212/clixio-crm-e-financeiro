@@ -147,3 +147,8 @@ export async function criarLancamentoManual(l: {
   });
   if (error) throw error;
 }
+
+export async function criarCategoria(nome: string, grupo: string) {
+  const { data, error } = await db.from("fin_categorias").insert({ nome, grupo }).select("*").single();
+  if (error) throw error; return data as Categoria;
+}

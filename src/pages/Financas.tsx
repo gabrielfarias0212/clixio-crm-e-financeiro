@@ -8,7 +8,7 @@ import { TriagemTab } from "@/components/financas/TriagemTab";
 import { ResumoTab } from "@/components/financas/ResumoTab";
 import { ConciliacaoTab } from "@/components/financas/ConciliacaoTab";
 import { ManualTab } from "@/components/financas/ManualTab";
-import { listarCategorias, listarFaturas, listarLancamentos, type Categoria, type Lanc } from "@/lib/financas/api";
+import { listarCategorias, listarFaturas, listarFontes, listarLancamentos, type Categoria, type Fonte, type Lanc } from "@/lib/financas/api";
 
 export const FINANCAS_FLAG = "clixio_financas";
 
@@ -16,13 +16,14 @@ export default function Financas() {
   const [lancs, setLancs] = useState<Lanc[]>([]);
   const [cats, setCats] = useState<Categoria[]>([]);
   const [faturas, setFaturas] = useState<any[]>([]);
+  const [fontes, setFontes] = useState<Fonte[]>([]);
   const [aba, setAba] = useState("resumo");
   const [importando, setImportando] = useState(false);
 
   const carregar = useCallback(async () => {
     try {
-      const [l, c, f] = await Promise.all([listarLancamentos(), listarCategorias(), listarFaturas()]);
-      setLancs(l); setCats(c); setFaturas(f);
+      const [l, c, f, fo] = await Promise.all([listarLancamentos(), listarCategorias(), listarFaturas(), listarFontes()]);
+      setLancs(l); setCats(c); setFaturas(f); setFontes(fo);
       return l;
     } catch (e: any) { toast.error("Erro ao carregar Finanças: " + (e.message ?? e)); return null; }
   }, []);
@@ -46,7 +47,7 @@ export default function Financas() {
             <TabsTrigger value="manual">Manual</TabsTrigger>
           </TabsList>
           <TabsContent value="triagem"><TriagemTab lancs={lancs} categorias={cats} onMudou={carregar} /></TabsContent>
-          <TabsContent value="resumo"><ResumoTab lancs={lancs} faturas={faturas} categorias={cats} onMudou={carregar} onImportar={() => setImportando(true)} onTriagem={() => setAba("triagem")} pendConc={pendConc} onConciliar={() => setAba("conciliacao")} /></TabsContent>
+          <TabsContent value="resumo"><ResumoTab fontes={fontes} lancs={lancs} faturas={faturas} categorias={cats} onMudou={carregar} onImportar={() => setImportando(true)} onTriagem={() => setAba("triagem")} pendConc={pendConc} onConciliar={() => setAba("conciliacao")} /></TabsContent>
           <TabsContent value="conciliacao"><ConciliacaoTab lancs={lancs} faturas={faturas} onMudou={carregar} /></TabsContent>
           <TabsContent value="manual"><ManualTab categorias={cats} onMudou={carregar} /></TabsContent>
         </Tabs>

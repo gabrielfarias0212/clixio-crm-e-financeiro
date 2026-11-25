@@ -6,6 +6,7 @@ import { startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { stringToDate } from "@/utils/dateUtils";
 import { Client } from "@/utils/types";
 import { useMemo } from "react";
+import { isFreelance, semFreelance } from "@/utils/freelance";
 
 export function useBusinessMetrics() {
   const { clients } = useClients();
@@ -72,6 +73,7 @@ export function useBusinessMetrics() {
 
     // 3. Taxa de conversão de leads em contratos (exclude workflow projects)
     const totalLeadsData = clients.filter(client => {
+      if (isFreelance(client)) return false;
       if (!client.createdAt) return false;
       // Exclude workflow-linked projects from lead count
       if (client.leadSource === "Projeto Direto") return false;
@@ -83,6 +85,7 @@ export function useBusinessMetrics() {
     const totalLeads = totalLeadsData.length;
     
     const closedContractsData = clients.filter(client => {
+      if (isFreelance(client)) return false;
       if (!(client.status === "fechado" || client.status === "projeto_finalizado")) return false;
       if (!client.createdAt) return false;
       // Exclude workflow-linked projects from contract count

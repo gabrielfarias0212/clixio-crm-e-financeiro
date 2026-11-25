@@ -7,5 +7,6 @@ export const EVENT_CATEGORIES = [
   "Ensaio externo",
   "Evento Corporativo",
   "15 anos",
+  "Freelance",
   "Outros",
 ];

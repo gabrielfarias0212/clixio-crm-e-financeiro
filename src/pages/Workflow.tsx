@@ -15,6 +15,7 @@ import {
   ChevronRight, Plus, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
+import { isFreelance, semFreelance } from "@/utils/freelance";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
@@ -479,7 +480,7 @@ export default function WorkflowPage() {
   const [viewMode, setViewMode] = useState<"painel" | "kanban">(() => (localStorage.getItem("workflow_view") ?? "painel") as "painel" | "kanban");
 
   const workflowClients = useMemo(() =>
-    clients.filter(c => (c.status === "projeto_finalizado" || c.status === "fechado") && c.eventCategory !== "Freelance"),
+    clients.filter(c => (c.status === "projeto_finalizado" || c.status === "fechado") && !isFreelance(c)),
     [clients]
   );
 

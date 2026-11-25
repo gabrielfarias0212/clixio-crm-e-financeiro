@@ -16,6 +16,7 @@ import {
   AlertTriangle, DollarSign, Users,
   CheckCircle2, ChevronRight, Calendar,
 } from "lucide-react";
+import { semFreelance } from "@/utils/freelance";
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -223,19 +224,21 @@ export function DashboardContent() {
     [clients]);
 
   // ── Funnel ─────────────────────────────────────────────────────────────────
+  // Freelances não contam como contrato/lead nem entram na produção
+  const clientesContrato = useMemo(() => semFreelance(clients), [clients]);
   const funnelData = useMemo(() => [
-    { label: "Leads",      count: clients.filter(c => c.status === "primeiro_contato").length,   color: "#93B8DD", clientList: clients.filter(c => c.status === "primeiro_contato") },
-    { label: "Orçamento",  count: clients.filter(c => c.status === "orçamento enviado").length,  color: "#FAC775", clientList: clients.filter(c => c.status === "orçamento enviado") },
-    { label: "Follow-up",  count: clients.filter(c => c.status === "negociacao").length,          color: "#E8A838", clientList: clients.filter(c => c.status === "negociacao") },
-    { label: "Fechado",    count: clients.filter(c => c.status === "fechado").length,             color: "#7EB96A", clientList: clients.filter(c => c.status === "fechado") },
-    { label: "Perdido",    count: clients.filter(c => c.status === "contrato_perdido").length,    color: "#E8A0A0", clientList: clients.filter(c => c.status === "contrato_perdido") },
-  ], [clients]);
+    { label: "Leads",      count: clientesContrato.filter(c => c.status === "primeiro_contato").length,   color: "#93B8DD", clientList: clientesContrato.filter(c => c.status === "primeiro_contato") },
+    { label: "Orçamento",  count: clientesContrato.filter(c => c.status === "orçamento enviado").length,  color: "#FAC775", clientList: clientesContrato.filter(c => c.status === "orçamento enviado") },
+    { label: "Follow-up",  count: clientesContrato.filter(c => c.status === "negociacao").length,          color: "#E8A838", clientList: clientesContrato.filter(c => c.status === "negociacao") },
+    { label: "Fechado",    count: clientesContrato.filter(c => c.status === "fechado").length,             color: "#7EB96A", clientList: clientesContrato.filter(c => c.status === "fechado") },
+    { label: "Perdido",    count: clientesContrato.filter(c => c.status === "contrato_perdido").length,    color: "#E8A0A0", clientList: clientesContrato.filter(c => c.status === "contrato_perdido") },
+  ], [clientesContrato]);
 
   const maxFunnel = Math.max(...funnelData.map(f => f.count), 1);
 
   // ── Production ─────────────────────────────────────────────────────────────
   const productionStages = useMemo(() => {
-    const wf = clients.filter(c => c.status === "fechado" || c.status === "projeto_finalizado");
+    const wf = clientesContrato.filter(c => c.status === "fechado" || c.status === "projeto_finalizado");
     const counts: Record<string, Client[]> = {};
     wf.forEach(c => {
       const s = c.workflowStage || "evento_ensaio";
@@ -246,7 +249,7 @@ export function DashboardContent() {
     return order
       .map(key => ({ key, label: STAGE_LABELS[key] || key, clients: counts[key] || [], color: PROD_COLORS[key] || "#CBD5E1" }))
       .filter(s => s.clients.length > 0);
-  }, [clients]);
+  }, [clientesContrato]);
 
   const maxProd = Math.max(...productionStages.map(s => s.clients.length), 1);
 

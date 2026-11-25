@@ -41,7 +41,7 @@ export function useEventCategories() {
           if (user) {
             const defaults = [
               "Casamento","Aniversario","Civil","Ensaio Estudio",
-              "Ensaio externo","Evento Corporativo","15 anos","Outros"
+              "Ensaio externo","Evento Corporativo","15 anos","Freelance","Outros"
             ];
             await supabase.from("event_categories").insert(
               defaults.map(name => ({ user_id: user.id, name, is_default: true }))

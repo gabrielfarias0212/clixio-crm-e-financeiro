@@ -11,6 +11,7 @@ import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { EventCategory } from "@/utils/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { isFreelance } from "@/utils/freelance";
 
 const EVENT_COLORS: Record<string, string> = {
   "Casamento":          "#a8a29e",
@@ -62,7 +63,7 @@ export function EventCategoryChart() {
     const categoryCount: Record<string, number> = {};
 
     const filtered = clients.filter(client => {
-      if (client.status !== "fechado") return false;
+      if (client.status !== "fechado" || isFreelance(client)) return false;
       if (timeRange === "all") return true;
       const createdAt = new Date(client.createdAt);
       return createdAt >= subMonths(now, parseInt(timeRange));

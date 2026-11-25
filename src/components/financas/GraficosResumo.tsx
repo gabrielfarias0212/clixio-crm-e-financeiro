@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Bar, BarChart, Cell, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis, LabelList } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Categoria, Fonte, Lanc } from "@/lib/financas/api";
@@ -34,6 +34,7 @@ export function GraficosResumo({ lancs, categorias, fontes = [], periodo, mesDe 
     const fim = [periodo?.ate ?? "", mesAtual()].sort().pop()!; // não esconde os meses seguintes ao clicar num mês antigo
     return [...m.values()].filter((r) => r.mes <= fim).sort((a, b) => (a.mes < b.mes ? -1 : 1)).slice(-6).map((r) => ({ ...r, nome: nomeMes(r.mes), PF: Math.round(r.PF), PJ: Math.round(r.PJ) }));
   }, [gastos, periodo, mesDe]);
+  const [agrupar, setAgrupar] = useState<"dono" | "cartao">("dono");
   const mesSel = periodo && periodo.de === periodo.ate ? periodo.de : null;
 
   const catNome = useMemo(() => new Map(categorias.map((c) => [c.id, c.nome])), [categorias]);
@@ -56,7 +57,7 @@ export function GraficosResumo({ lancs, categorias, fontes = [], periodo, mesDe 
   const pf = useMemo(() => porCategoria("PF"), [gastos, catNome, periodo, mesDe]);
   const pj = useMemo(() => porCategoria("PJ"), [gastos, catNome, periodo, mesDe]);
   const total = pf.total + pj.total;
-  const cartoes = useMemo(() => fontes.filter((f) => f.tipo === "cartao").map((f) => ({ f, d: porCategoria({ fonte: f.id }) })).filter((x) => x.d.itens.length > 0 || x.d.total !== 0), [fontes, gastos, catNome, periodo, mesDe]);
+  const cartoes = useMemo(() => fontes.filter((f) => f.tipo === "cartao").map((f) => ({ f, d: porCategoria({ fonte: f.id }) })).slice(0, 2), [fontes, gastos, catNome, periodo, mesDe]);
 
   if (!gastos.length) return null;
   const Horizontal = ({ titulo, d, cor }: { titulo: string; d: { itens: { nome: string; valor: number }[]; total: number; credito?: number }; cor: string }) => (
@@ -99,13 +100,20 @@ export function GraficosResumo({ lancs, categorias, fontes = [], periodo, mesDe 
         </CardContent>
       </Card>
       {cartoes.length > 0 && (
-        <div className="grid gap-3 md:grid-cols-2">
-          {cartoes.map(({ f, d }) => <Horizontal key={f.id} titulo={`Cartão ${f.nome}`} d={d} cor="#6b7280" />)}
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-muted-foreground">Detalhar por:</span>
+          {([["dono", "De quem é (PF / PJ)"], ["cartao", "Cartão"]] as const).map(([k, t]) => (
+            <button key={k} type="button" onClick={() => setAgrupar(k)} className={"rounded-full border px-3 py-1 " + (agrupar === k ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted")}>{t}</button>
+          ))}
         </div>
       )}
       <div className="grid gap-3 md:grid-cols-2">
-        <Horizontal titulo="Pessoal (PF)" d={pf} cor={COR.PF} />
-        <Horizontal titulo="Empresa (PJ)" d={pj} cor={COR.PJ} />
+        {agrupar === "cartao" && cartoes.length > 0
+          ? cartoes.map(({ f, d }, i) => <Horizontal key={f.id} titulo={f.nome} d={d} cor={i === 0 ? COR.PF : COR.PJ} />)
+          : (<>
+              <Horizontal titulo="Pessoal (PF)" d={pf} cor={COR.PF} />
+              <Horizontal titulo="Empresa (PJ)" d={pj} cor={COR.PJ} />
+            </>)}
       </div>
     </div>
   );

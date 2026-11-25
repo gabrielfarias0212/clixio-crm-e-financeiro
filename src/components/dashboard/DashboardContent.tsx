@@ -175,7 +175,7 @@ export function DashboardContent() {
     }, 0),
     [aReceberClients]);
 
-  // Falta receber dos casamentos do mês atual para ficarem quitados.
+  // Falta receber dos trabalhos (casamentos e outros) do mês atual para ficarem quitados.
   const saldoCasamentosMes = useMemo(() => {
     let total = 0, qtd = 0;
     for (const c of aReceberClients) {
@@ -282,8 +282,8 @@ export function DashboardContent() {
           <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>
             {monthlyTotals.income > 0
               ? (saldoCasamentosMes.qtd > 0
-                  ? `Recebido neste mês · faltam ${fmt(saldoCasamentosMes.total)} para quitar ${saldoCasamentosMes.qtd} casamento${saldoCasamentosMes.qtd !== 1 ? "s" : ""} do mês`
-                  : "Recebido neste mês · casamentos do mês quitados")
+                  ? `Recebido neste mês · faltam ${fmt(saldoCasamentosMes.total)} para quitar ${saldoCasamentosMes.qtd} trabalho${saldoCasamentosMes.qtd !== 1 ? "s" : ""} do mês`
+                  : "Recebido neste mês · trabalhos do mês quitados")
               : "Nenhuma entrada este mês"}
           </div>
         </div>

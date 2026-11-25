@@ -185,6 +185,12 @@ export function useFinancialProjections() {
           return;
         }
 
+        // Parcelas pendentes agendadas já entram em "garantido"; o "provável" cobre só o que sobra
+        const scheduledPendingTotal = client.payments
+          .filter(payment => payment.payment_status === 'pendente')
+          .reduce((sum, payment) => sum + Number(payment.amount), 0);
+        const probableAmount = Math.max(pendingAmount - scheduledPendingTotal, 0);
+
         // Processar pagamentos agendados otimizado
         client.payments.forEach(payment => {
           if (payment.payment_status === 'pendente' && payment.due_date) {
@@ -254,15 +260,15 @@ export function useFinancialProjections() {
           });
 
           if (monthIndex !== -1) {
-            if (client.status === 'fechado') {
-              nextSixMonths[monthIndex].probable += pendingAmount;
+            if (client.status === 'fechado' && probableAmount > 0) {
+              nextSixMonths[monthIndex].probable += probableAmount;
               
               const probableEvent: ProjectionEvent = {
                 id: `probable-${client.id}`,
                 clientName: client.name,
                 clientId: client.id,
                 eventDate: client.weddingDate,
-                amount: pendingAmount,
+                amount: probableAmount,
                 type: 'probable',
                 status: client.status || 'fechado',
                 description: `Valor pendente do contrato - ${client.eventCategory || 'Casamento'}`,
@@ -294,8 +300,8 @@ export function useFinancialProjections() {
         }
 
         // Distribuir valores pendentes otimizado apenas se não tem data de evento
-        if (!client.weddingDate && pendingAmount > 0 && client.status === 'fechado') {
-          const monthlyInstallment = pendingAmount / 3;
+        if (!client.weddingDate && probableAmount > 0 && client.status === 'fechado') {
+          const monthlyInstallment = probableAmount / 3;
           for (let i = 0; i < Math.min(3, 6); i++) {
             nextSixMonths[i].probable += monthlyInstallment;
             

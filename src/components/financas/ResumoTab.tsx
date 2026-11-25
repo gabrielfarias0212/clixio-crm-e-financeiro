@@ -198,7 +198,7 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
         </div>
       )}
 
-      <GraficosResumo lancs={lancsO} categorias={categorias} periodo={periodo} mesDe={mesDe} />
+      <GraficosResumo lancs={lancsO} categorias={categorias} fontes={fontes} periodo={periodo} mesDe={mesDe} onSelecionarMes={(m) => setPeriodo({ de: m, ate: m })} />
 
       <CategoriasComparativo lancs={lancs} fontes={fontes} categorias={categorias} onMudou={onMudou} origemInicial={origem} mesDe={mesDe} />
 

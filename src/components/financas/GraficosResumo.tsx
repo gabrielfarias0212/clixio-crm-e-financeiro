@@ -1,8 +1,8 @@
 import { useMemo } from "react";
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis, LabelList } from "recharts";
+import { Bar, BarChart, Cell, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis, LabelList } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Categoria, Lanc } from "@/lib/financas/api";
-import { mesNoPeriodo, mesPelaData, type MesDe, type Periodo } from "@/lib/financas/periodo";
+import type { Categoria, Fonte, Lanc } from "@/lib/financas/api";
+import { mesAtual, mesNoPeriodo, mesPelaData, type MesDe, type Periodo } from "@/lib/financas/periodo";
 
 // Cores validadas (azul/laranja, categórico slots 1 e 2: passam nos testes de daltonismo e contraste).
 const COR = { PF: "#2a78d6", PJ: "#eb6834" } as const;
@@ -20,7 +20,7 @@ function Tip({ active, payload, label }: any) {
   );
 }
 
-export function GraficosResumo({ lancs, categorias, periodo, mesDe = mesPelaData }: { lancs: Lanc[]; categorias: Categoria[]; periodo: Periodo | null; mesDe?: MesDe }) {
+export function GraficosResumo({ lancs, categorias, fontes = [], periodo, mesDe = mesPelaData, onSelecionarMes }: { lancs: Lanc[]; categorias: Categoria[]; fontes?: Fonte[]; periodo: Periodo | null; mesDe?: MesDe; onSelecionarMes?: (mes: string) => void }) {
   const gastos = useMemo(() => lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno")), [lancs]);
   const valor = (l: Lanc) => (l.tipo === "estorno" ? -l.valor : l.valor);
 
@@ -31,28 +31,35 @@ export function GraficosResumo({ lancs, categorias, periodo, mesDe = mesPelaData
       const r = m.get(k) ?? { mes: k, PF: 0, PJ: 0 };
       r[l.pertence_a] += valor(l); m.set(k, r);
     }
-    return [...m.values()].filter((r) => !periodo || r.mes <= periodo.ate).sort((a, b) => (a.mes < b.mes ? -1 : 1)).slice(-6).map((r) => ({ ...r, nome: nomeMes(r.mes), PF: Math.round(r.PF), PJ: Math.round(r.PJ) }));
+    const fim = [periodo?.ate ?? "", mesAtual()].sort().pop()!; // não esconde os meses seguintes ao clicar num mês antigo
+    return [...m.values()].filter((r) => r.mes <= fim).sort((a, b) => (a.mes < b.mes ? -1 : 1)).slice(-6).map((r) => ({ ...r, nome: nomeMes(r.mes), PF: Math.round(r.PF), PJ: Math.round(r.PJ) }));
   }, [gastos, periodo, mesDe]);
+  const mesSel = periodo && periodo.de === periodo.ate ? periodo.de : null;
 
   const catNome = useMemo(() => new Map(categorias.map((c) => [c.id, c.nome])), [categorias]);
-  const porCategoria = (dono: "PF" | "PJ") => {
+  const porCategoria = (dono: "PF" | "PJ" | { fonte: string }) => {
     const m = new Map<string, number>();
     for (const l of gastos) {
-      if (l.pertence_a !== dono || !mesNoPeriodo(mesDe(l), periodo)) continue;
+      if (typeof dono === "string" ? l.pertence_a !== dono : l.fonte_id !== dono.fonte) continue;
+      if (!mesNoPeriodo(mesDe(l), periodo)) continue;
       const k = l.categoria_id ? catNome.get(l.categoria_id) ?? "Outros" : "Sem categoria";
       m.set(k, (m.get(k) ?? 0) + valor(l));
     }
     const todas = [...m.entries()].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
     const top = todas.slice(0, 7), resto = todas.slice(7).reduce((s, [, v]) => s + v, 0);
     if (resto > 0) top.push(["Outras", resto]);
-    return { itens: top.map(([nome, v]) => ({ nome, valor: Math.round(v) })), total: [...m.values()].reduce((s, v) => s + v, 0) };
+    // créditos/estornos (categorias com saldo negativo) entram numa linha própria, para as barras fecharem com o total
+    const cred = [...m.values()].filter((v) => v < 0).reduce((s, v) => s + v, 0);
+    return {
+      credito: Math.round(cred), itens: top.map(([nome, v]) => ({ nome, valor: Math.round(v) })), total: [...m.values()].reduce((s, v) => s + v, 0) };
   };
   const pf = useMemo(() => porCategoria("PF"), [gastos, catNome, periodo, mesDe]);
   const pj = useMemo(() => porCategoria("PJ"), [gastos, catNome, periodo, mesDe]);
   const total = pf.total + pj.total;
+  const cartoes = useMemo(() => fontes.filter((f) => f.tipo === "cartao").map((f) => ({ f, d: porCategoria({ fonte: f.id }) })).filter((x) => x.d.itens.length > 0 || x.d.total !== 0), [fontes, gastos, catNome, periodo, mesDe]);
 
   if (!gastos.length) return null;
-  const Horizontal = ({ titulo, d, cor }: { titulo: string; d: { itens: { nome: string; valor: number }[]; total: number }; cor: string }) => (
+  const Horizontal = ({ titulo, d, cor }: { titulo: string; d: { itens: { nome: string; valor: number }[]; total: number; credito?: number }; cor: string }) => (
     <Card>
       <CardHeader className="pb-2"><CardTitle className="text-base">{titulo} <span className="font-normal text-muted-foreground">· {brl(d.total)}{total > 0 ? ` (${Math.round((d.total / total) * 100)}%)` : ""}</span></CardTitle></CardHeader>
       <CardContent>
@@ -68,6 +75,7 @@ export function GraficosResumo({ lancs, categorias, periodo, mesDe = mesPelaData
             </BarChart>
           </ResponsiveContainer>
         )}
+        {!!d.credito && <div className="mt-1 text-xs text-muted-foreground">Estornos/créditos no período: {brl(d.credito)} (já descontados no total acima)</div>}
       </CardContent>
     </Card>
   );
@@ -75,21 +83,26 @@ export function GraficosResumo({ lancs, categorias, periodo, mesDe = mesPelaData
   return (
     <div className="space-y-3">
       <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-base">Gastos por mês: pessoal x empresa</CardTitle></CardHeader>
+        <CardHeader className="pb-2"><CardTitle className="text-base">Gastos por mês: pessoal x empresa {onSelecionarMes && <span className="text-xs font-normal text-muted-foreground">· clique num mês para detalhar abaixo</span>}</CardTitle></CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={230}>
-            <BarChart data={porMes} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <BarChart data={porMes} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} onClick={(e: any) => { const m = e?.activePayload?.[0]?.payload?.mes; if (m && onSelecionarMes) onSelecionarMes(m); }} style={{ cursor: onSelecionarMes ? "pointer" : undefined }}>
               <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.08)" />
               <XAxis dataKey="nome" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
               <YAxis tickLine={false} axisLine={false} width={56} tick={{ fontSize: 11 }} tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : String(v))} />
               <Tooltip cursor={{ fill: "rgba(0,0,0,0.04)" }} content={<Tip />} />
               <Legend verticalAlign="top" align="left" iconType="square" wrapperStyle={{ fontSize: 12, paddingBottom: 8 }} />
-              <Bar dataKey="PF" name="Pessoal (PF)" stackId="a" fill={COR.PF} stroke="#fcfcfb" strokeWidth={2} />
-              <Bar dataKey="PJ" name="Empresa (PJ)" stackId="a" fill={COR.PJ} stroke="#fcfcfb" strokeWidth={2} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="PF" name="Pessoal (PF)" stackId="a" fill={COR.PF} stroke="#fcfcfb" strokeWidth={2}>{porMes.map((r) => <Cell key={r.mes} fillOpacity={mesSel && r.mes !== mesSel ? 0.35 : 1} />)}</Bar>
+              <Bar dataKey="PJ" name="Empresa (PJ)" stackId="a" fill={COR.PJ} stroke="#fcfcfb" strokeWidth={2} radius={[4, 4, 0, 0]}>{porMes.map((r) => <Cell key={r.mes} fillOpacity={mesSel && r.mes !== mesSel ? 0.35 : 1} />)}</Bar>
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
+      {cartoes.length > 0 && (
+        <div className="grid gap-3 md:grid-cols-2">
+          {cartoes.map(({ f, d }) => <Horizontal key={f.id} titulo={`Cartão ${f.nome}`} d={d} cor="#6b7280" />)}
+        </div>
+      )}
       <div className="grid gap-3 md:grid-cols-2">
         <Horizontal titulo="Pessoal (PF)" d={pf} cor={COR.PF} />
         <Horizontal titulo="Empresa (PJ)" d={pj} cor={COR.PJ} />

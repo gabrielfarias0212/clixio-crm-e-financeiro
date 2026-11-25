@@ -268,7 +268,7 @@ export function DashboardContent() {
           </div>
           <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>
             {monthlyTotals.income > 0
-              ? `${((monthlyTotals.income / (monthlyTotals.income + Math.max(0, aReceber))) * 100).toFixed(0)}% do contratado recebido`
+              ? `Recebido neste mês · ${fmt(Math.max(0, aReceber))} ainda a receber em ${aReceberClients.length} contrato${aReceberClients.length !== 1 ? "s" : ""} fechado${aReceberClients.length !== 1 ? "s" : ""}`
               : "Nenhuma entrada este mês"}
           </div>
         </div>

@@ -61,7 +61,7 @@ export const fetchClients = async (): Promise<Client[]> => {
       .from('wedding_clients')
       .select(CLIENT_SELECT)
       .order('created_at', { ascending: false })
-      .limit(100);
+      .range(0, 999);
 
     if (error) {
       console.error('Error fetching clients:', error);

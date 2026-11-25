@@ -8,6 +8,7 @@ import { TriagemTab } from "@/components/financas/TriagemTab";
 import { ContasTab } from "@/components/financas/ContasTab";
 import { ResumoTab } from "@/components/financas/ResumoTab";
 import { ConciliacaoTab } from "@/components/financas/ConciliacaoTab";
+import { ConferenciaTab } from "@/components/financas/ConferenciaTab";
 import { ManualTab } from "@/components/financas/ManualTab";
 import { ResumoDoMes } from "@/components/financas/ResumoDoMes";
 import { listarCategorias, listarFaturas, listarFontes, listarLancamentos, type Categoria, type Fonte, type Lanc } from "@/lib/financas/api";
@@ -48,12 +49,14 @@ export default function Financas() {
             <TabsTrigger value="contas">Contas</TabsTrigger>
             <TabsTrigger value="triagem">Triagem</TabsTrigger>
             <TabsTrigger value="conciliacao">Conciliação{pendConc > 0 ? ` (${pendConc})` : ""}</TabsTrigger>
+            <TabsTrigger value="conferencia">Conferência</TabsTrigger>
             <TabsTrigger value="manual">Manual</TabsTrigger>
           </TabsList>
           <TabsContent value="triagem"><TriagemTab lancs={lancs} categorias={cats} onMudou={carregar} /></TabsContent>
           <TabsContent value="resumo"><ResumoTab fontes={fontes} lancs={lancs} faturas={faturas} categorias={cats} onMudou={carregar} onImportar={() => setImportando(true)} onTriagem={() => setAba("triagem")} pendConc={pendConc} onConciliar={() => setAba("conciliacao")} /></TabsContent>
           <TabsContent value="contas"><ContasTab lancs={lancs} fontes={fontes} categorias={cats} onMudou={carregar} onImportar={() => setImportando(true)} /></TabsContent>
           <TabsContent value="conciliacao"><ConciliacaoTab lancs={lancs} faturas={faturas} onMudou={carregar} /></TabsContent>
+          <TabsContent value="conferencia"><ConferenciaTab lancs={lancs} faturas={faturas} /></TabsContent>
           <TabsContent value="manual"><ManualTab categorias={cats} onMudou={carregar} /></TabsContent>
         </Tabs>
         <Dialog open={importando} onOpenChange={setImportando}>

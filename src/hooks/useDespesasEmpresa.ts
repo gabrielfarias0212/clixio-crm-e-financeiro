@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { listarFaturas, listarLancamentos } from "@/lib/financas/api";
 
 // Despesas da EMPRESA (PJ) vindas do módulo Finanças, por mês (AAAA-MM).
-// Cartão conta no mês da fatura (vencimento); conta, no mês da data. Pagamento de fatura e transferência ficam fora.
+// Só o que sai do caixa da empresa: cartão da empresa (mês da fatura) + débitos das contas marcados como PJ (mês da data).
+// Compras da empresa no cartão PESSOAL ficam de fora: não saíram do caixa da empresa (entram no Acerto PF × PJ).
+// Pagamento de fatura e transferência ficam fora.
 let cache: { em: number; porMes: Record<string, number> } | null = null;
 const TTL = 2 * 60 * 1000;
 
@@ -12,6 +14,7 @@ async function calcular(): Promise<Record<string, number>> {
   const porMes: Record<string, number> = {};
   for (const l of lancs) {
     if (l.status !== "realizado" || l.pertence_a !== "PJ" || (l.tipo !== "saida" && l.tipo !== "estorno")) continue;
+    if (l.pagador === "PF" && l.fatura_id) continue; // compra da empresa no cartão pessoal
     const mes = (l.fatura_id && comp.get(l.fatura_id)) || l.data.slice(0, 7);
     porMes[mes] = (porMes[mes] ?? 0) + (l.tipo === "estorno" ? -l.valor : l.valor);
   }

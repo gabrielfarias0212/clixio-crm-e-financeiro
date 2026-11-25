@@ -479,7 +479,7 @@ export default function WorkflowPage() {
   const [viewMode, setViewMode] = useState<"painel" | "kanban">(() => (localStorage.getItem("workflow_view") ?? "painel") as "painel" | "kanban");
 
   const workflowClients = useMemo(() =>
-    clients.filter(c => c.status === "projeto_finalizado" || c.status === "fechado"),
+    clients.filter(c => (c.status === "projeto_finalizado" || c.status === "fechado") && c.eventCategory !== "Freelance"),
     [clients]
   );
 

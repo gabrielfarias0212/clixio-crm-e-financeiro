@@ -7,6 +7,7 @@ import { DashboardCardModal } from "./DashboardCardModal";
 import { MonthlyEventsModal } from "./MonthlyEventsModal";
 import { Client } from "@/utils/types";
 import { stringToDate } from "@/utils/dates";
+import { isFreelance, semFreelance } from "@/utils/freelance";
 
 export function DashboardStats() {
   const { clients } = useClients();
@@ -21,19 +22,21 @@ export function DashboardStats() {
   const [monthlyEventsModalOpen, setMonthlyEventsModalOpen] = useState(false);
 
   const monthlyLeadsClients = useMemo(() => clients.filter(client => {
+    if (isFreelance(client)) return false;
     if (!client.createdAt || client.leadSource === "Projeto Direto") return false;
     const createdAt = stringToDate(client.createdAt);
     return createdAt && isWithinInterval(createdAt, { start: monthStart, end: monthEnd });
   }), [clients, monthStart, monthEnd]);
 
   const monthlyClosedContractsClients = useMemo(() => clients.filter(client => {
+    if (isFreelance(client)) return false;
     if (!client.createdAt || client.leadSource === "Projeto Direto") return false;
     const createdAt = stringToDate(client.createdAt);
     return createdAt && isWithinInterval(createdAt, { start: monthStart, end: monthEnd }) && client.status === "fechado";
   }), [clients, monthStart, monthEnd]);
 
   const deliveredEventsClients = useMemo(() =>
-    clients.filter(client => client.status === "projeto_finalizado"),
+    clients.filter(client => client.status === "projeto_finalizado" && !isFreelance(client)),
   [clients]);
 
   const pendingPaymentsClients = useMemo(() =>

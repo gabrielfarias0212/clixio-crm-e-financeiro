@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { EventCategory } from "@/utils/types";
+import { semFreelance } from "@/utils/freelance";
 
 export default function CRM() {
   const navigate = useNavigate();
@@ -73,7 +74,7 @@ export default function CRM() {
   const filteredClients = useMemo(() => {
     if (!clients) return [];
     
-    let result = [...clients];
+    let result = semFreelance(clients);
 
     // Apply year filter
     if (timeFilter !== "all") {

@@ -42,6 +42,17 @@ const CARD = {
   boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.07)",
 } as const;
 
+// Busca sem acento e sem maiúsculas; cada palavra digitada precisa aparecer em algum campo do projeto.
+function filtrarPorBusca<T extends Client>(list: T[], termo: string): T[] {
+  if (!termo.trim()) return list;
+  const norm = (v: unknown) => String(v ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const palavras = norm(termo).split(/\s+/).filter(Boolean);
+  return list.filter(c => {
+    const alvo = norm([c.name, c.coupleName, c.weddingDate, c.eventLocation].join(" "));
+    return palavras.every(w => alvo.includes(w));
+  });
+}
+
 // ─── Status helpers ───────────────────────────────────────────────────────────
 
 function isDelivered(client: any): boolean {
@@ -494,15 +505,7 @@ export default function WorkflowPage() {
     if (filterStage !== "all") list = list.filter(c => getCurrentStageKey(c) === filterStage);
     if (filterMonth !== "all") list = list.filter(c => parseDate(c.weddingDate)?.getMonth() === filterMonth);
     if (filterYear !== "all") list = list.filter(c => parseDate(c.weddingDate)?.getFullYear() === filterYear);
-    if (searchTerm.trim()) {
-      const q = searchTerm.toLowerCase();
-      list = list.filter(c =>
-        c.name.toLowerCase().includes(q) ||
-        (c.coupleName ?? "").toLowerCase().includes(q) ||
-        (c.weddingDate ?? "").includes(q) ||
-        (c.eventLocation ?? "").toLowerCase().includes(q)
-      );
-    }
+    list = filtrarPorBusca(list, searchTerm);
     // Sort
     list = [...list].sort((a, b) => {
       if (sortOrder === "date_asc")  return (parseDate(a.weddingDate)?.getTime() ?? 0) - (parseDate(b.weddingDate)?.getTime() ?? 0);
@@ -667,7 +670,33 @@ export default function WorkflowPage() {
 
           {/* Tab: Projetos */}
           {activeTab === "projetos" && viewMode === "kanban" && (
-            <WorkflowKanban clients={filtered} />
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <div style={{ position: "relative" as const, flex: 1, maxWidth: 420 }}>
+                  <Search style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 13, height: 13, color: C.textSub }} />
+                  <input
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    placeholder="Buscar projeto: nome, casal, local, data..."
+                    aria-label="Buscar projeto no Kanban"
+                    style={{
+                      width: "100%", boxSizing: "border-box" as const,
+                      padding: "8px 30px 8px 30px",
+                      border: `1.5px solid ${C.border}`, borderRadius: 8,
+                      background: C.itemBg, fontSize: 12, color: C.text, outline: "none",
+                    }}
+                  />
+                  {searchTerm && (
+                    <button onClick={() => setSearchTerm("")} aria-label="Limpar busca"
+                      style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent", cursor: "pointer", color: C.textSub, fontSize: 14, lineHeight: 1 }}>✕</button>
+                  )}
+                </div>
+                {searchTerm.trim() && (
+                  <span style={{ fontSize: 11, color: C.textSub }}>{filtrarPorBusca(workflowClients, searchTerm).length} projeto(s) encontrado(s), em qualquer etapa</span>
+                )}
+              </div>
+              <WorkflowKanban clients={searchTerm.trim() ? filtrarPorBusca(workflowClients, searchTerm) : filtered} />
+            </>
           )}
           {activeTab === "projetos" && viewMode === "painel" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>

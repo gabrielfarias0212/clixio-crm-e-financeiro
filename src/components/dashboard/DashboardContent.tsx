@@ -175,6 +175,19 @@ export function DashboardContent() {
     }, 0),
     [aReceberClients]);
 
+  // Falta receber dos trabalhos (casamentos e outros) do mês atual para ficarem quitados.
+  const saldoCasamentosMes = useMemo(() => {
+    let total = 0, qtd = 0;
+    for (const c of aReceberClients) {
+      const d = c.weddingDate ? stringToDate(c.weddingDate) : null;
+      if (!d || d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) continue;
+      const pago = c.payments?.reduce((sp, p) => sp + (p.amount || 0), 0) ?? 0;
+      const saldo = Math.max(0, (c.contractValue || 0) - pago);
+      if (saldo > 0) { total += saldo; qtd += 1; }
+    }
+    return { total, qtd };
+  }, [aReceberClients]);
+
   const pipelineClients = useMemo(() =>
     clients.filter(c => ["primeiro_contato", "orçamento enviado", "negociacao"].includes(c.status)),
     [clients]);
@@ -268,7 +281,9 @@ export function DashboardContent() {
           </div>
           <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>
             {monthlyTotals.income > 0
-              ? `${((monthlyTotals.income / (monthlyTotals.income + Math.max(0, aReceber))) * 100).toFixed(0)}% do contratado recebido`
+              ? (saldoCasamentosMes.qtd > 0
+                  ? `Recebido neste mês · faltam ${fmt(saldoCasamentosMes.total)} para quitar ${saldoCasamentosMes.qtd} trabalho${saldoCasamentosMes.qtd !== 1 ? "s" : ""} do mês`
+                  : "Recebido neste mês · trabalhos do mês quitados")
               : "Nenhuma entrada este mês"}
           </div>
         </div>

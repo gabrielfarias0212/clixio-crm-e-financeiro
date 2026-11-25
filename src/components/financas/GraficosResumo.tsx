@@ -22,14 +22,14 @@ function Tip({ active, payload, label }: any) {
 
 export function GraficosResumo({ lancs, categorias, fontes = [], periodo, mesDe = mesPelaData, onSelecionarMes }: { lancs: Lanc[]; categorias: Categoria[]; fontes?: Fonte[]; periodo: Periodo | null; mesDe?: MesDe; onSelecionarMes?: (mes: string) => void }) {
   const gastos = useMemo(() => lancs.filter((l) => l.status === "realizado" && (l.tipo === "saida" || l.tipo === "estorno")), [lancs]);
-  const valor = (l: Lanc) => (l.tipo === "estorno" ? -l.valor : l.valor);
-
+  
   const porMes = useMemo(() => {
     const m = new Map<string, { mes: string; PF: number; PJ: number }>();
     for (const l of gastos) {
+      if (l.tipo === "estorno") continue; // gráfico = gasto bruto; estornos aparecem à parte nos painéis
       const k = mesDe(l);
       const r = m.get(k) ?? { mes: k, PF: 0, PJ: 0 };
-      r[l.pertence_a] += valor(l); m.set(k, r);
+      r[l.pertence_a] += l.valor; m.set(k, r);
     }
     const fim = [periodo?.ate ?? "", mesAtual()].sort().pop()!; // não esconde os meses seguintes ao clicar num mês antigo
     return [...m.values()].filter((r) => r.mes <= fim).sort((a, b) => (a.mes < b.mes ? -1 : 1)).slice(-6).map((r) => ({ ...r, nome: nomeMes(r.mes), PF: Math.round(r.PF), PJ: Math.round(r.PJ) }));
@@ -40,19 +40,19 @@ export function GraficosResumo({ lancs, categorias, fontes = [], periodo, mesDe 
   const catNome = useMemo(() => new Map(categorias.map((c) => [c.id, c.nome])), [categorias]);
   const porCategoria = (dono: "PF" | "PJ" | { fonte: string }) => {
     const m = new Map<string, number>();
+    let est = 0;
     for (const l of gastos) {
       if (typeof dono === "string" ? l.pertence_a !== dono : l.fonte_id !== dono.fonte) continue;
       if (!mesNoPeriodo(mesDe(l), periodo)) continue;
+      if (l.tipo === "estorno") { est += l.valor; continue; }
       const k = l.categoria_id ? catNome.get(l.categoria_id) ?? "Outros" : "Sem categoria";
-      m.set(k, (m.get(k) ?? 0) + valor(l));
+      m.set(k, (m.get(k) ?? 0) + l.valor);
     }
     const todas = [...m.entries()].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
     const top = todas.slice(0, 7), resto = todas.slice(7).reduce((s, [, v]) => s + v, 0);
     if (resto > 0) top.push(["Outras", resto]);
-    // créditos/estornos (categorias com saldo negativo) entram numa linha própria, para as barras fecharem com o total
-    const cred = [...m.values()].filter((v) => v < 0).reduce((s, v) => s + v, 0);
-    return {
-      credito: Math.round(cred), itens: top.map(([nome, v]) => ({ nome, valor: Math.round(v) })), total: [...m.values()].reduce((s, v) => s + v, 0) };
+    const bruto = [...m.values()].reduce((s, v) => s + v, 0);
+    return { estornos: Math.round(est), liquido: Math.round(bruto - est), itens: top.map(([nome, v]) => ({ nome, valor: Math.round(v) })), total: bruto };
   };
   const pf = useMemo(() => porCategoria("PF"), [gastos, catNome, periodo, mesDe]);
   const pj = useMemo(() => porCategoria("PJ"), [gastos, catNome, periodo, mesDe]);
@@ -60,7 +60,7 @@ export function GraficosResumo({ lancs, categorias, fontes = [], periodo, mesDe 
   const cartoes = useMemo(() => fontes.filter((f) => f.tipo === "cartao").map((f) => ({ f, d: porCategoria({ fonte: f.id }) })).slice(0, 2), [fontes, gastos, catNome, periodo, mesDe]);
 
   if (!gastos.length) return null;
-  const Horizontal = ({ titulo, d, cor }: { titulo: string; d: { itens: { nome: string; valor: number }[]; total: number; credito?: number }; cor: string }) => (
+  const Horizontal = ({ titulo, d, cor }: { titulo: string; d: { itens: { nome: string; valor: number }[]; total: number; estornos?: number; liquido?: number }; cor: string }) => (
     <Card>
       <CardHeader className="pb-2"><CardTitle className="text-base">{titulo} <span className="font-normal text-muted-foreground">· {brl(d.total)}{total > 0 ? ` (${Math.round((d.total / total) * 100)}%)` : ""}</span></CardTitle></CardHeader>
       <CardContent>
@@ -76,7 +76,7 @@ export function GraficosResumo({ lancs, categorias, fontes = [], periodo, mesDe 
             </BarChart>
           </ResponsiveContainer>
         )}
-        {!!d.credito && <div className="mt-1 text-xs text-muted-foreground">Estornos/créditos no período: {brl(d.credito)} (já descontados no total acima)</div>}
+        {!!d.estornos && <div className="mt-1 text-xs text-muted-foreground">Estornos de fatura: -{brl(d.estornos)} · líquido {brl(d.liquido ?? 0)}</div>}
       </CardContent>
     </Card>
   );

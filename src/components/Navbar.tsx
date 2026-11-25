@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BarChart, CalendarDays, Users, DollarSign, Workflow, GitBranch, Menu, X, Settings2, FileText, Camera } from "lucide-react";
+import { BarChart, CalendarDays, Users, DollarSign, WalletCards, Workflow, GitBranch, Menu, X, Settings2, FileText, Camera } from "lucide-react";
 import { useProofingNotifications } from "@/hooks/useProofingNotifications";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -19,7 +19,7 @@ const navItems = [
   { name: "Fluxo de Trabalho", path: "/workflow", icon: GitBranch },
   { name: "Calendário",        path: "/calendar", icon: CalendarDays },
   { name: "Financeiro",        path: "/cash-flow", icon: DollarSign },
-  { name: "Finanças",          path: "/financas",  icon: DollarSign, flag: "clixio_financas" },
+  { name: "Finanças",          path: "/financas",  icon: WalletCards, flag: "clixio_financas" },
   { name: "Formulários",       path: "/forms",     icon: FileText },
   { name: "Galerias",          path: "/galerias",  icon: Camera },
   { name: "Configurações",     path: "/settings",  icon: Settings2 },

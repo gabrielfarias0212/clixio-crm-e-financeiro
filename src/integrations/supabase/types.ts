@@ -885,6 +885,7 @@ export type Database = {
           created_at: string
           fonte_id: string
           id: string
+          pagamento_lancamento_id: string | null
           pago_em: string | null
           status: string
           user_id: string
@@ -897,6 +898,7 @@ export type Database = {
           created_at?: string
           fonte_id: string
           id?: string
+          pagamento_lancamento_id?: string | null
           pago_em?: string | null
           status?: string
           user_id?: string
@@ -909,6 +911,7 @@ export type Database = {
           created_at?: string
           fonte_id?: string
           id?: string
+          pagamento_lancamento_id?: string | null
           pago_em?: string | null
           status?: string
           user_id?: string
@@ -1028,6 +1031,7 @@ export type Database = {
       }
       fin_lancamentos: {
         Row: {
+          apelido: string | null
           categoria_id: string | null
           clixio_match_score: number | null
           clixio_match_status: string | null
@@ -1045,6 +1049,7 @@ export type Database = {
           importacao_id: string | null
           obs: string | null
           pagador: string
+          par_id: string | null
           parcela_atual: number | null
           parcela_total: number | null
           pertence_a: string
@@ -1054,6 +1059,7 @@ export type Database = {
           valor: number
         }
         Insert: {
+          apelido?: string | null
           categoria_id?: string | null
           clixio_match_score?: number | null
           clixio_match_status?: string | null
@@ -1071,6 +1077,7 @@ export type Database = {
           importacao_id?: string | null
           obs?: string | null
           pagador: string
+          par_id?: string | null
           parcela_atual?: number | null
           parcela_total?: number | null
           pertence_a: string
@@ -1080,6 +1087,7 @@ export type Database = {
           valor: number
         }
         Update: {
+          apelido?: string | null
           categoria_id?: string | null
           clixio_match_score?: number | null
           clixio_match_status?: string | null
@@ -1097,6 +1105,7 @@ export type Database = {
           importacao_id?: string | null
           obs?: string | null
           pagador?: string
+          par_id?: string | null
           parcela_atual?: number | null
           parcela_total?: number | null
           pertence_a?: string

@@ -99,7 +99,7 @@ export function ReceitaMesModal({ open, onClose }: { open: boolean; onClose: () 
 
           {sem.length > 0 && (
             <>
-              <div style={{ ...sec, marginTop: 18 }}>Saldo sem parcela cadastrada (conferir) · {fmt(totalSem)}</div>
+              <div style={{ ...sec, marginTop: 18 }}>Saldo sem parcela e sem data do evento (conferir) · {fmt(totalSem)}</div>
               {sem.map(x => (
                 <div key={x.id} style={row}>
                   <span>{x.nome}<div style={{ fontSize: 11, color: "#9A9590" }}>contrato {fmt(x.contrato)} · pago {fmt(x.pago)}</div></span>

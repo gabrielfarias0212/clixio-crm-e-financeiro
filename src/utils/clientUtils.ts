@@ -98,7 +98,12 @@ export const saldoExigivel = (client: Client, ateISO: string) => {
   }
   exigivel = Math.min(exigivel, saldo);
   aVencer = Math.min(aVencer, saldo - exigivel);
-  const semParcela = Math.max(0, saldo - exigivel - aVencer);
+  // Saldo sem parcela: cliente que paga aos poucos, sem cadastrar parcelas.
+  // Passa a ser exigível quando o evento já aconteceu ou é até o fim do mês.
+  const resto = Math.max(0, saldo - exigivel - aVencer);
+  const evento = toISODate(client.weddingDate);
+  if (resto > 0 && evento && evento <= ateISO) exigivel += resto;
+  const semParcela = resto > 0 && !evento ? resto : 0; // sem data: só para conferir
   return { saldo, exigivel, aVencer, semParcela };
 };
 

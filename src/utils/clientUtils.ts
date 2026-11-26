@@ -7,9 +7,14 @@ export const formatDate = (date: Date): string => {
 };
 
 // Helper function to check if a client has fully paid
+// Soma apenas pagamentos efetivamente recebidos (pendente/atrasado não contam)
+export const valorPago = (client: Client): number =>
+  (client.payments ?? [])
+    .filter(p => !p.payment_status || p.payment_status === "pago")
+    .reduce((sum, payment) => sum + (payment.amount || 0), 0);
+
 export const isFullyPaid = (client: Client): boolean => {
-  const totalPaid = client.payments.reduce((sum, payment) => sum + payment.amount, 0);
-  return totalPaid >= client.contractValue;
+  return valorPago(client) >= client.contractValue;
 };
 
 // Helper function to check if the work is fully delivered

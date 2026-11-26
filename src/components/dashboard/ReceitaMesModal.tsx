@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
-import { isFullyPaid } from "@/utils/clientUtils";
+import { isFullyPaid, valorPago } from "@/utils/clientUtils";
 import { stringToDate } from "@/utils/dates";
 
 const fmt = (v: number) =>
@@ -39,10 +39,10 @@ export function ReceitaMesModal({ open, onClose }: { open: boolean; onClose: () 
     const totalRecebido = recebidos.reduce((s, r) => s + r.valor, 0);
 
     const faltam = clients
-      .filter(c => c.status === "fechado" && !isFullyPaid(c))
+      .filter(c => (c.status === "fechado" || c.status === "projeto_finalizado") && !isFullyPaid(c))
       .map(c => {
         const d = c.weddingDate ? stringToDate(c.weddingDate) : null;
-        const pago = c.payments?.reduce((s, p) => s + (p.amount || 0), 0) ?? 0;
+        const pago = valorPago(c);
         const contrato = c.contractValue || 0;
         return { id: c.id, nome: c.coupleName || c.name, data: d, contrato, pago, falta: Math.max(0, contrato - pago) };
       })

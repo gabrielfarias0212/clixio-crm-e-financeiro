@@ -6,7 +6,7 @@ import { useState, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { differenceInDays } from "date-fns";
 import { stringToDate } from "@/utils/dates";
-import { isFullyPaid } from "@/utils/clientUtils";
+import { isFullyPaid, valorPago } from "@/utils/clientUtils";
 import { Client, AlertItem } from "@/utils/types";
 import { useNavigate } from "react-router-dom";
 import { DashboardCardModal } from "./DashboardCardModal";
@@ -164,16 +164,16 @@ export function DashboardContent() {
   const receitaConfirmada = useMemo(() =>
     clients
       .filter(c => c.status === "fechado" || c.status === "projeto_finalizado")
-      .reduce((s, c) => s + (c.payments?.reduce((sp, p) => sp + (p.amount || 0), 0) ?? 0), 0),
+      .reduce((s, c) => s + valorPago(c), 0),
     [clients]);
 
   const aReceberClients = useMemo(() =>
-    clients.filter(c => c.status === "fechado" && !isFullyPaid(c)),
+    clients.filter(c => (c.status === "fechado" || c.status === "projeto_finalizado") && !isFullyPaid(c)),
     [clients]);
 
   const aReceber = useMemo(() =>
     aReceberClients.reduce((s, c) => {
-      const pago = c.payments?.reduce((sp, p) => sp + (p.amount || 0), 0) ?? 0;
+      const pago = valorPago(c);
       return s + Math.max(0, (c.contractValue || 0) - pago);
     }, 0),
     [aReceberClients]);
@@ -184,7 +184,7 @@ export function DashboardContent() {
     for (const c of aReceberClients) {
       const d = c.weddingDate ? stringToDate(c.weddingDate) : null;
       if (!d || d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) continue;
-      const pago = c.payments?.reduce((sp, p) => sp + (p.amount || 0), 0) ?? 0;
+      const pago = valorPago(c);
       const saldo = Math.max(0, (c.contractValue || 0) - pago);
       if (saldo > 0) { total += saldo; qtd += 1; }
     }

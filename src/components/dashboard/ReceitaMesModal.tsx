@@ -27,7 +27,7 @@ export function ReceitaMesModal({ open, onClose }: { open: boolean; onClose: () 
   const { clients } = useClients();
   const { transactions } = useTransactions();
 
-  const { recebidos, totalRecebido, faltam, totalFalta, prazo, totalPrazo } = useMemo(() => {
+  const { recebidos, totalRecebido, faltam, totalFalta, prazo, totalPrazo, sem, totalSem } = useMemo(() => {
     const now = new Date();
     const doMes = (d: Date | null) =>
       !!d && !isNaN(d.getTime()) && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
@@ -43,15 +43,17 @@ export function ReceitaMesModal({ open, onClose }: { open: boolean; onClose: () 
       .filter(c => (c.status === "fechado" || c.status === "projeto_finalizado") && !isFullyPaid(c))
       .map(c => {
         const d = c.weddingDate ? stringToDate(c.weddingDate) : null;
-        const { exigivel, aVencer } = saldoExigivel(c, ate);
-        return { id: c.id, nome: c.coupleName || c.name, data: d, contrato: c.contractValue || 0, pago: valorPago(c), falta: exigivel, aVencer };
+        const { exigivel, aVencer, semParcela } = saldoExigivel(c, ate);
+        return { id: c.id, nome: c.coupleName || c.name, data: d, contrato: c.contractValue || 0, pago: valorPago(c), falta: exigivel, aVencer, semParcela };
       });
     const faltam = linhas.filter(x => x.falta > 0).sort((a, b) => (a.data?.getTime() ?? 0) - (b.data?.getTime() ?? 0));
     const totalFalta = faltam.reduce((s, x) => s + x.falta, 0);
     const prazo = linhas.filter(x => x.aVencer > 0).sort((a, b) => (a.data?.getTime() ?? 0) - (b.data?.getTime() ?? 0));
+    const sem = linhas.filter(x => x.semParcela > 0).sort((a, b) => b.semParcela - a.semParcela);
+    const totalSem = sem.reduce((s, x) => s + x.semParcela, 0);
     const totalPrazo = prazo.reduce((s, x) => s + x.aVencer, 0);
 
-    return { recebidos, totalRecebido, faltam, totalFalta, prazo, totalPrazo };
+    return { recebidos, totalRecebido, faltam, totalFalta, prazo, totalPrazo, sem, totalSem };
   }, [clients, transactions]);
 
   const sec: React.CSSProperties = { fontSize: 11, fontWeight: 700, color: "#9A9590", textTransform: "uppercase", letterSpacing: 0.5, margin: "4px 0 8px" };
@@ -90,6 +92,18 @@ export function ReceitaMesModal({ open, onClose }: { open: boolean; onClose: () 
                 <div key={x.id} style={row}>
                   <span>{x.nome}</span>
                   <b style={{ color: "#9A9590", whiteSpace: "nowrap" }}>{fmt(x.aVencer)}</b>
+                </div>
+              ))}
+            </>
+          )}
+
+          {sem.length > 0 && (
+            <>
+              <div style={{ ...sec, marginTop: 18 }}>Saldo sem parcela cadastrada (conferir) · {fmt(totalSem)}</div>
+              {sem.map(x => (
+                <div key={x.id} style={row}>
+                  <span>{x.nome}<div style={{ fontSize: 11, color: "#9A9590" }}>contrato {fmt(x.contrato)} · pago {fmt(x.pago)}</div></span>
+                  <b style={{ color: "#9A9590", whiteSpace: "nowrap" }}>{fmt(x.semParcela)}</b>
                 </div>
               ))}
             </>

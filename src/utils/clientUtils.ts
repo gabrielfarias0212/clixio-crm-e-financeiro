@@ -74,25 +74,32 @@ export const shouldShowDeliveredIndicator = (client: Client): boolean => {
 };
 
 
+// Datas do app chegam como DD/MM/YYYY (ou ISO): normaliza para YYYY-MM-DD para comparar
+export const toISODate = (d?: string | null): string => {
+  if (!d) return "";
+  const br = d.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+  return d.slice(0, 10);
+};
+
 /**
- * Saldo exigível até uma data (fim do mês): o que já venceu ou vence até lá.
- * Pagamentos pendentes com vencimento depois dessa data (prazo combinado) NÃO entram:
- * ficam em `aVencer`. Saldo sem parcela cadastrada vence na data do evento.
+ * Saldo do cliente separado em:
+ * - exigivel: parcelas pendentes já vencidas ou que vencem até o fim do mês
+ * - aVencer: parcelas pendentes com prazo combinado depois do mês (não cobra)
+ * - semParcela: saldo sem nenhuma parcela cadastrada (conferir lançamento)
  */
 export const saldoExigivel = (client: Client, ateISO: string) => {
-  const contrato = client.contractValue || 0;
-  const pago = valorPago(client);
-  const saldo = Math.max(0, contrato - pago);
+  const saldo = Math.max(0, (client.contractValue || 0) - valorPago(client));
   const pendentes = (client.payments ?? []).filter(p => p.payment_status === "pendente" || p.payment_status === "atrasado");
-  const dia = (p: { due_date?: string; date: string }) => (p.due_date || p.date || "").slice(0, 10);
-  const aVencer = Math.min(saldo, pendentes.filter(p => dia(p) > ateISO).reduce((s, p) => s + (p.amount || 0), 0));
-  const agendado = pendentes.reduce((s, p) => s + (p.amount || 0), 0);
-  const semParcela = Math.max(0, saldo - agendado);
-  const evento = (client.weddingDate || "").slice(0, 10);
-  const semParcelaExigivel = !evento || evento <= ateISO ? semParcela : 0;
-  const semParcelaFuturo = semParcela - semParcelaExigivel;
-  const exigivel = Math.max(0, saldo - aVencer - semParcelaFuturo);
-  return { saldo, exigivel, aVencer: aVencer + semParcelaFuturo };
+  const dia = (p: { due_date?: string; date: string }) => toISODate(p.due_date || p.date);
+  let exigivel = 0, aVencer = 0;
+  for (const p of pendentes) {
+    if (dia(p) <= ateISO) exigivel += p.amount || 0; else aVencer += p.amount || 0;
+  }
+  exigivel = Math.min(exigivel, saldo);
+  aVencer = Math.min(aVencer, saldo - exigivel);
+  const semParcela = Math.max(0, saldo - exigivel - aVencer);
+  return { saldo, exigivel, aVencer, semParcela };
 };
 
 export const fimDoMesISO = (d: Date = new Date()): string => {

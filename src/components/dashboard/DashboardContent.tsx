@@ -11,6 +11,7 @@ import { Client, AlertItem } from "@/utils/types";
 import { useNavigate } from "react-router-dom";
 import { DashboardCardModal } from "./DashboardCardModal";
 import { DashboardAlertsPanel } from "./DashboardAlertsPanel";
+import { ReceitaMesModal } from "./ReceitaMesModal";
 import {
   TrendingUp, TrendingDown, ArrowUpCircle, ArrowDownCircle,
   AlertTriangle, DollarSign, Users,
@@ -156,6 +157,7 @@ export function DashboardContent() {
     customData?: AlertItem[];
   } | null>(null);
 
+  const [receitaOpen, setReceitaOpen] = useState(false);
   const now = new Date();
 
   // ── Financial ──────────────────────────────────────────────────────────────
@@ -268,11 +270,13 @@ export function DashboardContent() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 
+      <ReceitaMesModal open={receitaOpen} onClose={() => setReceitaOpen(false)} />
+
       {/* ── KPI Row ── */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, minmax(0, 1fr))", gap: isMobile ? 10 : 12 }}>
 
         {/* Receita do Mês */}
-        <div style={{ ...CARD, borderTop: "3px solid #52C97A" }}>
+        <div role="button" tabIndex={0} onClick={() => setReceitaOpen(true)} onKeyDown={e => (e.key === "Enter" || e.key === " ") && setReceitaOpen(true)} style={{ ...CARD, borderTop: "3px solid #52C97A", cursor: "pointer" }} title="Ver detalhes da receita do mês">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
             <span style={MINI_TITLE}>Receita do Mês</span>
             <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#E6F9EE", display: "flex", alignItems: "center", justifyContent: "center" }}>

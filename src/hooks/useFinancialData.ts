@@ -10,7 +10,7 @@ interface FinancialCache {
     balance: number;
   };
   timestamp: number;
-  transactionCount: number;
+  signature: string;
 }
 
 // Cache com TTL de 2 minutos
@@ -31,15 +31,21 @@ export function useFinancialData() {
   // Memoizar dados de entrada
   const transactionsData = useMemo(() => transactions, [transactions]);
 
+  // Assinatura do conteúdo (não só a quantidade): editar valor/data/tipo invalida o cache
+  const signature = useMemo(
+    () => transactionsData.map(t => `${t.id}|${t.amount}|${t.type}|${t.date}`).join(";"),
+    [transactionsData]
+  );
+
   // Função otimizada para verificar cache
   const getCachedData = useCallback(() => {
     if (financialCache && 
         Date.now() - financialCache.timestamp < CACHE_TTL &&
-        financialCache.transactionCount === transactionsData.length) {
+        financialCache.signature === signature) {
       return financialCache;
     }
     return null;
-  }, [transactionsData.length]);
+  }, [signature]);
 
   // Memoizar data atual do mês para evitar recálculos
   const currentMonthInfo = useMemo(() => {
@@ -133,7 +139,7 @@ export function useFinancialData() {
       financialCache = {
         data: result,
         timestamp: Date.now(),
-        transactionCount: transactionsData.length
+        signature
       };
 
       setMonthlyTotals(result);
@@ -145,7 +151,7 @@ export function useFinancialData() {
       setLoading(false);
       setHasCalculated(true);
     }
-  }, [transactionsData.length, currentMonthTransactions, getCachedData]);
+  }, [transactionsData.length, currentMonthTransactions, getCachedData, signature]);
 
   // Effect otimizado
   useEffect(() => {

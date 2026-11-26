@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listarFaturas, listarLancamentos } from "@/lib/financas/api";
+import { CORTE_DESPESAS_MES } from "@/utils/despesasCorte";
 
 // Despesas da EMPRESA (PJ) vindas do módulo Finanças, por mês (AAAA-MM).
 // Cartão conta no mês da fatura (vencimento); conta, no mês da data. Pagamento de fatura e transferência ficam fora.
@@ -35,5 +36,9 @@ export function useDespesasEmpresa() {
   const doMes = Math.max(0, liq(porMes[mesAtual]));
   const doAno = Object.entries(porMes).filter(([m]) => m.startsWith(ano)).reduce((s, [, v]) => s + liq(v), 0);
   const total = Object.values(porMes).reduce((s, v) => s + liq(v), 0);
-  return { doMes, doAno: Math.max(0, doAno), total: Math.max(0, total), doMesBruto: porMes[mesAtual]?.bruto ?? 0 };
+  // Líquido por mês (AAAA-MM), só de meses a partir do corte (antes disso vale o módulo antigo)
+  const liquidoPorMes: Record<string, number> = {};
+  for (const [m, v] of Object.entries(porMes)) if (m >= CORTE_DESPESAS_MES) liquidoPorMes[m] = Math.max(0, liq(v));
+  const doAnoPosCorte = Object.entries(liquidoPorMes).filter(([m]) => m.startsWith(ano)).reduce((s, [, v]) => s + v, 0);
+  return { doMes, doAno: Math.max(0, doAno), total: Math.max(0, total), doMesBruto: porMes[mesAtual]?.bruto ?? 0, liquidoPorMes, doAnoPosCorte };
 }

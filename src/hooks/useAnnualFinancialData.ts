@@ -1,3 +1,5 @@
+import { saidaAntigaValida } from "@/utils/despesasCorte";
+import { useDespesasEmpresa } from "@/hooks/useDespesasEmpresa";
 
 import { useCallback, useState, useEffect, useMemo } from "react";
 import { useTransactions } from "@/contexts/TransactionsContext";
@@ -16,6 +18,7 @@ export type AnnualChartDataPoint = {
 
 export function useAnnualFinancialData() {
   const { transactions, loading: transactionsLoading } = useTransactions();
+  const despesasFin = useDespesasEmpresa();
   const [chartData, setChartData] = useState<AnnualChartDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasCalculated, setHasCalculated] = useState(false);
@@ -86,9 +89,11 @@ export function useAnnualFinancialData() {
           .filter(t => t.type === "entrada")
           .reduce((sum, t) => sum + Number(t.amount), 0);
           
+        // Antes do corte: saídas do módulo antigo; a partir dele: despesas do módulo Finanças
+        const mesKey = format(month, "yyyy-MM");
         const expenses = monthTransactions
-          .filter(t => t.type === "saída")
-          .reduce((sum, t) => sum + Number(t.amount), 0);
+          .filter(t => t.type === "saída" && saidaAntigaValida(t))
+          .reduce((sum, t) => sum + Number(t.amount), 0) + (despesasFin.liquidoPorMes[mesKey] ?? 0);
           
         const balance = income - expenses;
         
@@ -121,7 +126,7 @@ export function useAnnualFinancialData() {
       setLoading(false);
       setHasCalculated(true);
     }
-  }, [transactions, yearStart, yearEnd, currentYear]);
+  }, [transactions, yearStart, yearEnd, currentYear, despesasFin.liquidoPorMes]);
 
   // Effect to calculate data when transactions change
   useEffect(() => {

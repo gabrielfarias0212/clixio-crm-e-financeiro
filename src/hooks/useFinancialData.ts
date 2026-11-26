@@ -1,6 +1,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useTransactions } from "@/contexts/TransactionsContext";
+import { saidaAntigaValida } from "@/utils/despesasCorte";
 import { useDespesasEmpresa } from "@/hooks/useDespesasEmpresa";
 
 interface FinancialCache {
@@ -118,7 +119,7 @@ export function useFinancialData() {
         
         if (transaction.type === "entrada") {
           acc.income += amount;
-        } else if (transaction.type === "saída") {
+        } else if (transaction.type === "saída" && saidaAntigaValida(transaction)) {
           acc.expenses += amount;
         }
         

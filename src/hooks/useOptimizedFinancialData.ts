@@ -1,3 +1,4 @@
+import { saidaAntigaValida } from "@/utils/despesasCorte";
 
 import { useCallback, useState, useEffect, useMemo } from 'react';
 import { useTransactions } from '@/contexts/TransactionsContext';
@@ -107,7 +108,7 @@ export function useOptimizedFinancialData() {
         
         if (transaction.type === "entrada") {
           acc.income += amount;
-        } else if (transaction.type === "saída") {
+        } else if (transaction.type === "saída" && saidaAntigaValida(transaction)) {
           acc.expenses += amount;
         }
         

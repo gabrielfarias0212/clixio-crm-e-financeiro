@@ -89,7 +89,7 @@ export function ConciliacaoTab({ lancs, faturas, onMudou }: { lancs: Lanc[]; fat
     </div>
   );
 
-  if (!clixio) return <Card><CardContent className="p-6 text-sm text-muted-foreground">Lendo o Financeiro do Clixio…</CardContent></Card>;
+  if (!clixio) return <Card><CardContent className="p-6 text-sm text-muted-foreground">Lendo os Recebimentos do Clixio…</CardContent></Card>;
   const total = alta.length + duvida.length + semPar.length + proprios.length + transf.length + pagFat.length;
 
   return (
@@ -266,7 +266,7 @@ export function ConciliacaoTab({ lancs, faturas, onMudou }: { lancs: Lanc[]; fat
           <Input placeholder="Observação (ex.: parcela 2 de 5)" value={nota} onChange={(e) => setNota(e.target.value)} />
           {cliente && (
             <div className="rounded-md bg-amber-50 p-2 text-xs text-amber-900">
-              Vai ser criado no Financeiro: um <b>pagamento pago</b> de {brl(l.valor)} em {dBR(l.data)} para <b>{cliente.name}</b>, mais a <b>transação de entrada</b> (categoria casamento). Dá para desfazer depois.
+              Vai ser criado em Recebimentos: um <b>pagamento pago</b> de {brl(l.valor)} em {dBR(l.data)} para <b>{cliente.name}</b>, mais a <b>transação de entrada</b> (categoria casamento). Dá para desfazer depois.
             </div>
           )}
           <Button size="sm" disabled={!cliente || ocupado} onClick={() => executar(() => registrarPagamentoCliente(l, cliente!, nota.trim()), "Pagamento registrado no Clixio")}>Confirmar e registrar</Button>

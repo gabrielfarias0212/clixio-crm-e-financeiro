@@ -104,7 +104,7 @@ export function ResumoTab({ fontes, lancs, faturas, categorias, onMudou, onImpor
       </div>
       {pendConc > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-blue-300 bg-blue-50 px-3 py-2 text-sm text-blue-900">
-          <span>{pendConc} lançamentos do extrato aguardando conciliação com o Financeiro (para não duplicar entradas de clientes).</span>
+          <span>{pendConc} lançamentos do extrato aguardando conciliação com Recebimentos (para não duplicar entradas de clientes).</span>
           <Button size="sm" variant="outline" onClick={onConciliar}>Ir para a Conciliação</Button>
         </div>
       )}

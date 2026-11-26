@@ -150,9 +150,9 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel, financ
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="entrada">Entrada</SelectItem>
-                    <SelectItem value="saída">Saída</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">Aqui só entradas (contratos, clientes e trabalhos). Despesas são lançadas no módulo Finanças.</p>
                 <FormMessage />
               </FormItem>
             )}

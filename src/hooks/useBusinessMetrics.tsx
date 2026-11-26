@@ -1,6 +1,7 @@
 
 import { useClients } from "@/contexts/ClientsContext";
 import { useTransactions } from "@/contexts/TransactionsContext";
+import { saidaAntigaValida } from "@/utils/despesasCorte";
 import { useDespesasEmpresa } from "@/hooks/useDespesasEmpresa";
 import { startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { stringToDate } from "@/utils/dateUtils";
@@ -108,6 +109,7 @@ export function useBusinessMetrics() {
     const totalExpensesData = transactions
       .filter(t => {
         if (t.type !== "saída") return false;
+        if (!saidaAntigaValida(t)) return false; // a partir do corte, despesas só do módulo Finanças
         if (!t.date) return false;
         
         const transactionDate = stringToDate(t.date);
@@ -118,7 +120,7 @@ export function useBusinessMetrics() {
     const totalExpenses = totalExpensesData.reduce((sum, t) => {
       const amount = Number(t.amount);
       return sum + (isNaN(amount) ? 0 : amount);
-    }, 0) + despesasFin.doAno;
+    }, 0) + despesasFin.doAnoPosCorte;
     
     const netProfit = totalRevenue - totalExpenses;
 
@@ -145,7 +147,7 @@ export function useBusinessMetrics() {
       revenueMonths,
       currentYear
     };
-  }, [clients, transactions, yearStart, yearEnd, despesasFin.doAno]);
+  }, [clients, transactions, yearStart, yearEnd, despesasFin.doAnoPosCorte]);
 
   return metrics;
 }

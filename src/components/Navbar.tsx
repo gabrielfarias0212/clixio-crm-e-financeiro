@@ -18,7 +18,7 @@ const navItems = [
   { name: "CRM",               path: "/crm",      icon: Workflow },
   { name: "Fluxo de Trabalho", path: "/workflow", icon: GitBranch },
   { name: "Calendário",        path: "/calendar", icon: CalendarDays },
-  { name: "Financeiro",        path: "/cash-flow", icon: DollarSign },
+  { name: "Recebimentos",       path: "/cash-flow", icon: DollarSign },
   { name: "Finanças",          path: "/financas",  icon: WalletCards, flag: "clixio_financas" },
   { name: "Formulários",       path: "/forms",     icon: FileText },
   { name: "Galerias",          path: "/galerias",  icon: Camera },

@@ -57,7 +57,7 @@ export default function CashFlow() {
   const weeklyFilter = useWeeklyFilter();
 
   useEffect(() => {
-    document.title = "Financeiro | GCLIXIO";
+    document.title = "Recebimentos | GCLIXIO";
     refreshTransactions();
     refreshClients();
   }, [refreshTransactions, refreshClients]);
@@ -129,7 +129,7 @@ export default function CashFlow() {
 
         {/* Page header */}
         <div style={{ ...CARD, padding: "18px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" as const, gap: 12 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: C.text, margin: 0 }}>Financeiro</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: C.text, margin: 0 }}>Recebimentos</h1>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const, alignItems: "center" }}>
             <button
               onClick={() => setShowAddTransaction(true)}
@@ -144,7 +144,7 @@ export default function CashFlow() {
               }}
             >
               <PlusCircle style={{ width: 13, height: 13 }} />
-              Nova Transação
+              Novo Recebimento
             </button>
 
             <TransactionImporter onImportComplete={() => { refreshTransactions(); refreshClients(); toast.success("Dados atualizados!"); }} />

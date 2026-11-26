@@ -129,34 +129,7 @@ export function AddTransactionForm({ clients, onAddTransaction, onCancel, financ
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Tipo de Transação */}
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tipo de Transação</FormLabel>
-                <Select
-                  onValueChange={(value: TransactionType) => {
-                    field.onChange(value);
-                    setTransactionType(value);
-                  }}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo de transação" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="entrada">Entrada</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">Aqui só entradas (contratos, clientes e trabalhos). Despesas são lançadas no módulo Finanças.</p>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Tipo: sempre "entrada" (módulo Recebimentos). Despesas ficam no módulo Finanças. */}
 
           {/* Categoria */}
           <FormField

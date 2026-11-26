@@ -63,7 +63,7 @@ export function TransactionSection({
     <div className="space-y-6">
       {showAddTransaction && (
         <div className="mb-6 p-4 border rounded-lg bg-gray-50">
-          <h2 className="text-lg font-medium mb-4">Registrar Nova Transação</h2>
+          <h2 className="text-lg font-medium mb-4">Registrar Novo Recebimento</h2>
           <AddTransactionForm 
             clients={clients}
             onAddTransaction={onAddTransaction}

@@ -40,7 +40,7 @@ export default function Financas() {
       <div className="mx-auto max-w-4xl space-y-4 p-4">
         <div>
           <h1 className="text-2xl font-semibold">Finanças</h1>
-          <p className="text-sm text-muted-foreground">Contas e cartões, pessoal e empresa. Separado do Financeiro (que cuida das entradas de clientes).</p>
+          <p className="text-sm text-muted-foreground">Contas e cartões, pessoal e empresa. Separado de Recebimentos (que cuida das entradas de clientes).</p>
         </div>
         <ResumoDoMes lancs={lancs} fontes={fontes} faturas={faturas} />
         <Tabs value={aba} onValueChange={setAba}>

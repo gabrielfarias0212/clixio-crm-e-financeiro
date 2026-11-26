@@ -165,7 +165,9 @@ export function useFinancialData() {
     income: monthlyTotals.income,
     expenses: monthlyTotals.expenses + despesasFin.doMes,
     balance: monthlyTotals.balance - despesasFin.doMes,
-  }), [monthlyTotals, despesasFin.doMes]);
+    // bruto = despesas sem descontar estornos/créditos do cartão; o líquido (expenses) é o que entra no saldo
+    expensesBruto: monthlyTotals.expenses + despesasFin.doMesBruto,
+  }), [monthlyTotals, despesasFin.doMes, despesasFin.doMesBruto]);
 
   return { 
     monthlyTotals: totaisComFinancas,

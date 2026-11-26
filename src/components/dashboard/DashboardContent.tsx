@@ -6,7 +6,7 @@ import { useState, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { differenceInDays } from "date-fns";
 import { stringToDate } from "@/utils/dates";
-import { isFullyPaid, valorPago } from "@/utils/clientUtils";
+import { isFullyPaid, valorPago, saldoExigivel, fimDoMesISO } from "@/utils/clientUtils";
 import { Client, AlertItem } from "@/utils/types";
 import { useNavigate } from "react-router-dom";
 import { DashboardCardModal } from "./DashboardCardModal";
@@ -178,15 +178,13 @@ export function DashboardContent() {
     }, 0),
     [aReceberClients]);
 
-  // Falta receber dos trabalhos (casamentos e outros) do mês atual para ficarem quitados.
+  // Falta receber exigível: vencido ou que vence até o fim do mês. Prazo combinado maior não cobra.
   const saldoCasamentosMes = useMemo(() => {
+    const ate = fimDoMesISO();
     let total = 0, qtd = 0;
     for (const c of aReceberClients) {
-      const d = c.weddingDate ? stringToDate(c.weddingDate) : null;
-      if (!d || d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) continue;
-      const pago = valorPago(c);
-      const saldo = Math.max(0, (c.contractValue || 0) - pago);
-      if (saldo > 0) { total += saldo; qtd += 1; }
+      const { exigivel } = saldoExigivel(c, ate);
+      if (exigivel > 0) { total += exigivel; qtd += 1; }
     }
     return { total, qtd };
   }, [aReceberClients]);
@@ -289,8 +287,8 @@ export function DashboardContent() {
           <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>
             {monthlyTotals.income > 0
               ? (saldoCasamentosMes.qtd > 0
-                  ? `Recebido neste mês · faltam ${fmt(saldoCasamentosMes.total)} para quitar ${saldoCasamentosMes.qtd} trabalho${saldoCasamentosMes.qtd !== 1 ? "s" : ""} do mês`
-                  : "Recebido neste mês · trabalhos do mês quitados")
+                  ? `Recebido neste mês · faltam ${fmt(saldoCasamentosMes.total)} a receber (vencido ou do mês) de ${saldoCasamentosMes.qtd} trabalho${saldoCasamentosMes.qtd !== 1 ? "s" : ""}`
+                  : "Recebido neste mês · nada vencido a receber")
               : "Nenhuma entrada este mês"}
           </div>
         </div>

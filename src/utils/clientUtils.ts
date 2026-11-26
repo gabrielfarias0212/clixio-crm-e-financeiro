@@ -72,3 +72,30 @@ export const getUpdatedStatus = (client: Client, newPaymentAmount: number = 0): 
 export const shouldShowDeliveredIndicator = (client: Client): boolean => {
   return client.status === "projeto_finalizado";
 };
+
+
+/**
+ * Saldo exigível até uma data (fim do mês): o que já venceu ou vence até lá.
+ * Pagamentos pendentes com vencimento depois dessa data (prazo combinado) NÃO entram:
+ * ficam em `aVencer`. Saldo sem parcela cadastrada vence na data do evento.
+ */
+export const saldoExigivel = (client: Client, ateISO: string) => {
+  const contrato = client.contractValue || 0;
+  const pago = valorPago(client);
+  const saldo = Math.max(0, contrato - pago);
+  const pendentes = (client.payments ?? []).filter(p => p.payment_status === "pendente" || p.payment_status === "atrasado");
+  const dia = (p: { due_date?: string; date: string }) => (p.due_date || p.date || "").slice(0, 10);
+  const aVencer = Math.min(saldo, pendentes.filter(p => dia(p) > ateISO).reduce((s, p) => s + (p.amount || 0), 0));
+  const agendado = pendentes.reduce((s, p) => s + (p.amount || 0), 0);
+  const semParcela = Math.max(0, saldo - agendado);
+  const evento = (client.weddingDate || "").slice(0, 10);
+  const semParcelaExigivel = !evento || evento <= ateISO ? semParcela : 0;
+  const semParcelaFuturo = semParcela - semParcelaExigivel;
+  const exigivel = Math.max(0, saldo - aVencer - semParcelaFuturo);
+  return { saldo, exigivel, aVencer: aVencer + semParcelaFuturo };
+};
+
+export const fimDoMesISO = (d: Date = new Date()): string => {
+  const f = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  return `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, "0")}-${String(f.getDate()).padStart(2, "0")}`;
+};

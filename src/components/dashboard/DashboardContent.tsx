@@ -300,11 +300,13 @@ export function DashboardContent() {
             </div>
           </div>
           <div style={{ fontSize: 24, fontWeight: 700, color: "#E05252", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {fmt(monthlyTotals.expenses)}
+            {fmt(monthlyTotals.expensesBruto)}
           </div>
           <div style={{ fontSize: 11, color: "#9A9590", marginTop: 6 }}>
-            {monthlyTotals.expenses > 0
-              ? "Gastos da empresa (cartão e conta PJ do módulo Finanças + lançamentos)"
+            {monthlyTotals.expensesBruto > 0
+              ? (monthlyTotals.expensesBruto - monthlyTotals.expenses > 0.005
+                  ? `Bruto · estornos −${fmt(monthlyTotals.expensesBruto - monthlyTotals.expenses)} = líquido ${fmt(monthlyTotals.expenses)} (usado no saldo)`
+                  : "Bruto (sem estornos neste mês) · cartão e conta PJ do módulo Finanças + lançamentos")
               : "Nenhum gasto da empresa neste mês"}
           </div>
         </div>
